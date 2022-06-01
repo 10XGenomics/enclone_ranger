@@ -1,8 +1,0 @@
-
-1. Merge in changes you want to master, and then git switch master and git pull origin master to 
-   catch your local version up-to-speed.
-2. Type "start_release" to bump the z version and trigger the release process.
-   - Note one thing that this does not do: it does not generate an officially signed commit
-     for README.md.
-   - Note that after doing a release, Cargo.lock needs to be updated.  Could this be done 
-     instead as part of the release process?
