@@ -21,7 +21,6 @@ pub mod set_speakers;
 pub mod slurp;
 pub mod stringulate;
 pub mod test_def;
-pub mod testlist;
 pub mod var_reg;
 
 use lazy_static::lazy_static;

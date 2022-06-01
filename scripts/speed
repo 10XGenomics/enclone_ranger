@@ -1,3 +1,0 @@
-#!/bin/sh
-
-cd enclone_main; cargo test --test enclone_test1 --features cpu -- --nocapture
