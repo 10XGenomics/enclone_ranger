@@ -4,8 +4,8 @@
 
 // Read the vars file and export code.  This is a partial implementation.
 
-use enclone_vars::export_code::*;
-use io_utils::*;
+use enclone_vars::export_code::export_code;
+use io_utils::{fwrite, open_for_write_new};
 use pretty_trace::PrettyTrace;
 
 use std::io::Write;

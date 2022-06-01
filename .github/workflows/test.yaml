@@ -7,7 +7,14 @@ on:
       - master
 
 env:
+  CARGO_DENY_VERSION: "0.12.1"
+  RUST_VERSION: "1.61.0"
   CARGO_INCREMENTAL: 0
+
+permissions:
+  contents: read
+  # Write permissions are required in order to produce annotations.
+  checks: write
 
 jobs:
   test-mac:
@@ -15,37 +22,18 @@ jobs:
     runs-on: macos-latest
     steps:
 
-      # get prerequisite code in place (duplicated verbatim below)
-
-      - name: rust version
-        # note that rust version appears in two places in this file
-        run: rustup default 1.60.0
-      - name: add rustfmt
-        run: rustup component add rustfmt
-      - name: install cargo-license
-        run: cargo install cargo-license
+      - name: Install Rust
+        if: env.run_tests
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+          default: true
 
       # check out master
 
       - name: Checkout enclone master
         uses: actions/checkout@master
-
-      - uses: Swatinem/rust-cache@v1
-        with:
-          key: ${{ matrix.style }}v1 # increment this to bust the cache if needed
-
-      # set up caching (duplicated verbatim below)
-      #
-      # We have observed that Mac builds on GitHub Actions sometimes fail with errors about 
-      # crates, including prost.  These errors are observed to come and go as unrelated commits
-      # are made.  We believe these errors are associated with caching.
-      #
-      # 1. We added a purge step, which worked for a while, then exhibited the same error
-      # phenotype.  Now turned off.
-      #
-      # 2. We turned off the caching.  This seems to have solved the problem.
-      #
-      # THIS IS A NEW VERSION.  MAYBE IT WILL WORK.
 
       - uses: Swatinem/rust-cache@v1
         with:
@@ -58,24 +46,21 @@ jobs:
         run: cargo clean
       - name: build-enclone
         run: cargo build
-      - name: download test data
-        run: git clone --depth=1 https://github.com/10XGenomics/enclone-data.git
       - name: unit tests
-        run: cd enclone_exec; cargo test --features basic -- --nocapture
+        run: cargo test -- --nocapture
 
   test-linux:
     # This job runs on Linux
     runs-on: ubuntu-latest
     steps:
 
-      # get prerequisite code in place (duplicated verbatim above)
-
-      - name: rust version
-        run: rustup default 1.60.0
-      - name: add rustfmt
-        run: rustup component add rustfmt
-      - name: install cargo-license
-        run: cargo install cargo-license
+      - name: Install Rust
+        if: env.run_tests
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+          default: true
 
       # check out master
 
@@ -100,9 +85,52 @@ jobs:
       - name: Remove the Cargo target directory
         if: github.ref == 'refs/heads/master'
         run: cargo clean
+      - name: Install cargo-deny
+        run: |
+          wget https://github.com/EmbarkStudios/cargo-deny/releases/download/${CARGO_DENY_VERSION}/cargo-deny-${CARGO_DENY_VERSION}-x86_64-unknown-linux-musl.tar.gz
+          tar -xvf cargo-deny-${CARGO_DENY_VERSION}-x86_64-unknown-linux-musl.tar.gz
+          mkdir -p ~/bin/
+          cp cargo-deny-${CARGO_DENY_VERSION}-x86_64-unknown-linux-musl/cargo-deny ~/bin/
+          rm -r cargo-deny-${CARGO_DENY_VERSION}-x86_64-unknown-linux-musl*
+          echo "$HOME/bin" >> $GITHUB_PATH
+      - name: Check Rust formatting
+        run: cargo fmt -- --check
+      - name: Deny duplicate dependencies (lib/rust)
+        run: cargo deny --locked check
+      - name: Run clippy
+        uses: actions-rs/clippy-check@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Github limits the number of annotations it will display on a PR for
+          # a given action, so we're going to disable (for now!) some of the
+          # noisier lints so that more important ones are more likely to be
+          # visible.
+          # NOTE: keep this list in sync with lib/rust/.cargo/config, or else
+          #       which is ignored when running in this mode but not when
+          #       running locally.
+          # TODO: re-enable the allowed lints at the end of this list.
+          args: |
+            --all-targets --locked --
+            -D clippy::suspicious
+            -A clippy::comparison_chain
+            -W future_incompatible
+            -W nonstandard_style
+            -W rust_2018_compatibility
+            -W rust_2021_compatibility
+            -W unused
+            -D clippy::enum_glob_use
+            -D clippy::needless_lifetimes
+            -D clippy::redundant_closure_for_method_calls
+            -D clippy::unused_io_amount
+            -D clippy::wildcard_imports
+            -W clippy::blacklisted_name
+            -W clippy::enum_variant_names
+            -W clippy::large-enum-variant
+            -W clippy::missing_safety_doc
+            -A clippy::needless_range_loop
+            -A clippy::type_complexity
+            -A clippy::too_many_arguments
       - name: build-enclone
         run: cargo build
-      - name: download test data
-        run: git clone --depth=1 https://github.com/10XGenomics/enclone-data.git
       - name: unit tests
-        run: cd enclone_exec; cargo test --features basic -- --nocapture
+        run: cargo test -- --nocapture

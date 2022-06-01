@@ -22,37 +22,37 @@ const TEST4: &str = "1279069,1279077,1287160-1287163,1287168-1287171:\
         1279071,1279079,1287166-1287167,1287174-1287175:1279072,1279080";
 
 pub fn replace_at_test(x: &mut String) {
-    *x = x.replace("@test1", &TEST1);
-    *x = x.replace("@test2", &TEST2);
-    *x = x.replace("@test3", &TEST3);
-    *x = x.replace("@test4", &TEST4);
+    *x = x.replace("@test1", TEST1);
+    *x = x.replace("@test2", TEST2);
+    *x = x.replace("@test3", TEST3);
+    *x = x.replace("@test4", TEST4);
     *x = x.replace("@test", &format!("{};{};{};{}", TEST1, TEST2, TEST3, TEST4));
     *x = x.replace("@training", "1-3,5-9,11-12,14-16,18-43");
 }
 
 pub fn test_donor_id(x: usize) -> usize {
-    let test1 = expand_integer_ranges(&TEST1.replace(":", ","));
+    let test1 = expand_integer_ranges(&TEST1.replace(':', ","));
     let test1 = test1.split(',').collect::<Vec<&str>>();
     for t in test1.iter() {
         if t.force_usize() == x {
             return 1;
         }
     }
-    let test2 = expand_integer_ranges(&TEST2.replace(":", ","));
+    let test2 = expand_integer_ranges(&TEST2.replace(':', ","));
     let test2 = test2.split(',').collect::<Vec<&str>>();
     for t in test2.iter() {
         if t.force_usize() == x {
             return 2;
         }
     }
-    let test3 = expand_integer_ranges(&TEST3.replace(":", ","));
+    let test3 = expand_integer_ranges(&TEST3.replace(':', ","));
     let test3 = test3.split(',').collect::<Vec<&str>>();
     for t in test3.iter() {
         if t.force_usize() == x {
             return 3;
         }
     }
-    let test4 = expand_integer_ranges(&TEST4.replace(":", ","));
+    let test4 = expand_integer_ranges(&TEST4.replace(':', ","));
     let test4 = test4.split(',').collect::<Vec<&str>>();
     for t in test4.iter() {
         if t.force_usize() == x {

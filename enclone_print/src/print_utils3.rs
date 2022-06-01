@@ -2,7 +2,7 @@
 
 use crate::print_utils1::color_codon;
 use bio_edit::alignment::pairwise::Aligner;
-use bio_edit::alignment::AlignmentOperation::*;
+use bio_edit::alignment::AlignmentOperation::{Del, Ins, Match, Subst};
 use enclone_core::allowed_vars::{CVARS_ALLOWED, CVARS_ALLOWED_PCELL};
 use enclone_core::defs::{ColInfo, EncloneControl, ExactClonotype};
 use enclone_proto::types::DonorReferenceItem;
@@ -11,7 +11,7 @@ use itertools::Itertools;
 use std::io::Write;
 use string_utils::strme;
 use vdj_ann::refx::RefData;
-use vector_utils::*;
+use vector_utils::{bin_member, erase_if, make_freq, next_diff, sort_sync2, unique_sort};
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
@@ -598,10 +598,7 @@ pub fn insert_reference_rows(
                 let mut refseq = Vec::<u8>::new();
                 let mut vlen: usize;
                 let vseq: Vec<u8>;
-                if pass == 1 {
-                    vlen = refdata.refs[rsi.vids[cz]].len();
-                    vseq = refdata.refs[rsi.vids[cz]].to_ascii_vec();
-                } else if rsi.vpids[cz].is_none() {
+                if pass == 1 || rsi.vpids[cz].is_none() {
                     vlen = refdata.refs[rsi.vids[cz]].len();
                     vseq = refdata.refs[rsi.vids[cz]].to_ascii_vec();
                 } else {

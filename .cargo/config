@@ -8,24 +8,3 @@ linker = "x86_64-w64-mingw32-gcc"
 rustflags = [
   "-C", "target-feature=+sse3,+ssse3,+sse4.1,+sse4.2,+popcnt",
 ]
-
-[alias]
-
-# "cargo t" exercises nearly the full test suite, except for the giant test "enclone.test"
-#
-# It can only be run from 10x Genomics primarily because it uses a bunch of data files that we 
-# don't distribute.
-
-t = "test --bin traceback1 --test enclone_test1 --test enclone_test2 --test enclone_test3 --test enclone_test4 --test enclone_test_peak_mem -- --nocapture"
-
-# Note that "./test" exercises this plus a few more tests.
-
-# "cargo tb" exercises a subset of tests
-#
-# "cargo tb" has to be run from the directory enclone_main, but should be runnable from any
-# machine, so long as at least the medium dataset has been downloaded.
-#
-# Note that because it runs with "--features basic", one gets a bunch of warnings when one runs
-# "cargo tb".
-
-tb = "test --test enclone_test1 --test enclone_test2 --test enclone_test3 --test enclone_test4 --features basic -- --nocapture"

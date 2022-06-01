@@ -51,99 +51,100 @@ pub fn mammalian_fixed_len_peer_groups(refdata: &RefData) -> Vec<Vec<(usize, u8,
         if refdata.is_v(i) {
             let aa = aa_seq(&refdata.refs[i].to_ascii_vec(), 0);
             let rtype = refdata.rtype[i];
-            let chain_type;
-            if rtype == 0 {
-                chain_type = "IGH";
+            let chain_type = if rtype == 0 {
+                "IGH"
             } else if rtype == 1 {
-                chain_type = "IGK";
+                "IGK"
             } else if rtype == 2 {
-                chain_type = "IGL";
+                "IGL"
             } else if rtype == 3 {
-                chain_type = "TRA";
+                "TRA"
             } else if rtype == 4 {
-                chain_type = "TRB";
+                "TRB"
             } else {
                 continue;
-            }
+            };
             let fs1 = fr1_start(&aa, chain_type);
             let cs1 = cdr1_start(&aa, chain_type, false);
             let fs2 = fr2_start(&aa, chain_type, false);
             let cs2 = cdr2_start(&aa, chain_type, false);
             let fs3 = fr3_start(&aa, chain_type, false);
             let cs3 = cdr3_start(&aa, chain_type, false);
-            if cs1.is_some() && fs1 < cs1.unwrap() {
-                let cs1 = cs1.unwrap();
-                let x1 = start[&(chain_type.to_string(), "fwr1".to_string())];
-                let x2 = stop[&(chain_type.to_string(), "fwr1".to_string())];
-                let len = cs1 - fs1;
-                for x in x1..x2 {
-                    if m[x].2 == len {
-                        for j in 0..len {
-                            for k in 0..m[x].3[j].len() {
-                                pg[i].push((fs1 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+            if let Some(cs1) = cs1 {
+                if fs1 < cs1 {
+                    let x1 = start[&(chain_type.to_string(), "fwr1".to_string())];
+                    let x2 = stop[&(chain_type.to_string(), "fwr1".to_string())];
+                    let len = cs1 - fs1;
+                    for x in x1..x2 {
+                        if m[x].2 == len {
+                            for j in 0..len {
+                                for k in 0..m[x].3[j].len() {
+                                    pg[i].push((fs1 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+                                }
                             }
                         }
                     }
                 }
             }
-            if cs1.is_some() && fs2.is_some() && cs1.unwrap() < fs2.unwrap() {
-                let cs1 = cs1.unwrap();
-                let fs2 = fs2.unwrap();
-                let x1 = start[&(chain_type.to_string(), "cdr1".to_string())];
-                let x2 = stop[&(chain_type.to_string(), "cdr1".to_string())];
-                let len = fs2 - cs1;
-                for x in x1..x2 {
-                    if m[x].2 == len {
-                        for j in 0..len {
-                            for k in 0..m[x].3[j].len() {
-                                pg[i].push((cs1 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+            if let (Some(cs1), Some(fs2)) = (cs1, fs2) {
+                if cs1 < fs2 {
+                    let x1 = start[&(chain_type.to_string(), "cdr1".to_string())];
+                    let x2 = stop[&(chain_type.to_string(), "cdr1".to_string())];
+                    let len = fs2 - cs1;
+                    for x in x1..x2 {
+                        if m[x].2 == len {
+                            for j in 0..len {
+                                for k in 0..m[x].3[j].len() {
+                                    pg[i].push((cs1 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+                                }
                             }
                         }
                     }
                 }
             }
-            if fs2.is_some() && cs2.is_some() && fs2.unwrap() < cs2.unwrap() {
-                let fs2 = fs2.unwrap();
-                let cs2 = cs2.unwrap();
-                let x1 = start[&(chain_type.to_string(), "fwr2".to_string())];
-                let x2 = stop[&(chain_type.to_string(), "fwr2".to_string())];
-                let len = cs2 - fs2;
-                for x in x1..x2 {
-                    if m[x].2 == len {
-                        for j in 0..len {
-                            for k in 0..m[x].3[j].len() {
-                                pg[i].push((fs2 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+            if let (Some(fs2), Some(cs2)) = (fs2, cs2) {
+                if fs2 < cs2 {
+                    let x1 = start[&(chain_type.to_string(), "fwr2".to_string())];
+                    let x2 = stop[&(chain_type.to_string(), "fwr2".to_string())];
+                    let len = cs2 - fs2;
+                    for x in x1..x2 {
+                        if m[x].2 == len {
+                            for j in 0..len {
+                                for k in 0..m[x].3[j].len() {
+                                    pg[i].push((fs2 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+                                }
                             }
                         }
                     }
                 }
             }
-            if cs2.is_some() && fs3.is_some() && cs2.unwrap() < fs3.unwrap() {
-                let cs2 = cs2.unwrap();
-                let fs3 = fs3.unwrap();
-                let x1 = start[&(chain_type.to_string(), "cdr2".to_string())];
-                let x2 = stop[&(chain_type.to_string(), "cdr2".to_string())];
-                let len = fs3 - cs2;
-                for x in x1..x2 {
-                    if m[x].2 == len {
-                        for j in 0..len {
-                            for k in 0..m[x].3[j].len() {
-                                pg[i].push((cs2 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+            if let (Some(cs2), Some(fs3)) = (cs2, fs3) {
+                if cs2 < fs3 {
+                    let x1 = start[&(chain_type.to_string(), "cdr2".to_string())];
+                    let x2 = stop[&(chain_type.to_string(), "cdr2".to_string())];
+                    let len = fs3 - cs2;
+                    for x in x1..x2 {
+                        if m[x].2 == len {
+                            for j in 0..len {
+                                for k in 0..m[x].3[j].len() {
+                                    pg[i].push((cs2 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+                                }
                             }
                         }
                     }
                 }
             }
-            if fs3.is_some() && fs3.unwrap() < cs3 {
-                let fs3 = fs3.unwrap();
-                let x1 = start[&(chain_type.to_string(), "fwr3".to_string())];
-                let x2 = stop[&(chain_type.to_string(), "fwr3".to_string())];
-                let len = cs3 - fs3;
-                for x in x1..x2 {
-                    if m[x].2 == len {
-                        for j in 0..len {
-                            for k in 0..m[x].3[j].len() {
-                                pg[i].push((fs3 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+            if let Some(fs3) = fs3 {
+                if fs3 < cs3 {
+                    let x1 = start[&(chain_type.to_string(), "fwr3".to_string())];
+                    let x2 = stop[&(chain_type.to_string(), "fwr3".to_string())];
+                    let len = cs3 - fs3;
+                    for x in x1..x2 {
+                        if m[x].2 == len {
+                            for j in 0..len {
+                                for k in 0..m[x].3[j].len() {
+                                    pg[i].push((fs3 + j, m[x].3[j][k].1, m[x].3[j][k].0));
+                                }
                             }
                         }
                     }

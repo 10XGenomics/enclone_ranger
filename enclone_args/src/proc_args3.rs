@@ -4,7 +4,7 @@
 
 use enclone_core::defs::{EncloneControl, OriginInfo};
 use enclone_core::{expand_integer_ranges, fetch_url, tilde_expand_me};
-use io_utils::*;
+use io_utils::{dir_list, open_for_read, open_for_write_new, open_userfile_for_read, path_exists};
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::collections::HashMap;
@@ -409,24 +409,22 @@ fn parse_bc(mut bc: String, ctl: &mut EncloneControl, call_type: &str) -> Result
                         fields[barcode_pos], bc, origin
                     ));
                 }
-                if origin_pos.is_some() {
+                if let Some(origin_pos) = origin_pos {
                     origin_for_bc.insert(
                         fields[barcode_pos].to_string(),
-                        fields[origin_pos.unwrap()].to_string(),
+                        fields[origin_pos].to_string(),
                     );
                 }
-                if donor_pos.is_some() {
+                if let Some(donor_pos) = donor_pos {
                     donor_for_bc.insert(
                         fields[barcode_pos].to_string(),
-                        fields[donor_pos.unwrap()].to_string(),
+                        fields[donor_pos].to_string(),
                     );
                 }
-                if tag_pos.is_some() {
-                    let tag_pos = tag_pos.unwrap();
+                if let Some(tag_pos) = tag_pos {
                     tag.insert(fields[barcode_pos].to_string(), fields[tag_pos].to_string());
                 }
-                if color_pos.is_some() {
-                    let color_pos = color_pos.unwrap();
+                if let Some(color_pos) = color_pos {
                     barcode_color.insert(
                         fields[barcode_pos].to_string(),
                         fields[color_pos].to_string(),
@@ -668,33 +666,35 @@ pub fn proc_xcr(
     results.par_iter_mut().for_each(|res| {
         let (p, pg) = (&mut res.0, &mut res.1);
         let resx = get_path_or_internal_id(p, ctl, source, &spinlock);
-        if resx.is_err() {
-            res.3 = resx.unwrap_err();
-        } else {
-            *p = resx.unwrap();
-            if ctl.gen_opt.bcr && path_exists(&format!("{}/vdj_b", p)) {
-                *p = format!("{}/vdj_b", p);
-            }
-            if ctl.gen_opt.bcr && path_exists(&format!("{}/multi/vdj_b", p)) {
-                *p = format!("{}/multi/vdj_b", p);
-            }
-            if ctl.gen_opt.tcr && path_exists(&format!("{}/vdj_t", p)) {
-                *p = format!("{}/vdj_t", p);
-            }
-            if ctl.gen_opt.tcr && path_exists(&format!("{}/multi/vdj_t", p)) {
-                *p = format!("{}/multi/vdj_t", p);
-            }
-            if have_gex {
-                let resx = get_path_or_internal_id(pg, ctl, "GEX", &spinlock);
-                if resx.is_err() {
-                    res.3 = resx.unwrap_err();
-                } else {
-                    *pg = resx.unwrap();
-                    if path_exists(&format!("{}/count", pg)) {
-                        *pg = format!("{}/count", pg);
-                    }
-                    if path_exists(&format!("{}/count_pd", pg)) {
-                        *pg = format!("{}/count_pd", pg);
+        match resx {
+            Err(resx) => res.3 = resx,
+            Ok(resx) => {
+                *p = resx;
+                if ctl.gen_opt.bcr && path_exists(&format!("{}/vdj_b", p)) {
+                    *p = format!("{}/vdj_b", p);
+                }
+                if ctl.gen_opt.bcr && path_exists(&format!("{}/multi/vdj_b", p)) {
+                    *p = format!("{}/multi/vdj_b", p);
+                }
+                if ctl.gen_opt.tcr && path_exists(&format!("{}/vdj_t", p)) {
+                    *p = format!("{}/vdj_t", p);
+                }
+                if ctl.gen_opt.tcr && path_exists(&format!("{}/multi/vdj_t", p)) {
+                    *p = format!("{}/multi/vdj_t", p);
+                }
+                if have_gex {
+                    let resx = get_path_or_internal_id(pg, ctl, "GEX", &spinlock);
+                    match resx {
+                        Err(resx) => res.3 = resx,
+                        Ok(resx) => {
+                            *pg = resx;
+                            if path_exists(&format!("{}/count", pg)) {
+                                *pg = format!("{}/count", pg);
+                            }
+                            if path_exists(&format!("{}/count_pd", pg)) {
+                                *pg = format!("{}/count_pd", pg);
+                            }
+                        }
                     }
                 }
             }

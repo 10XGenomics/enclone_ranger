@@ -124,24 +124,22 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
                 ));
             }
 
-            if origin_pos.is_some() {
+            if let Some(origin_pos) = origin_pos {
                 origin_for_bc[li].insert(
                     fields[barcode_pos].to_string(),
-                    fields[origin_pos.unwrap()].to_string(),
+                    fields[origin_pos].to_string(),
                 );
             }
-            if donor_pos.is_some() {
+            if let Some(donor_pos) = donor_pos {
                 donor_for_bc[li].insert(
                     fields[barcode_pos].to_string(),
-                    fields[donor_pos.unwrap()].to_string(),
+                    fields[donor_pos].to_string(),
                 );
             }
-            if tag_pos.is_some() {
-                let tag_pos = tag_pos.unwrap();
+            if let Some(tag_pos) = tag_pos {
                 tag[li].insert(fields[barcode_pos].to_string(), fields[tag_pos].to_string());
             }
-            if color_pos.is_some() {
-                let color_pos = color_pos.unwrap();
+            if let Some(color_pos) = color_pos {
                 barcode_color[li].insert(
                     fields[barcode_pos].to_string(),
                     fields[color_pos].to_string(),

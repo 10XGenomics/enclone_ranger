@@ -57,7 +57,7 @@ pub fn weak_chains(
             &od,
             info,
             raw_joins,
-            &refdata,
+            refdata,
             dref,
         );
         let cols = mat.len();

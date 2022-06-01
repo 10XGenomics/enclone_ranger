@@ -49,7 +49,7 @@ pub fn split_orbits(
             &od,
             info,
             raw_joins,
-            &refdata,
+            refdata,
             dref,
         );
         let cols = mat.len();

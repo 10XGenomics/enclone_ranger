@@ -43,7 +43,7 @@ pub fn join_core(
                 to_bc,
                 sr,
                 pot,
-                &refdata,
+                refdata,
                 dref,
             ) {
                 eq.join((k1 - i) as i32, (k2 - i) as i32);

@@ -507,7 +507,7 @@ pub fn survives_filter(
             let ex = &exact_clonotypes[*s];
             for j in 0..ex.share.len() {
                 for k in 0..cdr3.len() {
-                    if levenshtein(&ex.share[j].cdr3_aa.as_bytes(), &cdr3[k].as_bytes()) as usize
+                    if levenshtein(ex.share[j].cdr3_aa.as_bytes(), cdr3[k].as_bytes()) as usize
                         <= dist[k]
                     {
                         ok = true;

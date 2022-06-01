@@ -163,7 +163,7 @@ pub fn define_mat(
                                 to_bc,
                                 sr,
                                 &mut pot,
-                                &refdata,
+                                refdata,
                                 dref,
                             ) {
                                 extras.push((k1, k2));
@@ -243,7 +243,7 @@ pub fn define_mat(
                     to_bc,
                     sr,
                     &mut pot,
-                    &refdata,
+                    refdata,
                     dref,
                 ) {
                     e.join(r[f1.0], r[f2.0]);

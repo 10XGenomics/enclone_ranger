@@ -37,7 +37,7 @@ pub fn heavy_complexity(
                 // Compensate for indel.  Code here and next work imperfectly and
                 // there would be value in investigating the error cases.
 
-                if ex.share[r].ins.len() > 0 {
+                if !ex.share[r].ins.is_empty() {
                     vstart -= ex.share[r].ins[0].1.len();
                 } else if ex.share[r].seq.len() < ex.share[r].seq_del.len() {
                     vstart += ex.share[r].seq_del.len() - ex.share[r].seq.len();
@@ -172,13 +172,13 @@ pub fn heavy_complexity(
                     }
                 }
                 res.1 = Junction {
-                    hcomp: hcomp,
-                    matches: matches,
-                    mismatches: mismatches,
-                    jun_ins: jun_ins,
+                    hcomp,
+                    matches,
+                    mismatches,
+                    jun_ins,
                     d: ds[0].clone(),
-                    vstart: vstart,
-                    indels: indels,
+                    vstart,
+                    indels,
                 };
             }
         }

@@ -184,9 +184,8 @@ fn parse_vector_entry_from_json(
     let mut validated_umis = Vec::<String>::new();
     let mut validated_umis_present = false;
     let val = v["validated_umis"].as_array();
-    if val.is_some() {
+    if let Some(val) = val {
         validated_umis_present = true;
-        let val = val.unwrap();
         for i in 0..val.len() {
             validated_umis.push(val[i].to_string().between("\"", "\"").to_string());
         }
@@ -194,9 +193,8 @@ fn parse_vector_entry_from_json(
     let mut non_validated_umis = Vec::<String>::new();
     let mut non_validated_umis_present = false;
     let non_val = v["non_validated_umis"].as_array();
-    if non_val.is_some() {
+    if let Some(non_val) = non_val {
         non_validated_umis_present = true;
-        let non_val = non_val.unwrap();
         for i in 0..non_val.len() {
             non_validated_umis.push(non_val[i].to_string().between("\"", "\"").to_string());
         }
@@ -204,9 +202,8 @@ fn parse_vector_entry_from_json(
     let mut invalidated_umis = Vec::<String>::new();
     let mut invalidated_umis_present = false;
     let inval = v["invalidated_umis"].as_array();
-    if inval.is_some() {
+    if let Some(inval) = inval {
         invalidated_umis_present = true;
-        let inval = inval.unwrap();
         for i in 0..inval.len() {
             invalidated_umis.push(inval[i].to_string().between("\"", "\"").to_string());
         }
@@ -216,8 +213,8 @@ fn parse_vector_entry_from_json(
 
     let mut frac_reads_used = None;
     let f = v["fraction_of_reads_for_this_barcode_provided_as_input_to_assembly"].as_f64();
-    if f.is_some() {
-        frac_reads_used = Some((f.unwrap() * 1_000_000.0).round() as u32);
+    if let Some(f) = f {
+        frac_reads_used = Some((f * 1_000_000.0).round() as u32);
     }
 
     // Reannotate.
@@ -598,16 +595,14 @@ fn parse_vector_entry_from_json(
     let mut origin_index = None;
     let mut donor_index = None;
     let mut tag_index = None;
-    if origin.is_some() {
-        if origin.is_some() {
-            origin_index = Some(bin_position(&origin_info.origin_list, &origin.unwrap()) as usize);
-        }
-        if donor.is_some() {
-            donor_index = Some(bin_position(&origin_info.donor_list, &donor.unwrap()) as usize);
+    if let Some(origin) = origin {
+        origin_index = Some(bin_position(&origin_info.origin_list, &origin) as usize);
+        if let Some(donor) = donor {
+            donor_index = Some(bin_position(&origin_info.donor_list, &donor) as usize);
         }
     }
-    if tag.is_some() {
-        tag_index = Some(bin_position(&origin_info.tag_list, &tag.unwrap()) as usize);
+    if let Some(tag) = tag {
+        tag_index = Some(bin_position(&origin_info.tag_list, &tag) as usize);
     }
     let mut valu = None;
     if validated_umis_present {
@@ -788,8 +783,8 @@ pub fn read_json(
             &mut res.5,
             &exiting,
         );
-        if resx.is_err() {
-            res.6 = resx.unwrap_err();
+        if let Err(resx) = resx {
+            res.6 = resx;
         }
     });
     for i in 0..results.len() {
@@ -934,8 +929,8 @@ pub fn parse_json_annotations_files(
             &mut res.6,
             &mut res.7,
         );
-        if resx.is_ok() {
-            let tig_bc: Vec<Vec<TigData>> = resx.unwrap();
+        if let Ok(resx) = resx {
+            let tig_bc: Vec<Vec<TigData>> = resx;
             res.5.sort();
             res.2 = tig_bc;
         } else {

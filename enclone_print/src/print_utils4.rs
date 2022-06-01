@@ -789,10 +789,11 @@ pub fn compute_bu(
                         if computed {
                             // note unneeded calculation above in certain cases
                             // TODO: ELIMINATE!
-                            if y0.ends_with("_min") {
-                            } else if y0.ends_with("_max") {
-                            } else if y0.ends_with("_μ") {
-                            } else if y0.ends_with("_Σ") {
+                            if y0.ends_with("_min")
+                                || y0.ends_with("_max")
+                                || y0.ends_with("_μ")
+                                || y0.ends_with("_Σ")
+                            {
                             } else if y0.ends_with("_%") {
                                 row.push(format!("{:.2}", (100.0 * count) / gex_count));
                             } else {
@@ -818,7 +819,7 @@ pub fn compute_bu(
                     for p in 0..rsi.cvars[col].len() {
                         if rsi.cvars[col][p] == *"v_name_orig" {
                             let v = &refdata.name[ex.clones[bcl.2][m].v_ref_id];
-                            cx[cp + p] = format!("{}", v);
+                            cx[cp + p] = v.to_string();
                         } else if rsi.cvars[col][p] == *"u" {
                             let numi = ex.clones[bcl.2][m].umi_count;
                             cx[cp + p] = format!("{}", numi);

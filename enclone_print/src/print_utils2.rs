@@ -13,7 +13,7 @@ use enclone_core::defs::{AlleleData, ColInfo, EncloneControl, ExactClonotype, Ge
 use enclone_core::median::median_f64;
 use enclone_proto::types::DonorReferenceItem;
 use enclone_vars::decode_arith;
-use expr_tools::*;
+use expr_tools::{define_evalexpr_context, vars_of_node};
 use itertools::Itertools;
 use ndarray::s;
 use stats_utils::percent_ratio;
@@ -376,7 +376,7 @@ pub fn row_fill(
                         // }
                         let val = res.unwrap();
                         let val = val.as_number();
-                        if !val.is_ok() {
+                        if val.is_err() {
                             out_vals.push(String::new());
                         } else {
                             let val = val.unwrap();
@@ -551,17 +551,14 @@ pub fn row_fill(
             let mut needed = false;
             let var = &all_vars[j];
             let varc = format!("{}{}", var, col + 1);
-            if jj < rsi.cvars[col].len() && cvars.contains(var) {
-                needed = true;
-            } else if pass == 2
-                && !ctl.parseable_opt.pout.is_empty()
-                && (ctl.parseable_opt.pchains == "max"
-                    || col < ctl.parseable_opt.pchains.force_usize())
-                && (pcols_sort.is_empty() || bin_member(&pcols_sort, &varc))
+            if jj < rsi.cvars[col].len() && cvars.contains(var)
+                || pass == 2
+                    && !ctl.parseable_opt.pout.is_empty()
+                    && (ctl.parseable_opt.pchains == "max"
+                        || col < ctl.parseable_opt.pchains.force_usize())
+                    && (pcols_sort.is_empty() || bin_member(&pcols_sort, &varc))
+                || extra_args.contains(&varc)
             {
-                needed = true;
-            }
-            if extra_args.contains(&varc) {
                 needed = true;
             }
             if !needed {
@@ -643,23 +640,19 @@ pub fn row_fill(
                 continue;
             }
             let varc = format!("{}{}", var, col + 1);
-            if jj < rsi.cvars[col].len() && cvars.contains(var) {
-                needed = true;
-            } else if pass == 2
-                && !ctl.parseable_opt.pout.is_empty()
-                && (ctl.parseable_opt.pchains == "max"
-                    || col < ctl.parseable_opt.pchains.force_usize())
-                && (pcols_sort.is_empty() || bin_member(&pcols_sort, &varc))
+            if jj < rsi.cvars[col].len() && cvars.contains(var)
+                || pass == 2
+                    && !ctl.parseable_opt.pout.is_empty()
+                    && (ctl.parseable_opt.pchains == "max"
+                        || col < ctl.parseable_opt.pchains.force_usize())
+                    && (pcols_sort.is_empty() || bin_member(&pcols_sort, &varc))
+                || *var == "amino"
+                || *var == "u_cell"
+                || *var == "r_cell"
+                || *var == "white"
+                || ctl.clono_filt_opt_def.whitef
+                || extra_args.contains(&varc)
             {
-                needed = true;
-            } else if *var == "amino" {
-                needed = true;
-            } else if *var == "u_cell" || *var == "r_cell" {
-                needed = true;
-            } else if *var == "white" || ctl.clono_filt_opt_def.whitef {
-                needed = true;
-            }
-            if extra_args.contains(&varc) {
                 needed = true;
             }
             if !needed {

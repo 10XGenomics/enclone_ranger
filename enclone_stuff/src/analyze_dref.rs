@@ -10,10 +10,10 @@ use enclone_core::version_string;
 use itertools::Itertools;
 use std::cmp::min;
 use std::env;
-use string_utils::*;
-use tables::*;
+use string_utils::TextUtils;
+use tables::print_tabular_vbox;
 use vdj_ann::refx::{make_vdj_ref_data_core, RefData};
-use vector_utils::*;
+use vector_utils::{bin_position, erase_if, next_diff1_2, next_diff1_3, unique_sort};
 
 pub fn analyze_donor_ref(
     refdata: &RefData,
@@ -22,7 +22,7 @@ pub fn analyze_donor_ref(
 ) {
     // Analyze donor reference.
 
-    if ctl.gen_opt.external_ref.len() > 0 {
+    if !ctl.gen_opt.external_ref.is_empty() {
         if ctl.gen_opt.echo {
             let args: Vec<String> = env::args().collect();
             println!("\n{} : {}", env!("CARGO_PKG_VERSION"), version_string());
@@ -176,7 +176,7 @@ pub fn analyze_donor_ref(
                 let mut imgts = Vec::<String>::new();
                 for r in 0..allelesg.len() {
                     for n in allelesg[r].0.iter() {
-                        if !n.starts_with("d") && !n.starts_with("u") {
+                        if !n.starts_with('d') && !n.starts_with('u') {
                             imgts.push(n.to_string());
                         }
                     }
@@ -211,7 +211,7 @@ pub fn analyze_donor_ref(
                             row.push("\\ext".to_string());
                         }
                     }
-                    if dp.len() > 0 {
+                    if !dp.is_empty() {
                         row.push("position".to_string());
                         for _ in 0..dp.len() - 1 {
                             row.push("\\ext".to_string());
@@ -272,7 +272,7 @@ pub fn analyze_donor_ref(
                         just.push(b'|');
                         just.append(&mut vec![b'l'; nimgt]);
                     }
-                    if dp.len() > 0 {
+                    if !dp.is_empty() {
                         just.push(b'|');
                         just.append(&mut vec![b'l'; dp.len()]);
                     }
@@ -287,7 +287,7 @@ pub fn analyze_donor_ref(
                     dp.len(),
                     dp.iter().format(",")
                 );
-                if log.len() > 0 {
+                if !log.is_empty() {
                     log.truncate(log.len() - 1);
                     println!("\n{}", log);
                     println!("* = a universal reference\n");

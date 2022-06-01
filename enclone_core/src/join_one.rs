@@ -270,10 +270,10 @@ pub fn join_one(
 
     // Cap CDR3 diffs for TCR or as requested.
 
-    if ctl.join_alg_opt.max_cdr3_diffs < 1000 || !is_bcr {
-        if cd > ctl.join_alg_opt.max_cdr3_diffs as isize || (!is_bcr && cd > 0) {
-            return false;
-        }
+    if (ctl.join_alg_opt.max_cdr3_diffs < 1000 || !is_bcr)
+        && (cd > ctl.join_alg_opt.max_cdr3_diffs as isize || (!is_bcr && cd > 0))
+    {
+        return false;
     }
 
     // Unless MIX_DONORS specified, do not join across donors.
@@ -465,14 +465,13 @@ pub fn join_one(
     if !ctl.join_alg_opt.old_light {
         for i in 0..info[k1].cdr3s.len() {
             let (j1, j2) = (info[k1].exact_cols[i], info[k2].exact_cols[i]);
-            if !ex1.share[j1].left {
-                if ex1.share[j1].c_ref_id.is_some() && ex2.share[j2].c_ref_id.is_some() {
-                    if ex1.share[j1].c_ref_id.unwrap() != ex2.share[j2].c_ref_id.unwrap() {
-                        if cd > 0 {
-                            return false;
-                        }
-                    }
-                }
+            if !ex1.share[j1].left
+                && ex1.share[j1].c_ref_id.is_some()
+                && ex2.share[j2].c_ref_id.is_some()
+                && ex1.share[j1].c_ref_id.unwrap() != ex2.share[j2].c_ref_id.unwrap()
+                && cd > 0
+            {
+                return false;
             }
         }
     }
@@ -539,163 +538,154 @@ pub fn join_one(
         && *min_shares < ctl.join_alg_opt.auto_share as isize
         && (ctl.join_alg_opt.comp_filt_bound == 0
             || *min_indeps as usize <= ctl.join_alg_opt.comp_filt_bound)
+        && ex1.share.len() == 2
+        && ex2.share.len() == 2
+        && ex1.share[0].left != ex1.share[1].left
     {
-        if ex1.share.len() == 2 && ex2.share.len() == 2 && ex1.share[0].left != ex1.share[1].left {
-            let h1 = info[k1].exact_cols[0];
-            let h2 = info[k2].exact_cols[0];
-            let comp = min(ex1.share[h1].jun.hcomp, ex2.share[h2].jun.hcomp);
-            if comp as isize - cd >= ctl.join_alg_opt.comp_filt as isize {
-                /*
-                println!("\nwould accept");
-                println!("cdr3: {}", ex1.share[h1].cdr3_aa);
-                println!("cdr3: {}", ex2.share[h2].cdr3_aa);
-                */
-                accept = true;
-            } else if ctl.join_alg_opt.super_comp_filt > 0 {
-                if score > ctl.join_alg_opt.max_score
-                // && ex2.share[h2].cdr3_aa == "CARESLVGLLPMFDYW" {
-                // && ex1.share[h1].cdr3_aa == "CARDGYSNSWYVPYW" {
+        let h1 = info[k1].exact_cols[0];
+        let h2 = info[k2].exact_cols[0];
+        let comp = min(ex1.share[h1].jun.hcomp, ex2.share[h2].jun.hcomp);
+        if comp as isize - cd >= ctl.join_alg_opt.comp_filt as isize {
+            /*
+            println!("\nwould accept");
+            println!("cdr3: {}", ex1.share[h1].cdr3_aa);
+            println!("cdr3: {}", ex2.share[h2].cdr3_aa);
+            */
+            accept = true;
+        } else if ctl.join_alg_opt.super_comp_filt > 0 && score > ctl.join_alg_opt.max_score {
+            let vstart = ex1.share[h1].jun.vstart;
+            let indels = &ex1.share[h1].jun.indels;
+            let v_ref_id = ex1.share[h1].v_ref_id;
+            let j_ref_id = ex1.share[h1].j_ref_id;
+            if vstart == ex2.share[h2].jun.vstart && *indels == ex2.share[h2].jun.indels {
+                if accept {
+                    // println!("passes first test");
+                }
+                let d = &ex1.share[h1].jun.d;
+                if *d == ex2.share[h2].jun.d
+                    && v_ref_id == ex2.share[h2].v_ref_id
+                    && j_ref_id == ex2.share[h2].j_ref_id
                 {
-                    let vstart = ex1.share[h1].jun.vstart;
-                    let indels = &ex1.share[h1].jun.indels;
-                    let v_ref_id = ex1.share[h1].v_ref_id;
-                    let j_ref_id = ex1.share[h1].j_ref_id;
-                    if vstart == ex2.share[h2].jun.vstart && *indels == ex2.share[h2].jun.indels {
-                        if accept {
-                            // println!("passes first test");
+                    // println!("passes second test");
+                    let mut seq1 = ex1.share[h1].seq_del.clone();
+                    let mut seq2 = ex2.share[h2].seq_del.clone();
+                    let mut vref1 = refdata.refs[v_ref_id].to_ascii_vec();
+                    if ex1.share[h1].v_ref_id_donor.is_some() {
+                        vref1 = dref[ex1.share[h1].v_ref_id_donor.unwrap()]
+                            .nt_sequence
+                            .clone();
+                    }
+                    let mut vref2 = refdata.refs[v_ref_id].to_ascii_vec();
+                    if ex2.share[h2].v_ref_id_donor.is_some() {
+                        vref2 = dref[ex2.share[h2].v_ref_id_donor.unwrap()]
+                            .nt_sequence
+                            .clone();
+                    }
+                    let donor1 = ex1.clones[0][0].donor_index;
+                    let donor2 = ex2.clones[0][0].donor_index;
+                    let mut ok = vref1 == vref2;
+                    if ctl.gen_opt.mix_only && donor1 == donor2 {
+                        ok = false;
+                    }
+                    if ok {
+                        let vref = vref1[vstart..vref1.len()].to_vec();
+                        let mut concat = vref;
+                        for i in 0..d.len() {
+                            concat.append(&mut refdata.refs[d[i]].to_ascii_vec());
                         }
-                        let d = &ex1.share[h1].jun.d;
-                        if *d == ex2.share[h2].jun.d {
-                            if v_ref_id == ex2.share[h2].v_ref_id
-                                && j_ref_id == ex2.share[h2].j_ref_id
-                            {
-                                // println!("passes second test");
-                                let mut seq1 = ex1.share[h1].seq_del.clone();
-                                let mut seq2 = ex2.share[h2].seq_del.clone();
-                                let mut vref1 = refdata.refs[v_ref_id].to_ascii_vec();
-                                if ex1.share[h1].v_ref_id_donor.is_some() {
-                                    vref1 = dref[ex1.share[h1].v_ref_id_donor.unwrap()]
-                                        .nt_sequence
-                                        .clone();
-                                }
-                                let mut vref2 = refdata.refs[v_ref_id].to_ascii_vec();
-                                if ex2.share[h2].v_ref_id_donor.is_some() {
-                                    vref2 = dref[ex2.share[h2].v_ref_id_donor.unwrap()]
-                                        .nt_sequence
-                                        .clone();
-                                }
-                                let donor1 = ex1.clones[0][0].donor_index;
-                                let donor2 = ex2.clones[0][0].donor_index;
-                                let mut ok = vref1 == vref2;
-                                if ctl.gen_opt.mix_only {
-                                    if donor1 == donor2 {
-                                        ok = false;
-                                    }
-                                }
-                                if ok {
-                                    let vref = vref1[vstart..vref1.len()].to_vec();
-                                    let mut concat = vref.clone();
-                                    for i in 0..d.len() {
-                                        concat.append(&mut refdata.refs[d[i]].to_ascii_vec());
-                                    }
-                                    let mut jref = refdata.refs[j_ref_id].to_ascii_vec();
-                                    let jend = jflank(&seq1, &jref); // note using seq1
-                                    jref = jref[0..jend].to_vec();
-                                    concat.append(&mut jref.clone());
-                                    let mut seq_start = vstart as isize;
-                                    if ex1.share[h1].annv.len() > 1 {
-                                        let q1 = ex1.share[h1].annv[0].0 + ex1.share[h1].annv[0].1;
-                                        let q2 = ex1.share[h1].annv[1].0;
-                                        seq_start += q2 as isize - q1 as isize;
-                                    }
-                                    let mut seq_end = seq1.len() - (jref.len() - jend);
-                                    if seq_start as usize > seq_end {
-                                        seq_start = vstart as isize;
-                                    }
-                                    if seq_end <= seq_start as usize {
-                                        seq_end = seq1.len();
-                                    }
-                                    seq1 = seq1[seq_start as usize..seq_end].to_vec();
-                                    seq2 = seq2[seq_start as usize..seq_end].to_vec();
-                                    let mut share = 0;
-                                    for i in 0..indels.len() {
-                                        if indels[i].1 < 0 {
-                                            share += 1;
-                                        }
-                                    }
-                                    let mut ref_pos = 0;
-                                    let mut i = 0;
-                                    let n = min(seq1.len(), seq2.len());
-                                    'seq: while i < n {
-                                        for j in 0..indels.len() {
-                                            if indels[j].0 == i {
-                                                if indels[j].1 > 0 {
-                                                    for k in 0..indels[j].1 as usize {
-                                                        if seq1[i + k] == seq2[i + k] {
-                                                            share += 1;
-                                                        }
-                                                    }
-                                                    i += indels[j].1 as usize;
-                                                    continue 'seq;
-                                                } else {
-                                                    ref_pos += -indels[j].1 as usize;
-                                                }
+                        let mut jref = refdata.refs[j_ref_id].to_ascii_vec();
+                        let jend = jflank(&seq1, &jref); // note using seq1
+                        jref = jref[0..jend].to_vec();
+                        concat.append(&mut jref.clone());
+                        let mut seq_start = vstart as isize;
+                        if ex1.share[h1].annv.len() > 1 {
+                            let q1 = ex1.share[h1].annv[0].0 + ex1.share[h1].annv[0].1;
+                            let q2 = ex1.share[h1].annv[1].0;
+                            seq_start += q2 as isize - q1 as isize;
+                        }
+                        let mut seq_end = seq1.len() - (jref.len() - jend);
+                        if seq_start as usize > seq_end {
+                            seq_start = vstart as isize;
+                        }
+                        if seq_end <= seq_start as usize {
+                            seq_end = seq1.len();
+                        }
+                        seq1 = seq1[seq_start as usize..seq_end].to_vec();
+                        seq2 = seq2[seq_start as usize..seq_end].to_vec();
+                        let mut share = 0;
+                        for i in 0..indels.len() {
+                            if indels[i].1 < 0 {
+                                share += 1;
+                            }
+                        }
+                        let mut ref_pos = 0;
+                        let mut i = 0;
+                        let n = min(seq1.len(), seq2.len());
+                        'seq: while i < n {
+                            for j in 0..indels.len() {
+                                if indels[j].0 == i {
+                                    if indels[j].1 > 0 {
+                                        for k in 0..indels[j].1 as usize {
+                                            if seq1[i + k] == seq2[i + k] {
+                                                share += 1;
                                             }
                                         }
-                                        if i >= n || ref_pos >= concat.len() {
-                                            break;
-                                        }
-                                        if seq1[i] == seq2[i] && seq1[i] != concat[ref_pos] {
-                                            share += 1;
-                                        }
-                                        i += 1;
-                                        ref_pos += 1;
-                                    }
-                                    if share >= ctl.join_alg_opt.super_comp_filt {
-                                        let mut log = Vec::<u8>::new();
-                                        use io_utils::*;
-                                        use std::io::Write;
-                                        fwriteln!(log, "\nEXAMPLE");
-                                        fwriteln!(log, "cdr3: {}", ex1.share[h1].cdr3_aa);
-                                        fwriteln!(log, "cdr3: {}", ex2.share[h2].cdr3_aa);
-
-                                        let (j1, j2) =
-                                            (info[k1].exact_cols[0], info[k2].exact_cols[0]);
-                                        let (x1, x2) = (&ex1.share[j1], &ex2.share[j2]);
-                                        let (v1, v2) = (x1.v_ref_id, x2.v_ref_id);
-                                        let (n1, n2) =
-                                            (refdata.name[v1].clone(), refdata.name[v2].clone());
-                                        fwriteln!(log, "heavy V genes = {}/{}", n1, n2);
-
-                                        use itertools::Itertools;
-                                        fwriteln!(
-                                            log,
-                                            "indels1 = {:?}",
-                                            ex1.share[h1].jun.indels.iter().format(",")
-                                        );
-                                        fwriteln!(
-                                            log,
-                                            "indels2 = {:?}",
-                                            ex2.share[h2].jun.indels.iter().format(",")
-                                        );
-                                        use string_utils::strme;
-                                        /*
-                                        fwriteln!(log, "vstart1 = {}", vstart);
-                                        fwriteln!(log, "vstart2 = {}", ex2.share[h2].jun.vstart);
-                                        fwriteln!(log, "seq1   = {}", strme(&seq1));
-                                        fwriteln!(log, "seq2   = {}", strme(&seq2));
-                                        fwriteln!(log, "concat = {}", strme(&concat));
-                                        */
-                                        fwriteln!(log, "heavy junction share = {}", share);
-                                        fwriteln!(log, "non junction share = {}", *min_shares);
-                                        fwriteln!(log, "indep mutations outside = {}", *min_indeps);
-                                        fwriteln!(log, "cd = {}", cd);
-                                        fwriteln!(log, "hcd = {}", hcd);
-                                        print!("{}", strme(&log));
-                                        accept = true;
+                                        i += indels[j].1 as usize;
+                                        continue 'seq;
+                                    } else {
+                                        ref_pos += -indels[j].1 as usize;
                                     }
                                 }
                             }
+                            if i >= n || ref_pos >= concat.len() {
+                                break;
+                            }
+                            if seq1[i] == seq2[i] && seq1[i] != concat[ref_pos] {
+                                share += 1;
+                            }
+                            i += 1;
+                            ref_pos += 1;
+                        }
+                        if share >= ctl.join_alg_opt.super_comp_filt {
+                            let mut log = Vec::<u8>::new();
+                            use io_utils::fwriteln;
+                            use std::io::Write;
+                            fwriteln!(log, "\nEXAMPLE");
+                            fwriteln!(log, "cdr3: {}", ex1.share[h1].cdr3_aa);
+                            fwriteln!(log, "cdr3: {}", ex2.share[h2].cdr3_aa);
+
+                            let (j1, j2) = (info[k1].exact_cols[0], info[k2].exact_cols[0]);
+                            let (x1, x2) = (&ex1.share[j1], &ex2.share[j2]);
+                            let (v1, v2) = (x1.v_ref_id, x2.v_ref_id);
+                            let (n1, n2) = (refdata.name[v1].clone(), refdata.name[v2].clone());
+                            fwriteln!(log, "heavy V genes = {}/{}", n1, n2);
+
+                            use itertools::Itertools;
+                            fwriteln!(
+                                log,
+                                "indels1 = {:?}",
+                                ex1.share[h1].jun.indels.iter().format(",")
+                            );
+                            fwriteln!(
+                                log,
+                                "indels2 = {:?}",
+                                ex2.share[h2].jun.indels.iter().format(",")
+                            );
+                            use string_utils::strme;
+                            /*
+                            fwriteln!(log, "vstart1 = {}", vstart);
+                            fwriteln!(log, "vstart2 = {}", ex2.share[h2].jun.vstart);
+                            fwriteln!(log, "seq1   = {}", strme(&seq1));
+                            fwriteln!(log, "seq2   = {}", strme(&seq2));
+                            fwriteln!(log, "concat = {}", strme(&concat));
+                            */
+                            fwriteln!(log, "heavy junction share = {}", share);
+                            fwriteln!(log, "non junction share = {}", *min_shares);
+                            fwriteln!(log, "indep mutations outside = {}", *min_indeps);
+                            fwriteln!(log, "cd = {}", cd);
+                            fwriteln!(log, "hcd = {}", hcd);
+                            print!("{}", strme(&log));
+                            accept = true;
                         }
                     }
                 }
@@ -705,11 +695,11 @@ pub fn join_one(
 
     // Threshold on score.
 
-    if !accept {
-        if score > ctl.join_alg_opt.max_score && *min_shares < ctl.join_alg_opt.auto_share as isize
-        {
-            return false;
-        }
+    if !accept
+        && score > ctl.join_alg_opt.max_score
+        && *min_shares < ctl.join_alg_opt.auto_share as isize
+    {
+        return false;
     }
 
     // If V gene names are different (after removing trailing *...), and either
@@ -722,10 +712,10 @@ pub fn join_one(
         let (x1, x2) = (&ex1.share[j1], &ex2.share[j2]);
         let (v1, v2) = (x1.v_ref_id, x2.v_ref_id);
         let (mut n1, mut n2) = (refdata.name[v1].clone(), refdata.name[v2].clone());
-        if n1.contains("*") {
+        if n1.contains('*') {
             n1 = n1.before("*").to_string();
         }
-        if n2.contains("*") {
+        if n2.contains('*') {
             n2 = n2.before("*").to_string();
         }
         if n1 != n2 {
@@ -743,8 +733,8 @@ pub fn join_one(
                 }
             }
             let (u1, u2) = (x1.u_ref_id, x2.u_ref_id);
-            if u1.is_some() && u2.is_some() {
-                let (x1, x2) = (&refdata.refs[u1.unwrap()], &refdata.refs[u2.unwrap()]);
+            if let (Some(u1), Some(u2)) = (u1, u2) {
+                let (x1, x2) = (&refdata.refs[u1], &refdata.refs[u2]);
                 let n = min(x1.len(), x2.len());
                 for m in 0..n {
                     if x1.get(x1.len() - 1 - m) != x2.get(x2.len() - 1 - m) {
@@ -768,68 +758,67 @@ pub fn join_one(
         let (j1, j2) = (info[k1].exact_cols[m], info[k2].exact_cols[m]);
         let (x1, x2) = (&ex1.share[j1], &ex2.share[j2]);
         if x1.left {
-            if x1.cdr1_start.is_some() {
-                if x2.cdr1_start.is_some() {
-                    let fr1_start1 = x1.fr1_start;
-                    let fr1_stop1 = x1.cdr1_start.unwrap();
-                    let fr1_start2 = x2.fr1_start;
-                    let fr1_stop2 = x2.cdr1_start.unwrap();
-                    let len = fr1_stop1 - fr1_start1;
-                    if fr1_stop2 - fr1_start2 == len {
+            if x1.cdr1_start.is_some() && x2.cdr1_start.is_some() {
+                let fr1_start1 = x1.fr1_start;
+                let fr1_stop1 = x1.cdr1_start.unwrap();
+                let fr1_start2 = x2.fr1_start;
+                let fr1_stop2 = x2.cdr1_start.unwrap();
+                let len = fr1_stop1 - fr1_start1;
+                if fr1_stop2 - fr1_start2 == len {
+                    let mut diffs = 0;
+                    for p in 0..len {
+                        if x1.seq_del_amino[p + fr1_start1] != x2.seq_del_amino[p + fr1_start2] {
+                            diffs += 1;
+                        }
+                    }
+                    fwr1_len = len;
+                    fwr1_diffs = diffs;
+                }
+            }
+            if x1.cdr1_start.is_some()
+                && x1.fr2_start.is_some()
+                && x2.cdr1_start.is_some()
+                && x2.fr2_start.is_some()
+            {
+                let cdr1_start1 = x1.cdr1_start.unwrap();
+                let cdr1_stop1 = x1.fr2_start.unwrap();
+                let cdr1_start2 = x2.cdr1_start.unwrap();
+                let cdr1_stop2 = x2.fr2_start.unwrap();
+                let len = cdr1_stop1 - cdr1_start1;
+                if cdr1_stop2 - cdr1_start2 == len {
+                    let mut diffs = 0;
+                    for p in 0..len {
+                        if x1.seq_del_amino[p + cdr1_start1] != x2.seq_del_amino[p + cdr1_start2] {
+                            diffs += 1;
+                        }
+                    }
+                    cdr1_len = len;
+                    cdr1_diffs = diffs;
+                }
+            }
+            if x1.cdr2_start.is_some()
+                && x1.fr3_start.is_some()
+                && x2.cdr2_start.is_some()
+                && x2.fr3_start.is_some()
+            {
+                let cdr2_start1 = x1.cdr2_start.unwrap();
+                let cdr2_stop1 = x1.fr3_start.unwrap();
+                let cdr2_start2 = x2.cdr2_start.unwrap();
+                let cdr2_stop2 = x2.fr3_start.unwrap();
+                // this was violated once when using IMGT reference
+                if cdr2_start1 <= cdr2_stop1 {
+                    let len = cdr2_stop1 - cdr2_start1;
+                    if cdr2_stop2 - cdr2_start2 == len {
                         let mut diffs = 0;
                         for p in 0..len {
-                            if x1.seq_del_amino[p + fr1_start1] != x2.seq_del_amino[p + fr1_start2]
+                            if x1.seq_del_amino[p + cdr2_start1]
+                                != x2.seq_del_amino[p + cdr2_start2]
                             {
                                 diffs += 1;
                             }
                         }
-                        fwr1_len = len;
-                        fwr1_diffs = diffs;
-                    }
-                }
-            }
-            if x1.cdr1_start.is_some() && x1.fr2_start.is_some() {
-                if x2.cdr1_start.is_some() && x2.fr2_start.is_some() {
-                    let cdr1_start1 = x1.cdr1_start.unwrap();
-                    let cdr1_stop1 = x1.fr2_start.unwrap();
-                    let cdr1_start2 = x2.cdr1_start.unwrap();
-                    let cdr1_stop2 = x2.fr2_start.unwrap();
-                    let len = cdr1_stop1 - cdr1_start1;
-                    if cdr1_stop2 - cdr1_start2 == len {
-                        let mut diffs = 0;
-                        for p in 0..len {
-                            if x1.seq_del_amino[p + cdr1_start1]
-                                != x2.seq_del_amino[p + cdr1_start2]
-                            {
-                                diffs += 1;
-                            }
-                        }
-                        cdr1_len = len;
-                        cdr1_diffs = diffs;
-                    }
-                }
-            }
-            if x1.cdr2_start.is_some() && x1.fr3_start.is_some() {
-                if x2.cdr2_start.is_some() && x2.fr3_start.is_some() {
-                    let cdr2_start1 = x1.cdr2_start.unwrap();
-                    let cdr2_stop1 = x1.fr3_start.unwrap();
-                    let cdr2_start2 = x2.cdr2_start.unwrap();
-                    let cdr2_stop2 = x2.fr3_start.unwrap();
-                    // this was violated once when using IMGT reference
-                    if cdr2_start1 <= cdr2_stop1 {
-                        let len = cdr2_stop1 - cdr2_start1;
-                        if cdr2_stop2 - cdr2_start2 == len {
-                            let mut diffs = 0;
-                            for p in 0..len {
-                                if x1.seq_del_amino[p + cdr2_start1]
-                                    != x2.seq_del_amino[p + cdr2_start2]
-                                {
-                                    diffs += 1;
-                                }
-                            }
-                            cdr2_len = len;
-                            cdr2_diffs = diffs;
-                        }
+                        cdr2_len = len;
+                        cdr2_diffs = diffs;
                     }
                 }
             }

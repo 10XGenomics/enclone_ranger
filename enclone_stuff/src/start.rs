@@ -20,7 +20,7 @@ use enclone::misc2::{check_for_barcode_reuse, find_exact_subclonotypes, search_f
 use enclone::misc3::sort_tig_bc;
 use enclone_args::read_json::parse_json_annotations_files;
 use enclone_core::defs::{AlleleData, CloneInfo, TigData};
-use enclone_core::enclone_structs::*;
+use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup};
 use enclone_core::hcomp::heavy_complexity;
 use enclone_core::version_string;
 use enclone_print::loupe::make_donor_refs;
@@ -220,7 +220,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     if ctl.gen_opt.utr_con || ctl.gen_opt.con_con {
         return Ok(EncloneIntermediates::default());
     }
-    if ctl.gen_opt.trace_barcode.len() > 0 {
+    if !ctl.gen_opt.trace_barcode.is_empty() {
         for u in 0..exact_clonotypes.len() {
             let ex = &exact_clonotypes[u];
             for j in 0..ex.clones.len() {
@@ -348,7 +348,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Analyze donor reference.
 
-    analyze_donor_ref(&refdata, &ctl, &alt_refs);
+    analyze_donor_ref(refdata, ctl, &alt_refs);
 
     // Update reference sequences for V segments by substituting in alt alleles if better.
 
@@ -385,7 +385,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     let tcomp = Instant::now();
     if ctl.join_alg_opt.comp_filt < 1_000_000 {
-        let jun = heavy_complexity(&refdata, &exact_clonotypes, &ctl, &drefs);
+        let jun = heavy_complexity(refdata, &exact_clonotypes, ctl, &drefs);
         for u in 0..exact_clonotypes.len() {
             let ex = &mut exact_clonotypes[u];
             for m in 0..ex.share.len() {
@@ -468,7 +468,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     if ctl.gen_opt.heavy_chain_reuse {
         return Ok(EncloneIntermediates::default());
     }
-    if ctl.gen_opt.trace_barcode.len() > 0 {
+    if !ctl.gen_opt.trace_barcode.is_empty() {
         for u in 0..exact_clonotypes.len() {
             let ex = &exact_clonotypes[u];
             for j in 0..ex.clones.len() {
@@ -496,7 +496,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         info,
         &mut fate,
     );
-    if ctl.gen_opt.trace_barcode.len() > 0 {
+    if !ctl.gen_opt.trace_barcode.is_empty() {
         for u in 0..exact_clonotypes.len() {
             let ex = &exact_clonotypes[u];
             for j in 0..ex.clones.len() {
@@ -622,7 +622,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
         // Apply POST_FILTER.
 
-        if ctl.gen_opt.post_filter.len() > 0 {
+        if !ctl.gen_opt.post_filter.is_empty() {
             let mut post_filter = Vec::<(String, String)>::new();
             let f = open_for_read![&ctl.gen_opt.post_filter];
             for (i, line) in f.lines().enumerate() {
@@ -674,7 +674,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         let mut clonotypes1 = 0;
         let mut cells2 = 0;
         let mut clonotypes2 = 0;
-        let mut cells_by_donor = vec![0 as usize; ctl.origin_info.donor_list.len()];
+        let mut cells_by_donor = vec![0_usize; ctl.origin_info.donor_list.len()];
 
         // Reverse sort clonotypes by size.
 
@@ -728,7 +728,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                             );
                         }
                     }
-                    println!("");
+                    println!();
                 }
                 for k in 0..ex.clones.len() {
                     let x = &ex.clones[k][0];
@@ -749,12 +749,13 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                             for k2 in 0..ex2.clones.len() {
                                 if (j1, k1) < (j2, k2) {
                                     let x2 = &ex2.clones[k2][0];
-                                    if x1.donor_index.is_some() && x2.donor_index.is_some() {
-                                        if x1.donor_index.unwrap() != x2.donor_index.unwrap() {
-                                            mixes_this += 1;
-                                            mixes += 1;
-                                            mixed = true;
-                                        }
+                                    if x1.donor_index.is_some()
+                                        && x2.donor_index.is_some()
+                                        && x1.donor_index.unwrap() != x2.donor_index.unwrap()
+                                    {
+                                        mixes_this += 1;
+                                        mixes += 1;
+                                        mixed = true;
                                     }
                                 }
                             }
@@ -841,7 +842,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         }
     }
     ctl.perf_stats(&tmark, "marking vdj noncells");
-    if ctl.gen_opt.trace_barcode.len() > 0 {
+    if !ctl.gen_opt.trace_barcode.is_empty() {
         for u in 0..exact_clonotypes.len() {
             let ex = &exact_clonotypes[u];
             for j in 0..ex.clones.len() {
@@ -870,7 +871,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             fate,
             is_bcr,
             allele_data: AlleleData {
-                alt_refs: alt_refs,
+                alt_refs,
                 var_pos: Vec::new(),
                 var_bases: Vec::new(),
             },

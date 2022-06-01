@@ -67,7 +67,7 @@ pub fn delete_doublets(
                 &od,
                 info,
                 raw_joins,
-                &refdata,
+                refdata,
                 dref,
             );
             let nexacts = mat[0].len();

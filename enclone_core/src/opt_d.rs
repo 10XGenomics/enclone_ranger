@@ -147,8 +147,8 @@ pub fn opt_d(
     let mut counts = Vec::<f64>::new();
     let mut good_d = Vec::<usize>::new();
     let mut vref = refdata.refs[v_ref_id].to_ascii_vec();
-    if v_alt.is_some() {
-        vref = dref[v_alt.unwrap()].nt_sequence.clone();
+    if let Some(v_alt) = v_alt {
+        vref = dref[v_alt].nt_sequence.clone();
     }
     let vstart = vref.len() - vflank(tig, &vref);
     let mut seq_start = vstart as isize;
