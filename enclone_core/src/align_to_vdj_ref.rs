@@ -23,7 +23,7 @@
 
 use bio_edit::alignment::pairwise::{Aligner, Scoring, MIN_SCORE};
 use bio_edit::alignment::AlignmentMode;
-use bio_edit::alignment::AlignmentOperation::*;
+use bio_edit::alignment::AlignmentOperation::{Del, Ins, Match, Subst};
 use string_utils::strme;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓

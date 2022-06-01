@@ -162,7 +162,7 @@ pub fn populate_features(
             "behavior by defining the environment variable ENCLONE_ACCEPT_BROKEN.".to_string(),
         ]);
         let mut log = stringme(&log);
-        print_tabular_vbox(&mut log, &rows, 2, &b"l".to_vec(), false, true);
+        print_tabular_vbox(&mut log, &rows, 2, b"l".as_ref(), false, true);
         let mut log = log.as_bytes().to_vec();
         fwriteln!(log, "");
         fwriteln!(

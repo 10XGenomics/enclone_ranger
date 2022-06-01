@@ -17,7 +17,7 @@ impl LinearCondition {
     }
 
     pub fn new(x: &str) -> Result<LinearCondition, String> {
-        let y = x.replace(" ", "");
+        let y = x.replace(' ', "");
         let lhs: String;
         let mut rhs: String;
         let sense: String;
@@ -60,7 +60,7 @@ impl LinearCondition {
                 x
             ));
         }
-        rhs = rhs.replace("E", "e");
+        rhs = rhs.replace('E', "e");
         if !rhs.contains('.') && !rhs.contains('e') {
             rhs += ".0";
         }
@@ -101,8 +101,8 @@ impl LinearCondition {
             parts.push(stringme(&lhsx[last + 1..]));
         }
         for i in 0..parts.len() {
-            parts[i] = parts[i].replace("(", "");
-            parts[i] = parts[i].replace(")", "");
+            parts[i] = parts[i].replace('(', "");
+            parts[i] = parts[i].replace(')', "");
             if parts[i].contains('*') {
                 let mut coeffi = parts[i].before("*").to_string();
                 let vari = parts[i].after("*");

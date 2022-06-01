@@ -1,7 +1,7 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
 use enclone_core::defs::ColInfo;
-use enclone_core::enclone_structs::*;
+use enclone_core::enclone_structs::EncloneIntermediates;
 use enclone_print::print_clonotypes::print_clonotypes;
 use rayon::prelude::*;
 use std::collections::HashMap;

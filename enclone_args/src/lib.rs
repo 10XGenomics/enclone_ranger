@@ -1,6 +1,6 @@
 // Copyright (c) 2021 10x Genomics, Inc. All rights reserved.
 
-use io_utils::*;
+use io_utils::path_exists;
 
 pub mod load_gex;
 pub mod load_gex_core;

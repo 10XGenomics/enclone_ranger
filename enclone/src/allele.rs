@@ -75,16 +75,16 @@ pub fn find_alleles(
                 if !partner.is_empty()
                     && y.seq_del.len() >= refdata.refs[id].len() - ctl.heur.ref_v_trim
                 {
-                    for l in 0..x.clones.len() {
-                        let donor = x.clones[l][j].donor_index;
-                        if donor.is_some() {
+                    for clone in &x.clones {
+                        let donor = clone[j].donor_index;
+                        if let Some(donor) = donor {
                             allxy[id].push((
-                                donor.unwrap(),
+                                donor,
                                 y.seq_del.clone(),
                                 partner.clone(),
                                 m,
-                                x.clones[l][j].dataset_index,
-                                x.clones[l][0].barcode.clone(),
+                                clone[j].dataset_index,
+                                clone[0].barcode.clone(),
                             ));
                         }
                     }
@@ -393,8 +393,8 @@ pub fn find_alleles(
                 }
             }
 
-            let analysis_mode = ctl.gen_opt.external_ref.len() > 0;
-            if (analysis_mode && keep.len() > 0)
+            let analysis_mode = !ctl.gen_opt.external_ref.is_empty();
+            if (analysis_mode && !keep.is_empty())
                 || keep.len() > 1
                 || (!keep.is_empty() && !have_ref)
             {

@@ -17,7 +17,7 @@
 // 2. Concatenate these.
 
 use itertools::Itertools;
-use string_utils::*;
+use string_utils::TextUtils;
 
 const DOUBLE: &str = "";
 

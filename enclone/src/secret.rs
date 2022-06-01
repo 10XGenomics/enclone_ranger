@@ -172,13 +172,7 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
                         }
                         ref_pos += n;
                         read_pos += n;
-                    } else if x == b'N' {
-                        ref_pos += n;
-                    } else if x == b'S' {
-                        read_pos += n;
-                    } else if x == b'I' {
-                        read_pos += n;
-                    } else if x == b'D' {
+                    } else if x == b'N' || x == b'S' || x == b'I' || x == b'D' {
                         ref_pos += n;
                     } else {
                         return Err("\nUnexpected character in cigar string.\n".to_string());

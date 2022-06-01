@@ -43,7 +43,7 @@ pub fn some_filters(
         exact_clonotypes,
         info,
         raw_joins,
-        &refdata,
+        refdata,
         dref,
         fate,
     );
@@ -86,7 +86,7 @@ pub fn some_filters(
             &od,
             info,
             raw_joins,
-            &refdata,
+            refdata,
             dref,
         );
 
@@ -217,7 +217,7 @@ pub fn some_filters(
         exact_clonotypes,
         info,
         raw_joins,
-        &refdata,
+        refdata,
         dref,
     );
     ctl.perf_stats(&tsplit, "splitting orbits 1");
@@ -235,7 +235,7 @@ pub fn some_filters(
         info,
         raw_joins,
         fate,
-        &refdata,
+        refdata,
         dref,
     );
     ctl.perf_stats(&tweak, "weak chain filtering");
@@ -252,7 +252,7 @@ pub fn some_filters(
         exact_clonotypes,
         info,
         raw_joins,
-        &refdata,
+        refdata,
         dref,
     );
     ctl.perf_stats(&tsplit, "splitting orbits 2");
@@ -291,7 +291,7 @@ pub fn some_filters(
             &od,
             info,
             raw_joins,
-            &refdata,
+            refdata,
             dref,
         );
         let cols = mat.len();
@@ -477,7 +477,7 @@ pub fn some_filters(
         exact_clonotypes,
         info,
         raw_joins,
-        &refdata,
+        refdata,
         dref,
     );
     ctl.perf_stats(&tsplit, "splitting orbits 3");

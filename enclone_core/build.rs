@@ -31,9 +31,8 @@ fn main() {
 }
 
 fn get_commit_hash() -> String {
-    match std::env::var("GITHUB_SHA") {
-        Ok(v) => return v[0..7].to_string(),
-        _ => (),
+    if let Ok(v) = std::env::var("GITHUB_SHA") {
+        return v[0..7].to_string();
     }
 
     let output = Command::new("git")
@@ -51,10 +50,7 @@ fn get_commit_hash() -> String {
 }
 
 fn is_github() -> bool {
-    match std::env::var("GITHUB_SHA") {
-        Ok(_) => true,
-        _ => false,
-    }
+    matches!(std::env::var("GITHUB_SHA"), Ok(_))
 }
 
 // We used to have the commit date here but this is easier and serves the same purpose for
@@ -89,9 +85,8 @@ fn get_branch_name() -> String {
 }
 
 fn is_working_tree_clean() -> bool {
-    match std::env::var("GITHUB_SHA") {
-        Ok(_) => return true,
-        _ => (),
+    if std::env::var("GITHUB_SHA").is_ok() {
+        return true;
     }
 
     let status = Command::new("git")

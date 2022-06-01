@@ -5,12 +5,12 @@
 //
 // This writes a temporary file.
 
-use crate::var::*;
-use io_utils::*;
+use crate::var::{parse_variables, Variable};
+use io_utils::{fwrite, fwriteln, open_for_write_new};
 use itertools::Itertools;
 use std::io::{BufWriter, Write};
 use std::process::Command;
-use string_utils::*;
+use string_utils::TextUtils;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 

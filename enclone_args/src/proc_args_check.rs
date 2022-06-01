@@ -496,9 +496,7 @@ pub fn check_pcols(
                 x
             ));
         }
-        if LVARS_ALLOWED.contains(&x.as_str()) || gpvar {
-            ok = true;
-        } else if is_pattern(&x, true) {
+        if LVARS_ALLOWED.contains(&x.as_str()) || gpvar || is_pattern(&x, true) {
             ok = true;
         } else {
             let mut y = Vec::<u8>::new();
@@ -516,23 +514,20 @@ pub fn check_pcols(
                     || (ps.force_usize() > 0 && ps.force_usize() <= pchains.force_usize()))
             {
                 let y = x.rev_before(ps);
-                if CVARS_ALLOWED.contains(&y) || (allow_cell && CVARS_ALLOWED_PCELL.contains(&y)) {
-                    ok = true;
-                } else if PCVARS_ALLOWED.contains(&y) {
-                    ok = true;
-                } else if y.starts_with("ndiff")
-                    && y.ends_with("vj")
-                    && y.between("ndiff", "vj").parse::<usize>().is_ok()
-                    && y.between("ndiff", "vj").force_usize() >= 1
-                {
-                    ok = true;
-                } else if (y.starts_with("cdr1_aa_")
-                    || y.starts_with("cdr2_aa_")
-                    || y.starts_with("cdr3_aa_"))
-                    && y.after("aa_").contains('_')
-                    && y.between("aa_", "_").parse::<isize>().is_ok()
-                    && y.after("aa_").after("_").ends_with("_ext")
-                    && y.after("aa_").between("_", "_ext").parse::<isize>().is_ok()
+                if CVARS_ALLOWED.contains(&y)
+                    || (allow_cell && CVARS_ALLOWED_PCELL.contains(&y))
+                    || PCVARS_ALLOWED.contains(&y)
+                    || y.starts_with("ndiff")
+                        && y.ends_with("vj")
+                        && y.between("ndiff", "vj").parse::<usize>().is_ok()
+                        && y.between("ndiff", "vj").force_usize() >= 1
+                    || (y.starts_with("cdr1_aa_")
+                        || y.starts_with("cdr2_aa_")
+                        || y.starts_with("cdr3_aa_"))
+                        && y.after("aa_").contains('_')
+                        && y.between("aa_", "_").parse::<isize>().is_ok()
+                        && y.after("aa_").after("_").ends_with("_ext")
+                        && y.after("aa_").between("_", "_ext").parse::<isize>().is_ok()
                 {
                     ok = true;
                 }
@@ -558,27 +553,21 @@ pub fn check_cvars(ctl: &EncloneControl) -> Result<(), String> {
         if x.contains(':') {
             x = x.after(":").to_string();
         }
-        let mut ok = CVARS_ALLOWED.contains(&x.as_str());
-        if x.starts_with("ndiff")
-            && x.ends_with("vj")
-            && x.between("ndiff", "vj").parse::<usize>().is_ok()
-            && x.between("ndiff", "vj").force_usize() >= 1
-        {
-            ok = true;
-        }
-        if (x.starts_with("cdr1_aa_") || x.starts_with("cdr2_aa_") || x.starts_with("cdr3_aa_"))
-            && x.after("aa_").contains('_')
-            && x.between("aa_", "_").parse::<usize>().is_ok()
-            && x.after("aa_").after("_").ends_with("_ext")
-            && x.after("aa_").between("_", "_ext").parse::<usize>().is_ok()
-        {
-            ok = true;
-        } else if x.starts_with('q')
-            && x.ends_with('_')
-            && x.after("q").rev_before("_").parse::<usize>().is_ok()
-        {
-            ok = true;
-        }
+        let ok = CVARS_ALLOWED.contains(&x.as_str())
+            || x.starts_with("ndiff")
+                && x.ends_with("vj")
+                && x.between("ndiff", "vj").parse::<usize>().is_ok()
+                && x.between("ndiff", "vj").force_usize() >= 1
+            || (x.starts_with("cdr1_aa_")
+                || x.starts_with("cdr2_aa_")
+                || x.starts_with("cdr3_aa_"))
+                && x.after("aa_").contains('_')
+                && x.between("aa_", "_").parse::<usize>().is_ok()
+                && x.after("aa_").after("_").ends_with("_ext")
+                && x.after("aa_").between("_", "_ext").parse::<usize>().is_ok()
+            || x.starts_with('q')
+                && x.ends_with('_')
+                && x.after("q").rev_before("_").parse::<usize>().is_ok();
         if !ok {
             return Err(format!(
                 "\nUnrecognized variable {} for CVARS or CVARSP.  \

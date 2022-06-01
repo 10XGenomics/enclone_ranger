@@ -399,7 +399,7 @@ pub fn make_table(
         // Do similar things for header line, but bold the line instead.
         } else if c == '#' {
             if ctl.pretty {
-                *logz += &"[01m#".to_string();
+                *logz += "[01m#";
                 header = true;
             } else {
                 logz.push('#');
@@ -413,7 +413,7 @@ pub fn make_table(
         // In a header line, hop around │ symbols, which should not be colorized.
         } else if header && c == '│' && x[j + 1] != '\n' {
             *logz += "[0m│";
-            *logz += &"[01m".to_string();
+            *logz += "[01m";
         } else if header && c == '│' && x[j + 1] == '\n' {
             *logz += "[0m│";
             header = false;
@@ -596,10 +596,11 @@ pub fn start_gen(
                         for k2 in 0..ex2.clones.len() {
                             if (j1, k1) < (j2, k2) {
                                 let x2 = &ex2.clones[k2][0];
-                                if x1.donor_index.is_some() && x2.donor_index.is_some() {
-                                    if x1.donor_index.unwrap() != x2.donor_index.unwrap() {
-                                        mixes += 1;
-                                    }
+                                if x1.donor_index.is_some()
+                                    && x2.donor_index.is_some()
+                                    && x1.donor_index.unwrap() != x2.donor_index.unwrap()
+                                {
+                                    mixes += 1;
                                 }
                             }
                         }

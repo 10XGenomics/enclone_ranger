@@ -71,7 +71,7 @@ pub fn build_table_stuff(
         } else if rsi.chain_descrip[j].contains(&"IGH".to_string())
             || rsi.chain_descrip[j].contains(&"TRB".to_string())
         {
-            row.push(bold(&rsi.chain_descrip[j].before(" ◆ ").to_string()));
+            row.push(bold(rsi.chain_descrip[j].before(" ◆ ")));
         } else {
             row.push(rsi.chain_descrip[j].before(" ◆ ").to_string());
         }

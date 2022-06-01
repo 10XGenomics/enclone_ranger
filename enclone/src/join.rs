@@ -86,10 +86,8 @@ pub fn join_exacts(
                 if info[j].lens[0] != info[i].lens[0] {
                     break;
                 }
-            } else {
-                if info[j].lens != info[i].lens {
-                    break;
-                }
+            } else if info[j].lens != info[i].lens {
+                break;
             }
             j += 1;
         }
@@ -138,7 +136,7 @@ pub fn join_exacts(
             to_bc,
             sr,
             &mut pot,
-            &refdata,
+            refdata,
             dref,
         );
 
@@ -372,70 +370,72 @@ pub fn join_exacts(
                 let (j1, j2) = (info[k1].exact_cols[m], info[k2].exact_cols[m]);
                 let (x1, x2) = (&ex1.share[j1], &ex2.share[j2]);
                 if x1.left {
-                    if x1.cdr1_start.is_some() {
-                        if x2.cdr1_start.is_some() {
-                            let fr1_start1 = x1.fr1_start;
-                            let fr1_stop1 = x1.cdr1_start.unwrap();
-                            let fr1_start2 = x2.fr1_start;
-                            let fr1_stop2 = x2.cdr1_start.unwrap();
-                            let len = fr1_stop1 - fr1_start1;
-                            if fr1_stop2 - fr1_start2 == len {
-                                let mut diffs = 0;
-                                for p in 0..len {
-                                    if x1.seq_del_amino[p + fr1_start1]
-                                        != x2.seq_del_amino[p + fr1_start2]
-                                    {
-                                        diffs += 1;
-                                    }
+                    if x1.cdr1_start.is_some() && x2.cdr1_start.is_some() {
+                        let fr1_start1 = x1.fr1_start;
+                        let fr1_stop1 = x1.cdr1_start.unwrap();
+                        let fr1_start2 = x2.fr1_start;
+                        let fr1_stop2 = x2.cdr1_start.unwrap();
+                        let len = fr1_stop1 - fr1_start1;
+                        if fr1_stop2 - fr1_start2 == len {
+                            let mut diffs = 0;
+                            for p in 0..len {
+                                if x1.seq_del_amino[p + fr1_start1]
+                                    != x2.seq_del_amino[p + fr1_start2]
+                                {
+                                    diffs += 1;
                                 }
-                                fwriteln!(log, "heavy chain FWR1 diffs = {}", diffs);
-                                fwr1_len = len;
-                                fwr1_diffs = diffs;
                             }
+                            fwriteln!(log, "heavy chain FWR1 diffs = {}", diffs);
+                            fwr1_len = len;
+                            fwr1_diffs = diffs;
                         }
                     }
-                    if x1.cdr1_start.is_some() && x1.fr2_start.is_some() {
-                        if x2.cdr1_start.is_some() && x2.fr2_start.is_some() {
-                            let cdr1_start1 = x1.cdr1_start.unwrap();
-                            let cdr1_stop1 = x1.fr2_start.unwrap();
-                            let cdr1_start2 = x2.cdr1_start.unwrap();
-                            let cdr1_stop2 = x2.fr2_start.unwrap();
-                            let len = cdr1_stop1 - cdr1_start1;
-                            if cdr1_stop2 - cdr1_start2 == len {
-                                let mut diffs = 0;
-                                for p in 0..len {
-                                    if x1.seq_del_amino[p + cdr1_start1]
-                                        != x2.seq_del_amino[p + cdr1_start2]
-                                    {
-                                        diffs += 1;
-                                    }
+                    if x1.cdr1_start.is_some()
+                        && x1.fr2_start.is_some()
+                        && x2.cdr1_start.is_some()
+                        && x2.fr2_start.is_some()
+                    {
+                        let cdr1_start1 = x1.cdr1_start.unwrap();
+                        let cdr1_stop1 = x1.fr2_start.unwrap();
+                        let cdr1_start2 = x2.cdr1_start.unwrap();
+                        let cdr1_stop2 = x2.fr2_start.unwrap();
+                        let len = cdr1_stop1 - cdr1_start1;
+                        if cdr1_stop2 - cdr1_start2 == len {
+                            let mut diffs = 0;
+                            for p in 0..len {
+                                if x1.seq_del_amino[p + cdr1_start1]
+                                    != x2.seq_del_amino[p + cdr1_start2]
+                                {
+                                    diffs += 1;
                                 }
-                                fwriteln!(log, "heavy chain CDR1 diffs = {}", diffs);
-                                cdr1_len = len;
-                                cdr1_diffs = diffs;
                             }
+                            fwriteln!(log, "heavy chain CDR1 diffs = {}", diffs);
+                            cdr1_len = len;
+                            cdr1_diffs = diffs;
                         }
                     }
-                    if x1.cdr2_start.is_some() && x1.fr3_start.is_some() {
-                        if x2.cdr2_start.is_some() && x2.fr3_start.is_some() {
-                            let cdr2_start1 = x1.cdr2_start.unwrap();
-                            let cdr2_stop1 = x1.fr3_start.unwrap();
-                            let cdr2_start2 = x2.cdr2_start.unwrap();
-                            let cdr2_stop2 = x2.fr3_start.unwrap();
-                            let len = cdr2_stop1 - cdr2_start1;
-                            if cdr2_stop2 - cdr2_start2 == len {
-                                let mut diffs = 0;
-                                for p in 0..len {
-                                    if x1.seq_del_amino[p + cdr2_start1]
-                                        != x2.seq_del_amino[p + cdr2_start2]
-                                    {
-                                        diffs += 1;
-                                    }
+                    if x1.cdr2_start.is_some()
+                        && x1.fr3_start.is_some()
+                        && x2.cdr2_start.is_some()
+                        && x2.fr3_start.is_some()
+                    {
+                        let cdr2_start1 = x1.cdr2_start.unwrap();
+                        let cdr2_stop1 = x1.fr3_start.unwrap();
+                        let cdr2_start2 = x2.cdr2_start.unwrap();
+                        let cdr2_stop2 = x2.fr3_start.unwrap();
+                        let len = cdr2_stop1 - cdr2_start1;
+                        if cdr2_stop2 - cdr2_start2 == len {
+                            let mut diffs = 0;
+                            for p in 0..len {
+                                if x1.seq_del_amino[p + cdr2_start1]
+                                    != x2.seq_del_amino[p + cdr2_start2]
+                                {
+                                    diffs += 1;
                                 }
-                                fwriteln!(log, "heavy chain CDR2 diffs = {}", diffs);
-                                cdr2_len = len;
-                                cdr2_diffs = diffs;
                             }
+                            fwriteln!(log, "heavy chain CDR2 diffs = {}", diffs);
+                            cdr2_len = len;
+                            cdr2_diffs = diffs;
                         }
                     }
                     let cdr3_start1 = x1.cdr3_start;

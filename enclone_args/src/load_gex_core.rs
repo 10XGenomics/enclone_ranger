@@ -2,8 +2,11 @@
 //
 // Load gene expression and feature barcoding (antibody, antigen) data from Cell Ranger outputs.
 
-use crate::load_gex_util::*;
-use crate::*;
+use crate::load_gex_util::{
+    find_cluster_file, find_feature_metrics_file, find_json_metrics_file, find_metrics_file,
+    find_pca_file,
+};
+use crate::{fnx, parse_csv_pure};
 use enclone_core::defs::EncloneControl;
 use enclone_core::slurp::slurp_h5;
 use io_utils::{dir_list, open_for_read, open_userfile_for_read, path_exists};
@@ -646,13 +649,13 @@ pub fn load_gex(
                     return;
                 }
             }
-            if rpc.is_some() {
+            if let Some(rpc) = rpc {
                 const RPC_EXPECTED: f64 = 20_000.0;
-                gene_mult = Some(RPC_EXPECTED / rpc.unwrap() as f64);
+                gene_mult = Some(RPC_EXPECTED / rpc as f64);
             }
-            if fbrpc.is_some() {
+            if let Some(fbrpc) = fbrpc {
                 const FB_RPC_EXPECTED: f64 = 5_000.0;
-                fb_mult = Some(FB_RPC_EXPECTED / fbrpc.unwrap() as f64);
+                fb_mult = Some(FB_RPC_EXPECTED / fbrpc as f64);
             }
             r.4 = gene_mult;
             r.5 = fb_mult;
@@ -917,13 +920,13 @@ pub fn load_gex(
         fb_top_matrices.push(x13);
         fb_top_barcodes.push(x14);
         let mut gex_mult = 1.0;
-        if x4.is_some() {
-            gex_mult = x4.unwrap();
+        if let Some(x4) = x4 {
+            gex_mult = x4;
         }
         gex_mults.push(gex_mult);
         let mut fb_mult = 1.0;
-        if x5.is_some() {
-            fb_mult = x5.unwrap();
+        if let Some(x5) = x5 {
+            fb_mult = x5;
         }
         fb_mults.push(fb_mult);
         gex_cell_barcodes.push(x6);

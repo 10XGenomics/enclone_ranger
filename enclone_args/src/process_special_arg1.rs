@@ -4,7 +4,9 @@
 
 use crate::proc_args2::test_writeable;
 use crate::proc_args2::{is_simple_arg, is_usize_arg};
-use enclone_core::cell_color::*;
+use enclone_core::cell_color::{
+    CellColor, ColorByCategoricalVariableValue, ColorByDataset, ColorByVariableValue,
+};
 use enclone_core::defs::EncloneControl;
 use enclone_core::tilde_expand_me;
 use enclone_vars::encode_arith;
