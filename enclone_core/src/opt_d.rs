@@ -118,13 +118,13 @@ pub fn evaluate_d(
 }
 
 pub fn opt_d(
-    v_ref_id: usize,                       // ex.share[mid].v_ref_id
-    j_ref_id: usize,                       // ex.share[mid].j_ref_id
-    tig: &Vec<u8>,                         // ex.share[mid].seq_del
-    annv: &Vec<(i32, i32, i32, i32, i32)>, // ex.share[mid].annv
-    cdr3_aa: &str,                         // ex.share[mid].cdr3_aa
+    v_ref_id: usize,                    // ex.share[mid].v_ref_id
+    j_ref_id: usize,                    // ex.share[mid].j_ref_id
+    tig: &[u8],                         // ex.share[mid].seq_del
+    annv: &[(i32, i32, i32, i32, i32)], // ex.share[mid].annv
+    cdr3_aa: &str,                      // ex.share[mid].cdr3_aa
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
     scores: &mut Vec<f64>,
     dsx: &mut Vec<Vec<usize>>,
     jscore_match: i32,

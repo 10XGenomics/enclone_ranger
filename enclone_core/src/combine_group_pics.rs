@@ -8,8 +8,8 @@ use string_utils::{stringme, strme};
 use tables::print_tabular;
 
 pub fn combine_group_pics(
-    group_pics: &Vec<String>,
-    last_widths: &Vec<u32>,
+    group_pics: &[String],
+    last_widths: &[u32],
     parseable_stdouth: bool,
     noprint: bool,
     noprintx: bool,

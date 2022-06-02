@@ -20,16 +20,16 @@ use vector_utils::{bin_member, meet_size, unique_sort, VecUtils};
 pub fn vars_and_shares(
     pass: usize,
     ctl: &EncloneControl,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
     rsi: &ColInfo,
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
     vars: &mut Vec<Vec<usize>>,
     vars_amino: &mut Vec<Vec<usize>>,
     shares_amino: &mut Vec<Vec<usize>>,
     ref_diff_pos: &mut Vec<Vec<Vec<usize>>>,
-    out_data: &mut Vec<HashMap<String, String>>,
+    out_data: &mut [HashMap<String, String>],
 ) {
     // Copied stuff.
 
@@ -191,11 +191,11 @@ pub fn vars_and_shares(
 
 pub fn delete_weaks(
     ctl: &EncloneControl,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    mat: &Vec<Vec<Option<usize>>>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
+    mat: &[Vec<Option<usize>>],
     refdata: &RefData,
-    bads: &mut Vec<bool>,
+    bads: &mut [bool],
 ) {
     // Mark for deletion exact subclonotypes that fail the MIN_CELLS_EXACT or MIN_CHAINS_EXACT
     // or CHAINS_EXACT tests.
@@ -301,16 +301,16 @@ pub fn build_diff_row(
     rsi: &ColInfo,
     rows: &mut Vec<Vec<String>>,
     drows: &mut Vec<Vec<String>>,
-    row1: &Vec<String>,
+    row1: &[String],
     nexacts: usize,
-    field_types: &Vec<Vec<u8>>,
-    show_aa: &Vec<Vec<usize>>,
+    field_types: &[Vec<u8>],
+    show_aa: &[Vec<usize>],
 ) {
     let mat = &rsi.mat;
     let cols = mat.len();
     let diff_pos = rows.len();
     if !drows.is_empty() {
-        let mut row = row1.clone();
+        let mut row = row1.to_owned();
         for col in 0..cols {
             for m in 0..rsi.cvars[col].len() {
                 if rsi.cvars[col][m] == *"amino" {
@@ -433,9 +433,9 @@ pub fn insert_consensus_row(
     ctl: &EncloneControl,
     rsi: &ColInfo,
     nexacts: usize,
-    field_types: &Vec<Vec<u8>>,
-    show_aa: &Vec<Vec<usize>>,
-    row1: &Vec<String>,
+    field_types: &[Vec<u8>],
+    show_aa: &[Vec<usize>],
+    row1: &[String],
     rows: &mut Vec<Vec<String>>,
 ) {
     let mat = &rsi.mat;

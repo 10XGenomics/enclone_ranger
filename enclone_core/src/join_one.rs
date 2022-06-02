@@ -71,13 +71,13 @@ pub fn join_one(
     k1: usize,
     k2: usize,
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
     to_bc: &HashMap<(usize, usize), Vec<String>>,
-    sr: &Vec<Vec<Double>>,
+    sr: &[Vec<Double>],
     pot: &mut Vec<PotentialJoin>,
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) -> bool {
     // Do not merge onesies or foursies with anything.  Deferred until later.
     // Note that perhaps some foursies should be declared doublets and deleted.

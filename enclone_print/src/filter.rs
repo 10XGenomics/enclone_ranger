@@ -16,13 +16,13 @@ use triple_accel::levenshtein;
 use vector_utils::{make_freq, next_diff, unique_sort};
 
 pub fn survives_filter(
-    exacts: &Vec<usize>,
+    exacts: &[usize],
     rsi: &ColInfo,
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exact_clonotypes: &[ExactClonotype],
     refdata: &RefData,
     gex_info: &GexInfo,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) -> bool {
     let mut mults = Vec::<usize>::new();
     for i in 0..exacts.len() {

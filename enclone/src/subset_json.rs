@@ -8,7 +8,7 @@ use std::io::BufRead;
 use string_utils::TextUtils;
 use vector_utils::bin_member;
 
-pub fn subset_all_contig_annotations_json(filename: &str, barcodes: &Vec<String>) -> String {
+pub fn subset_all_contig_annotations_json(filename: &str, barcodes: &[String]) -> String {
     let mut x = "[\n".to_string();
     let mut lines = Vec::<String>::new();
     let f = open_userfile_for_read(filename);

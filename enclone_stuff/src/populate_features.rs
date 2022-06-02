@@ -14,7 +14,7 @@ use vdj_ann::vdj_features::{cdr1_start, cdr2_start, fr1_start, fr2_start, fr3_st
 pub fn populate_features(
     ctl: &EncloneControl,
     refdata: &RefData,
-    broken: &Vec<bool>,
+    broken: &[bool],
     fr1_starts: &mut Vec<usize>,
     fr2_starts: &mut Vec<Option<usize>>,
     fr3_starts: &mut Vec<Option<usize>>,

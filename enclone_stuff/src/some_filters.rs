@@ -21,16 +21,16 @@ pub fn some_filters(
     orbits: &mut Vec<Vec<i32>>,
     is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
-    sr: &Vec<Vec<Double>>,
+    sr: &[Vec<Double>],
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
-    raw_joins: &Vec<Vec<usize>>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
+    raw_joins: &[Vec<usize>],
     eq: &EquivRel,
-    disintegrated: &Vec<bool>,
-    fate: &mut Vec<HashMap<String, String>>,
+    disintegrated: &[bool],
+    fate: &mut [HashMap<String, String>],
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) {
     // Delete exact subclonotypes that appear to represent doublets.
 

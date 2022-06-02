@@ -15,7 +15,7 @@ use string_utils::{strme, TextUtils};
 
 // Process arguments.
 
-pub fn proc_args(mut ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(), String> {
+pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), String> {
     //
     // Start.
 
@@ -27,7 +27,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(),
 
     // Check for @test1,...,@test4 and @test.
 
-    let mut args = args.clone();
+    let mut args = args.to_owned();
     for i in 0..args.len() {
         replace_at_test(&mut args[i]);
     }

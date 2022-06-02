@@ -14,7 +14,7 @@ pub fn heavy_complexity(
     refdata: &RefData,
     exact_clonotypes: &Vec<ExactClonotype>,
     ctl: &EncloneControl,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) -> Vec<Junction> {
     let mut results = Vec::<(usize, Junction)>::new();
     for i in 0..exact_clonotypes.len() {

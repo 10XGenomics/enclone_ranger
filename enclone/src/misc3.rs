@@ -13,7 +13,7 @@ use vector_utils::unique_sort;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut Vec<Vec<TigData>>, refdata: &RefData) {
+pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut [Vec<TigData>], refdata: &RefData) {
     tig_bc.sort_by(|x, y| -> Ordering {
         for i in 0..x.len() {
             // Order by number of chains.
@@ -106,9 +106,9 @@ pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut Vec<Vec<TigData>>, refdata
 pub fn study_consensus(
     _count: &mut usize,
     ctl: &EncloneControl,
-    share: &Vec<TigData1>,
-    clones: &Vec<Vec<TigData0>>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    share: &[TigData1],
+    clones: &[Vec<TigData0>],
+    exact_clonotypes: &[ExactClonotype],
     refdata: &RefData,
 ) {
     if ctl.gen_opt.utr_con {

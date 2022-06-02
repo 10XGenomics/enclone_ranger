@@ -13,7 +13,7 @@ use std::io::{Read, Write};
 use std::process::{Command, Stdio};
 use string_utils::TextUtils;
 
-pub fn prepare_for_apocalypse(args: &Vec<String>, email: bool, bug_reports: &str) {
+pub fn prepare_for_apocalypse(args: &[String], email: bool, bug_reports: &str) {
     if email {
         assert!(!bug_reports.is_empty());
     }

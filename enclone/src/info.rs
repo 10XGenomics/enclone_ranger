@@ -19,7 +19,7 @@ pub fn build_info(
     refdata: &RefData,
     ctl: &EncloneControl,
     exact_clonotypes: &mut Vec<ExactClonotype>,
-    fate: &mut Vec<HashMap<String, String>>,
+    fate: &mut [HashMap<String, String>],
 ) -> Vec<CloneInfo> {
     // Build info about clonotypes.  We create a data structure info.
     // An entry in info is a clonotype having appropriate properties.

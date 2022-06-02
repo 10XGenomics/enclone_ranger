@@ -95,8 +95,8 @@ fn json_error(
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 fn parse_vector_entry_from_json(
-    x: &Vec<u8>,
-    json: &String,
+    x: &[u8],
+    json: &str,
     accept_inconsistent: bool,
     origin_info: &OriginInfo,
     li: usize,
@@ -873,7 +873,7 @@ pub fn parse_json_annotations_files(
     vdj_cells: &mut Vec<Vec<String>>,
     gex_cells: &mut Vec<Vec<String>>,
     gex_cells_specified: &mut Vec<bool>,
-    fate: &mut Vec<HashMap<String, String>>,
+    fate: &mut [HashMap<String, String>],
 ) -> Result<(), String> {
     // (origin index, contig name, V..J length): (?)
     let mut results = Vec::<(

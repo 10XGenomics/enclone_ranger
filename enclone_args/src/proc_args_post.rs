@@ -159,13 +159,13 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
 
 pub fn proc_args_post(
     mut ctl: &mut EncloneControl,
-    args: &Vec<String>,
-    metas: &Vec<String>,
-    metaxs: &Vec<String>,
-    xcrs: &Vec<String>,
+    args: &[String],
+    metas: &[String],
+    metaxs: &[String],
+    xcrs: &[String],
     have_gex: bool,
-    gex: &String,
-    bc: &String,
+    gex: &str,
+    bc: &str,
     using_plot: bool,
 ) -> Result<(), String> {
     // Process INFO.

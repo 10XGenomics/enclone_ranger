@@ -21,9 +21,9 @@ use vector_utils::{unique_sort, VecUtils};
 pub fn process_special_arg1(
     arg: &str,
     ctl: &mut EncloneControl,
-    _metas: &mut Vec<String>,
-    _metaxs: &mut Vec<String>,
-    _xcrs: &mut Vec<String>,
+    _metas: &mut [String],
+    _metaxs: &mut [String],
+    _xcrs: &mut [String],
     _using_plot: &mut bool,
 ) -> Result<bool, String> {
     // Process the argument.

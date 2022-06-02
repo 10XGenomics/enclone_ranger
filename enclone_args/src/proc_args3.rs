@@ -713,7 +713,7 @@ pub fn proc_xcr(
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn proc_meta_core(lines: &Vec<String>, mut ctl: &mut EncloneControl) -> Result<(), String> {
+pub fn proc_meta_core(lines: &[String], mut ctl: &mut EncloneControl) -> Result<(), String> {
     let mut fields = Vec::<String>::new();
     let mut donors = Vec::<String>::new();
     for (count, s) in lines.iter().enumerate() {
@@ -886,7 +886,7 @@ pub fn proc_meta_core(lines: &Vec<String>, mut ctl: &mut EncloneControl) -> Resu
     Ok(())
 }
 
-pub fn proc_meta(v: &Vec<String>, ctl: &mut EncloneControl) -> Result<(), String> {
+pub fn proc_meta(v: &[String], ctl: &mut EncloneControl) -> Result<(), String> {
     let mut lines_all = Vec::<Vec<String>>::new();
     for f in v.iter() {
         if !path_exists(f) {

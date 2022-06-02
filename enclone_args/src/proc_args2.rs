@@ -147,11 +147,11 @@ pub fn is_string_arg(arg: &str, x: &str) -> Result<bool, String> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn proc_args_tail(ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(), String> {
+pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String> {
     let tall = Instant::now();
     let mut lvars_specified = false;
-    for i in 1..args.len() {
-        if args[i].starts_with("LVARS=") {
+    for arg in args {
+        if arg.starts_with("LVARS=") {
             lvars_specified = true;
         }
     }

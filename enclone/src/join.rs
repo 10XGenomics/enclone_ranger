@@ -32,12 +32,12 @@ pub fn join_exacts(
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     refdata: &RefData,
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
     join_info: &mut Vec<(usize, usize, bool, Vec<u8>)>,
     raw_joins: &mut Vec<(i32, i32)>,
-    sr: &Vec<Vec<Double>>,
-    dref: &Vec<DonorReferenceItem>,
+    sr: &[Vec<Double>],
+    dref: &[DonorReferenceItem],
 ) -> EquivRel {
     //
     // Run special option for joining by barcode identity.

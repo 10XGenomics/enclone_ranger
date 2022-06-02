@@ -22,9 +22,9 @@ use vector_utils::{bin_member, bin_position, reverse_sort};
 
 pub fn test_vdj_gex_inconsistent(
     ctl: &EncloneControl,
-    tig_bc: &Vec<Vec<TigData>>,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    vdj_cells: &Vec<Vec<String>>,
+    tig_bc: &[Vec<TigData>],
+    exact_clonotypes: &[ExactClonotype],
+    vdj_cells: &[Vec<String>],
     gex_info: &GexInfo,
 ) -> Result<(), String> {
     let tinc = Instant::now();

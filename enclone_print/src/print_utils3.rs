@@ -20,7 +20,7 @@ pub fn comp_edit(
     mid: usize,
     col: usize,
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
     rsi: &ColInfo,
 ) -> (usize, String) {
     let mut comp = 1000000;
@@ -136,8 +136,8 @@ pub fn comp_edit(
 
 pub fn consensus_codon_cdr3(
     rsi: &ColInfo,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
 ) -> Vec<Vec<u8>> {
     let mut cons = Vec::<Vec<u8>>::new();
     let nexacts = exacts.len();
@@ -190,9 +190,9 @@ pub fn consensus_codon_cdr3(
 
 pub fn define_column_info(
     ctl: &EncloneControl,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    mat: &Vec<Vec<Option<usize>>>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
+    mat: &[Vec<Option<usize>>],
     refdata: &RefData,
 ) -> ColInfo {
     let cols = mat.len();
@@ -506,10 +506,10 @@ pub fn define_column_info(
 
 pub fn add_header_text(
     ctl: &EncloneControl,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    rord: &Vec<usize>,
-    mat: &Vec<Vec<Option<usize>>>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
+    rord: &[usize],
+    mat: &[Vec<Option<usize>>],
     mut mlog: &mut Vec<u8>,
 ) {
     let nexacts = exacts.len();
@@ -570,17 +570,17 @@ pub fn add_header_text(
 pub fn insert_reference_rows(
     ctl: &EncloneControl,
     rsi: &ColInfo,
-    show_aa: &Vec<Vec<usize>>,
-    field_types: &Vec<Vec<u8>>,
+    show_aa: &[Vec<usize>],
+    field_types: &[Vec<u8>],
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
-    row1: &Vec<String>,
+    dref: &[DonorReferenceItem],
+    row1: &[String],
     drows: &mut Vec<Vec<String>>,
     rows: &mut Vec<Vec<String>>,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    peer_groups: &Vec<Vec<(usize, u8, u32)>>,
-    cdr3_con: &Vec<Vec<u8>>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
+    peer_groups: &[Vec<(usize, u8, u32)>],
+    cdr3_con: &[Vec<u8>],
 ) {
     let cols = rsi.seq_del_lens.len();
     if !drows.is_empty() {
@@ -705,8 +705,8 @@ pub fn insert_reference_rows(
 pub fn process_complete(
     ctl: &EncloneControl,
     nexacts: usize,
-    bads: &mut Vec<bool>,
-    mat: &Vec<Vec<Option<usize>>>,
+    bads: &mut [bool],
+    mat: &[Vec<Option<usize>>],
 ) {
     let cols = mat.len();
     if ctl.gen_opt.complete {
@@ -734,7 +734,7 @@ pub fn process_complete(
 
 // Identify certain extra parseable variables.  These arise from parameterizable cvars.
 
-pub fn get_extra_parseables(ctl: &EncloneControl, pcols_sort: &Vec<String>) -> Vec<String> {
+pub fn get_extra_parseables(ctl: &EncloneControl, pcols_sort: &[String]) -> Vec<String> {
     let mut extra_parseables = Vec::<String>::new();
     let mut exclusions = ctl.clono_print_opt.cvars.clone();
     for v in CVARS_ALLOWED.iter() {
