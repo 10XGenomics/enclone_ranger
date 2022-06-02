@@ -14,6 +14,7 @@ use enclone_core::median::median_f64;
 use enclone_proto::types::DonorReferenceItem;
 use enclone_vars::decode_arith;
 use expr_tools::{define_evalexpr_context, vars_of_node};
+use hdf5::Reader;
 use itertools::Itertools;
 use ndarray::s;
 use stats_utils::percent_ratio;
@@ -22,11 +23,6 @@ use string_utils::{stringme, strme, TextUtils};
 use vdj_ann::refx::RefData;
 use vector_utils::next_diff12_4;
 use vector_utils::{bin_member, bin_position, unique_sort};
-
-#[cfg(target_os = "windows")]
-use hdf5::Reader;
-#[cfg(not(target_os = "windows"))]
-use hdf5x::Reader;
 
 // The following code creates a row in the enclone output table for a clonotype.  Simultaneously
 // it generates a row of parseable output.  And it does some other things that are not described

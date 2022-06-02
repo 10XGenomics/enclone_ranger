@@ -5,10 +5,7 @@ use amino::{aa_seq, codon_to_aa};
 use enclone_core::defs::{ColInfo, EncloneControl, ExactClonotype, GexInfo, POUT_SEP};
 use enclone_core::median::{median_f64, rounded_median};
 use enclone_proto::types::DonorReferenceItem;
-#[cfg(target_os = "windows")]
 use hdf5::Reader;
-#[cfg(not(target_os = "windows"))]
-use hdf5x::Reader;
 use itertools::Itertools;
 use ndarray::s;
 use regex::Regex;

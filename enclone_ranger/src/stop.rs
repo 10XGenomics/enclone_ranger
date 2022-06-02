@@ -3,13 +3,9 @@
 use enclone_core::defs::ColInfo;
 use enclone_core::enclone_structs::EncloneIntermediates;
 use enclone_print::print_clonotypes::print_clonotypes;
+use hdf5::Reader;
 use rayon::prelude::*;
 use std::collections::HashMap;
-
-#[cfg(target_os = "windows")]
-use hdf5::Reader;
-#[cfg(not(target_os = "windows"))]
-use hdf5x::Reader;
 
 pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), String> {
     // Unpack inputs.

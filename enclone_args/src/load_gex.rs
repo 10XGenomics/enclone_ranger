@@ -6,11 +6,7 @@
 use crate::load_gex_core::load_gex;
 use enclone_core::defs::{EncloneControl, GexInfo};
 
-#[cfg(target_os = "windows")]
 use hdf5::Dataset;
-#[cfg(not(target_os = "windows"))]
-use hdf5x::Dataset;
-
 use mirror_sparse_matrix::MirrorSparseMatrix;
 use rayon::prelude::*;
 use std::{collections::HashMap, time::Instant};
@@ -110,9 +106,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
             {
                 let f = &h5_paths[i];
 
-                #[cfg(not(target_os = "windows"))]
-                let h = hdf5x::File::open(&f).unwrap();
-                #[cfg(target_os = "windows")]
                 let h = hdf5::File::open(&f).unwrap();
 
                 h5_data.push(Some(h.dataset("matrix/data").unwrap()));

@@ -4,11 +4,7 @@ use crate::cell_color::CellColor;
 use crate::linear_condition::LinearCondition;
 use debruijn::dna_string::DnaString;
 use evalexpr::Node;
-
-#[cfg(target_os = "windows")]
 use hdf5::Dataset;
-#[cfg(not(target_os = "windows"))]
-use hdf5x::Dataset;
 
 use io_utils::{open_for_read, path_exists};
 use mirror_sparse_matrix::MirrorSparseMatrix;
