@@ -51,7 +51,7 @@ pub fn evaluate_d(
     tig: &[u8],
     vref: &[u8],
     seq_start: usize,
-    ds: &Vec<usize>,
+    ds: &[usize],
     jref: &[u8],
     refdata: &RefData,
     jscore_match: i32,
@@ -138,8 +138,7 @@ pub fn opt_d(
 
     // Go through every D segment, or possibly every concatenation of D segments.
 
-    let mut todo = Vec::<Vec<usize>>::new();
-    todo.push(vec![]);
+    let mut todo = vec![vec![]];
     for i in refdata.ds.iter() {
         todo.push(vec![*i]);
     }

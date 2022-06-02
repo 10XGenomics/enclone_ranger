@@ -421,9 +421,7 @@ pub fn build_diff_row(
         }
         rows.push(row);
     } else {
-        for i in 0..row1.len() {
-            rows[diff_pos - 1][i] = row1[i].clone();
-        }
+        rows[diff_pos - 1][..row1.len()].clone_from_slice(&row1[..]);
     }
 }
 
@@ -446,8 +444,7 @@ pub fn insert_consensus_row(
         } else {
             style = "p";
         }
-        let mut row = Vec::<String>::new();
-        row.push("consensus".to_string());
+        let mut row = vec!["consensus".to_string()];
         for _ in 1..row1.len() {
             row.push("\\ext".to_string());
         }

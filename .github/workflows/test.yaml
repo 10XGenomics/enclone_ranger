@@ -111,6 +111,7 @@ jobs:
           # TODO: re-enable the allowed lints at the end of this list.
           args: |
             --all-targets --locked --
+            -D clippy::perf
             -D clippy::suspicious
             -A clippy::comparison_chain
             -W future_incompatible
@@ -123,7 +124,6 @@ jobs:
             -D clippy::redundant_closure_for_method_calls
             -D clippy::unused_io_amount
             -D clippy::wildcard_imports
-            -D clippy::ptr_arg
             -W clippy::blacklisted_name
             -W clippy::enum_variant_names
             -W clippy::large-enum-variant

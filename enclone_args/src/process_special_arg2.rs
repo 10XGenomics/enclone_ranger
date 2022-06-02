@@ -52,19 +52,19 @@ pub fn process_special_arg2(
                 ctl.clono_group_opt.cdr3_heavy_len = true;
             } else if x == "cdr3_light_len" {
                 ctl.clono_group_opt.cdr3_light_len = true;
-            } else if x.starts_with("cdr3_aa_heavy≥") && x.contains("@") {
+            } else if x.starts_with("cdr3_aa_heavy≥") && x.contains('@') {
                 let x = x.after("cdr3_aa_heavy≥");
                 if !x.contains("%:h:@") || x.before("%:h:@").parse::<f64>().is_err() {
                     return Err("\nIllegal cdr3_aa_heavy≥n%:h:@f argument in GROUP.\n".to_string());
                 }
                 let val = x.before("%:h:@").force_f64();
                 let f = x.after("%:h:@");
-                require_readable_file(&f, "GROUP")?;
+                require_readable_file(f, "GROUP")?;
                 let mut m = Vec::<Vec<f64>>::new();
                 let ff = open_for_read![&f];
                 for line in ff.lines() {
                     let mut s = line.unwrap();
-                    let sb = s.replace(" ", "");
+                    let sb = s.replace(' ', "");
                     if sb == "ACDEFGHIKLMNPQRSTVWY" {
                         continue;
                     }
@@ -312,7 +312,7 @@ pub fn process_special_arg2(
                 ));
             }
         }
-        condition = condition.replace("'", "\"");
+        condition = condition.replace('\'', "\"");
         let compiled = build_operator_tree(&condition);
         if compiled.is_err() {
             return Err(format!("\n{} usage incorrect.\n", arg.before("=")));
@@ -361,7 +361,7 @@ pub fn process_special_arg2(
         ctl.clono_filt_opt.bound_type.push("max".to_string());
     } else if arg.starts_with("SCAN=") {
         let mut x = arg.after("SCAN=").to_string();
-        x = x.replace(" ", "");
+        x = x.replace(' ', "");
         let x = x.split(',').collect::<Vec<&str>>();
         if x.len() != 3 {
             return Err("\nArgument to SCAN must have three components.\n".to_string());
@@ -606,7 +606,7 @@ pub fn process_special_arg2(
                 } else {
                     let _f1 = fields[i].before("~");
                     let f2 = fields[i].after("~");
-                    if !f2.parse::<usize>().is_ok() {
+                    if f2.parse::<usize>().is_err() {
                         ok = false;
                     }
                 }

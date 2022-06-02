@@ -76,12 +76,12 @@ pub struct DescriptionTable {
 
 impl DescriptionTable {
     pub fn to_string(&self) -> String {
-        let mut v = Vec::<String>::new();
-        v.push("DescriptionTable".to_string());
-        v.push((4).to_string());
-        v.push(self.display_text.clone());
-        v.push(self.spreadsheet_text.clone());
-        flatten_vec_string(&v)
+        flatten_vec_string(&[
+            "DescriptionTable".to_string(),
+            (4).to_string(),
+            self.display_text.clone(),
+            self.spreadsheet_text.clone(),
+        ])
     }
     pub fn from_string(x: &str) -> Self {
         let v = unflatten_string(x);
@@ -106,13 +106,14 @@ pub struct FeatureBarcodeAlluvialTableSet {
 
 impl FeatureBarcodeAlluvialTableSet {
     pub fn to_string(&self) -> String {
-        let mut v = Vec::<String>::new();
-        v.push("FeatureBarcodeAlluvialTableSet".to_string());
-        v.push((3 * self.s.len() + 2).to_string());
-        for i in 0..self.s.len() {
-            v.push(self.s[i].id.clone());
-            v.push(self.s[i].display_text.clone());
-            v.push(self.s[i].spreadsheet_text.clone());
+        let mut v = vec![
+            "FeatureBarcodeAlluvialTableSet".to_string(),
+            (3 * self.s.len() + 2).to_string(),
+        ];
+        for s in &self.s {
+            v.push(s.id.clone());
+            v.push(s.display_text.clone());
+            v.push(s.spreadsheet_text.clone());
         }
         flatten_vec_string(&v)
     }
@@ -145,13 +146,14 @@ pub struct FeatureBarcodeAlluvialReadsTableSet {
 
 impl FeatureBarcodeAlluvialReadsTableSet {
     pub fn to_string(&self) -> String {
-        let mut v = Vec::<String>::new();
-        v.push("FeatureBarcodeAlluvialReadsTableSet".to_string());
-        v.push((3 * self.s.len() + 2).to_string());
-        for i in 0..self.s.len() {
-            v.push(self.s[i].id.clone());
-            v.push(self.s[i].display_text.clone());
-            v.push(self.s[i].spreadsheet_text.clone());
+        let mut v = vec![
+            "FeatureBarcodeAlluvialReadsTableSet".to_string(),
+            (3 * self.s.len() + 2).to_string(),
+        ];
+        for s in &self.s {
+            v.push(s.id.clone());
+            v.push(s.display_text.clone());
+            v.push(s.spreadsheet_text.clone());
         }
         flatten_vec_string(&v)
     }

@@ -734,7 +734,7 @@ pub fn read_json(
         let x = read_vector_entry_from_json(&mut f);
         if x.is_err() {
             eprintln!("\nProblem reading {}.\n", jsonx);
-            return Err(format!("{}", x.err().unwrap()));
+            return Err(x.err().unwrap());
         }
         match x.unwrap() {
             None => break,
@@ -841,11 +841,11 @@ pub fn read_json(
             if y < 1.0 - ctl.gen_opt.subsample {
                 to_delete1[i] = true;
                 let bc = &tig_bc[i][0].barcode;
-                let p = bin_position(&vdj_cells, &bc);
+                let p = bin_position(vdj_cells, bc);
                 if p >= 0 {
                     to_delete2[p as usize] = true;
                 }
-                let p = bin_position(&gex_cells, &bc);
+                let p = bin_position(gex_cells, bc);
                 if p >= 0 {
                     to_delete3[p as usize] = true;
                 }
@@ -959,7 +959,7 @@ pub fn parse_json_annotations_files(
         let mut found = vec![false; cells.len()];
         let tigs = &results[i].2;
         for j in 0..tigs.len() {
-            let p = bin_position(&cells, &tigs[j][0].barcode);
+            let p = bin_position(cells, &tigs[j][0].barcode);
             if p >= 0 {
                 found[p as usize] = true;
             }

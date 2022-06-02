@@ -12,7 +12,7 @@ use vdj_ann::refx::RefData;
 
 pub fn heavy_complexity(
     refdata: &RefData,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exact_clonotypes: &[ExactClonotype],
     ctl: &EncloneControl,
     dref: &[DonorReferenceItem],
 ) -> Vec<Junction> {

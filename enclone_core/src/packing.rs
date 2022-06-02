@@ -48,7 +48,7 @@ pub fn save_string(x: &String) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_string(x: &Vec<u8>, pos: &mut usize) -> Result<String, ()> {
+pub fn restore_string(x: &[u8], pos: &mut usize) -> Result<String, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }
@@ -77,7 +77,7 @@ pub fn save_vec_string(x: &Vec<String>) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_vec_string(x: &Vec<u8>, pos: &mut usize) -> Result<Vec<String>, ()> {
+pub fn restore_vec_string(x: &[u8], pos: &mut usize) -> Result<Vec<String>, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }
@@ -115,7 +115,7 @@ pub fn save_vec_string_comp(x: &Vec<String>) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_vec_string_comp(x: &Vec<u8>, pos: &mut usize) -> Result<Vec<String>, ()> {
+pub fn restore_vec_string_comp(x: &[u8], pos: &mut usize) -> Result<Vec<String>, ()> {
     if *pos + 8 > x.len() {
         return Err(());
     }
@@ -143,7 +143,7 @@ pub fn save_vec_vec_string(x: &Vec<Vec<String>>) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_vec_vec_string(x: &Vec<u8>, pos: &mut usize) -> Result<Vec<Vec<String>>, ()> {
+pub fn restore_vec_vec_string(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<String>>, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }
@@ -168,7 +168,7 @@ pub fn save_vec_vec_u8(x: &Vec<Vec<u8>>) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_vec_vec_u8(x: &Vec<u8>, pos: &mut usize) -> Result<Vec<Vec<u8>>, ()> {
+pub fn restore_vec_vec_u8(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<u8>>, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }
@@ -204,7 +204,7 @@ pub fn save_vec_vec_u32(x: &Vec<Vec<u32>>) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_vec_vec_u32(x: &Vec<u8>, pos: &mut usize) -> Result<Vec<Vec<u32>>, ()> {
+pub fn restore_vec_vec_u32(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<u32>>, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }
@@ -239,7 +239,7 @@ pub fn save_vec_bool(x: &Vec<bool>) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_vec_bool(x: &Vec<u8>, pos: &mut usize) -> Result<Vec<bool>, ()> {
+pub fn restore_vec_bool(x: &[u8], pos: &mut usize) -> Result<Vec<bool>, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }
@@ -267,7 +267,7 @@ pub fn save_vec_u32(x: &Vec<u32>) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_vec_u32(x: &Vec<u8>, pos: &mut usize) -> Result<Vec<u32>, ()> {
+pub fn restore_vec_u32(x: &[u8], pos: &mut usize) -> Result<Vec<u32>, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }
@@ -290,7 +290,7 @@ pub fn save_u32(x: u32) -> Vec<u8> {
     x.to_le_bytes().to_vec()
 }
 
-pub fn restore_u32(x: &Vec<u8>, pos: &mut usize) -> Result<u32, ()> {
+pub fn restore_u32(x: &[u8], pos: &mut usize) -> Result<u32, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }
@@ -305,7 +305,7 @@ pub fn save_bool(x: bool) -> Vec<u8> {
     vec![x as u8]
 }
 
-pub fn restore_bool(x: &Vec<u8>, pos: &mut usize) -> Result<bool, ()> {
+pub fn restore_bool(x: &[u8], pos: &mut usize) -> Result<bool, ()> {
     if *pos + 1 > x.len() {
         return Err(());
     }
@@ -325,7 +325,7 @@ pub fn save_vec_f32(x: &Vec<f32>) -> Vec<u8> {
     bytes
 }
 
-pub fn restore_vec_f32(x: &Vec<u8>, pos: &mut usize) -> Result<Vec<f32>, ()> {
+pub fn restore_vec_f32(x: &[u8], pos: &mut usize) -> Result<Vec<f32>, ()> {
     if *pos + 4 > x.len() {
         return Err(());
     }

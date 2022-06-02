@@ -177,26 +177,20 @@ fn check_gene_fb(
     let fb_ends0 = ["_ab", "_cr", "_cu"];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
     let suffixes_g = ["", "_min", "_max", "_μ", "_Σ", "_%"];
-    let (mut g_ends, mut fb_ends) = (Vec::<String>::new(), Vec::<String>::new());
-    for x in g_ends0.iter() {
-        for y in suffixes_g.iter() {
-            g_ends.push(format!("{}{}", x, y));
-        }
-    }
-    for x in fb_ends0.iter() {
-        for y in suffixes.iter() {
-            fb_ends.push(format!("{}{}", x, y));
-        }
-    }
-    for x in to_check.iter() {
-        let mut x = x.to_string();
+    let g_ends = g_ends0
+        .iter()
+        .flat_map(|&x| suffixes_g.iter().map(move |&y| format!("{}{}", x, y)))
+        .collect::<Vec<_>>();
+    let fb_ends = fb_ends0
+        .iter()
+        .flat_map(|&x| suffixes.iter().map(move |&y| format!("{}{}", x, y)))
+        .collect::<Vec<_>>();
+    for x in to_check {
+        let mut x = x.as_str();
         if x.contains(':') {
-            x = x.after(":").to_string();
+            x = x.after(":");
         }
-        if !gex_info.have_gex
-            && !gex_info.have_fb
-            && (*x == "n_gex".to_string() || *x == "n_gex_cell".to_string())
-        {
+        if !gex_info.have_gex && !gex_info.have_fb && (x == "n_gex" || x == "n_gex_cell") {
             if category == "parseable" {
                 return Err(format!(
                     "\nParseable field {} does not make sense because neither gene expression \
@@ -219,13 +213,13 @@ fn check_gene_fb(
                 }
             }
             if problem
-                || *x == "gex".to_string()
+                || x == "gex"
                 || x.starts_with("gex_")
-                || *x == "clust".to_string()
-                || *x == "type".to_string()
-                || *x == "entropy".to_string()
-                || *x == "cred".to_string()
-                || *x == "cred_cell".to_string()
+                || x == "clust"
+                || x == "type"
+                || x == "entropy"
+                || x == "cred"
+                || x == "cred_cell"
             {
                 if category == "parseable" {
                     return Err(format!(

@@ -27,7 +27,7 @@ pub fn finish_table(
     mlog: &mut Vec<u8>,
     logz: &mut String,
     stats: &[(String, Vec<String>)],
-    sr: &mut Vec<(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)>,
+    sr: &mut [(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)],
     extra_args: &[String],
     pcols_sort: &[String],
     out_data: &mut Vec<HashMap<String, String>>,
@@ -143,37 +143,36 @@ pub fn finish_table(
 
     // Finish building table content.
 
-    for j in 0..sr.len() {
-        sr[j].0[0] = format!("{}", j + 1); // row number (#)
-        rows.push(sr[j].0.clone());
-        rows.append(&mut sr[j].1.clone());
+    for (j, srj) in sr.iter_mut().enumerate() {
+        srj.0[0] = format!("{}", j + 1); // row number (#)
+        rows.push(srj.0.clone());
+        rows.extend(srj.1.clone());
     }
 
     // Add sum and mean rows.
 
     if ctl.clono_print_opt.sum {
-        let mut row = Vec::<String>::new();
-        row.push("Σ".to_string());
-        for i in 0..lvars.len() {
-            let mut x = lvars[i].clone();
+        let mut row = vec!["Σ".to_string()];
+        for lvar in lvars {
+            let mut x = lvar.as_str();
             if x.contains(':') {
-                x = x.before(":").to_string();
+                x = x.before(":");
             }
             let mut found = false;
             let mut total = 0.0;
-            for j in 0..stats.len() {
-                if stats[j].0 == x {
+            for stat in stats {
+                if stat.0 == x {
                     found = true;
-                    for k in 0..stats[j].1.len() {
-                        if stats[j].1[k].parse::<f64>().is_ok() {
-                            total += stats[j].1[k].force_f64();
-                        }
-                    }
+                    total += stat
+                        .1
+                        .iter()
+                        .filter_map(|statk| statk.parse::<f64>().ok())
+                        .sum::<f64>();
                 }
             }
             if !found {
                 row.push(String::new());
-            } else if !lvars[i].ends_with("_%") {
+            } else if !lvar.ends_with("_%") {
                 row.push(format!("{}", total.round() as usize));
             } else {
                 row.push(format!("{:.2}", total));
@@ -188,29 +187,28 @@ pub fn finish_table(
         rows.push(row);
     }
     if ctl.clono_print_opt.mean {
-        let mut row = Vec::<String>::new();
-        row.push("μ".to_string());
-        for i in 0..lvars.len() {
-            let mut x = lvars[i].clone();
+        let mut row = vec!["μ".to_string()];
+        for lvar in lvars {
+            let mut x = lvar.as_str();
             if x.contains(':') {
-                x = x.before(":").to_string();
+                x = x.before(":");
             }
             let mut found = false;
             let mut total = 0.0;
-            for j in 0..stats.len() {
-                if stats[j].0 == x {
+            for stat in stats {
+                if stat.0 == x {
                     found = true;
-                    for k in 0..stats[j].1.len() {
-                        if stats[j].1[k].parse::<f64>().is_ok() {
-                            total += stats[j].1[k].force_f64();
-                        }
-                    }
+                    total += stat
+                        .1
+                        .iter()
+                        .filter_map(|statk| statk.parse::<f64>().ok())
+                        .sum::<f64>();
                 }
             }
             let mean = total / n as f64;
             if !found {
                 row.push(String::new());
-            } else if !lvars[i].ends_with("_%") {
+            } else if !lvar.ends_with("_%") {
                 row.push(format!("{:.1}", mean));
             } else {
                 row.push(format!("{:.2}", mean));
@@ -227,10 +225,9 @@ pub fn finish_table(
 
     // Make table.
 
-    for i in 0..rows.len() {
-        for j in 0..rows[i].len() {
-            rows[i][j] = rows[i][j].replace("|TRX", "TRB");
-            rows[i][j] = rows[i][j].replace("|TRY", "TRA");
+    for row in rows.iter_mut() {
+        for v in row.iter_mut() {
+            *v = v.replace("|TRX", "TRB").replace("|TRY", "TRA");
         }
     }
     for cx in 0..cols {

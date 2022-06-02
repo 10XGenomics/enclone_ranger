@@ -76,12 +76,12 @@ pub fn process_special_arg1(
             parts = arg.after("ALL_BCH=").split(',').collect::<Vec<&str>>();
             ctl.gen_opt.all_bc_human = true;
         }
-        if parts.is_empty() || parts[0].len() == 0 {
+        if parts.is_empty() || parts[0].is_empty() {
             return Err(
                 "\nFor ALL_BC/ALL_BCH, at a minimum, a filename must be provided.\n".to_string(),
             );
         }
-        if ctl.gen_opt.all_bc_filename.len() > 0 {
+        if !ctl.gen_opt.all_bc_filename.is_empty() {
             return Err("\nThe argument ALL_BC/ALL_BCH may only be used once.\n".to_string());
         }
         ctl.gen_opt.all_bc_filename = parts[0].to_string();
@@ -92,7 +92,7 @@ pub fn process_special_arg1(
         ctl.gen_opt.all_bc_fields_orig = ctl.gen_opt.all_bc_fields.clone();
     } else if arg.starts_with("STATE_NARRATIVE=") {
         let mut narrative = arg.after("STATE_NARRATIVE=").to_string();
-        if narrative.starts_with("@") {
+        if narrative.starts_with('@') {
             let filename = narrative.after("@");
             if !path_exists(&filename) {
                 return Err(
@@ -105,7 +105,7 @@ pub fn process_special_arg1(
         }
     } else if arg.starts_with("SESSION_NARRATIVE=") {
         let mut narrative = arg.after("SESSION_NARRATIVE=").to_string();
-        if narrative.starts_with("@") {
+        if narrative.starts_with('@') {
             let filename = narrative.after("@");
             if !path_exists(&filename) {
                 return Err(
@@ -118,7 +118,7 @@ pub fn process_special_arg1(
         }
     } else if arg.starts_with("JOIN_BASIC=") {
         let val = arg.after("JOIN_BASIC=");
-        if !val.parse::<f64>().is_ok() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
+        if val.parse::<f64>().is_err() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
             return Err(
                 "\nArgument to JOIN_BASIC needs to be a number between 0 and 100.\n".to_string(),
             );
@@ -126,7 +126,7 @@ pub fn process_special_arg1(
         ctl.join_alg_opt.basic = Some(val.force_f64());
     } else if arg.starts_with("JOIN_BASIC_H=") {
         let val = arg.after("JOIN_BASIC_H=");
-        if !val.parse::<f64>().is_ok() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
+        if val.parse::<f64>().is_err() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
             return Err(
                 "\nArgument to JOIN_BASIC_H needs to be a number between 0 and 100.\n".to_string(),
             );
@@ -134,7 +134,7 @@ pub fn process_special_arg1(
         ctl.join_alg_opt.basic_h = Some(val.force_f64());
     } else if arg.starts_with("JOIN_CDR3_IDENT=") {
         let val = arg.after("JOIN_CDR3_IDENT=");
-        if !val.parse::<f64>().is_ok() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
+        if val.parse::<f64>().is_err() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
             return Err(
                 "\nArgument to JOIN_CDR3_IDENT needs to be a number between 0 and 100.\n"
                     .to_string(),
@@ -143,7 +143,7 @@ pub fn process_special_arg1(
         ctl.join_alg_opt.join_cdr3_ident = val.force_f64();
     } else if arg.starts_with("FWR1_CDR12_DELTA=") {
         let val = arg.after("FWR1_CDR12_DELTA=");
-        if !val.parse::<f64>().is_ok() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
+        if val.parse::<f64>().is_err() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
             return Err(
                 "\nArgument to FWR1_CDR12_DELTA needs to be a number between 0 and 100.\n"
                     .to_string(),
@@ -244,10 +244,7 @@ pub fn process_special_arg1(
                     }
                     let n = p[2].after("maxcat:").force_usize();
 
-                    let v = ColorByCategoricalVariableValue {
-                        vars: vars,
-                        maxcat: n,
-                    };
+                    let v = ColorByCategoricalVariableValue { vars, maxcat: n };
                     let cc = CellColor::ByCategoricalVariableValue(v);
                     ctl.plot_opt.cell_color = cc;
                 } else {
@@ -399,7 +396,7 @@ pub fn process_special_arg1(
         ctl.parseable_opt.pout = val.to_string();
         tilde_expand_me(&mut ctl.parseable_opt.pout);
         if val != "stdout" && val != "stdouth" && val != "/dev/null" {
-            test_writeable(&val, ctl.gen_opt.evil_eye)?;
+            test_writeable(val, ctl.gen_opt.evil_eye)?;
         }
     } else if arg.starts_with("SIM_MAT_PLOT=") {
         let fields = arg.after("SIM_MAT_PLOT=").split(',').collect::<Vec<&str>>();

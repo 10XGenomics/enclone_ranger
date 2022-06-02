@@ -150,17 +150,19 @@ pub fn populate_features(
  🌼  misannotation.                                                                          🌼\n"
         );
 
-        let mut rows = Vec::<Vec<String>>::new();
-        rows.push(vec![
-            "You can make enclone ignore these defects by adding the additional argument"
-                .to_string(),
-        ]);
-        rows.push(vec![
-            "ACCEPT_BROKEN to the enclone command line.  Or you can obtain the same".to_string(),
-        ]);
-        rows.push(vec![
-            "behavior by defining the environment variable ENCLONE_ACCEPT_BROKEN.".to_string(),
-        ]);
+        let rows = [
+            vec![
+                "You can make enclone ignore these defects by adding the additional argument"
+                    .to_string(),
+            ],
+            vec![
+                "ACCEPT_BROKEN to the enclone command line.  Or you can obtain the same"
+                    .to_string(),
+            ],
+            vec![
+                "behavior by defining the environment variable ENCLONE_ACCEPT_BROKEN.".to_string(),
+            ],
+        ];
         let mut log = stringme(&log);
         print_tabular_vbox(&mut log, &rows, 2, b"l".as_ref(), false, true);
         let mut log = log.as_bytes().to_vec();

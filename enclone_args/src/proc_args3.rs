@@ -46,8 +46,8 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                 let m = fetch_url(&url)?;
                 if m.contains("\"analysis_ids\":[") {
                     let mut ids = m.between("\"analysis_ids\":[", "]").to_string();
-                    ids = ids.replace(" ", "");
-                    ids = ids.replace("\n", "");
+                    ids = ids.replace(' ', "");
+                    ids = ids.replace('\n', "");
                     let ids = ids.split(',').collect::<Vec<&str>>();
                     let mut ids2 = Vec::<String>::new();
 
@@ -570,7 +570,7 @@ pub fn proc_xcr(
                 datasets = (*s).split(',').collect::<Vec<&str>>();
             }
             for i in 0..datasets.len() {
-                if datasets[i].ends_with("/") {
+                if datasets[i].ends_with('/') {
                     datasets[i] = datasets[i].rev_before("/");
                 }
             }
@@ -781,7 +781,7 @@ pub fn proc_meta_core(lines: &[String], mut ctl: &mut EncloneControl) -> Result<
                         .to_string(),
                 );
             }
-        } else if !s.starts_with('#') && s.len() > 0 {
+        } else if !s.starts_with('#') && !s.is_empty() {
             let val = s.split(',').collect::<Vec<&str>>();
             if val.len() != fields.len() {
                 return Err(format!(
@@ -914,9 +914,9 @@ pub fn proc_meta(v: &[String], ctl: &mut EncloneControl) -> Result<(), String> {
     let mut lines = Vec::<String>::new();
     for j in 0..lines_all.len() {
         if lines_all[j].is_empty() || lines_all[j][0] != lines_all[0][0] {
-            return Err(format!(
-                "\nMETA files having different header lines have been specified.\n"
-            ));
+            return Err(
+                "\nMETA files having different header lines have been specified.\n".to_string(),
+            );
         }
         if j == 0 {
             lines.push(lines_all[0][0].clone());

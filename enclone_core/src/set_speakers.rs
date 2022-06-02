@@ -35,18 +35,18 @@ pub fn set_speakers(ctl: &EncloneControl, parseable_fields: &mut Vec<String>, ma
     for i in 0..LVARS_ALLOWED.len() {
         let x = &LVARS_ALLOWED[i];
         if !have_gex
-            && (*x == "gex".to_string()
+            && (*x == "gex"
                 || x.starts_with("gex_")
                 || x.ends_with("_g")
                 || x.ends_with("_g_μ")
-                || *x == "n_gex_cell".to_string()
-                || *x == "n_gex".to_string()
-                || *x == "n_b".to_string()
-                || *x == "clust".to_string()
-                || *x == "type".to_string()
-                || *x == "entropy".to_string()
-                || *x == "cred".to_string()
-                || *x == "cred_cell".to_string())
+                || *x == "n_gex_cell"
+                || *x == "n_gex"
+                || *x == "n_b"
+                || *x == "clust"
+                || *x == "type"
+                || *x == "entropy"
+                || *x == "cred"
+                || *x == "cred_cell")
         {
             continue;
         }

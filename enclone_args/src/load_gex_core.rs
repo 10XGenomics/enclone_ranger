@@ -201,11 +201,11 @@ pub fn load_gex(
 
             // Find files.
 
-            let pca_file = find_pca_file(&ctl, &outs, &analysis, pathlist);
-            let json_metrics_file = find_json_metrics_file(&ctl, &outs, &analysis, pathlist);
-            let feature_metrics_file = find_feature_metrics_file(&ctl, &outs, &analysis, pathlist);
-            let metrics_file = find_metrics_file(&ctl, &outs, &analysis, pathlist);
-            let cluster_file = find_cluster_file(&ctl, &outs, &analysis, pathlist);
+            let pca_file = find_pca_file(ctl, &outs, &analysis, pathlist);
+            let json_metrics_file = find_json_metrics_file(ctl, &outs, &analysis, pathlist);
+            let feature_metrics_file = find_feature_metrics_file(ctl, &outs, &analysis, pathlist);
+            let metrics_file = find_metrics_file(ctl, &outs, &analysis, pathlist);
+            let cluster_file = find_cluster_file(ctl, &outs, &analysis, pathlist);
 
             // Proceed.
 
@@ -401,11 +401,10 @@ pub fn load_gex(
             // file, so it may not be present.
 
             if !feature_metrics_file.is_empty() {
-                let mut count = 0;
                 let f = open_for_read![&feature_metrics_file];
                 let mut feature_pos = HashMap::<String, usize>::new();
                 let mut xfields = Vec::<String>::new();
-                for line in f.lines() {
+                for (count, line) in f.lines().enumerate() {
                     let s = line.unwrap();
                     let fields = parse_csv(&s);
                     if count == 0 {
@@ -445,7 +444,6 @@ pub fn load_gex(
                             }
                         }
                     }
-                    count += 1;
                 }
             }
 
@@ -536,8 +534,8 @@ pub fn load_gex(
                         && fields[name_field] == "Mean reads per cell"
                     {
                         let mut rpcx = fields[value_field].to_string();
-                        rpcx = rpcx.replace(",", "");
-                        rpcx = rpcx.replace("\"", "");
+                        rpcx = rpcx.replace(',', "");
+                        rpcx = rpcx.replace('\"', "");
                         if rpcx.parse::<usize>().is_err() {
                             r.11 = format!(
                                 "\nSomething appears to be wrong with the file\n{}:\n\
@@ -553,8 +551,8 @@ pub fn load_gex(
                         && fields[name_field] == "Mean reads per cell"
                     {
                         let mut fbrpcx = fields[value_field].to_string();
-                        fbrpcx = fbrpcx.replace(",", "");
-                        fbrpcx = fbrpcx.replace("\"", "");
+                        fbrpcx = fbrpcx.replace(',', "");
+                        fbrpcx = fbrpcx.replace('\"', "");
                         if fbrpcx.parse::<usize>().is_err() {
                             r.11 = format!(
                                 "\nSomething appears to be wrong with the file\n{}:\n\
@@ -600,8 +598,8 @@ pub fn load_gex(
                             return;
                         } else if rpc_field.is_some() {
                             let mut rpcx = fields[rpc_field.unwrap()].to_string();
-                            rpcx = rpcx.replace(",", "");
-                            rpcx = rpcx.replace("\"", "");
+                            rpcx = rpcx.replace(',', "");
+                            rpcx = rpcx.replace('\"', "");
                             if rpcx.parse::<usize>().is_err() {
                                 r.11 = format!(
                                     "\nSomething appears to be wrong with the file\n{}:\n\
@@ -621,8 +619,8 @@ pub fn load_gex(
                             return;
                         } else if fbrpc_field.is_some() {
                             let mut fbrpcx = fields[fbrpc_field.unwrap()].to_string();
-                            fbrpcx = fbrpcx.replace(",", "");
-                            fbrpcx = fbrpcx.replace("\"", "");
+                            fbrpcx = fbrpcx.replace(',', "");
+                            fbrpcx = fbrpcx.replace('\"', "");
                             if fbrpcx.parse::<usize>().is_err() {
                                 r.11 = format!(
                                     "\nSomething appears to be wrong with the file\n{}:\n\

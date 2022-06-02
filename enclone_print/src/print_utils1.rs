@@ -796,7 +796,7 @@ pub fn color_codon(
         }
         fwrite!(log, "{}", aa as char);
     }
-    if last && *last_color != "black".to_string() {
+    if last && *last_color != "black" {
         emit_end_escape(&mut log);
     }
     log
@@ -804,20 +804,20 @@ pub fn color_codon(
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn aa_classes() -> Vec<(char, Vec<u8>)> {
-    let mut classes = Vec::new();
-    classes.push(('B', b"DN".to_vec()));
-    classes.push(('Z', b"EQ".to_vec()));
-    classes.push(('J', b"IL".to_vec()));
-    classes.push(('-', b"DE".to_vec()));
-    classes.push(('+', b"KHR".to_vec()));
-    classes.push(('Ψ', b"ILMV".to_vec()));
-    classes.push(('π', b"AGPS".to_vec()));
-    classes.push(('Ω', b"FHWY".to_vec()));
-    classes.push(('Φ', b"IFLMVWY".to_vec()));
-    classes.push(('ζ', b"DEHKNQRST".to_vec()));
-    classes.push(('X', b"ACDEFGHIKLMNPQRSTVWY".to_vec()));
-    classes
+pub fn aa_classes() -> Vec<(char, &'static [u8])> {
+    vec![
+        ('B', b"DN"),
+        ('Z', b"EQ"),
+        ('J', b"IL"),
+        ('-', b"DE"),
+        ('+', b"KHR"),
+        ('Ψ', b"ILMV"),
+        ('π', b"AGPS"),
+        ('Ω', b"FHWY"),
+        ('Φ', b"IFLMVWY"),
+        ('ζ', b"DEHKNQRST"),
+        ('X', b"ACDEFGHIKLMNPQRSTVWY"),
+    ]
 }
 
 pub fn cdr3_aa_con(

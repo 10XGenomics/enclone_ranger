@@ -318,9 +318,7 @@ pub fn build_table_stuff(
                         for x in s.chars() {
                             schars.push(x);
                         }
-                        for k in 0..q {
-                            ch[ch_start + k] = schars[k];
-                        }
+                        ch[ch_start..(q + ch_start)].copy_from_slice(&schars[..q]);
                     }
                 }
                 let mut s = String::new();

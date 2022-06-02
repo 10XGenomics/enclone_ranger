@@ -198,49 +198,55 @@ pub fn analyze_donor_ref(
 
                 let mut log = String::new();
                 if dp.len() <= 20 {
-                    let mut rows = Vec::<Vec<String>>::new();
-                    let mut row = Vec::<String>::new();
-                    row.push("allele".to_string());
-                    row.push("donor".to_string());
-                    for _ in 0..ndonors - 1 {
-                        row.push("\\ext".to_string());
-                    }
-                    if nimgt > 0 {
-                        row.push("IMGT".to_string());
-                        for _ in 0..nimgt - 1 {
-                            row.push("\\ext".to_string());
-                        }
-                    }
-                    if !dp.is_empty() {
-                        row.push("position".to_string());
-                        for _ in 0..dp.len() - 1 {
-                            row.push("\\ext".to_string());
-                        }
-                    }
-                    rows.push(row);
-                    let mut row = vec!["".to_string()];
-                    row.append(&mut vec!["\\hline".to_string(); ndonors + nimgt + dp.len()]);
-                    rows.push(row);
-                    let mut row = Vec::<String>::new();
-                    row.push("".to_string());
-                    for d in 0..ndonors {
-                        row.push(format!("{}", d + 1));
-                    }
-                    for k in 0..nimgt {
-                        row.push(imgts[k].clone());
-                    }
-                    for u in 0..dp.len() {
-                        row.push(dp[u].to_string());
-                    }
-                    rows.push(row);
-                    let row = vec!["\\hline".to_string(); ndonors + nimgt + dp.len() + 1];
-                    rows.push(row);
-                    for r in 0..allelesg.len() {
+                    let mut rows = vec![
+                        {
+                            let mut row = vec!["allele".to_string(), "donor".to_string()];
+                            for _ in 0..ndonors - 1 {
+                                row.push("\\ext".to_string());
+                            }
+                            if nimgt > 0 {
+                                row.push("IMGT".to_string());
+                                for _ in 0..nimgt - 1 {
+                                    row.push("\\ext".to_string());
+                                }
+                            }
+                            if !dp.is_empty() {
+                                row.push("position".to_string());
+                                for _ in 0..dp.len() - 1 {
+                                    row.push("\\ext".to_string());
+                                }
+                            }
+                            row
+                        },
+                        {
+                            let mut row = vec!["".to_string()];
+                            row.append(&mut vec![
+                                "\\hline".to_string();
+                                ndonors + nimgt + dp.len()
+                            ]);
+                            row
+                        },
+                        {
+                            let mut row = vec!["".to_string()];
+                            for d in 0..ndonors {
+                                row.push(format!("{}", d + 1));
+                            }
+                            for k in 0..nimgt {
+                                row.push(imgts[k].clone());
+                            }
+                            for u in 0..dp.len() {
+                                row.push(dp[u].to_string());
+                            }
+                            row
+                        },
+                        vec!["\\hline".to_string(); ndonors + nimgt + dp.len() + 1],
+                    ];
+                    for (r, alleleg) in allelesg.into_iter().enumerate() {
                         let mut row = Vec::<String>::new();
                         let allele_name = (b'A' + r as u8) as char;
                         let mut an = String::new();
                         an.push(allele_name);
-                        for n in allelesg[r].0.iter() {
+                        for n in alleleg.0.iter() {
                             if n.starts_with("uref") {
                                 an.push('*');
                                 break;
@@ -262,19 +268,19 @@ pub fn analyze_donor_ref(
                             }
                         }
                         for u in 0..dp.len() {
-                            row.push((allelesg[r].1[dp[u]] as char).to_string());
+                            row.push((alleleg.1[dp[u]] as char).to_string());
                         }
                         rows.push(row);
                     }
                     let mut just = b"l|".to_vec();
-                    just.append(&mut vec![b'l'; ndonors]);
+                    just.extend(vec![b'l'; ndonors]);
                     if nimgt > 0 {
                         just.push(b'|');
-                        just.append(&mut vec![b'l'; nimgt]);
+                        just.extend(vec![b'l'; nimgt]);
                     }
                     if !dp.is_empty() {
                         just.push(b'|');
-                        just.append(&mut vec![b'l'; dp.len()]);
+                        just.extend(vec![b'l'; dp.len()]);
                     }
                     print_tabular_vbox(&mut log, &rows, 1, &just, false, false);
                 }
@@ -312,14 +318,12 @@ pub fn analyze_donor_ref(
                         );
                     }
                 }
-                for m1 in 0..alleles.len() {
+                for a1 in &alleles {
                     let mut best = 1_000_000;
-                    let a1 = &alleles[m1];
                     if !a1.1.starts_with("dref") {
                         continue;
                     }
-                    for m2 in 0..alleles.len() {
-                        let a2 = &alleles[m2];
+                    for a2 in &alleles {
                         if a2.1.starts_with("dref") {
                             continue;
                         }
