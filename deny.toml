@@ -84,19 +84,6 @@ default = "deny"
 # canonical license text of a valid SPDX license file.
 # [possible values: any between 0.0 and 1.0].
 confidence-threshold = 0.6
-# Allow 1 or more licenses on a per-crate basis, so that particular licenses
-# aren't accepted for every possible crate as with the normal allow list
-
-# Some crates don't have (easily) machine readable licensing information,
-# adding a clarification entry for it allows you to manually specify the
-# licensing information
-[[licenses.clarify]]
-name = "hdf5-src"
-expression = "BSD-3-Clause"
-
-[[licenses.clarify.license-files]]
-path = "ext/1_13/COPYING"
-hash = 0xe1ee0ba2
 
 [licenses.private]
 # If true, ignores workspace crates that aren't published, or are only
@@ -142,10 +129,6 @@ allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 allow-git = [
     # TODO: remove this
     "https://github.com/Barandis/qd",
-    # TODO: remove this
-    "https://github.com/DavidBJaffe/hdf5-rust-as-hdf5x",
-    # TODO: remove this
-    "https://github.com/CompRD/hdf5-rust",
 ]
 
 [sources.allow-org]

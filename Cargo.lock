@@ -288,15 +288,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cmake"
-version = "0.1.48"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8ad8cef104ac57b68b89df3208164d228503abbdce70f6880ffa3d970e7443a"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "cpp_demangle"
 version = "0.3.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -457,8 +448,6 @@ dependencies = [
  "evalexpr",
  "graph_simple",
  "hdf5",
- "hdf5-sys",
- "hdf5x",
  "io_utils",
  "itertools",
  "mirror_sparse_matrix",
@@ -489,8 +478,6 @@ dependencies = [
  "evalexpr",
  "expr_tools",
  "hdf5",
- "hdf5-sys",
- "hdf5x",
  "io_utils",
  "itertools",
  "mirror_sparse_matrix",
@@ -517,8 +504,6 @@ dependencies = [
  "enclone_proto",
  "evalexpr",
  "hdf5",
- "hdf5-sys",
- "hdf5x",
  "io_utils",
  "itertools",
  "lazy_static",
@@ -555,8 +540,6 @@ dependencies = [
  "evalexpr",
  "expr_tools",
  "hdf5",
- "hdf5-sys",
- "hdf5x",
  "io_utils",
  "itertools",
  "mirror_sparse_matrix",
@@ -603,8 +586,6 @@ dependencies = [
  "enclone_proto",
  "enclone_stuff",
  "hdf5",
- "hdf5-sys",
- "hdf5x",
  "io_utils",
  "itertools",
  "rayon",
@@ -627,8 +608,6 @@ dependencies = [
  "equiv",
  "evalexpr",
  "hdf5",
- "hdf5-sys",
- "hdf5x",
  "io_utils",
  "itertools",
  "ndarray",
@@ -818,8 +797,8 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
 name = "hdf5"
-version = "0.8.1"
-source = "git+https://github.com/CompRD/hdf5-rust?branch=master#528bc89007f6795f367d780cabdf4dfbba2507c1"
+version = "0.8.0"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#276926691a4c81298344dba3644945b04007e07a"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -835,82 +814,18 @@ dependencies = [
 
 [[package]]
 name = "hdf5-derive"
-version = "0.8.1"
-source = "git+https://github.com/CompRD/hdf5-rust?branch=master#528bc89007f6795f367d780cabdf4dfbba2507c1"
+version = "0.8.0"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#276926691a4c81298344dba3644945b04007e07a"
 dependencies = [
- "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "hdf5-src"
-version = "0.8.1"
-source = "git+https://github.com/CompRD/hdf5-rust?branch=master#528bc89007f6795f367d780cabdf4dfbba2507c1"
-dependencies = [
- "cmake",
- "libz-sys",
 ]
 
 [[package]]
 name = "hdf5-sys"
-version = "0.8.1"
-source = "git+https://github.com/CompRD/hdf5-rust?branch=master#528bc89007f6795f367d780cabdf4dfbba2507c1"
-dependencies = [
- "hdf5-src",
- "libc",
- "libloading",
- "libz-sys",
- "pkg-config",
- "regex",
- "serde",
- "serde_derive",
- "winreg",
-]
-
-[[package]]
-name = "hdf5-types"
-version = "0.8.1"
-source = "git+https://github.com/CompRD/hdf5-rust?branch=master#528bc89007f6795f367d780cabdf4dfbba2507c1"
-dependencies = [
- "ascii",
- "cfg-if",
- "hdf5-sys",
- "libc",
-]
-
-[[package]]
-name = "hdf5x"
 version = "0.8.0"
-source = "git+https://github.com/DavidBJaffe/hdf5-rust-as-hdf5x?branch=conda_nov2021_as_hdf5x#343a9003e945edcf4f0fc44ce12e8ab7517c94cf"
-dependencies = [
- "bitflags",
- "cfg-if",
- "hdf5x-derive",
- "hdf5x-sys",
- "hdf5x-types",
- "lazy_static",
- "libc",
- "ndarray",
- "parking_lot",
- "paste",
-]
-
-[[package]]
-name = "hdf5x-derive"
-version = "0.8.0"
-source = "git+https://github.com/DavidBJaffe/hdf5-rust-as-hdf5x?branch=conda_nov2021_as_hdf5x#343a9003e945edcf4f0fc44ce12e8ab7517c94cf"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "hdf5x-sys"
-version = "0.8.0"
-source = "git+https://github.com/DavidBJaffe/hdf5-rust-as-hdf5x?branch=conda_nov2021_as_hdf5x#343a9003e945edcf4f0fc44ce12e8ab7517c94cf"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#276926691a4c81298344dba3644945b04007e07a"
 dependencies = [
  "attohttpc",
  "bzip2",
@@ -926,13 +841,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "hdf5x-types"
+name = "hdf5-types"
 version = "0.8.0"
-source = "git+https://github.com/DavidBJaffe/hdf5-rust-as-hdf5x?branch=conda_nov2021_as_hdf5x#343a9003e945edcf4f0fc44ce12e8ab7517c94cf"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#276926691a4c81298344dba3644945b04007e07a"
 dependencies = [
  "ascii",
  "cfg-if",
- "hdf5x-sys",
+ "hdf5-sys",
  "libc",
 ]
 
@@ -1090,18 +1005,6 @@ name = "libm"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33a33a362ce288760ec6a508b94caaec573ae7d3bbbd91b87aa0bad4456839db"
-
-[[package]]
-name = "libz-sys"
-version = "1.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92e7e15d7610cce1d9752e137625f14e61a28cd45929b6e12e47b50fe154ee2e"
-dependencies = [
- "cc",
- "libc",
- "pkg-config",
- "vcpkg",
-]
 
 [[package]]
 name = "lock_api"
@@ -1474,29 +1377,6 @@ dependencies = [
  "string_utils",
  "tables",
  "vector_utils",
-]
-
-[[package]]
-name = "proc-macro-error"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
-dependencies = [
- "proc-macro-error-attr",
- "proc-macro2",
- "quote",
- "version_check",
-]
-
-[[package]]
-name = "proc-macro-error-attr"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
-dependencies = [
- "proc-macro2",
- "quote",
- "version_check",
 ]
 
 [[package]]
@@ -2045,12 +1925,6 @@ name = "uuid"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
-
-[[package]]
-name = "vcpkg"
-version = "0.2.15"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "vdj_ann"

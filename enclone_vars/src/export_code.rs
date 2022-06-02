@@ -724,9 +724,6 @@ pub fn export_code(level: usize) -> Vec<(String, String)> {
         use string_utils::*;
         use vdj_ann::refx::RefData;
         use vector_utils::*;
-        #[cfg(not(target_os = "windows"))]
-        use hdf5x::Reader;
-        #[cfg(target_os = "windows")]
         use hdf5::Reader;
 
         pub fn proc_lvar_auto(
