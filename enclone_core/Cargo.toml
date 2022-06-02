@@ -49,11 +49,17 @@ zstd = "0.9"
 
 [target.'cfg(not(windows))'.dependencies]
 tilde-expand = "0.1"
-hdf5x = { git = "https://github.com/DavidBJaffe/hdf5-rust-as-hdf5x", branch = "conda_nov2021_as_hdf5x", default-features=false, features = ["conda"] }
 
-[target.'cfg(windows)'.dependencies]
-hdf5 = { git = "https://github.com/CompRD/hdf5-rust", branch = "master", default-features=false }
-hdf5-sys = { git = "https://github.com/CompRD/hdf5-rust", branch = "master", default-features=false, features = ["static","zlib"] }
+[target.'cfg(not(windows))'.dependencies.hdf5]
+git = "https://github.com/10XGenomics/hdf5-rust.git"
+branch = "conda_nov2021"
+features = ["conda"]
+default-features = false
+
+[target.'cfg(windows)'.dependencies.hdf5]
+git = "https://github.com/10XGenomics/hdf5-rust.git"
+branch = "conda_nov2021"
+default-features = false
 
 [build-dependencies]
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }

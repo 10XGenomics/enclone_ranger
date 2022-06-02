@@ -5,6 +5,7 @@
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype, GexInfo};
 use enclone_print::print_utils4::get_gex_matrix_entry;
 use evalexpr::{ContextWithMutableVariables, HashMapContext};
+use hdf5::Reader;
 use io_utils::{dir_list, path_exists};
 use ndarray::s;
 use rayon::prelude::*;
@@ -14,11 +15,6 @@ use std::time;
 use std::time::Instant;
 use string_utils::TextUtils;
 use vector_utils::{bin_position, erase_if};
-
-#[cfg(target_os = "windows")]
-use hdf5::Reader;
-#[cfg(not(target_os = "windows"))]
-use hdf5x::Reader;
 
 pub fn filter_by_fcell(
     ctl: &EncloneControl,

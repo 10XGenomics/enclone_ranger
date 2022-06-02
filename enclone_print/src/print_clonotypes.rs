@@ -24,6 +24,7 @@ use enclone_core::mammalian_fixed_len::mammalian_fixed_len_peer_groups;
 use enclone_core::set_speakers::set_speakers;
 use enclone_proto::types::{Clonotype, DonorReferenceItem};
 use equiv::EquivRel;
+use hdf5::Reader;
 use qd::Double;
 use rayon::prelude::*;
 use std::cmp::max;
@@ -31,11 +32,6 @@ use std::collections::{HashMap, HashSet};
 use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
-
-#[cfg(target_os = "windows")]
-use hdf5::Reader;
-#[cfg(not(target_os = "windows"))]
-use hdf5x::Reader;
 
 // Print clonotypes.  A key challenge here is to define the columns that represent shared
 // chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
