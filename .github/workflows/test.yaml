@@ -112,6 +112,7 @@ jobs:
           args: |
             --all-targets --locked --
             -D clippy::perf
+            -D clippy::style
             -D clippy::suspicious
             -A clippy::comparison_chain
             -W future_incompatible
@@ -131,6 +132,7 @@ jobs:
             -A clippy::needless_range_loop
             -A clippy::type_complexity
             -A clippy::too_many_arguments
+            -W clippy::result_unit_err
       - name: build-enclone
         run: cargo build
       - name: unit tests

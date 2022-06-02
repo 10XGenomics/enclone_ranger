@@ -34,12 +34,11 @@ pub fn get_gex_matrix_entry(
             }
         }
     }
-    let mult: f64;
-    if y.ends_with("_g") {
-        mult = gex_info.gex_mults[li];
+    let mult = if y.ends_with("_g") {
+        gex_info.gex_mults[li]
     } else {
-        mult = gex_info.fb_mults[li];
-    }
+        gex_info.fb_mults[li]
+    };
     if !ctl.gen_opt.full_counts {
         raw_count *= mult;
     }
@@ -142,12 +141,11 @@ pub fn build_show_aa(
         if ctl.clono_print_opt.amino.contains(&"donor".to_string()) {
             let vseq1 = refdata.refs[rsi.vids[cx]].to_ascii_vec();
             let jseq1 = refdata.refs[rsi.jids[cx]].to_ascii_vec();
-            let vseq2: Vec<u8>;
-            if rsi.vpids[cx].is_some() {
-                vseq2 = dref[rsi.vpids[cx].unwrap()].nt_sequence.clone();
+            let vseq2 = if let Some(vpid) = rsi.vpids[cx] {
+                &dref[vpid].nt_sequence
             } else {
-                vseq2 = vseq1.clone();
-            }
+                &vseq1
+            };
             let jseq2 = &jseq1;
             let vlen = vseq2.len() - ctl.heur.ref_v_trim;
             let jlen = jseq2.len() - ctl.heur.ref_j_trim;
@@ -192,12 +190,11 @@ pub fn build_show_aa(
         if ctl.clono_print_opt.amino.contains(&"donorn".to_string()) {
             let vseq1 = refdata.refs[rsi.vids[cx]].to_ascii_vec();
             let jseq1 = refdata.refs[rsi.jids[cx]].to_ascii_vec();
-            let vseq2: Vec<u8>;
-            if rsi.vpids[cx].is_some() {
-                vseq2 = dref[rsi.vpids[cx].unwrap()].nt_sequence.clone();
+            let vseq2 = if let Some(vpid) = rsi.vpids[cx] {
+                &dref[vpid].nt_sequence
             } else {
-                vseq2 = vseq1.clone();
-            }
+                &vseq1
+            };
             let jseq2 = &jseq1;
             let vlen = vseq2.len() - ctl.heur.ref_v_trim;
             let jlen = jseq2.len() - ctl.heur.ref_j_trim;

@@ -438,12 +438,7 @@ pub fn insert_consensus_row(
 ) {
     let mat = &rsi.mat;
     if ctl.clono_print_opt.conx || ctl.clono_print_opt.conp {
-        let style;
-        if ctl.clono_print_opt.conx {
-            style = "x";
-        } else {
-            style = "p";
-        }
+        let style = if ctl.clono_print_opt.conx { "x" } else { "p" };
         let mut row = vec!["consensus".to_string()];
         for _ in 1..row1.len() {
             row.push("\\ext".to_string());
@@ -501,7 +496,7 @@ pub fn insert_consensus_row(
                                 xdots += "X";
                             } else {
                                 for m in classes.iter() {
-                                    if meet_size(&aas, &m.1) == aas.len() {
+                                    if meet_size(&aas, m.1) == aas.len() {
                                         xdots.push(m.0 as char);
                                         break;
                                     }

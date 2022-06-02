@@ -71,12 +71,11 @@ pub fn set_speakers(ctl: &EncloneControl, parseable_fields: &mut Vec<String>, ma
             }
         };
     }
-    let pchains;
-    if ctl.parseable_opt.pchains == "max" {
-        pchains = max_chains;
+    let pchains = if ctl.parseable_opt.pchains == "max" {
+        max_chains
     } else {
-        pchains = ctl.parseable_opt.pchains.force_usize();
-    }
+        ctl.parseable_opt.pchains.force_usize()
+    };
     for col in 0..pchains {
         for x in CVARS_ALLOWED.iter() {
             speakerc!(col, x);

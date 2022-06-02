@@ -784,13 +784,7 @@ pub fn load_gex(
                     &mut r.1,
                     &mut matrix,
                 );
-                if s.is_err() {
-                    let err;
-                    if s.as_ref().err().is_some() {
-                        err = s.err().unwrap();
-                    } else {
-                        err = "[NO ERROR MESSAGE]".to_string();
-                    }
+                if let Err(err) = s {
                     r.11 = err;
                     return;
                 }

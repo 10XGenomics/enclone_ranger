@@ -645,16 +645,10 @@ pub fn insert_reference_rows(
                     trim -= ptrim as usize;
                 }
 
+                refseq.extend(&vseq[..vlen]);
                 let gap = gap as usize;
-                for j in 0..vlen {
-                    refseq.push(vseq[j]);
-                }
-                for _ in 0..gap {
-                    refseq.push(b'-');
-                }
-                for j in 0..jlen {
-                    refseq.push(jseq[j + trim]);
-                }
+                refseq.resize(refseq.len() + gap, b'-');
+                refseq.extend(&jseq[trim..trim + jlen]);
                 let mut refx = String::new();
                 let mut last_color = "black".to_string();
                 for k in 0..show_aa[cz].len() {

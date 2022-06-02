@@ -2,10 +2,7 @@
 
 use crate::defs::{CloneInfo, EncloneControl, ExactClonotype, PotentialJoin};
 use crate::opt_d::jflank;
-use debruijn::{
-    dna_string::{ndiffs, DnaString},
-    Mer,
-};
+use debruijn::{dna_string::ndiffs, Mer};
 use enclone_proto::types::DonorReferenceItem;
 use qd::{dd, Double};
 use stats_utils::abs_diff;
@@ -83,17 +80,18 @@ pub fn join_one(
     // Note that perhaps some foursies should be declared doublets and deleted.
     // Note onesies merging above is turned off so this appears to be moot.
 
-    let (clono1, clono2) = (info[k1].clonotype_id, info[k2].clonotype_id);
+    let (info1, info2) = (&info[k1], &info[k2]);
+    let (clono1, clono2) = (info1.clonotype_id, info2.clonotype_id);
     let chains1 = exact_clonotypes[clono1].share.len();
     let chains2 = exact_clonotypes[clono2].share.len();
     if !(2..=3).contains(&chains1) || chains2 < 2 || chains2 > 3 {
         return false;
     }
     // NEED FOR THIS SEEMS LIKE A BUG:
-    if info[k1].vs.len() == 1 || info[k2].vs.len() == 4 {
+    if info1.vs.len() == 1 || info2.vs.len() == 4 {
         return false;
     }
-    if info[k1].vs.len() > 2 {
+    if info1.vs.len() > 2 {
         return false;
     }
 
@@ -105,27 +103,29 @@ pub fn join_one(
         } else {
             1
         };
-        let (x1, x2) = (&info[k1].cdr3s, &info[k2].cdr3s);
-        for z in 0..chains {
-            if x1[z].len() != x2[z].len() {
-                return false;
-            }
-            if info[k1].vs[z] != info[k2].vs[z] || info[k1].js[z] != info[k2].js[z] {
+        let (x1, x2) = (&info1.cdr3s, &info2.cdr3s);
+        for (((z1, z2), (vs1, vs2)), (js1, js2)) in x1
+            .iter()
+            .zip(x2.iter())
+            .zip(info1.vs.iter().zip(info2.vs.iter()))
+            .zip(info1.js.iter().zip(info2.js.iter()))
+            .take(chains)
+        {
+            if z1.len() != z2.len() || vs1 != vs2 || js1 != js2 {
                 return false;
             }
             let mut cd = 0;
-            for m in 0..x1[z].len() {
-                if x1[z].as_bytes()[m] != x2[z].as_bytes()[m] {
+            for (z1m, z2m) in z1.as_bytes().iter().zip(z2.as_bytes().iter()) {
+                if z1m != z2m {
                     cd += 1;
                 }
             }
-            let limit;
-            if ctl.join_alg_opt.basic.is_some() {
-                limit = (100.0 - ctl.join_alg_opt.basic.unwrap()) / 100.0;
+            let limit = if let Some(basic) = ctl.join_alg_opt.basic {
+                (100.0 - basic) / 100.0
             } else {
-                limit = (100.0 - ctl.join_alg_opt.basic_h.unwrap()) / 100.0;
-            }
-            if cd as f64 / (x1[z].len() as f64) > limit {
+                (100.0 - ctl.join_alg_opt.basic_h.unwrap()) / 100.0
+            };
+            if cd as f64 / (z1.len() as f64) > limit {
                 return false;
             }
         }
@@ -328,12 +328,7 @@ pub fn join_one(
     let mut share_pos_v = vec![Vec::<usize>::new(); 2];
     let mut share_pos_j = vec![Vec::<usize>::new(); 2];
     for u in 0..nrefs {
-        let k: usize;
-        if u == 0 {
-            k = k1;
-        } else {
-            k = k2;
-        }
+        let k = if u == 0 { k1 } else { k2 };
 
         // Traverse the chains in the clonotype.
 
@@ -344,16 +339,16 @@ pub fn join_one(
             // Traverse the two segments (V and J).
 
             for si in 0..2 {
-                let seg: &DnaString;
-                if si == 0 {
-                    seg = &info[k].vs[m];
+                let seg = if si == 0 {
+                    &info[k].vs[m]
                 } else {
-                    seg = &info[k].js[m];
-                }
-                let mut ref_trim = ctl.heur.ref_v_trim;
-                if si == 1 {
-                    ref_trim = ctl.heur.ref_j_trim;
-                }
+                    &info[k].js[m]
+                };
+                let ref_trim = if si == 1 {
+                    ctl.heur.ref_j_trim
+                } else {
+                    ctl.heur.ref_v_trim
+                };
                 for p in 0..seg.len() - ref_trim {
                     let (t1, t2);
                     let r;

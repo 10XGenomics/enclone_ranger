@@ -417,12 +417,11 @@ pub fn process_special_arg1(
                 );
                 if val.contains('/') {
                     let dir = val.rev_before("/");
-                    let msg;
-                    if path_exists(dir) {
-                        msg = "exists";
+                    let msg = if path_exists(dir) {
+                        "exists"
                     } else {
-                        msg = "does not exist";
-                    }
+                        "does not exist"
+                    };
                     emsg += &mut format!("Note that the path {} {}.\n", dir, msg);
                 }
                 return Err(emsg);
@@ -510,12 +509,11 @@ pub fn process_special_arg1(
                 );
                 if val.contains('/') {
                     let dir = val.rev_before("/");
-                    let msg;
-                    if path_exists(dir) {
-                        msg = "exists";
+                    let msg = if path_exists(dir) {
+                        "exists"
                     } else {
-                        msg = "does not exist";
-                    }
+                        "does not exist"
+                    };
                     emsg += &mut format!("Note that the path {} {}.\n", dir, msg);
                 }
                 return Err(emsg);

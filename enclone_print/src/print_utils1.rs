@@ -850,7 +850,7 @@ pub fn cdr3_aa_con(
             c.push('X');
         } else {
             for m in classes.iter() {
-                if meet_size(&vals, &m.1) == vals.len() {
+                if meet_size(&vals, m.1) == vals.len() {
                     c.push(m.0);
                     break;
                 }
@@ -882,12 +882,11 @@ pub fn get_gex_matrix_entry(
             }
         }
     }
-    let mult: f64;
-    if y.ends_with("_g") {
-        mult = gex_info.gex_mults[li];
+    let mult = if y.ends_with("_g") {
+        gex_info.gex_mults[li]
     } else {
-        mult = gex_info.fb_mults[li];
-    }
+        gex_info.fb_mults[li]
+    };
     if !ctl.gen_opt.full_counts {
         raw_count *= mult;
     }

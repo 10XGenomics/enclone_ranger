@@ -21,12 +21,7 @@ use vector_utils::{bin_member, next_diff, sort_sync2, unique_sort};
 
 fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
     let bc = &ctl.gen_opt.bc_joint;
-    let delimiter;
-    if bc.ends_with(".tsv") {
-        delimiter = '\t';
-    } else {
-        delimiter = ',';
-    }
+    let delimiter = if bc.ends_with(".tsv") { '\t' } else { ',' };
     let n = ctl.origin_info.n();
     let mut origin_for_bc = vec![HashMap::<String, String>::new(); n];
     let mut donor_for_bc = vec![HashMap::<String, String>::new(); n];

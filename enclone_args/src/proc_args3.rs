@@ -464,46 +464,44 @@ pub fn proc_xcr(
     ctl.gen_opt.tcr = f.starts_with("TCR=");
     ctl.gen_opt.tcrgd = f.starts_with("TCRGD=");
     ctl.gen_opt.bcr = f.starts_with("BCR=");
-    let mut val: String;
-    if ctl.gen_opt.tcr {
-        val = f.after("TCR=").to_string();
+    let val = if ctl.gen_opt.tcr {
+        f.after("TCR=")
     } else if ctl.gen_opt.bcr {
-        val = f.after("BCR=").to_string();
+        f.after("BCR=")
     } else if ctl.gen_opt.tcrgd {
-        val = f.after("TCRGD=").to_string();
+        f.after("TCRGD=")
     } else {
-        val = f.to_string();
-    }
-    if val == *"" {
+        f
+    };
+    if val.is_empty() {
         return Err(format!(
             "\nYou can't write {} with no value on the right hand side.\n\
             Perhaps you need to remove some white space from your command line.\n",
             f
         ));
     }
-    val = expand_integer_ranges(&val);
-    val = expand_analysis_sets(&val, ctl)?;
-    let donor_groups;
-    if ctl.gen_opt.cellranger {
-        donor_groups = vec![&val[..]];
+    let val = expand_integer_ranges(val);
+    let val = expand_analysis_sets(&val, ctl)?;
+    let donor_groups = if ctl.gen_opt.cellranger {
+        vec![&val[..]]
     } else {
-        donor_groups = val.split(';').collect::<Vec<&str>>();
-    }
+        val.split(';').collect::<Vec<&str>>()
+    };
     let mut gex2 = expand_integer_ranges(gex);
     gex2 = expand_analysis_sets(&gex2, ctl)?;
-    let donor_groups_gex;
-    if ctl.gen_opt.cellranger {
-        donor_groups_gex = vec![&gex2[..]];
+    let donor_groups_gex = if ctl.gen_opt.cellranger {
+        vec![&gex2[..]]
     } else {
-        donor_groups_gex = gex2.split(';').collect::<Vec<&str>>();
-    }
+        gex2.split(';').collect::<Vec<&str>>()
+    };
     let donor_groups_bc = bc.split(';').collect::<Vec<&str>>();
-    let mut xcr = "TCR".to_string();
-    if ctl.gen_opt.bcr {
-        xcr = "BCR".to_string();
+    let xcr = if ctl.gen_opt.bcr {
+        "BCR"
     } else if ctl.gen_opt.tcrgd {
-        xcr = "TCRGD".to_string();
-    }
+        "TCRGD"
+    } else {
+        "TCR"
+    };
     if have_gex && donor_groups_gex.len() != donor_groups.len() {
         return Err(format!(
             "\nThere are {} {} donor groups and {} GEX donor groups, so \
@@ -525,12 +523,11 @@ pub fn proc_xcr(
     ctl.perf_stats(&t, "in proc_xcr 1");
     let t = Instant::now();
     for (id, d) in donor_groups.iter().enumerate() {
-        let origin_groups;
-        if ctl.gen_opt.cellranger {
-            origin_groups = vec![&d[..]];
+        let origin_groups = if ctl.gen_opt.cellranger {
+            vec![&d[..]]
         } else {
-            origin_groups = (*d).split(':').collect::<Vec<&str>>();
-        }
+            (*d).split(':').collect::<Vec<&str>>()
+        };
         let mut origin_groups_gex = Vec::<&str>::new();
         if have_gex {
             if ctl.gen_opt.cellranger {
@@ -563,12 +560,11 @@ pub fn proc_xcr(
             }
         }
         for (is, s) in origin_groups.iter().enumerate() {
-            let mut datasets;
-            if ctl.gen_opt.cellranger {
-                datasets = vec![&s[..]];
+            let mut datasets = if ctl.gen_opt.cellranger {
+                vec![&s[..]]
             } else {
-                datasets = (*s).split(',').collect::<Vec<&str>>();
-            }
+                (*s).split(',').collect::<Vec<&str>>()
+            };
             for i in 0..datasets.len() {
                 if datasets[i].ends_with('/') {
                     datasets[i] = datasets[i].rev_before("/");

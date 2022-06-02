@@ -921,15 +921,10 @@ pub fn proc_cvar_auto(
             }
         } else {
             let heavy = refdata.rtype[x.j_ref_id] == 0;
-            let aa_len;
-            if heavy {
-                aa_len = 10;
-            } else {
-                aa_len = 9;
-            }
+            let aa_len = if heavy { 10 } else { 9 };
             let dna = refdata.refs[x.j_ref_id].to_ascii_vec();
-            let dna = dna[dna.len() - 1 - 3 * aa_len..dna.len() - 1].to_vec();
-            y = stringme(&aa_seq(&dna, 0));
+            let dna = &dna[dna.len() - 1 - 3 * aa_len..dna.len() - 1];
+            y = stringme(&aa_seq(dna, 0));
         }
 
         (y, Vec::new(), "clono".to_string())
@@ -994,15 +989,10 @@ pub fn proc_cvar_auto(
             }
         } else {
             let heavy = refdata.rtype[x.j_ref_id] == 0;
-            let aa_len;
-            if heavy {
-                aa_len = 10;
-            } else {
-                aa_len = 9;
-            }
+            let aa_len = if heavy { 10 } else { 9 };
             let dna = refdata.refs[x.j_ref_id].to_ascii_vec();
-            let dna = dna[dna.len() - 1 - 3 * aa_len..dna.len() - 1].to_vec();
-            y = stringme(&dna);
+            let dna = &dna[dna.len() - 1 - 3 * aa_len..dna.len() - 1];
+            y = stringme(dna);
         }
 
         (y, Vec::new(), "clono".to_string())
@@ -1086,10 +1076,9 @@ pub fn proc_cvar_auto(
         && vname.between2("ndiff", "vj").force_i64() >= 1
     {
         let arg1 = vname.between2("ndiff", "vj").force_i64();
-        let nd;
         let mat = &rsi.mat;
         let u0 = (arg1 - 1) as usize;
-        if u0 < exacts.len() && mat[col][u0].is_some() && mat[col][u].is_some() {
+        let nd = if u0 < exacts.len() && mat[col][u0].is_some() && mat[col][u].is_some() {
             let m0 = mat[col][u0].unwrap();
             let m = mat[col][u].unwrap();
             let mut ndiff = 0;
@@ -1100,10 +1089,10 @@ pub fn proc_cvar_auto(
                     ndiff += 1;
                 }
             }
-            nd = format!("{}", ndiff)
+            format!("{}", ndiff)
         } else {
-            nd = "_".to_string()
-        }
+            "_".to_string()
+        };
 
         (nd, Vec::new(), "exact".to_string())
     } else if vname == "nival" {

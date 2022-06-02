@@ -12,6 +12,7 @@ use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
 use enclone_core::print_tools::emit_codon_color_escape;
 use rayon::prelude::*;
 use std::collections::HashMap;
+use std::convert::TryInto;
 use string_utils::strme;
 use vector_utils::unique_sort;
 
@@ -74,15 +75,9 @@ pub fn build_info(
             if annv.len() == 2 && annv[1].0 == annv[0].0 + annv[0].1 {
                 let mut t = Vec::<u8>::new();
                 let (mut del_start, mut del_stop) = (annv[0].1, annv[1].3);
-                for i in 0..del_start {
-                    t.push(x.seq[i as usize]);
-                }
-                for _ in del_start..del_stop {
-                    t.push(b'-');
-                }
-                for i in (annv[1].0 as usize)..x.seq.len() {
-                    t.push(x.seq[i as usize]);
-                }
+                t.extend(&x.seq[..del_start.try_into().unwrap()]);
+                t.resize(del_stop.try_into().unwrap(), b'-');
+                t.extend(&x.seq[annv[1].0 as usize..]);
                 lens.push(t.len());
                 tigs.push(t.clone());
                 if del_start % 3 != 0 {
@@ -91,15 +86,9 @@ pub fn build_info(
                     del_start -= offset;
                     del_stop -= offset;
                     t.clear();
-                    for i in 0..del_start {
-                        t.push(x.seq[i as usize]);
-                    }
-                    for _ in del_start..del_stop {
-                        t.push(b'-');
-                    }
-                    for i in ((annv[1].0 - offset) as usize)..x.seq.len() {
-                        t.push(x.seq[i as usize]);
-                    }
+                    t.extend(&x.seq[..del_start.try_into().unwrap()]);
+                    t.resize(del_stop.try_into().unwrap(), b'-');
+                    t.extend(&x.seq[((annv[1].0 - offset) as usize)..]);
                 }
                 annv[0].1 += (del_stop - del_start) + annv[1].1;
                 annv.truncate(1);
@@ -142,12 +131,11 @@ pub fn build_info(
                 let ref_aa = aa_seq(&refdata.refs[vid].to_ascii_vec(), 0);
                 let ins_len_aa = ins_len / 3;
                 const EXT: usize = 10;
-                let ins_pos_low;
-                if ins_pos / 3 < EXT {
-                    ins_pos_low = 0;
+                let ins_pos_low = if ins_pos / 3 < EXT {
+                    0
                 } else {
-                    ins_pos_low = ins_pos / 3 - EXT;
-                }
+                    ins_pos / 3 - EXT
+                };
                 let mut ins_pos_high =
                     std::cmp::min(ins_pos / 3 + EXT, aa_full.len() - ins_len_aa + 1);
                 ins_pos_high = std::cmp::min(ins_pos_high, ref_aa.len() - ins_len_aa + 1);

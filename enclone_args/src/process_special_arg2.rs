@@ -290,12 +290,11 @@ pub fn process_special_arg2(
     } else if arg.starts_with("FCELL=") // FCELL retained for backward compatibility
         || arg.starts_with("KEEP_CELL_IF")
     {
-        let mut condition;
-        if arg.starts_with("FCELL") {
-            condition = arg.after("FCELL=").to_string();
+        let condition = if arg.starts_with("FCELL") {
+            arg.after("FCELL=")
         } else {
-            condition = arg.after("KEEP_CELL_IF=").to_string();
-        }
+            arg.after("KEEP_CELL_IF=")
+        };
         let con = condition.as_bytes();
         for i in 0..con.len() {
             if i > 0
@@ -312,7 +311,7 @@ pub fn process_special_arg2(
                 ));
             }
         }
-        condition = condition.replace('\'', "\"");
+        let condition = condition.replace('\'', "\"");
         let compiled = build_operator_tree(&condition);
         if compiled.is_err() {
             return Err(format!("\n{} usage incorrect.\n", arg.before("=")));

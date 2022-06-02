@@ -901,12 +901,11 @@ pub fn parse_json_annotations_files(
         ));
     }
     // Note: only tracking truncated seq and quals initially
-    let ann;
-    if !ctl.gen_opt.cellranger {
-        ann = "all_contig_annotations.json";
+    let ann = if !ctl.gen_opt.cellranger {
+        "all_contig_annotations.json"
     } else {
-        ann = "contig_annotations.json";
-    }
+        "contig_annotations.json"
+    };
     results.par_iter_mut().for_each(|res| {
         let li = res.0;
         let json = format!("{}/{}", ctl.origin_info.dataset_path[li], ann);

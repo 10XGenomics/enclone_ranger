@@ -1030,12 +1030,11 @@ pub fn proc_lvar_auto(
             }
             dist = max(dist, d);
         }
-        let d;
-        if dist == -1_isize {
-            d = "".to_string();
+        let d = if dist == -1_isize {
+            String::new()
         } else {
-            d = format!("{}", dist);
-        }
+            format!("{}", dist)
+        };
 
         (d, Vec::new(), "exact".to_string())
     } else if vname.starts_with("fb")
@@ -1556,7 +1555,6 @@ pub fn proc_lvar_auto(
             "exact".to_string(),
         )
     } else if vname == "near" {
-        let near;
         let mut dist = 1_000_000;
         for i2 in 0..varmat.len() {
             if i2 == u || fp[i2] != fp[u] {
@@ -1572,11 +1570,11 @@ pub fn proc_lvar_auto(
             }
             dist = min(dist, d);
         }
-        if dist == 1_000_000 {
-            near = "".to_string()
+        let near = if dist == 1_000_000 {
+            String::new()
         } else {
-            near = format!("{}", dist)
-        }
+            format!("{}", dist)
+        };
 
         (near, Vec::new(), "exact".to_string())
     } else if vname == "npe" {
