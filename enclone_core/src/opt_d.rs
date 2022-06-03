@@ -51,7 +51,7 @@ pub fn evaluate_d(
     tig: &[u8],
     vref: &[u8],
     seq_start: usize,
-    ds: &Vec<usize>,
+    ds: &[usize],
     jref: &[u8],
     refdata: &RefData,
     jscore_match: i32,
@@ -118,13 +118,13 @@ pub fn evaluate_d(
 }
 
 pub fn opt_d(
-    v_ref_id: usize,                       // ex.share[mid].v_ref_id
-    j_ref_id: usize,                       // ex.share[mid].j_ref_id
-    tig: &Vec<u8>,                         // ex.share[mid].seq_del
-    annv: &Vec<(i32, i32, i32, i32, i32)>, // ex.share[mid].annv
-    cdr3_aa: &str,                         // ex.share[mid].cdr3_aa
+    v_ref_id: usize,                    // ex.share[mid].v_ref_id
+    j_ref_id: usize,                    // ex.share[mid].j_ref_id
+    tig: &[u8],                         // ex.share[mid].seq_del
+    annv: &[(i32, i32, i32, i32, i32)], // ex.share[mid].annv
+    cdr3_aa: &str,                      // ex.share[mid].cdr3_aa
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
     scores: &mut Vec<f64>,
     dsx: &mut Vec<Vec<usize>>,
     jscore_match: i32,
@@ -138,8 +138,7 @@ pub fn opt_d(
 
     // Go through every D segment, or possibly every concatenation of D segments.
 
-    let mut todo = Vec::<Vec<usize>>::new();
-    todo.push(vec![]);
+    let mut todo = vec![vec![]];
     for i in refdata.ds.iter() {
         todo.push(vec![*i]);
     }

@@ -22,7 +22,7 @@ use io_utils::write_obj;
 
 // Export donor reference/inferred alt allele sequences
 pub fn make_donor_refs(
-    alt_refs: &Vec<(usize, usize, DnaString, usize, bool)>,
+    alt_refs: &[(usize, usize, DnaString, usize, bool)],
     refdata: &RefData,
 ) -> Vec<DonorReferenceItem> {
     let mut drefs = Vec::<DonorReferenceItem>::new();
@@ -86,11 +86,11 @@ fn amino_acid(seq: &[u8], start: usize) -> Vec<u8> {
 }
 
 pub fn make_loupe_clonotype(
-    exact_clonotypes: &Vec<ExactClonotype>,
-    exacts: &Vec<usize>,
+    exact_clonotypes: &[ExactClonotype],
+    exacts: &[usize],
     rsi: &ColInfo,
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
     ctl: &EncloneControl,
 ) -> Clonotype {
     // Define concatenated universal and donor reference sequences.
@@ -431,7 +431,7 @@ pub fn loupe_out(
     ctl: &EncloneControl,
     all_loupe_clonotypes: Vec<Clonotype>,
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) {
     if !ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty() {
         let mut uref = Vec::new();

@@ -15,13 +15,13 @@ pub fn split_orbits(
     orbits: &mut Vec<Vec<i32>>,
     is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
-    sr: &Vec<Vec<Double>>,
+    sr: &[Vec<Double>],
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
-    raw_joins: &Vec<Vec<usize>>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
+    raw_joins: &[Vec<usize>],
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) {
     let mut orbits2 = Vec::<Vec<i32>>::new();
     for i in 0..orbits.len() {

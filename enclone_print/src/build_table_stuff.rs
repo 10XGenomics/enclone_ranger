@@ -11,17 +11,17 @@ use vector_utils::unique_sort;
 
 pub fn build_table_stuff(
     ctl: &EncloneControl,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
     rsi: &ColInfo,
-    vars: &Vec<Vec<usize>>,
-    show_aa: &Vec<Vec<usize>>,
-    field_types: &Vec<Vec<u8>>,
+    vars: &[Vec<usize>],
+    show_aa: &[Vec<usize>],
+    field_types: &[Vec<u8>],
     row1: &mut Vec<String>,
     justify: &mut Vec<u8>,
     drows: &mut Vec<Vec<String>>,
     rows: &mut Vec<Vec<String>>,
-    lvars: &Vec<String>,
+    lvars: &[String],
 ) {
     // Build lead header row and justification to match.
 
@@ -318,9 +318,7 @@ pub fn build_table_stuff(
                         for x in s.chars() {
                             schars.push(x);
                         }
-                        for k in 0..q {
-                            ch[ch_start + k] = schars[k];
-                        }
+                        ch[ch_start..(q + ch_start)].copy_from_slice(&schars[..q]);
                     }
                 }
                 let mut s = String::new();

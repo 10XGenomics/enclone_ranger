@@ -13,9 +13,9 @@ pub fn filter_umi(
     eq: &EquivRel,
     orbits: &mut Vec<Vec<i32>>,
     ctl: &EncloneControl,
-    exact_clonotypes: &mut Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
-    fate: &mut Vec<HashMap<String, String>>,
+    exact_clonotypes: &mut [ExactClonotype],
+    info: &[CloneInfo],
+    fate: &mut [HashMap<String, String>],
 ) {
     let (mut is_tcr, mut is_bcr) = (true, true);
     if ctl.gen_opt.tcr {

@@ -21,16 +21,16 @@ pub fn some_filters(
     orbits: &mut Vec<Vec<i32>>,
     is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
-    sr: &Vec<Vec<Double>>,
+    sr: &[Vec<Double>],
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
-    raw_joins: &Vec<Vec<usize>>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
+    raw_joins: &[Vec<usize>],
     eq: &EquivRel,
-    disintegrated: &Vec<bool>,
-    fate: &mut Vec<HashMap<String, String>>,
+    disintegrated: &[bool],
+    fate: &mut [HashMap<String, String>],
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) {
     // Delete exact subclonotypes that appear to represent doublets.
 
@@ -331,9 +331,7 @@ pub fn some_filters(
                 let clonotype_id = exacts[u];
                 let ex = &exact_clonotypes[clonotype_id];
                 for col in 0..cols {
-                    let m = mat[col][u];
-                    if m.is_some() {
-                        let m = m.unwrap();
+                    if let Some(m) = mat[col][u] {
                         if ex.share[m].annv.len() > 1 {
                             continue;
                         }
@@ -361,9 +359,7 @@ pub fn some_filters(
             let clonotype_id = exacts[u];
             let ex = &exact_clonotypes[clonotype_id];
             for col in 0..cols {
-                let m = mat[col][u];
-                if m.is_some() {
-                    let m = m.unwrap();
+                if let Some(m) = mat[col][u] {
                     if ex.share[m].annv.len() > 1 {
                         continue;
                     }

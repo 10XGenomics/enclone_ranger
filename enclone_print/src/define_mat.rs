@@ -14,12 +14,12 @@ use vector_utils::{bin_position, next_diff12_3, next_diff1_3, unique_sort};
 // raw joins.  Also join where there are identical V..J sequences.
 
 fn joiner(
-    infos: &Vec<usize>,
-    info: &Vec<CloneInfo>,
+    infos: &[usize],
+    info: &[CloneInfo],
     to_exacts: &HashMap<usize, usize>,
-    raw_joinsx: &Vec<Vec<usize>>,
-    chains: &Vec<(usize, usize)>,
-    seq_chains: &Vec<(Vec<u8>, usize, usize)>,
+    raw_joinsx: &[Vec<usize>],
+    chains: &[(usize, usize)],
+    seq_chains: &[(Vec<u8>, usize, usize)],
 ) -> EquivRel {
     let mut e = EquivRel::new(chains.len() as i32);
     for i1 in 0..infos.len() {
@@ -59,15 +59,15 @@ fn joiner(
 pub fn define_mat(
     is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
-    sr: &Vec<Vec<Double>>,
+    sr: &[Vec<Double>],
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    exacts: &Vec<usize>,
-    od: &Vec<(Vec<usize>, usize, i32)>,
-    info: &Vec<CloneInfo>,
-    raw_joins: &Vec<Vec<usize>>,
+    exact_clonotypes: &[ExactClonotype],
+    exacts: &[usize],
+    od: &[(Vec<usize>, usize, i32)],
+    info: &[CloneInfo],
+    raw_joins: &[Vec<usize>],
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) -> Vec<Vec<Option<usize>>> {
     // Define map of indices into exacts.
 

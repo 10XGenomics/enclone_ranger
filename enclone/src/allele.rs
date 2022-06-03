@@ -21,7 +21,7 @@ use vector_utils::{erase_if, next_diff, next_diff1_2, next_diff1_3, reverse_sort
 pub fn find_alleles(
     refdata: &RefData,
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exact_clonotypes: &[ExactClonotype],
 ) -> Vec<(usize, usize, DnaString, usize, bool)> {
     // Derive consensus sequences for alternate alleles of V segments.
     //
@@ -509,9 +509,9 @@ pub fn find_alleles(
 pub fn sub_alts(
     refdata: &RefData,
     ctl: &EncloneControl,
-    alt_refs: &Vec<(usize, usize, DnaString, usize, bool)>,
+    alt_refs: &[(usize, usize, DnaString, usize, bool)],
     info: &mut Vec<CloneInfo>,
-    exact_clonotypes: &mut Vec<ExactClonotype>,
+    exact_clonotypes: &mut [ExactClonotype],
 ) {
     let t = Instant::now();
     for i in 0..info.len() {

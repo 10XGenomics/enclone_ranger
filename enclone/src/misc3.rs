@@ -13,7 +13,7 @@ use vector_utils::unique_sort;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut Vec<Vec<TigData>>, refdata: &RefData) {
+pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut [Vec<TigData>], refdata: &RefData) {
     tig_bc.sort_by(|x, y| -> Ordering {
         for i in 0..x.len() {
             // Order by number of chains.
@@ -106,9 +106,9 @@ pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut Vec<Vec<TigData>>, refdata
 pub fn study_consensus(
     _count: &mut usize,
     ctl: &EncloneControl,
-    share: &Vec<TigData1>,
-    clones: &Vec<Vec<TigData0>>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    share: &[TigData1],
+    clones: &[Vec<TigData0>],
+    exact_clonotypes: &[ExactClonotype],
     refdata: &RefData,
 ) {
     if ctl.gen_opt.utr_con {
@@ -207,8 +207,7 @@ pub fn study_consensus(
         const SHOW: usize = 120;
         for z in 0..clones[0].len() {
             let mut log = Vec::<u8>::new();
-            let mut c_ref_ids = Vec::<Option<usize>>::new();
-            c_ref_ids.push(share[z].c_ref_id);
+            let mut c_ref_ids = vec![share[z].c_ref_id];
             unique_sort(&mut c_ref_ids);
             fwriteln!(
                 log,
@@ -221,35 +220,35 @@ pub fn study_consensus(
             let _len = share[z].seq.len();
             let mut rights = Vec::<Vec<u8>>::new();
             let mut bcs = Vec::<String>::new();
-            for m in 0..clones.len() {
-                let start = clones[m][z].j_stop;
-                let mut x = clones[m][z].full_seq[start..].to_vec();
+            for clone in clones {
+                let start = clone[z].j_stop;
+                let mut x = clone[z].full_seq[start..].to_vec();
                 if x.len() > SHOW {
                     x.truncate(SHOW);
                 }
                 rights.push(x.to_vec());
-                bcs.push(clones[m][0].barcode.clone());
+                bcs.push(clone[0].barcode.clone());
             }
-            let mut rconst = Vec::<Vec<u8>>::new();
-            for i in 0..c_ref_ids.len() {
-                let cid = c_ref_ids[i];
-                if cid.is_none() {
-                    continue;
-                }
-                let mut x = refdata.refs[cid.unwrap()].to_string().as_bytes().to_vec();
-                if x.len() > SHOW {
-                    x.truncate(SHOW);
-                }
-                /*
-                // WARNING!  TO INVESTIGATE, AND NOT NECESSARILY VALID FOR MOUSE!!!!!!!!!!!!!!!
-                let n = refdata.name[cid.unwrap()].after("IG");
-                if n == "HM" || n == "HA1" || n == "HA2" ||  n == "HG1" || n == "HG2"
-                    || n == "HG4"{
-                    x.remove(0);
-                }
-                */
-                rconst.push(x.to_vec());
-            }
+            let rconst = c_ref_ids
+                .iter()
+                .filter_map(|&cid| {
+                    cid.map(|cid| {
+                        let mut x = refdata.refs[cid].to_string().as_bytes().to_vec();
+                        if x.len() > SHOW {
+                            x.truncate(SHOW);
+                        }
+                        /*
+                        // WARNING!  TO INVESTIGATE, AND NOT NECESSARILY VALID FOR MOUSE!!!!!!!!!!!!!!!
+                        let n = refdata.name[cid.unwrap()].after("IG");
+                        if n == "HM" || n == "HA1" || n == "HA2" ||  n == "HG1" || n == "HG2"
+                            || n == "HG4"{
+                            x.remove(0);
+                        }
+                        */
+                        x
+                    })
+                })
+                .collect::<Vec<_>>();
             let mut minlen = 1_000_000;
             let mut maxlen = 0;
             for i in 0..rights.len() {

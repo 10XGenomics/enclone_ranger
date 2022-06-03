@@ -15,7 +15,7 @@ use string_utils::{strme, TextUtils};
 
 // Process arguments.
 
-pub fn proc_args(mut ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(), String> {
+pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), String> {
     //
     // Start.
 
@@ -27,7 +27,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(),
 
     // Check for @test1,...,@test4 and @test.
 
-    let mut args = args.clone();
+    let mut args = args.to_owned();
     for i in 0..args.len() {
         replace_at_test(&mut args[i]);
     }
@@ -285,7 +285,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(),
                     if found {
                         if args[i].starts_with("BIP=") {
                             if s.starts_with("PUBLIC_BCR_SUBSET=") {
-                                if bcrv.len() == 0 {
+                                if bcrv.is_empty() {
                                     bcrv.push(s.after("PUBLIC_BCR_SUBSET=").to_string());
                                 } else {
                                     let n = bcrv.len();
@@ -800,7 +800,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(),
                 if evil_eye {
                     println!("creating file {} to test writability", val);
                 }
-                test_writeable(&val, evil_eye)?;
+                test_writeable(val, evil_eye)?;
                 continue 'args_loop;
             }
         }
@@ -815,7 +815,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(),
                 tilde_expand_me(&mut *set_string_writeable_or_stdout[j].1);
                 let val = &(set_string_writeable_or_stdout[j].1);
                 if *val != "stdout" {
-                    test_writeable(&val, evil_eye)?;
+                    test_writeable(val, evil_eye)?;
                 }
                 continue 'args_loop;
             }
@@ -941,10 +941,10 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(),
 
     // Force visual mode if plot file is gui or if VIS_DUMP was invoked.
 
-    if ctl.plot_opt.plot_file == "gui" || ctl.plot_opt.plot_file == "gui_stdout" {
-        if !ctl.gen_opt.vis_dump {
-            ctl.visual_mode = true;
-        }
+    if (ctl.plot_opt.plot_file == "gui" || ctl.plot_opt.plot_file == "gui_stdout")
+        && !ctl.gen_opt.vis_dump
+    {
+        ctl.visual_mode = true;
     }
 
     // Record time.

@@ -9,10 +9,10 @@ use vector_utils::{lower_bound1_2, unique_sort, upper_bound1_2};
 pub fn merge_onesies(
     orbits: &mut Vec<Vec<i32>>,
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
     eq: &EquivRel,
-    disintegrated: &Vec<bool>,
+    disintegrated: &[bool],
 ) {
     if ctl.join_alg_opt.merge_onesies {
         // ctl.join_alg_opt.merge_onesies is always true

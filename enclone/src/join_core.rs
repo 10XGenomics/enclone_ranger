@@ -13,13 +13,13 @@ pub fn join_core(
     i: usize,
     j: usize,
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
     to_bc: &HashMap<(usize, usize), Vec<String>>,
-    sr: &Vec<Vec<Double>>,
+    sr: &[Vec<Double>],
     pot: &mut Vec<PotentialJoin>,
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
 ) {
     let mut eq: EquivRel = EquivRel::new((j - i) as i32);
     for k1 in i..j {

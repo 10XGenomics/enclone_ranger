@@ -23,8 +23,8 @@ use hdf5x::Reader;
 pub fn filter_by_fcell(
     ctl: &EncloneControl,
     orbits: &mut Vec<Vec<i32>>,
-    info: &Vec<CloneInfo>,
-    exact_clonotypes: &mut Vec<ExactClonotype>,
+    info: &[CloneInfo],
+    exact_clonotypes: &mut [ExactClonotype],
     gex_info: &GexInfo,
 ) -> Result<(), String> {
     if !ctl.clono_filt_opt_def.fcell.is_empty() {

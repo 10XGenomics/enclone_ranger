@@ -46,8 +46,8 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                 let m = fetch_url(&url)?;
                 if m.contains("\"analysis_ids\":[") {
                     let mut ids = m.between("\"analysis_ids\":[", "]").to_string();
-                    ids = ids.replace(" ", "");
-                    ids = ids.replace("\n", "");
+                    ids = ids.replace(' ', "");
+                    ids = ids.replace('\n', "");
                     let ids = ids.split(',').collect::<Vec<&str>>();
                     let mut ids2 = Vec::<String>::new();
 
@@ -451,12 +451,9 @@ pub fn proc_xcr(
     mut ctl: &mut EncloneControl,
 ) -> Result<(), String> {
     ctl.origin_info = OriginInfo::default();
-    if (ctl.gen_opt.tcr && f.starts_with("BCR="))
-        || (ctl.gen_opt.tcr && f.starts_with("TCRGD="))
-        || (ctl.gen_opt.tcrgd && f.starts_with("BCR="))
-        || (ctl.gen_opt.tcrgd && f.starts_with("TCR="))
-        || (ctl.gen_opt.bcr && f.starts_with("TCR="))
-        || (ctl.gen_opt.bcr && f.starts_with("TCRGD="))
+    if ((ctl.gen_opt.tcr || ctl.gen_opt.tcrgd) && f.starts_with("BCR="))
+        || ((ctl.gen_opt.bcr || ctl.gen_opt.tcr) && f.starts_with("TCRGD="))
+        || ((ctl.gen_opt.bcr || ctl.gen_opt.tcrgd) && f.starts_with("TCR="))
     {
         return Err("\nOnly one of TCR, BCR, or TCRGD can be specified.\n".to_string());
     }
@@ -464,46 +461,44 @@ pub fn proc_xcr(
     ctl.gen_opt.tcr = f.starts_with("TCR=");
     ctl.gen_opt.tcrgd = f.starts_with("TCRGD=");
     ctl.gen_opt.bcr = f.starts_with("BCR=");
-    let mut val: String;
-    if ctl.gen_opt.tcr {
-        val = f.after("TCR=").to_string();
+    let val = if ctl.gen_opt.tcr {
+        f.after("TCR=")
     } else if ctl.gen_opt.bcr {
-        val = f.after("BCR=").to_string();
+        f.after("BCR=")
     } else if ctl.gen_opt.tcrgd {
-        val = f.after("TCRGD=").to_string();
+        f.after("TCRGD=")
     } else {
-        val = f.to_string();
-    }
-    if val == *"" {
+        f
+    };
+    if val.is_empty() {
         return Err(format!(
             "\nYou can't write {} with no value on the right hand side.\n\
             Perhaps you need to remove some white space from your command line.\n",
             f
         ));
     }
-    val = expand_integer_ranges(&val);
-    val = expand_analysis_sets(&val, ctl)?;
-    let donor_groups;
-    if ctl.gen_opt.cellranger {
-        donor_groups = vec![&val[..]];
+    let val = expand_integer_ranges(val);
+    let val = expand_analysis_sets(&val, ctl)?;
+    let donor_groups = if ctl.gen_opt.cellranger {
+        vec![&val[..]]
     } else {
-        donor_groups = val.split(';').collect::<Vec<&str>>();
-    }
+        val.split(';').collect::<Vec<&str>>()
+    };
     let mut gex2 = expand_integer_ranges(gex);
     gex2 = expand_analysis_sets(&gex2, ctl)?;
-    let donor_groups_gex;
-    if ctl.gen_opt.cellranger {
-        donor_groups_gex = vec![&gex2[..]];
+    let donor_groups_gex = if ctl.gen_opt.cellranger {
+        vec![&gex2[..]]
     } else {
-        donor_groups_gex = gex2.split(';').collect::<Vec<&str>>();
-    }
+        gex2.split(';').collect::<Vec<&str>>()
+    };
     let donor_groups_bc = bc.split(';').collect::<Vec<&str>>();
-    let mut xcr = "TCR".to_string();
-    if ctl.gen_opt.bcr {
-        xcr = "BCR".to_string();
+    let xcr = if ctl.gen_opt.bcr {
+        "BCR"
     } else if ctl.gen_opt.tcrgd {
-        xcr = "TCRGD".to_string();
-    }
+        "TCRGD"
+    } else {
+        "TCR"
+    };
     if have_gex && donor_groups_gex.len() != donor_groups.len() {
         return Err(format!(
             "\nThere are {} {} donor groups and {} GEX donor groups, so \
@@ -525,12 +520,11 @@ pub fn proc_xcr(
     ctl.perf_stats(&t, "in proc_xcr 1");
     let t = Instant::now();
     for (id, d) in donor_groups.iter().enumerate() {
-        let origin_groups;
-        if ctl.gen_opt.cellranger {
-            origin_groups = vec![&d[..]];
+        let origin_groups = if ctl.gen_opt.cellranger {
+            vec![&d[..]]
         } else {
-            origin_groups = (*d).split(':').collect::<Vec<&str>>();
-        }
+            (*d).split(':').collect::<Vec<&str>>()
+        };
         let mut origin_groups_gex = Vec::<&str>::new();
         if have_gex {
             if ctl.gen_opt.cellranger {
@@ -563,14 +557,13 @@ pub fn proc_xcr(
             }
         }
         for (is, s) in origin_groups.iter().enumerate() {
-            let mut datasets;
-            if ctl.gen_opt.cellranger {
-                datasets = vec![&s[..]];
+            let mut datasets = if ctl.gen_opt.cellranger {
+                vec![&s[..]]
             } else {
-                datasets = (*s).split(',').collect::<Vec<&str>>();
-            }
+                (*s).split(',').collect::<Vec<&str>>()
+            };
             for i in 0..datasets.len() {
-                if datasets[i].ends_with("/") {
+                if datasets[i].ends_with('/') {
                     datasets[i] = datasets[i].rev_before("/");
                 }
             }
@@ -713,7 +706,7 @@ pub fn proc_xcr(
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn proc_meta_core(lines: &Vec<String>, mut ctl: &mut EncloneControl) -> Result<(), String> {
+pub fn proc_meta_core(lines: &[String], mut ctl: &mut EncloneControl) -> Result<(), String> {
     let mut fields = Vec::<String>::new();
     let mut donors = Vec::<String>::new();
     for (count, s) in lines.iter().enumerate() {
@@ -781,7 +774,7 @@ pub fn proc_meta_core(lines: &Vec<String>, mut ctl: &mut EncloneControl) -> Resu
                         .to_string(),
                 );
             }
-        } else if !s.starts_with('#') && s.len() > 0 {
+        } else if !s.starts_with('#') && !s.is_empty() {
             let val = s.split(',').collect::<Vec<&str>>();
             if val.len() != fields.len() {
                 return Err(format!(
@@ -886,7 +879,7 @@ pub fn proc_meta_core(lines: &Vec<String>, mut ctl: &mut EncloneControl) -> Resu
     Ok(())
 }
 
-pub fn proc_meta(v: &Vec<String>, ctl: &mut EncloneControl) -> Result<(), String> {
+pub fn proc_meta(v: &[String], ctl: &mut EncloneControl) -> Result<(), String> {
     let mut lines_all = Vec::<Vec<String>>::new();
     for f in v.iter() {
         if !path_exists(f) {
@@ -914,9 +907,9 @@ pub fn proc_meta(v: &Vec<String>, ctl: &mut EncloneControl) -> Result<(), String
     let mut lines = Vec::<String>::new();
     for j in 0..lines_all.len() {
         if lines_all[j].is_empty() || lines_all[j][0] != lines_all[0][0] {
-            return Err(format!(
-                "\nMETA files having different header lines have been specified.\n"
-            ));
+            return Err(
+                "\nMETA files having different header lines have been specified.\n".to_string(),
+            );
         }
         if j == 0 {
             lines.push(lines_all[0][0].clone());

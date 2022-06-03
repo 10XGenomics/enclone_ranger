@@ -89,10 +89,10 @@ pub fn filter_gelbead_contamination(
 
 pub fn create_exact_subclonotype_core(
     // inputs:
-    tig_bc: &Vec<Vec<TigData>>,
+    tig_bc: &[Vec<TigData>],
     r: usize,
     s: usize,
-    to_delete: &Vec<bool>,
+    to_delete: &[bool],
     // outputs:
     share: &mut Vec<TigData1>,
     clones: &mut Vec<Vec<TigData0>>,
@@ -269,9 +269,9 @@ pub fn create_exact_subclonotype_core(
 
 pub fn find_exact_subclonotypes(
     ctl: &EncloneControl,
-    tig_bc: &Vec<Vec<TigData>>,
+    tig_bc: &[Vec<TigData>],
     refdata: &RefData,
-    fate: &mut Vec<HashMap<String, String>>,
+    fate: &mut [HashMap<String, String>],
 ) -> Vec<ExactClonotype> {
     let mut exact_clonotypes = Vec::<ExactClonotype>::new();
     let mut r = 0;
@@ -557,7 +557,7 @@ pub fn search_for_shm_indels(ctl: &EncloneControl, tig_bc: &Vec<Vec<TigData>>) {
 
 pub fn check_for_barcode_reuse(
     ctl: &EncloneControl,
-    tig_bc: &Vec<Vec<TigData>>,
+    tig_bc: &[Vec<TigData>],
 ) -> Result<(), String> {
     if !ctl.gen_opt.accept_reuse {
         const MIN_REUSE_FRAC_TO_SHOW: f64 = 0.25;

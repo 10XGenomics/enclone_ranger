@@ -16,8 +16,8 @@ pub fn get_gex_matrix_entry(
     ctl: &EncloneControl,
     gex_info: &GexInfo,
     fid: usize,
-    d_all: &Vec<Vec<u32>>,
-    ind_all: &Vec<Vec<u32>>,
+    d_all: &[Vec<u32>],
+    ind_all: &[Vec<u32>],
     li: usize,
     l: usize,
     p: usize,
@@ -34,12 +34,11 @@ pub fn get_gex_matrix_entry(
             }
         }
     }
-    let mult: f64;
-    if y.ends_with("_g") {
-        mult = gex_info.gex_mults[li];
+    let mult = if y.ends_with("_g") {
+        gex_info.gex_mults[li]
     } else {
-        mult = gex_info.fb_mults[li];
-    }
+        gex_info.fb_mults[li]
+    };
     if !ctl.gen_opt.full_counts {
         raw_count *= mult;
     }
@@ -53,12 +52,12 @@ pub fn get_gex_matrix_entry(
 pub fn build_show_aa(
     ctl: &EncloneControl,
     rsi: &ColInfo,
-    vars_amino: &Vec<Vec<usize>>,
-    shares_amino: &Vec<Vec<usize>>,
+    vars_amino: &[Vec<usize>],
+    shares_amino: &[Vec<usize>],
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
-    _exacts: &Vec<usize>,
-    _exact_clonotypes: &Vec<ExactClonotype>,
+    dref: &[DonorReferenceItem],
+    _exacts: &[usize],
+    _exact_clonotypes: &[ExactClonotype],
 ) -> Vec<Vec<usize>> {
     let cols = rsi.vids.len();
     let mut show_aa = vec![Vec::<usize>::new(); cols];
@@ -142,12 +141,11 @@ pub fn build_show_aa(
         if ctl.clono_print_opt.amino.contains(&"donor".to_string()) {
             let vseq1 = refdata.refs[rsi.vids[cx]].to_ascii_vec();
             let jseq1 = refdata.refs[rsi.jids[cx]].to_ascii_vec();
-            let vseq2: Vec<u8>;
-            if rsi.vpids[cx].is_some() {
-                vseq2 = dref[rsi.vpids[cx].unwrap()].nt_sequence.clone();
+            let vseq2 = if let Some(vpid) = rsi.vpids[cx] {
+                &dref[vpid].nt_sequence
             } else {
-                vseq2 = vseq1.clone();
-            }
+                &vseq1
+            };
             let jseq2 = &jseq1;
             let vlen = vseq2.len() - ctl.heur.ref_v_trim;
             let jlen = jseq2.len() - ctl.heur.ref_j_trim;
@@ -192,12 +190,11 @@ pub fn build_show_aa(
         if ctl.clono_print_opt.amino.contains(&"donorn".to_string()) {
             let vseq1 = refdata.refs[rsi.vids[cx]].to_ascii_vec();
             let jseq1 = refdata.refs[rsi.jids[cx]].to_ascii_vec();
-            let vseq2: Vec<u8>;
-            if rsi.vpids[cx].is_some() {
-                vseq2 = dref[rsi.vpids[cx].unwrap()].nt_sequence.clone();
+            let vseq2 = if let Some(vpid) = rsi.vpids[cx] {
+                &dref[vpid].nt_sequence
             } else {
-                vseq2 = vseq1.clone();
-            }
+                &vseq1
+            };
             let jseq2 = &jseq1;
             let vlen = vseq2.len() - ctl.heur.ref_v_trim;
             let jlen = jseq2.len() - ctl.heur.ref_j_trim;
@@ -254,12 +251,12 @@ pub fn build_show_aa(
 
 pub fn compute_some_stats(
     ctl: &EncloneControl,
-    lvars: &Vec<String>,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    lvars: &[String],
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
     gex_info: &GexInfo,
-    vdj_cells: &Vec<Vec<String>>,
-    n_vdj_gex: &Vec<usize>,
+    vdj_cells: &[Vec<String>],
+    n_vdj_gex: &[usize],
     cred: &mut Vec<Vec<String>>,
     pe: &mut Vec<Vec<String>>,
     ppe: &mut Vec<Vec<String>>,
@@ -491,30 +488,30 @@ pub fn compute_some_stats(
 pub fn compute_bu(
     u: usize,
     cell_count: usize,
-    exacts: &Vec<usize>,
-    lvars: &Vec<String>,
+    exacts: &[usize],
+    lvars: &[String],
     ctl: &EncloneControl,
-    bli: &Vec<(String, usize, usize)>,
+    bli: &[(String, usize, usize)],
     ex: &ExactClonotype,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    row: &mut Vec<String>,
+    exact_clonotypes: &[ExactClonotype],
+    row: &mut [String],
     subrows: &mut Vec<Vec<String>>,
-    varmat: &Vec<Vec<Vec<u8>>>,
+    varmat: &[Vec<Vec<u8>>],
     have_gex: bool,
     gex_info: &GexInfo,
     rsi: &ColInfo,
     sr: &mut Vec<(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)>,
-    fate: &Vec<HashMap<String, String>>,
-    nd_fields: &Vec<String>,
-    alt_bcs: &Vec<String>,
-    cred: &Vec<Vec<String>>,
-    pe: &Vec<Vec<String>>,
-    ppe: &Vec<Vec<String>>,
-    npe: &Vec<Vec<String>>,
-    d_all: &Vec<Vec<u32>>,
-    ind_all: &Vec<Vec<u32>>,
-    mat: &Vec<Vec<Option<usize>>>,
-    these_stats: &Vec<(String, Vec<String>)>,
+    fate: &[HashMap<String, String>],
+    nd_fields: &[String],
+    alt_bcs: &[String],
+    cred: &[Vec<String>],
+    pe: &[Vec<String>],
+    ppe: &[Vec<String>],
+    npe: &[Vec<String>],
+    d_all: &[Vec<u32>],
+    ind_all: &[Vec<u32>],
+    mat: &[Vec<Option<usize>>],
+    these_stats: &[(String, Vec<String>)],
     refdata: &RefData,
 ) {
     // Very bad computation because of embedded binary search.
@@ -813,9 +810,7 @@ pub fn compute_bu(
             let mut cx = vec!["".to_string(); ncall];
             let mut cp = 0;
             for col in 0..cols {
-                let m = mat[col][u];
-                if m.is_some() {
-                    let m = m.unwrap();
+                if let Some(m) = mat[col][u] {
                     for p in 0..rsi.cvars[col].len() {
                         if rsi.cvars[col][p] == *"v_name_orig" {
                             let v = &refdata.name[ex.clones[bcl.2][m].v_ref_id];

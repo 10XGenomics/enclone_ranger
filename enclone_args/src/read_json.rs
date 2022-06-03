@@ -95,8 +95,8 @@ fn json_error(
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 fn parse_vector_entry_from_json(
-    x: &Vec<u8>,
-    json: &String,
+    x: &[u8],
+    json: &str,
     accept_inconsistent: bool,
     origin_info: &OriginInfo,
     li: usize,
@@ -734,7 +734,7 @@ pub fn read_json(
         let x = read_vector_entry_from_json(&mut f);
         if x.is_err() {
             eprintln!("\nProblem reading {}.\n", jsonx);
-            return Err(format!("{}", x.err().unwrap()));
+            return Err(x.err().unwrap());
         }
         match x.unwrap() {
             None => break,
@@ -841,11 +841,11 @@ pub fn read_json(
             if y < 1.0 - ctl.gen_opt.subsample {
                 to_delete1[i] = true;
                 let bc = &tig_bc[i][0].barcode;
-                let p = bin_position(&vdj_cells, &bc);
+                let p = bin_position(vdj_cells, bc);
                 if p >= 0 {
                     to_delete2[p as usize] = true;
                 }
-                let p = bin_position(&gex_cells, &bc);
+                let p = bin_position(gex_cells, bc);
                 if p >= 0 {
                     to_delete3[p as usize] = true;
                 }
@@ -873,7 +873,7 @@ pub fn parse_json_annotations_files(
     vdj_cells: &mut Vec<Vec<String>>,
     gex_cells: &mut Vec<Vec<String>>,
     gex_cells_specified: &mut Vec<bool>,
-    fate: &mut Vec<HashMap<String, String>>,
+    fate: &mut [HashMap<String, String>],
 ) -> Result<(), String> {
     // (origin index, contig name, V..J length): (?)
     let mut results = Vec::<(
@@ -901,12 +901,11 @@ pub fn parse_json_annotations_files(
         ));
     }
     // Note: only tracking truncated seq and quals initially
-    let ann;
-    if !ctl.gen_opt.cellranger {
-        ann = "all_contig_annotations.json";
+    let ann = if !ctl.gen_opt.cellranger {
+        "all_contig_annotations.json"
     } else {
-        ann = "contig_annotations.json";
-    }
+        "contig_annotations.json"
+    };
     results.par_iter_mut().for_each(|res| {
         let li = res.0;
         let json = format!("{}/{}", ctl.origin_info.dataset_path[li], ann);
@@ -959,7 +958,7 @@ pub fn parse_json_annotations_files(
         let mut found = vec![false; cells.len()];
         let tigs = &results[i].2;
         for j in 0..tigs.len() {
-            let p = bin_position(&cells, &tigs[j][0].barcode);
+            let p = bin_position(cells, &tigs[j][0].barcode);
             if p >= 0 {
                 found[p as usize] = true;
             }

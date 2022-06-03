@@ -63,8 +63,8 @@ pub fn setup_pager(_pager: bool) {}
 
 pub fn lookup_heavy_chain_reuse(
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
     eq: &EquivRel,
 ) {
     if ctl.gen_opt.heavy_chain_reuse {
@@ -195,7 +195,7 @@ pub fn lookup_heavy_chain_reuse(
 pub fn cross_filter(
     ctl: &EncloneControl,
     tig_bc: &mut Vec<Vec<TigData>>,
-    fate: &mut Vec<HashMap<String, String>>,
+    fate: &mut [HashMap<String, String>],
 ) {
     // Get the list of dataset origins.  Here we allow the same origin name to have been used
     // for more than one donor, as we haven't explicitly prohibited that.
