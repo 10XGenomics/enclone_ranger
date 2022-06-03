@@ -7,7 +7,7 @@ use vector_utils::VecUtils;
 pub fn find_pca_file(
     _ctl: &EncloneControl,
     _outs: &str,
-    analysis: &Vec<String>,
+    analysis: &[String],
     pathlist: &mut Vec<String>,
 ) -> String {
     let mut pca_file = String::new();
@@ -29,7 +29,7 @@ pub fn find_pca_file(
 pub fn find_json_metrics_file(
     ctl: &EncloneControl,
     _outs: &str,
-    analysis: &Vec<String>,
+    analysis: &[String],
     pathlist: &mut Vec<String>,
 ) -> String {
     let mut json_metrics_file = String::new();
@@ -49,7 +49,7 @@ pub fn find_json_metrics_file(
 pub fn find_feature_metrics_file(
     ctl: &EncloneControl,
     _outs: &str,
-    analysis: &Vec<String>,
+    analysis: &[String],
     pathlist: &mut Vec<String>,
 ) -> String {
     let mut feature_metrics_file = String::new();
@@ -69,7 +69,7 @@ pub fn find_feature_metrics_file(
 pub fn find_metrics_file(
     ctl: &EncloneControl,
     outs: &str,
-    _analysis: &Vec<String>,
+    _analysis: &[String],
     pathlist: &mut Vec<String>,
 ) -> String {
     let mut metrics_file = String::new();
@@ -90,7 +90,7 @@ pub fn find_metrics_file(
 pub fn find_cluster_file(
     _ctl: &EncloneControl,
     _outs: &str,
-    analysis: &Vec<String>,
+    analysis: &[String],
     pathlist: &mut Vec<String>,
 ) -> String {
     let mut cluster_file = String::new();

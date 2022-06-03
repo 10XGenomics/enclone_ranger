@@ -38,50 +38,50 @@ pub fn row_fill(
     pass: usize,
     u: usize,
     ctl: &EncloneControl,
-    exacts: &Vec<usize>,
-    mults: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exacts: &[usize],
+    mults: &[usize],
+    exact_clonotypes: &[ExactClonotype],
     gex_info: &GexInfo,
     refdata: &RefData,
-    varmat: &Vec<Vec<Vec<u8>>>,
-    fp: &Vec<Vec<usize>>,
-    vars_amino: &Vec<Vec<usize>>,
-    show_aa: &Vec<Vec<usize>>,
-    ref_diff_pos: &Vec<Vec<Vec<usize>>>,
-    field_types: &Vec<Vec<u8>>,
-    bads: &mut Vec<bool>,
+    varmat: &[Vec<Vec<u8>>],
+    fp: &[Vec<usize>],
+    vars_amino: &[Vec<usize>],
+    show_aa: &[Vec<usize>],
+    ref_diff_pos: &[Vec<Vec<usize>>],
+    field_types: &[Vec<u8>],
+    bads: &mut [bool],
     gex_low: &mut usize,
-    row: &mut Vec<String>,                       // row of human-readable output
-    out_data: &mut Vec<HashMap<String, String>>, // row of parseable output
-    cx: &mut Vec<Vec<String>>,
-    d_all: &mut Vec<Vec<u32>>,
-    ind_all: &mut Vec<Vec<u32>>,
+    row: &mut Vec<String>,                    // row of human-readable output
+    out_data: &mut [HashMap<String, String>], // row of parseable output
+    cx: &mut [Vec<String>],
+    d_all: &mut [Vec<u32>],
+    ind_all: &mut [Vec<u32>],
     rsi: &ColInfo,
-    dref: &Vec<DonorReferenceItem>,
+    dref: &[DonorReferenceItem],
     groups: &HashMap<usize, Vec<usize>>,
-    d_readers: &Vec<Option<Reader>>,
-    ind_readers: &Vec<Option<Reader>>,
-    h5_data: &Vec<(usize, Vec<u32>, Vec<u32>)>,
+    d_readers: &[Option<Reader>],
+    ind_readers: &[Option<Reader>],
+    h5_data: &[(usize, Vec<u32>, Vec<u32>)],
     stats: &mut Vec<(String, Vec<String>)>,
-    stats_pass1: &Vec<Vec<(String, Vec<String>)>>,
-    vdj_cells: &Vec<Vec<String>>,
-    n_vdj_gex: &Vec<usize>,
-    lvarsc: &Vec<String>,
+    stats_pass1: &[Vec<(String, Vec<String>)>],
+    vdj_cells: &[Vec<String>],
+    n_vdj_gex: &[usize],
+    lvarsc: &[String],
     lvarsh: &HashSet<String>,
-    nd_fields: &Vec<String>,
-    peer_groups: &Vec<Vec<(usize, u8, u32)>>,
-    extra_args: &Vec<String>,
-    all_vars: &Vec<String>,
+    nd_fields: &[String],
+    peer_groups: &[Vec<(usize, u8, u32)>],
+    extra_args: &[String],
+    all_vars: &[String],
     need_gex: bool,
-    fate: &Vec<HashMap<String, String>>,
-    cdr3_con: &Vec<Vec<u8>>,
+    fate: &[HashMap<String, String>],
+    cdr3_con: &[Vec<u8>],
     allele_data: &AlleleData,
 ) -> Result<(), String> {
     // Redefine some things to reduce dependencies.
 
     let mat = &rsi.mat;
     let cvars = &ctl.clono_print_opt.cvars;
-    let lvars = lvarsc.clone();
+    let lvars = lvarsc;
     let clonotype_id = exacts[u];
     let ex = &exact_clonotypes[clonotype_id];
     let mut pcols_sort = ctl.parseable_opt.pcols_sort.clone();
@@ -288,7 +288,7 @@ pub fn row_fill(
     // WARNING!  If you add lead variables, you may need to add them to the function
     // LinearCondition::require_valid_variables.
 
-    let mut all_lvars = lvars.clone();
+    let mut all_lvars = lvars.to_owned();
     if ctl.parseable_opt.pout.is_empty() {
     } else if ctl.parseable_opt.pcols.is_empty() {
         for i in 0..LVARS_ALLOWED.len() {
@@ -303,7 +303,7 @@ pub fn row_fill(
             }
         }
     }
-    for x in extra_args.iter() {
+    for x in extra_args {
         if !lvarsh.contains(&*x) {
             all_lvars.push(x.clone());
         }
@@ -376,12 +376,10 @@ pub fn row_fill(
                         // }
                         let val = res.unwrap();
                         let val = val.as_number();
-                        if val.is_err() {
-                            out_vals.push(String::new());
-                        } else {
-                            let val = val.unwrap();
-                            out_vals.push(format!("{:.1}", val));
-                        }
+                        out_vals.push(match val {
+                            Err(_) => String::new(),
+                            Ok(val) => format!("{:.1}", val),
+                        });
                     }
                     let mut median = String::new();
                     let mut out_valsf = Vec::<f64>::new();
@@ -434,7 +432,7 @@ pub fn row_fill(
             extra_args,
             out_data,
             stats,
-            &lvars,
+            lvars,
             row,
             fate,
             dref,
@@ -468,7 +466,7 @@ pub fn row_fill(
                 d_all,
                 ind_all,
                 stats,
-                &lvars,
+                lvars,
                 &alt_bcs,
                 gex_mean,
                 gex_sum,

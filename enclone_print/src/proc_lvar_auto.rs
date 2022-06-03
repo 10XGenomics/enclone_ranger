@@ -22,34 +22,34 @@ pub fn proc_lvar_auto(
     i: usize,
     pass: usize,
     var: &String,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
     u: usize,
     rsi: &ColInfo,
     refdata: &RefData,
     ctl: &EncloneControl,
-    extra_args: &Vec<String>,
-    out_data: &mut Vec<HashMap<String, String>>,
+    extra_args: &[String],
+    out_data: &mut [HashMap<String, String>],
     stats: &mut Vec<(String, Vec<String>)>,
-    lvars: &Vec<String>,
+    lvars: &[String],
     row: &mut Vec<String>,
-    fate: &Vec<HashMap<String, String>>,
-    dref: &Vec<DonorReferenceItem>,
-    varmat: &Vec<Vec<Vec<u8>>>,
-    fp: &Vec<Vec<usize>>,
-    n_vdj_gex: &Vec<usize>,
-    vdj_cells: &Vec<Vec<String>>,
+    fate: &[HashMap<String, String>],
+    dref: &[DonorReferenceItem],
+    varmat: &[Vec<Vec<u8>>],
+    fp: &[Vec<usize>],
+    n_vdj_gex: &[usize],
+    vdj_cells: &[Vec<String>],
     gex_info: &GexInfo,
     groups: &HashMap<usize, Vec<usize>>,
-    mults: &Vec<usize>,
-    nd_fields: &Vec<String>,
-    gex_counts_unsorted: &Vec<usize>,
-    gex_fcounts_unsorted: &Vec<f64>,
-    n_gexs: &Vec<usize>,
-    d_readers: &Vec<Option<Reader>>,
-    ind_readers: &Vec<Option<Reader>>,
-    h5_data: &Vec<(usize, Vec<u32>, Vec<u32>)>,
-    alt_bcs: &Vec<String>,
+    mults: &[usize],
+    nd_fields: &[String],
+    gex_counts_unsorted: &[usize],
+    gex_fcounts_unsorted: &[f64],
+    n_gexs: &[usize],
+    d_readers: &[Option<Reader>],
+    ind_readers: &[Option<Reader>],
+    h5_data: &[(usize, Vec<u32>, Vec<u32>)],
+    alt_bcs: &[String],
 ) -> Result<bool, String> {
     let clonotype_id = exacts[u];
     let ex = &exact_clonotypes[clonotype_id];
@@ -1030,12 +1030,11 @@ pub fn proc_lvar_auto(
             }
             dist = max(dist, d);
         }
-        let d;
-        if dist == -1_isize {
-            d = "".to_string();
+        let d = if dist == -1_isize {
+            String::new()
         } else {
-            d = format!("{}", dist);
-        }
+            format!("{}", dist)
+        };
 
         (d, Vec::new(), "exact".to_string())
     } else if vname.starts_with("fb")
@@ -1139,7 +1138,7 @@ pub fn proc_lvar_auto(
         for x in gex_fcounts_unsorted.iter() {
             f.push(format!("{}", *x));
         }
-        let mut counts = gex_counts_unsorted.clone();
+        let mut counts = gex_counts_unsorted.to_owned();
         counts.sort_unstable();
         let gex_median = rounded_median(&counts);
 
@@ -1149,7 +1148,7 @@ pub fn proc_lvar_auto(
         for x in gex_fcounts_unsorted.iter() {
             f.push(format!("{}", *x));
         }
-        let mut counts = gex_counts_unsorted.clone();
+        let mut counts = gex_counts_unsorted.to_owned();
         counts.sort_unstable();
         let gex_median = rounded_median(&counts);
 
@@ -1556,7 +1555,6 @@ pub fn proc_lvar_auto(
             "exact".to_string(),
         )
     } else if vname == "near" {
-        let near;
         let mut dist = 1_000_000;
         for i2 in 0..varmat.len() {
             if i2 == u || fp[i2] != fp[u] {
@@ -1572,11 +1570,11 @@ pub fn proc_lvar_auto(
             }
             dist = min(dist, d);
         }
-        if dist == 1_000_000 {
-            near = "".to_string()
+        let near = if dist == 1_000_000 {
+            String::new()
         } else {
-            near = format!("{}", dist)
-        }
+            format!("{}", dist)
+        };
 
         (near, Vec::new(), "exact".to_string())
     } else if vname == "npe" {

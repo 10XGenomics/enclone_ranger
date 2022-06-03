@@ -33,7 +33,7 @@ pub fn graph_filter(
     ctl: &EncloneControl,
     tig_bc: &mut Vec<Vec<TigData>>,
     graph: bool,
-    fate: &mut Vec<HashMap<String, String>>,
+    fate: &mut [HashMap<String, String>],
 ) {
     let mut ndels = 0;
     let mut seqs = Vec::<(Vec<u8>, bool, String, usize)>::new();

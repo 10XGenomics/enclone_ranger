@@ -75,7 +75,7 @@ pub fn get_known_features(gex_info: &GexInfo) -> Result<Vec<String>, String> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn involves_gex_fb(x: &String) -> bool {
+pub fn involves_gex_fb(x: &str) -> bool {
     let ends0 = [
         "_g", "_ab", "_cr", "_cu", "_g_μ", "_ab_μ", "_cr_μ", "_cu_μ", "_g_%",
     ];
@@ -86,19 +86,16 @@ pub fn involves_gex_fb(x: &String) -> bool {
             ends.push(format!("{}{}", z, y));
         }
     }
-    let mut x = x.clone();
-    if x.contains(':') {
-        x = x.rev_after(":").to_string();
-    }
-    if x.ends_with("_cell") {
-        x = x.rev_before("_cell").to_string();
-    }
-    for y in ends.iter() {
-        if x.ends_with(y) {
-            return true;
+    let x = {
+        let x = if x.contains(':') { x.rev_after(":") } else { x };
+        if x.ends_with("_cell") {
+            x.rev_before("_cell")
+        } else {
+            x
         }
-    }
-    x == "gex"
+    };
+    ends.iter().any(|y| x.ends_with(y))
+        || x == "gex"
         || x.starts_with("gex_")
         || x == "n_gex"
         || x == "clust"
@@ -110,28 +107,28 @@ pub fn involves_gex_fb(x: &String) -> bool {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn is_pattern(x: &String, parseable: bool) -> bool {
+pub fn is_pattern(x: &str, parseable: bool) -> bool {
     let ends0 = [
         "_g", "_ab", "_cr", "_cu", "_g_μ", "_ab_μ", "_cr_μ", "_cu_μ", "_g_%",
     ];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
-    let mut ends = Vec::<String>::new();
-    for z in ends0.iter() {
-        for y in suffixes.iter() {
-            ends.push(format!("{}{}", z, y));
+    let x = {
+        let mut x = x;
+        if x.contains(':') {
+            x = x.rev_after(":");
         }
-    }
-    let mut x = x.clone();
-    if x.contains(':') {
-        x = x.rev_after(":").to_string();
-    }
-    if parseable && x.ends_with("_cell") {
-        x = x.rev_before("_cell").to_string();
-    }
+        if parseable && x.ends_with("_cell") {
+            x = x.rev_before("_cell");
+        }
+        x
+    };
     let mut pat = false;
-    for y in ends.iter() {
-        if x.ends_with(y) {
-            let p = x.rev_before(y);
+    for y in ends0
+        .into_iter()
+        .flat_map(|z| suffixes.iter().map(move |&y| format!("{}{}", z, y)))
+    {
+        if x.ends_with(&y) {
+            let p = x.rev_before(&y);
             if !p.is_empty() && Regex::new(p).is_ok() {
                 let mut ok = true;
                 let mut special = false;
@@ -164,33 +161,24 @@ pub fn is_pattern(x: &String, parseable: bool) -> bool {
 fn check_gene_fb(
     ctl: &EncloneControl,
     gex_info: &GexInfo,
-    to_check: &Vec<String>,
+    to_check: &[String],
     category: &str,
 ) -> Result<(), String> {
     let g_ends0 = ["_g"];
     let fb_ends0 = ["_ab", "_cr", "_cu"];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
     let suffixes_g = ["", "_min", "_max", "_μ", "_Σ", "_%"];
-    let (mut g_ends, mut fb_ends) = (Vec::<String>::new(), Vec::<String>::new());
-    for x in g_ends0.iter() {
-        for y in suffixes_g.iter() {
-            g_ends.push(format!("{}{}", x, y));
-        }
-    }
-    for x in fb_ends0.iter() {
-        for y in suffixes.iter() {
-            fb_ends.push(format!("{}{}", x, y));
-        }
-    }
-    for x in to_check.iter() {
-        let mut x = x.to_string();
-        if x.contains(':') {
-            x = x.after(":").to_string();
-        }
-        if !gex_info.have_gex
-            && !gex_info.have_fb
-            && (*x == "n_gex".to_string() || *x == "n_gex_cell".to_string())
-        {
+    let g_ends = g_ends0
+        .iter()
+        .flat_map(|&x| suffixes_g.iter().map(move |&y| format!("{}{}", x, y)))
+        .collect::<Vec<_>>();
+    for x in to_check {
+        let x = if x.contains(':') {
+            x.after(":")
+        } else {
+            x.as_str()
+        };
+        if !gex_info.have_gex && !gex_info.have_fb && (x == "n_gex" || x == "n_gex_cell") {
             if category == "parseable" {
                 return Err(format!(
                     "\nParseable field {} does not make sense because neither gene expression \
@@ -213,13 +201,13 @@ fn check_gene_fb(
                 }
             }
             if problem
-                || *x == "gex".to_string()
+                || x == "gex"
                 || x.starts_with("gex_")
-                || *x == "clust".to_string()
-                || *x == "type".to_string()
-                || *x == "entropy".to_string()
-                || *x == "cred".to_string()
-                || *x == "cred_cell".to_string()
+                || x == "clust"
+                || x == "type"
+                || x == "entropy"
+                || x == "cred"
+                || x == "cred_cell"
             {
                 if category == "parseable" {
                     return Err(format!(
@@ -237,8 +225,11 @@ fn check_gene_fb(
             }
         }
         if !gex_info.have_fb {
-            for y in fb_ends.iter() {
-                if x.ends_with(y) {
+            for y in fb_ends0
+                .into_iter()
+                .flat_map(|x| suffixes.iter().map(move |&y| format!("{}{}", x, y)))
+            {
+                if x.ends_with(&y) {
                     if category == "parseable" {
                         return Err(format!(
                             "\nParseable field {} does not make sense because feature \
@@ -420,7 +411,7 @@ fn check_gene_fb(
 pub fn check_pcols(
     ctl: &EncloneControl,
     gex_info: &GexInfo,
-    cols: &Vec<String>,
+    cols: &[String],
     allow_cell: bool,
 ) -> Result<(), String> {
     let mut alt_bcs = Vec::<String>::new();
@@ -586,7 +577,7 @@ pub fn check_one_lvar(
     ctl: &EncloneControl,
     gex_info: &GexInfo,
     nd_used: &mut bool,
-    ends: &Vec<String>,
+    ends: &[String],
     is_lvar: bool,
 ) -> Result<bool, String> {
     for i in 0..ctl.gen_opt.info_fields.len() {

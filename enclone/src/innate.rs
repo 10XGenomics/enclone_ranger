@@ -11,7 +11,7 @@ use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, reverse_sort, unique_sort};
 
-pub fn species(refdata: &RefData) -> String {
+pub fn species(refdata: &RefData) -> &'static str {
     let mut my_trac = Vec::<Vec<u8>>::new();
     for i in 0..refdata.refs.len() {
         if refdata.name[i].starts_with("TRAC") || refdata.name[i].starts_with("IGHM") {
@@ -28,24 +28,18 @@ pub fn species(refdata: &RefData) -> String {
         }
     }
     unique_sort(&mut kmers);
-    let mut counts = Vec::<(usize, String)>::new();
+    let mut counts = Vec::<(usize, &'static str)>::new();
     for pass in 1..=2 {
         let mut count = 0;
-        let species;
-        if pass == 1 {
-            species = "human".to_string();
-        } else {
-            species = "mouse".to_string();
-        }
+        let species = if pass == 1 { "human" } else { "mouse" };
 
         // Build trac.  This is the concatenation, with single space separation, of the all
         // the human (pass = 1) or mouse (pass = 2) reference sequences that contain
         // |TRAC or |IGHM, for particular versions of these reference sequences (and probably
         // that choice doesn't matter much).
 
-        let trac;
-        if pass == 1 {
-            trac = b"GGAGTGCATCCGCCCCAACCCTTTTCCCCCTCGTCTCCTGTGAGAATTCCCCGTCGGATACGAGCAGCGTGGCCG\
+        let trac = if pass == 1 {
+            b"GGAGTGCATCCGCCCCAACCCTTTTCCCCCTCGTCTCCTGTGAGAATTCCCCGTCGGATACGAGCAGCGTGGCCG\
             TTGGCTGCCTCGCACAGGACTTCCTTCCCGACTCCATCACTTTCTCCTGGAAATACAAGAACAACTCTGACATCA\
             GCAGCACCCGGGGCTTCCCATCAGTCCTGAGAGGGGGCAAGTACGCAGCCACCTCACAGGTGCTGCTGCCTTCCA\
             AGGACGTCATGCAGGGCACAGACGAACACGTGGTGTGCAAAGTCCAGCACCCCAACGGCAACAAAGAAAAGAACG\
@@ -87,9 +81,9 @@ pub fn species(refdata: &RefData) -> String {
             TGCTAGACATGAGGTCTATGGACTTCAAGAGCAACAGTGCTGTGGCCTGGAGCAACAAATCTGACTTTGCATGTG\
             CAAACGCCTTCAACAACAGCATTATTCCAGAAGACACCTTCTTCCCCAGCCCAGAAAGTTCCTGTGATGTCAAGC\
             TGGTCGAGAAAAGCTTTGAAACAGATACGAACCTAAACTTTCAAAACCTGTCAGTGATTGGGTTCCGAATCCTCC\
-            TCCTGAAAGTGGCCGGGTTTAATCTGCTCATGACGCTGCGGCTGTGGTCCAGC";
+            TCCTGAAAGTGGCCGGGTTTAATCTGCTCATGACGCTGCGGCTGTGGTCCAGC"
         } else {
-            trac = b"AGAGTCAGTCCTTCCCAAATGTCTTCCCCCTCGTCTCCTGCGAGAGCCCCCTGTCTGATAAGAATCTGGTGGCCA\
+            b"AGAGTCAGTCCTTCCCAAATGTCTTCCCCCTCGTCTCCTGCGAGAGCCCCCTGTCTGATAAGAATCTGGTGGCCA\
             TGGGCTGCCTGGCCCGGGACTTCCTGCCCAGCACCATTTCCTTCACCTGGAACTACCAGAACAACACTGAAGTCA\
             TCCAGGGTATCAGAACCTTCCCAACACTGAGGACAGGGGGCAAGTACCTAGCCACCTCGCAGGTGTTGCTGTCTC\
             CCAAGAGCATCCTTGAAGGTTCAGATGAATACCTGGTATGCAAAATCCACTACGGAGGCAAAAACAAAGATCTGC\
@@ -131,8 +125,8 @@ pub fn species(refdata: &RefData) -> String {
             CTGACAAAACTGTGCTGGACATGAAAGCTATGGATTCCAAGAGCAATGGGGCCATTGCCTGGAGCAACCAGACAA\
             GCTTCACCTGCCAAGATATCTTCAAAGAGACCAACGCCACCTACCCCAGTTCAGACGTTCCCTGTGATGCCACGT\
             TGACTGAGAAAAGCTTTGAAACAGATATGAACCTAAACTTTCAAAACCTGTCAGTTATGGGACTCCGAATCCTCC\
-            TGCTGAAAGTAGCCGGATTTAACCTGCTCATGACGCTGAGGCTGTGGTCCAGT";
-        }
+            TGCTGAAAGTAGCCGGATTTAACCTGCTCATGACGCTGAGGCTGTGGTCCAGT"
+        };
 
         // Test the kmers.
 
@@ -146,9 +140,9 @@ pub fn species(refdata: &RefData) -> String {
     }
     reverse_sort(&mut counts);
     if counts[0].0 == counts[1].0 {
-        "unknown".to_string()
+        "unknown"
     } else {
-        counts[0].1.clone()
+        counts[0].1
     }
 }
 
@@ -177,8 +171,8 @@ pub fn innate_cdr3(species: &str, class: &str) -> Vec<String> {
 
 pub fn mark_innate(refdata: &RefData, ex: &mut Vec<ExactClonotype>) {
     let species = species(refdata);
-    let inkt_cdr3 = innate_cdr3(&species, "iNKT");
-    let mait_cdr3 = innate_cdr3(&species, "MAIT");
+    let inkt_cdr3 = innate_cdr3(species, "iNKT");
+    let mait_cdr3 = innate_cdr3(species, "MAIT");
     for i in 0..ex.len() {
         let (mut have_mait_tra, mut have_mait_trb) = (false, false);
         let (mut have_mait_tra_cdr3, mut have_mait_trb_cdr3) = (false, false);
@@ -193,7 +187,7 @@ pub fn mark_innate(refdata: &RefData, ex: &mut Vec<ExactClonotype>) {
             if jname.contains('*') {
                 jname = jname.before("*").to_string();
             }
-            if species == *"human" {
+            if species == "human" {
                 if vname == "TRAV10" && jname == "TRAJ18" {
                     have_inkt_tra = true;
                 }
@@ -208,7 +202,7 @@ pub fn mark_innate(refdata: &RefData, ex: &mut Vec<ExactClonotype>) {
                 if vname.starts_with("TRBV20") || vname.starts_with("TRBV6") {
                     have_mait_trb = true;
                 }
-            } else if species == *"mouse" {
+            } else if species == "mouse" {
                 if vname == "TRAV1" && jname == "TRAJ33" {
                     have_mait_tra = true;
                 }

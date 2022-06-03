@@ -19,14 +19,14 @@ pub fn delete_doublets(
     orbits: &mut Vec<Vec<i32>>,
     is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
-    sr: &Vec<Vec<Double>>,
+    sr: &[Vec<Double>],
     ctl: &EncloneControl,
-    exact_clonotypes: &Vec<ExactClonotype>,
-    info: &Vec<CloneInfo>,
-    raw_joins: &Vec<Vec<usize>>,
+    exact_clonotypes: &[ExactClonotype],
+    info: &[CloneInfo],
+    raw_joins: &[Vec<usize>],
     refdata: &RefData,
-    dref: &Vec<DonorReferenceItem>,
-    fate: &mut Vec<HashMap<String, String>>,
+    dref: &[DonorReferenceItem],
+    fate: &mut [HashMap<String, String>],
 ) {
     if ctl.clono_filt_opt_def.doublet {
         let t = Instant::now();

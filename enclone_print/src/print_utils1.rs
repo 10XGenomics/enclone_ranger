@@ -206,7 +206,7 @@ pub fn get_fwr3(x: &TigData1) -> Option<String> {
 pub fn compute_field_types(
     ctl: &EncloneControl,
     rsi: &ColInfo,
-    show_aa: &Vec<Vec<usize>>,
+    show_aa: &[Vec<usize>],
 ) -> Vec<Vec<u8>> {
     let cols = rsi.mat.len();
     let mut field_types = vec![Vec::new(); cols];
@@ -266,8 +266,8 @@ pub fn compute_field_types(
 pub fn make_table(
     ctl: &EncloneControl,
     rows: &mut Vec<Vec<String>>,
-    justify: &Vec<u8>,
-    mlog: &Vec<u8>,
+    justify: &[u8],
+    mlog: &[u8],
     logz: &mut String,
 ) {
     // In plain mode, strip escape characters.
@@ -478,11 +478,11 @@ pub fn ndigits(n: usize) -> usize {
 
 pub fn start_gen(
     ctl: &EncloneControl,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
     out_data: &mut Vec<HashMap<String, String>>,
     mut mlog: &mut Vec<u8>,
-    extra_args: &Vec<String>,
+    extra_args: &[String],
 ) {
     let pcols_sort = &ctl.parseable_opt.pcols_sort;
     macro_rules! speak {
@@ -660,10 +660,10 @@ pub fn start_gen(
 pub fn insert_position_rows(
     ctl: &EncloneControl,
     rsi: &ColInfo,
-    show_aa: &Vec<Vec<usize>>,
-    field_types: &Vec<Vec<u8>>,
-    vars: &Vec<Vec<usize>>,
-    row1: &Vec<String>,
+    show_aa: &[Vec<usize>],
+    field_types: &[Vec<u8>],
+    vars: &[Vec<usize>],
+    row1: &[String],
 ) -> Vec<Vec<String>> {
     let cols = rsi.cdr3_starts.len();
     let mut drows = Vec::<Vec<String>>::new();
@@ -719,18 +719,18 @@ pub fn insert_position_rows(
 
 pub fn color_codon(
     ctl: &EncloneControl,
-    seq_amino: &Vec<u8>,
-    ref_diff_pos: &Vec<Vec<Vec<usize>>>,
-    x: &Vec<(usize, u8, u32)>,
+    seq_amino: &[u8],
+    ref_diff_pos: &[Vec<Vec<usize>>],
+    x: &[(usize, u8, u32)],
     col: usize,
     mid: usize,
     p: usize,
     u: usize,
     last_color: &mut String,
     last: bool,
-    cdr3_con: &Vec<Vec<u8>>,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    cdr3_con: &[Vec<u8>],
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
 ) -> Vec<u8> {
     let mut log = Vec::<u8>::new();
     let codon = &seq_amino[3 * p..3 * p + 3];
@@ -796,7 +796,7 @@ pub fn color_codon(
         }
         fwrite!(log, "{}", aa as char);
     }
-    if last && *last_color != "black".to_string() {
+    if last && *last_color != "black" {
         emit_end_escape(&mut log);
     }
     log
@@ -804,36 +804,35 @@ pub fn color_codon(
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn aa_classes() -> Vec<(char, Vec<u8>)> {
-    let mut classes = Vec::new();
-    classes.push(('B', b"DN".to_vec()));
-    classes.push(('Z', b"EQ".to_vec()));
-    classes.push(('J', b"IL".to_vec()));
-    classes.push(('-', b"DE".to_vec()));
-    classes.push(('+', b"KHR".to_vec()));
-    classes.push(('Ψ', b"ILMV".to_vec()));
-    classes.push(('π', b"AGPS".to_vec()));
-    classes.push(('Ω', b"FHWY".to_vec()));
-    classes.push(('Φ', b"IFLMVWY".to_vec()));
-    classes.push(('ζ', b"DEHKNQRST".to_vec()));
-    classes.push(('X', b"ACDEFGHIKLMNPQRSTVWY".to_vec()));
-    classes
+pub fn aa_classes() -> Vec<(char, &'static [u8])> {
+    vec![
+        ('B', b"DN"),
+        ('Z', b"EQ"),
+        ('J', b"IL"),
+        ('-', b"DE"),
+        ('+', b"KHR"),
+        ('Ψ', b"ILMV"),
+        ('π', b"AGPS"),
+        ('Ω', b"FHWY"),
+        ('Φ', b"IFLMVWY"),
+        ('ζ', b"DEHKNQRST"),
+        ('X', b"ACDEFGHIKLMNPQRSTVWY"),
+    ]
 }
 
 pub fn cdr3_aa_con(
     style: &str,
     col: usize,
-    exacts: &Vec<usize>,
-    exact_clonotypes: &Vec<ExactClonotype>,
+    exacts: &[usize],
+    exact_clonotypes: &[ExactClonotype],
     rsi: &ColInfo,
 ) -> String {
     let mat = &rsi.mat;
     let mut cdr3s = Vec::<String>::new();
     for v in 0..exacts.len() {
-        let m = mat[col][v];
-        if m.is_some() {
+        if let Some(m) = mat[col][v] {
             let ex = &exact_clonotypes[exacts[v]];
-            cdr3s.push(ex.share[m.unwrap()].cdr3_aa.clone());
+            cdr3s.push(ex.share[m].cdr3_aa.clone());
         }
     }
     let classes = aa_classes();
@@ -850,7 +849,7 @@ pub fn cdr3_aa_con(
             c.push('X');
         } else {
             for m in classes.iter() {
-                if meet_size(&vals, &m.1) == vals.len() {
+                if meet_size(&vals, m.1) == vals.len() {
                     c.push(m.0);
                     break;
                 }
@@ -864,8 +863,8 @@ pub fn get_gex_matrix_entry(
     ctl: &EncloneControl,
     gex_info: &GexInfo,
     fid: usize,
-    d_all: &Vec<Vec<u32>>,
-    ind_all: &Vec<Vec<u32>>,
+    d_all: &[Vec<u32>],
+    ind_all: &[Vec<u32>],
     li: usize,
     l: usize,
     p: usize,
@@ -882,12 +881,11 @@ pub fn get_gex_matrix_entry(
             }
         }
     }
-    let mult: f64;
-    if y.ends_with("_g") {
-        mult = gex_info.gex_mults[li];
+    let mult = if y.ends_with("_g") {
+        gex_info.gex_mults[li]
     } else {
-        mult = gex_info.fb_mults[li];
-    }
+        gex_info.fb_mults[li]
+    };
     if !ctl.gen_opt.full_counts {
         raw_count *= mult;
     }

@@ -21,12 +21,7 @@ use vector_utils::{bin_member, next_diff, sort_sync2, unique_sort};
 
 fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
     let bc = &ctl.gen_opt.bc_joint;
-    let delimiter;
-    if bc.ends_with(".tsv") {
-        delimiter = '\t';
-    } else {
-        delimiter = ',';
-    }
+    let delimiter = if bc.ends_with(".tsv") { '\t' } else { ',' };
     let n = ctl.origin_info.n();
     let mut origin_for_bc = vec![HashMap::<String, String>::new(); n];
     let mut donor_for_bc = vec![HashMap::<String, String>::new(); n];
@@ -159,13 +154,13 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
 
 pub fn proc_args_post(
     mut ctl: &mut EncloneControl,
-    args: &Vec<String>,
-    metas: &Vec<String>,
-    metaxs: &Vec<String>,
-    xcrs: &Vec<String>,
+    args: &[String],
+    metas: &[String],
+    metaxs: &[String],
+    xcrs: &[String],
     have_gex: bool,
-    gex: &String,
-    bc: &String,
+    gex: &str,
+    bc: &str,
     using_plot: bool,
 ) -> Result<(), String> {
     // Process INFO.
@@ -266,7 +261,7 @@ pub fn proc_args_post(
         &mut ctl.parseable_opt.pout,
     ];
     for f in files.iter_mut() {
-        tilde_expand_me(&mut *f);
+        tilde_expand_me(*f);
     }
 
     // Test VAR_DEF arguments for circularity.
@@ -423,13 +418,13 @@ pub fn proc_args_post(
 
     // Sanity check other arguments (and more below).
 
-    if ctl.parseable_opt.pcols_show.len() > 0 {
-        if ctl.parseable_opt.pcols_show.len() != ctl.parseable_opt.pcols.len() {
-            return Err(
-                "\nThe number of fields provided to PCOLS_SHOW has to match that for PCOLS.\n"
-                    .to_string(),
-            );
-        }
+    if !ctl.parseable_opt.pcols_show.is_empty()
+        && ctl.parseable_opt.pcols_show.len() != ctl.parseable_opt.pcols.len()
+    {
+        return Err(
+            "\nThe number of fields provided to PCOLS_SHOW has to match that for PCOLS.\n"
+                .to_string(),
+        );
     }
     if ctl.plot_opt.split_plot_by_dataset && ctl.plot_opt.split_plot_by_origin {
         return Err(
@@ -527,7 +522,7 @@ pub fn proc_args_post(
         for i in 0..metas.len() {
             let f = get_path_fail(&metas[i], ctl, "META")?;
             v.push(f.clone());
-            if f.contains("/") {
+            if f.contains('/') {
                 let d = f.rev_before("/").to_string();
                 if !ctl.gen_opt.pre.contains(&d) {
                     ctl.gen_opt.pre.push(d);
@@ -552,8 +547,8 @@ pub fn proc_args_post(
 
     // Process BC_JOINT.
 
-    if ctl.gen_opt.bc_joint.len() > 0 {
-        parse_bc_joint(&mut ctl)?;
+    if !ctl.gen_opt.bc_joint.is_empty() {
+        parse_bc_joint(ctl)?;
     }
 
     // More argument sanity checking.
@@ -621,14 +616,14 @@ pub fn proc_args_post(
                                 if n.contains('\"') {
                                     n = n.between("\"", "\"").to_string();
                                 }
-                                n = n.replace(",", "");
+                                n = n.replace(',', "");
                                 cells_cr = Some(n.force_usize());
                             } else if Some(i) == rpc_field {
                                 let mut n = x.to_string();
                                 if n.contains('\"') {
                                     n = n.between("\"", "\"").to_string();
                                 }
-                                n = n.replace(",", "");
+                                n = n.replace(',', "");
                                 rpc_cr = Some(n.force_usize());
                             }
                         }

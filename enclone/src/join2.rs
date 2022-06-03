@@ -12,15 +12,15 @@ use vector_utils::next_diff1_2;
 
 pub fn finish_join(
     ctl: &EncloneControl,
-    info: &Vec<CloneInfo>,
-    results: &Vec<(
+    info: &[CloneInfo],
+    results: &[(
         usize,
         usize,
         usize,
         usize,
         Vec<(usize, usize, bool, Vec<u8>)>,
         Vec<(usize, usize)>,
-    )>,
+    )],
     join_info: &mut Vec<(usize, usize, bool, Vec<u8>)>,
 ) -> EquivRel {
     // Tally results.

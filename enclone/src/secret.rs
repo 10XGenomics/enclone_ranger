@@ -187,12 +187,11 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
 
                 // Print.
 
-                let mut class;
-                if species == "human" {
-                    class = stringme(&ext_seq[0..6]);
+                let mut class = if species == "human" {
+                    stringme(&ext_seq[0..6])
                 } else {
-                    class = stringme(&ext_seq[0..9]);
-                }
+                    stringme(&ext_seq[0..9])
+                };
                 for j in 0..fol.len() {
                     if strme(&ext_seq).starts_with(&fol[j].0) {
                         class = fol[j].1.to_string();

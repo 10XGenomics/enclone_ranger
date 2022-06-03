@@ -140,7 +140,7 @@ pub fn main_enclone_setup_ranger(args: &Vec<String>) -> Result<EncloneSetup, Str
 
     // Determine if the species is human or mouse or unknown.
 
-    ctl.gen_opt.species = species(&refdata);
+    ctl.gen_opt.species = species(&refdata).to_string();
 
     // Return.
 

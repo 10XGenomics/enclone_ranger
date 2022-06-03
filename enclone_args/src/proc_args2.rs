@@ -24,12 +24,11 @@ pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
         );
         if val.contains('/') {
             let dir = val.rev_before("/");
-            let msg;
-            if path_exists(dir) {
-                msg = "exists";
+            let msg = if path_exists(dir) {
+                "exists"
             } else {
-                msg = "does not exist";
-            }
+                "does not exist"
+            };
             msgx += &mut format!("Note that the path {} {}.\n", dir, msg);
         }
         return Err(msgx);
@@ -50,7 +49,7 @@ pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
 // where the argument has been set by an environment variable.
 
 pub fn is_simple_arg(arg: &str, x: &str) -> Result<bool, String> {
-    if arg == x || arg == &format!("{}=", x) {
+    if arg == x || arg == format!("{}=", x) {
         return Ok(true);
     } else if arg.starts_with(&format!("{}=", x)) {
         return Err(format!(
@@ -147,11 +146,11 @@ pub fn is_string_arg(arg: &str, x: &str) -> Result<bool, String> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn proc_args_tail(ctl: &mut EncloneControl, args: &Vec<String>) -> Result<(), String> {
+pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String> {
     let tall = Instant::now();
     let mut lvars_specified = false;
-    for i in 1..args.len() {
-        if args[i].starts_with("LVARS=") {
+    for arg in args.iter().skip(1) {
+        if arg.starts_with("LVARS=") {
             lvars_specified = true;
         }
     }

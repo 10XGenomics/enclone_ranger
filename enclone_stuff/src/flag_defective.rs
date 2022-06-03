@@ -136,24 +136,24 @@ pub fn flag_defective(
 
             let seq = refdata.refs[i].to_ascii_vec();
             let aa = aa_seq(&seq, 0);
-            let mut reasons = Vec::<String>::new();
+            let mut reasons = Vec::<&'static str>::new();
             if !aa.starts_with(b"M") {
-                reasons.push("does not begin with a start codon".to_string());
+                reasons.push("does not begin with a start codon");
             }
             let stops = aa.iter().filter(|&n| *n == b'*').count();
             if stops > 1 {
-                reasons.push("has more than one stop codon".to_string());
+                reasons.push("has more than one stop codon");
             }
             if aa.len() < 100 {
-                reasons.push("appears truncated (has less than 100 amino acids)".to_string());
+                reasons.push("appears truncated (has less than 100 amino acids)");
             } else if aa.len() < 105 && chain_type == "IGH" {
-                reasons.push("appears truncated (has less than 105 amino acids)".to_string());
+                reasons.push("appears truncated (has less than 105 amino acids)");
             }
             if aa.len() >= 30 {
                 let mut aap = aa.clone();
                 aap.push(b'C');
                 if cdr3_score(&aap, chain_type, false) > 4 + cdr3_score(&aa, chain_type, false) {
-                    reasons.push("appears to need a C to be appended to its right end".to_string());
+                    reasons.push("appears to need a C to be appended to its right end");
                 }
             }
             if stops > 0 {
@@ -172,7 +172,7 @@ pub fn flag_defective(
                     }
                 }
                 if fixable {
-                    reasons.push("appears to be frameshifted".to_string());
+                    reasons.push("appears to be frameshifted");
                 }
             }
             if aa.len() >= 31 {
@@ -180,19 +180,17 @@ pub fn flag_defective(
                     let aad = aa_seq(&seq, del);
                     if cdr3_score(&aad, chain_type, false) > 4 + cdr3_score(&aa, chain_type, false)
                     {
-                        reasons.push("appears to be frameshifted".to_string());
+                        reasons.push("appears to be frameshifted");
                     }
                 }
             }
             if reasons.is_empty() {
-                let cs2 = cdr2_start(&aa, chain_type, false);
-                if cs2.is_some() {
+                if let Some(cs2) = cdr2_start(&aa, chain_type, false) {
                     let fr3 = fr3_start(&aa, chain_type, false).unwrap();
-                    if cs2.unwrap() > fr3 {
+                    if cs2 > fr3 {
                         reasons.push(
                             "appears to be defective, because our computed \
-                            CDR2 start exceeds our computed FWR3 start"
-                                .to_string(),
+                            CDR2 start exceeds our computed FWR3 start",
                         );
                     }
                 }
@@ -209,7 +207,7 @@ pub fn flag_defective(
                     }
                 }
                 if frameshift {
-                    reasons.push("appears to be frameshifted".to_string());
+                    reasons.push("appears to be frameshifted");
                 }
             }
             if reasons.is_empty() {
@@ -228,7 +226,7 @@ pub fn flag_defective(
                 }
                 let score = score_fwr3(&aa, r, &freqs);
                 if score < 8.0 && score4(&aa, r) < 5 {
-                    reasons.push("appears to be frameshifted or truncated".to_string());
+                    reasons.push("appears to be frameshifted or truncated");
                 }
             }
 

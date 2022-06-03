@@ -16,6 +16,8 @@
 // 1. Convert each of the objects to strings, except for strings, which we leave intact.
 // 2. Concatenate these.
 
+use std::fmt::Display;
+
 use itertools::Itertools;
 use string_utils::TextUtils;
 
@@ -74,15 +76,17 @@ pub struct DescriptionTable {
     pub spreadsheet_text: String,
 }
 
-impl DescriptionTable {
-    pub fn to_string(&self) -> String {
-        let mut v = Vec::<String>::new();
-        v.push("DescriptionTable".to_string());
-        v.push((4).to_string());
-        v.push(self.display_text.clone());
-        v.push(self.spreadsheet_text.clone());
-        flatten_vec_string(&v)
+impl Display for DescriptionTable {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}DescriptionTable{}4{}{}{}{}{}",
+            DOUBLE, DOUBLE, DOUBLE, self.display_text, DOUBLE, self.spreadsheet_text, DOUBLE,
+        )
     }
+}
+
+impl DescriptionTable {
     pub fn from_string(x: &str) -> Self {
         let v = unflatten_string(x);
         DescriptionTable {
@@ -104,18 +108,28 @@ pub struct FeatureBarcodeAlluvialTableSet {
     pub s: Vec<FeatureBarcodeAlluvialTable>,
 }
 
-impl FeatureBarcodeAlluvialTableSet {
-    pub fn to_string(&self) -> String {
-        let mut v = Vec::<String>::new();
-        v.push("FeatureBarcodeAlluvialTableSet".to_string());
-        v.push((3 * self.s.len() + 2).to_string());
-        for i in 0..self.s.len() {
-            v.push(self.s[i].id.clone());
-            v.push(self.s[i].display_text.clone());
-            v.push(self.s[i].spreadsheet_text.clone());
+impl Display for FeatureBarcodeAlluvialTableSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}FeatureBarcodeAlluvialTableSet{}{}{}",
+            DOUBLE,
+            DOUBLE,
+            3 * self.s.len() + 2,
+            DOUBLE
+        )?;
+        for s in &self.s {
+            write!(
+                f,
+                "{}{}{}{}{}{}",
+                s.id, DOUBLE, s.display_text, DOUBLE, s.spreadsheet_text, DOUBLE
+            )?;
         }
-        flatten_vec_string(&v)
+        Ok(())
     }
+}
+
+impl FeatureBarcodeAlluvialTableSet {
     pub fn from_string(x: &str) -> Self {
         let v = unflatten_string(x);
         let n = v[1].force_usize() / 3;
@@ -143,18 +157,28 @@ pub struct FeatureBarcodeAlluvialReadsTableSet {
     pub s: Vec<FeatureBarcodeAlluvialReadsTable>,
 }
 
-impl FeatureBarcodeAlluvialReadsTableSet {
-    pub fn to_string(&self) -> String {
-        let mut v = Vec::<String>::new();
-        v.push("FeatureBarcodeAlluvialReadsTableSet".to_string());
-        v.push((3 * self.s.len() + 2).to_string());
-        for i in 0..self.s.len() {
-            v.push(self.s[i].id.clone());
-            v.push(self.s[i].display_text.clone());
-            v.push(self.s[i].spreadsheet_text.clone());
+impl Display for FeatureBarcodeAlluvialReadsTableSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}FeatureBarcodeAlluvialReadsTableSet{}{}{}",
+            DOUBLE,
+            DOUBLE,
+            3 * self.s.len() + 2,
+            DOUBLE
+        )?;
+        for s in &self.s {
+            write!(
+                f,
+                "{}{}{}{}{}{}",
+                s.id, DOUBLE, s.display_text, DOUBLE, s.spreadsheet_text, DOUBLE
+            )?;
         }
-        flatten_vec_string(&v)
+        Ok(())
     }
+}
+
+impl FeatureBarcodeAlluvialReadsTableSet {
     pub fn from_string(x: &str) -> Self {
         let v = unflatten_string(x);
         let n = v[1].force_usize() / 3;

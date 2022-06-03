@@ -137,7 +137,7 @@ impl LinearCondition {
         })
     }
 
-    pub fn satisfied(&self, val: &Vec<f64>) -> bool {
+    pub fn satisfied(&self, val: &[f64]) -> bool {
         let mut lhs = 0.0;
         for i in 0..self.coeff.len() {
             lhs += self.coeff[i] * val[i];
