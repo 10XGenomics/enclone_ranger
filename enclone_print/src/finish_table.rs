@@ -246,11 +246,9 @@ pub fn finish_table(
         let mut jrefs = Vec::<Vec<u8>>::new();
         for cx in 0..cols {
             let (mut vref, mut jref) = (Vec::<u8>::new(), Vec::<u8>::new());
-            for u in 0..nexacts {
-                let m = rsi.mat[cx][u];
-                if m.is_some() {
-                    let m = m.unwrap();
-                    jref = exact_clonotypes[exacts[u]].share[m].js.to_ascii_vec();
+            for (&exact, &m) in exacts.iter().zip(rsi.mat[cx].iter()) {
+                if let Some(m) = m {
+                    jref = exact_clonotypes[exact].share[m].js.to_ascii_vec();
                 }
                 let vseq1 = refdata.refs[rsi.vids[cx]].to_ascii_vec();
                 if rsi.vpids[cx].is_some() {

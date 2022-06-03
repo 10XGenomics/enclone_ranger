@@ -810,9 +810,7 @@ pub fn compute_bu(
             let mut cx = vec!["".to_string(); ncall];
             let mut cp = 0;
             for col in 0..cols {
-                let m = mat[col][u];
-                if m.is_some() {
-                    let m = m.unwrap();
+                if let Some(m) = mat[col][u] {
                     for p in 0..rsi.cvars[col].len() {
                         if rsi.cvars[col][p] == *"v_name_orig" {
                             let v = &refdata.name[ex.clones[bcl.2][m].v_ref_id];

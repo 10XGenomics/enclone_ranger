@@ -830,10 +830,9 @@ pub fn cdr3_aa_con(
     let mat = &rsi.mat;
     let mut cdr3s = Vec::<String>::new();
     for v in 0..exacts.len() {
-        let m = mat[col][v];
-        if m.is_some() {
+        if let Some(m) = mat[col][v] {
             let ex = &exact_clonotypes[exacts[v]];
-            cdr3s.push(ex.share[m.unwrap()].cdr3_aa.clone());
+            cdr3s.push(ex.share[m].cdr3_aa.clone());
         }
     }
     let classes = aa_classes();

@@ -286,27 +286,23 @@ pub fn print_clonotypes(
                 refdata,
                 dref,
             );
-            let mut priority = Vec::<(Vec<bool>, usize, usize)>::new();
-            for u in 0..exacts.len() {
-                let mut typex = vec![false; mat.len()];
-                for col in 0..mat.len() {
-                    if mat[col][u].is_some() {
-                        typex[col] = true;
-                    }
-                }
-                let clonotype_id = exacts[u];
-                let ex = &exact_clonotypes[clonotype_id];
-                let mut utot0 = 0;
-                let mid = mat[0][u];
-                if mid.is_some() {
-                    let mid = mid.unwrap();
+            let priority = exacts
+                .iter()
+                .enumerate()
+                .map(|(u, &exact)| {
+                    let typex = mat.iter().map(|col| col[u].is_some()).collect::<Vec<_>>();
+                    let clonotype_id = exact;
                     let ex = &exact_clonotypes[clonotype_id];
-                    for j in 0..ex.clones.len() {
-                        utot0 += ex.clones[j][mid].umi_count;
+                    let mut utot0 = 0;
+                    if let Some(mid) = mat[0][u] {
+                        let ex = &exact_clonotypes[clonotype_id];
+                        for j in 0..ex.clones.len() {
+                            utot0 += ex.clones[j][mid].umi_count;
+                        }
                     }
-                }
-                priority.push((typex.clone(), ex.ncells(), utot0));
-            }
+                    (typex, ex.ncells(), utot0)
+                })
+                .collect::<Vec<_>>();
             let permutation = permutation::sort(&priority[..]);
             exacts = permutation.apply_slice(&exacts[..]);
             mults = permutation.apply_slice(&mults[..]);
@@ -692,18 +688,16 @@ pub fn print_clonotypes(
                         stats_pass1.push(these_stats.clone());
                     }
                     these_stats.sort_by(|a, b| a.0.cmp(&b.0));
-                    if resx.is_err() {
-                        res.13 = resx.unwrap_err();
+                    if let Err(e) = resx {
+                        res.13 = e;
                         return;
                     }
-                    let mut bli = Vec::<(String, usize, usize)>::new();
-                    for l in 0..ex.clones.len() {
-                        bli.push((
-                            ex.clones[l][0].barcode.clone(),
-                            ex.clones[l][0].dataset_index,
-                            l,
-                        ));
-                    }
+                    let mut bli = ex
+                        .clones
+                        .iter()
+                        .enumerate()
+                        .map(|(l, clone)| (clone[0].barcode.clone(), clone[0].dataset_index, l))
+                        .collect::<Vec<_>>();
                     // WHY ARE WE SORTING HERE?
                     bli.sort();
                     for col in 0..cols {

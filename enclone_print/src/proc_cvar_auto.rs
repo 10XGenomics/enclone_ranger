@@ -155,8 +155,8 @@ pub fn proc_cvar_auto(
         let cid = ex.share[mid].c_ref_id;
         let mut cdiff = String::new();
         let mut ndiffs = 0;
-        if cid.is_some() {
-            let r = &refdata.refs[cid.unwrap()];
+        if let Some(cid) = cid {
+            let r = &refdata.refs[cid];
             let mut extra = 0;
             if clen > r.len() {
                 extra = clen - r.len();
@@ -268,21 +268,14 @@ pub fn proc_cvar_auto(
     {
         let arg1 = vname.between2("cdr", "_aa").force_i64();
         let x = &ex.share[mid];
-        let mut y = "unknown".to_string();
-        let c;
-        if arg1 == 1 {
-            c = get_cdr1(x, 0, 0);
-            if c.is_some() {
-                y = stringme(&aa_seq(c.unwrap().as_bytes(), 0));
-            }
+        let y = if arg1 == 1 {
+            get_cdr1(x, 0, 0).map(|c| stringme(&aa_seq(c.as_bytes(), 0)))
         } else if arg1 == 2 {
-            c = get_cdr2(x, 0, 0);
-            if c.is_some() {
-                y = stringme(&aa_seq(c.unwrap().as_bytes(), 0));
-            }
+            get_cdr2(x, 0, 0).map(|c| stringme(&aa_seq(c.as_bytes(), 0)))
         } else {
-            y = x.cdr3_aa.clone();
+            Some(x.cdr3_aa.clone())
         }
+        .unwrap_or_else(|| "unknown".to_string());
 
         (y, Vec::new(), "exact".to_string())
     } else if vname.starts_with("cdr")
@@ -293,37 +286,20 @@ pub fn proc_cvar_auto(
     {
         let arg1 = vname.between2("cdr", "_aa_north").force_i64();
         let x = &ex.share[mid];
-        let mut y = "unknown".to_string();
-        let c;
-        if arg1 == 1 {
-            let (mut left, mut right) = (0, 0);
-            if x.left {
-                left = 3;
-                right = 3;
-            }
-            c = get_cdr1(x, left, right);
-            if c.is_some() {
-                y = stringme(&aa_seq(c.unwrap().as_bytes(), 0));
-            }
+        let c = if arg1 == 1 {
+            let (left, right) = if x.left { (3, 3) } else { (0, 0) };
+            get_cdr1(x, left, right)
         } else if arg1 == 2 {
-            let (left, right);
-            if ex.share[mid].left {
-                left = 2;
-                right = 3;
-            } else {
-                left = 1;
-                right = 0;
-            }
-            c = get_cdr2(x, left, right);
-            if c.is_some() {
-                y = stringme(&aa_seq(c.unwrap().as_bytes(), 0));
-            }
+            let (left, right) = if x.left { (2, 3) } else { (1, 0) };
+            get_cdr2(x, left, right)
         } else {
-            c = get_cdr3(x, -1, -1);
-            if c.is_some() {
-                y = stringme(&aa_seq(c.unwrap().as_bytes(), 0));
-            }
-        }
+            get_cdr3(x, -1, -1)
+        };
+        let y = if let Some(c) = c {
+            stringme(&aa_seq(c.as_bytes(), 0))
+        } else {
+            "unknown".to_string()
+        };
 
         (y, Vec::new(), "exact".to_string())
     } else if vname.starts_with("cdr")
@@ -436,18 +412,14 @@ pub fn proc_cvar_auto(
     {
         let arg1 = vname.between2("cdr", "_dna").force_i64();
         let x = &ex.share[mid];
-        let mut y = "unknown".to_string();
-        let c;
-        if arg1 == 1 {
-            c = get_cdr1(x, 0, 0);
+        let y = if arg1 == 1 {
+            get_cdr1(x, 0, 0)
         } else if arg1 == 2 {
-            c = get_cdr2(x, 0, 0);
+            get_cdr2(x, 0, 0)
         } else {
-            c = Some(x.cdr3_dna.clone());
+            Some(x.cdr3_dna.clone())
         }
-        if c.is_some() {
-            y = c.unwrap();
-        }
+        .unwrap_or_else(|| "unknown".to_string());
 
         (y, Vec::new(), "exact".to_string())
     } else if vname.starts_with("cdr")
@@ -514,13 +486,11 @@ pub fn proc_cvar_auto(
 
         (format!("{}", comp), Vec::new(), "exact".to_string())
     } else if vname == "const" {
-        let mut constx = Vec::<String>::new();
-        let cid = ex.share[mid].c_ref_id;
-        if cid.is_some() {
-            constx.push(refdata.name[cid.unwrap()].clone());
+        let mut constx = vec![if let Some(cid) = ex.share[mid].c_ref_id {
+            refdata.name[cid].clone()
         } else {
-            constx.push("?".to_string());
-        }
+            "?".to_string()
+        }];
         unique_sort(&mut constx);
         // This is overcomplicated because there is now at most one
         // const entry per exact subclonotype.
@@ -531,10 +501,11 @@ pub fn proc_cvar_auto(
             "exact".to_string(),
         )
     } else if vname == "const_id" {
-        let mut const_id = String::new();
-        if ex.share[mid].c_ref_id.is_some() {
-            const_id = format!("{}", refdata.id[ex.share[mid].c_ref_id.unwrap()]);
-        }
+        let const_id = if let Some(c_ref_id) = ex.share[mid].c_ref_id {
+            format!("{}", refdata.id[c_ref_id])
+        } else {
+            String::new()
+        };
 
         (const_id, Vec::new(), "exact".to_string())
     } else if vname == "d1_name" {
@@ -868,24 +839,24 @@ pub fn proc_cvar_auto(
     {
         let arg1 = vname.between2("fwr", "_aa").force_i64();
         let x = &ex.share[mid];
-        let mut y = "unknown".to_string();
-        let c;
-        if arg1 == 1 {
-            c = get_fwr1(x);
+        let c = if arg1 == 1 {
+            get_fwr1(x)
         } else if arg1 == 2 {
-            c = get_fwr2(x);
+            get_fwr2(x)
         } else if arg1 == 3 {
-            c = get_fwr3(x);
+            get_fwr3(x)
         } else {
             let x = &ex.share[mid];
             let start = rsi.cdr3_starts[col] + 3 * rsi.cdr3_lens[col];
             let stop = rsi.seq_del_lens[col];
             let dna = &x.seq_del_amino[start..stop];
-            c = Some(stringme(dna));
-        }
-        if c.is_some() {
-            y = stringme(&aa_seq(c.unwrap().as_bytes(), 0));
-        }
+            Some(stringme(dna))
+        };
+        let y = if let Some(c) = c {
+            stringme(&aa_seq(c.as_bytes(), 0))
+        } else {
+            "unknown".to_string()
+        };
 
         (y, Vec::new(), "exact".to_string())
     } else if vname.starts_with("fwr")
@@ -936,24 +907,23 @@ pub fn proc_cvar_auto(
     {
         let arg1 = vname.between2("fwr", "_dna").force_i64();
         let x = &ex.share[mid];
-        let mut y = "unknown".to_string();
-        let c;
-        if arg1 == 1 {
-            c = get_fwr1(x);
+        let c = if arg1 == 1 {
+            get_fwr1(x)
         } else if arg1 == 2 {
-            c = get_fwr2(x);
+            get_fwr2(x)
         } else if arg1 == 3 {
-            c = get_fwr3(x);
+            get_fwr3(x)
         } else {
-            let x = &ex.share[mid];
             let start = rsi.cdr3_starts[col] + 3 * rsi.cdr3_lens[col];
             let stop = rsi.seq_del_lens[col];
             let dna = &x.seq_del_amino[start..stop];
-            c = Some(stringme(dna));
-        }
-        if c.is_some() {
-            y = c.unwrap();
-        }
+            Some(stringme(dna))
+        };
+        let y = if let Some(c) = c {
+            c
+        } else {
+            "unknown".to_string()
+        };
 
         (y, Vec::new(), "exact".to_string())
     } else if vname.starts_with("fwr")
@@ -964,36 +934,44 @@ pub fn proc_cvar_auto(
     {
         let arg1 = vname.between2("fwr", "_dna_ref").force_i64();
         let x = &ex.share[mid];
-        let mut y = "unknown".to_string();
-        if arg1 == 1 {
-            if x.cdr1_start.is_some() && x.fr1_start <= x.cdr1_start.unwrap() {
-                let dna = refdata.refs[x.v_ref_id].to_ascii_vec()
-                    [x.fr1_start..x.cdr1_start.unwrap()]
-                    .to_vec();
-                y = stringme(&dna);
-            }
+        let y = if arg1 == 1 {
+            x.cdr1_start.and_then(|cdr1_start| {
+                if x.fr1_start <= cdr1_start {
+                    let dna = &refdata.refs[x.v_ref_id].to_ascii_vec()[x.fr1_start..cdr1_start];
+                    Some(stringme(dna))
+                } else {
+                    None
+                }
+            })
         } else if arg1 == 2 {
             if x.fr2_start.unwrap() <= x.cdr2_start.unwrap() {
-                let dna = refdata.refs[x.v_ref_id].to_ascii_vec()
-                    [x.fr2_start.unwrap()..x.cdr2_start.unwrap()]
-                    .to_vec();
-                y = stringme(&dna);
+                let dna = &refdata.refs[x.v_ref_id].to_ascii_vec()
+                    [x.fr2_start.unwrap()..x.cdr2_start.unwrap()];
+                Some(stringme(dna))
+            } else {
+                None
             }
         } else if arg1 == 3 {
-            if x.fr3_start.is_some() && x.fr3_start.unwrap() <= x.cdr3_start - x.ins_len() {
-                let dna = refdata.refs[x.v_ref_id].to_ascii_vec();
-                if x.cdr3_start <= dna.len() {
-                    let dna = dna[x.fr3_start.unwrap()..x.cdr3_start - x.ins_len()].to_vec();
-                    y = stringme(&dna);
+            x.fr3_start.and_then(|fr3_start| {
+                if fr3_start <= x.cdr3_start - x.ins_len() {
+                    let dna = refdata.refs[x.v_ref_id].to_ascii_vec();
+                    if x.cdr3_start <= dna.len() {
+                        let dna = &dna[x.fr3_start.unwrap()..x.cdr3_start - x.ins_len()];
+                        Some(stringme(dna))
+                    } else {
+                        None
+                    }
+                } else {
+                    None
                 }
-            }
+            })
         } else {
             let heavy = refdata.rtype[x.j_ref_id] == 0;
             let aa_len = if heavy { 10 } else { 9 };
             let dna = refdata.refs[x.j_ref_id].to_ascii_vec();
-            let dna = &dna[dna.len() - 1 - 3 * aa_len..dna.len() - 1];
-            y = stringme(dna);
+            Some(stringme(&dna[dna.len() - 1 - 3 * aa_len..dna.len() - 1]))
         }
+        .unwrap_or_else(|| "unknown".to_string());
 
         (y, Vec::new(), "clono".to_string())
     } else if vname.starts_with("fwr")
@@ -1341,8 +1319,8 @@ pub fn proc_cvar_auto(
         let uid = ex.share[mid].u_ref_id;
         let mut udiff = String::new();
         let mut ndiffs = 0;
-        if uid.is_some() {
-            let r = &refdata.refs[uid.unwrap()];
+        if let Some(uid) = uid {
+            let r = &refdata.refs[uid];
             let mut extra = 0;
             if ulen > r.len() {
                 extra = ulen - r.len();

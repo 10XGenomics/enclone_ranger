@@ -8,6 +8,7 @@ use enclone_core::defs::{ColInfo, EncloneControl, ExactClonotype};
 use enclone_proto::types::DonorReferenceItem;
 use io_utils::fwriteln;
 use itertools::Itertools;
+use std::fmt::Write as _;
 use std::io::Write;
 use string_utils::strme;
 use vdj_ann::refx::RefData;
@@ -145,9 +146,7 @@ pub fn consensus_codon_cdr3(
     for cx in 0..cols {
         let mut cdr3s = Vec::<Vec<u8>>::new();
         for u in 0..nexacts {
-            let m = rsi.mat[cx][u];
-            if m.is_some() {
-                let m = m.unwrap();
+            if let Some(m) = rsi.mat[cx][u] {
                 cdr3s.push(
                     exact_clonotypes[exacts[u]].share[m]
                         .cdr3_dna
@@ -205,9 +204,7 @@ pub fn define_column_info(
         let mut left = false;
         for u in 0..exacts.len() {
             let ex = &exact_clonotypes[exacts[u]];
-            let m = mat[cx][u];
-            if m.is_some() {
-                let m = m.unwrap();
+            if let Some(m) = mat[cx][u] {
                 let ex = &ex.share[m];
                 if ex.left {
                     left = true;
@@ -252,9 +249,7 @@ pub fn define_column_info(
     for cx in 0..cols {
         for u in 0..exacts.len() {
             let ex = &exact_clonotypes[exacts[u]];
-            let m = mat[cx][u];
-            if m.is_some() {
-                let m = m.unwrap();
+            if let Some(m) = mat[cx][u] {
                 let exm = &ex.share[m];
                 cdr3_lens.push(exm.cdr3_aa.len());
                 seq_lens.push(exm.seq.len());
@@ -346,41 +341,34 @@ pub fn define_column_info(
         for e in 0..exacts.len() {
             let clonotype_id = exacts[e];
             let ex = &exact_clonotypes[clonotype_id];
-            let m = mat[col][e];
-            if m.is_some() {
-                let x = &ex.share[m.unwrap()];
+            if let Some(m) = mat[col][e] {
+                let x = &ex.share[m];
                 if x.left {
                     left[col] = true;
                 }
-                if x.u_ref_id.is_some() {
-                    for _ in 0..ex.ncells() {
-                        u.push(x.u_ref_id.unwrap());
-                    }
+                let ncells = ex.ncells();
+                if let Some(u_ref_id) = x.u_ref_id {
+                    u.resize(u.len() + ncells, u_ref_id);
                 }
-                for _ in 0..ex.ncells() {
-                    // This is not actually correct.  It copies the consensus V gene assignment
-                    // for an exact subclonotype, rather than fetch the per cell entries.  However
-                    // it would be very rare for this to make a difference.
-                    v.push(x.v_ref_id);
-                    vp.push((
+                // This is not actually correct.  It copies the consensus V gene assignment
+                // for an exact subclonotype, rather than fetch the per cell entries.  However
+                // it would be very rare for this to make a difference.
+                v.resize(v.len() + ncells, x.v_ref_id);
+                vp.resize(
+                    vp.len() + ncells,
+                    (
                         x.v_ref_id,
                         x.v_ref_id_donor,
                         x.v_ref_id_donor_donor,
                         x.v_ref_id_donor_alt_id,
-                    ));
+                    ),
+                );
+                if let Some(d_ref_id) = x.d_ref_id {
+                    d.resize(d.len() + ncells, d_ref_id);
                 }
-                if x.d_ref_id.is_some() {
-                    for _ in 0..ex.ncells() {
-                        d.push(x.d_ref_id.unwrap());
-                    }
-                }
-                for _ in 0..ex.ncells() {
-                    j.push(x.j_ref_id);
-                }
-                if x.c_ref_id.is_some() {
-                    for _ in 0..ex.ncells() {
-                        c.push(x.c_ref_id.unwrap());
-                    }
+                j.resize(j.len() + ncells, x.j_ref_id);
+                if let Some(c_ref_id) = x.c_ref_id {
+                    c.resize(c.len() + ncells, c_ref_id);
                 }
             }
         }
@@ -434,9 +422,7 @@ pub fn define_column_info(
         let mut seqs = Vec::<Vec<u8>>::new();
         let mut seqs_amino = Vec::<Vec<u8>>::new();
         for u in 0..nexacts {
-            let m = mat[cx][u];
-            if m.is_some() {
-                let m = m.unwrap();
+            if let Some(m) = mat[cx][u] {
                 seqs.push(exact_clonotypes[exacts[u]].share[m].seq_del.clone());
                 seqs_amino.push(exact_clonotypes[exacts[u]].share[m].seq_del_amino.clone());
             } else {
@@ -451,27 +437,37 @@ pub fn define_column_info(
     // Show segment names.  We used ◼ as a separator character, but that does not render well
     // as a fixed-width character in Google Docs.  So we changed it to ◆.
 
-    let mut chain_descrip = vec![String::new(); cols];
-    for cx in 0..cols {
-        let vid = vids[cx];
-        let mut vdescrip = format!("{}", refdata.id[vid]);
-        if vpids[cx].is_some() {
-            vdescrip = format!(
-                "{}.{}.{}",
-                vdescrip,
-                vpids_d[cx].unwrap() + 1,
-                vpids_a[cx].unwrap() + 1
-            );
-        }
-        chain_descrip[cx] = format!("{}|{}", vdescrip, refdata.name[vid]);
-        let did = dids[cx];
-        if did.is_some() {
-            let did = did.unwrap();
-            chain_descrip[cx] += &format!(" ◆ {}|{}", refdata.id[did], refdata.name[did]);
-        }
-        let jid = jids[cx];
-        chain_descrip[cx] += &format!(" ◆ {}|{}", refdata.id[jid], refdata.name[jid]);
-    }
+    let chain_descrip = (0..cols)
+        .map(|cx| {
+            let vid = vids[cx];
+            let mut vdescrip = format!("{}", refdata.id[vid]);
+            if vpids[cx].is_some() {
+                vdescrip = format!(
+                    "{}.{}.{}",
+                    vdescrip,
+                    vpids_d[cx].unwrap() + 1,
+                    vpids_a[cx].unwrap() + 1
+                );
+            }
+            let mut chain_descrip = format!("{}|{}", vdescrip, refdata.name[vid]);
+            if let Some(did) = dids[cx] {
+                write!(
+                    chain_descrip,
+                    " ◆ {}|{}",
+                    refdata.id[did], refdata.name[did]
+                )
+                .unwrap();
+            }
+            let jid = jids[cx];
+            write!(
+                chain_descrip,
+                " ◆ {}|{}",
+                refdata.id[jid], refdata.name[jid]
+            )
+            .unwrap();
+            chain_descrip
+        })
+        .collect();
 
     // Return.
 
@@ -517,9 +513,7 @@ pub fn add_header_text(
     for cx in 0..cols {
         let (mut vref, mut jref) = (Vec::<u8>::new(), Vec::<u8>::new());
         for u in 0..nexacts {
-            let m = mat[cx][u];
-            if m.is_some() {
-                let m = m.unwrap();
+            if let Some(m) = mat[cx][u] {
                 vref = exact_clonotypes[exacts[u]].share[m].vs.to_ascii_vec();
                 jref = exact_clonotypes[exacts[u]].share[m].js.to_ascii_vec();
             }
@@ -528,9 +522,7 @@ pub fn add_header_text(
         let mut full_seqs = Vec::<Vec<u8>>::new();
         for u in 0..nexacts {
             let ex = &exact_clonotypes[exacts[rord[u]]];
-            let m = mat[cx][rord[u]];
-            if m.is_some() {
-                let m = m.unwrap();
+            if let Some(m) = mat[cx][rord[u]] {
                 seqs.push(ex.share[m].seq_del.clone());
                 full_seqs.push(ex.share[m].full_seq.clone());
             } else {

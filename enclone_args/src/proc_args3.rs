@@ -451,12 +451,9 @@ pub fn proc_xcr(
     mut ctl: &mut EncloneControl,
 ) -> Result<(), String> {
     ctl.origin_info = OriginInfo::default();
-    if (ctl.gen_opt.tcr && f.starts_with("BCR="))
-        || (ctl.gen_opt.tcr && f.starts_with("TCRGD="))
-        || (ctl.gen_opt.tcrgd && f.starts_with("BCR="))
-        || (ctl.gen_opt.tcrgd && f.starts_with("TCR="))
-        || (ctl.gen_opt.bcr && f.starts_with("TCR="))
-        || (ctl.gen_opt.bcr && f.starts_with("TCRGD="))
+    if ((ctl.gen_opt.tcr || ctl.gen_opt.tcrgd) && f.starts_with("BCR="))
+        || ((ctl.gen_opt.bcr || ctl.gen_opt.tcr) && f.starts_with("TCRGD="))
+        || ((ctl.gen_opt.bcr || ctl.gen_opt.tcrgd) && f.starts_with("TCR="))
     {
         return Err("\nOnly one of TCR, BCR, or TCRGD can be specified.\n".to_string());
     }

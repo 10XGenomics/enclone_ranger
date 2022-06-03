@@ -376,12 +376,10 @@ pub fn row_fill(
                         // }
                         let val = res.unwrap();
                         let val = val.as_number();
-                        if val.is_err() {
-                            out_vals.push(String::new());
-                        } else {
-                            let val = val.unwrap();
-                            out_vals.push(format!("{:.1}", val));
-                        }
+                        out_vals.push(match val {
+                            Err(_) => String::new(),
+                            Ok(val) => format!("{:.1}", val),
+                        });
                     }
                     let mut median = String::new();
                     let mut out_valsf = Vec::<f64>::new();

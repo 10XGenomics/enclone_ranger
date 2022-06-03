@@ -331,9 +331,7 @@ pub fn some_filters(
                 let clonotype_id = exacts[u];
                 let ex = &exact_clonotypes[clonotype_id];
                 for col in 0..cols {
-                    let m = mat[col][u];
-                    if m.is_some() {
-                        let m = m.unwrap();
+                    if let Some(m) = mat[col][u] {
                         if ex.share[m].annv.len() > 1 {
                             continue;
                         }
@@ -361,9 +359,7 @@ pub fn some_filters(
             let clonotype_id = exacts[u];
             let ex = &exact_clonotypes[clonotype_id];
             for col in 0..cols {
-                let m = mat[col][u];
-                if m.is_some() {
-                    let m = m.unwrap();
+                if let Some(m) = mat[col][u] {
                     if ex.share[m].annv.len() > 1 {
                         continue;
                     }
