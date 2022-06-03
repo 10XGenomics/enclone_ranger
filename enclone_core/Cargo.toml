@@ -12,7 +12,7 @@ authors = ["""David Jaffe <david.jaffe@10xgenomics.com>,
               Alvin Liang <alvin.liang@10xgenomics.com>,
               Patrick Marks <patrick.marks@10xgenomics.com>,
               Wyatt McDonnell <wyatt.mcdonnell@10xgenomics.com>"""]
-edition = "2018"
+edition = "2021"
 build = "build.rs"
 license-file = "LICENSE.txt"
 publish = false

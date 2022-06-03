@@ -87,21 +87,15 @@ pub fn involves_gex_fb(x: &str) -> bool {
         }
     }
     let x = {
-        let mut x = x;
-        if x.contains(':') {
-            x = x.rev_after(":");
-        }
+        let x = if x.contains(':') { x.rev_after(":") } else { x };
         if x.ends_with("_cell") {
-            x = x.rev_before("_cell");
+            x.rev_before("_cell")
+        } else {
+            x
         }
-        x
     };
-    for y in ends.iter() {
-        if x.ends_with(y) {
-            return true;
-        }
-    }
-    x == "gex"
+    ends.iter().any(|y| x.ends_with(y))
+        || x == "gex"
         || x.starts_with("gex_")
         || x == "n_gex"
         || x == "clust"
@@ -118,12 +112,6 @@ pub fn is_pattern(x: &str, parseable: bool) -> bool {
         "_g", "_ab", "_cr", "_cu", "_g_μ", "_ab_μ", "_cr_μ", "_cu_μ", "_g_%",
     ];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
-    let mut ends = Vec::<String>::new();
-    for z in ends0.iter() {
-        for y in suffixes.iter() {
-            ends.push(format!("{}{}", z, y));
-        }
-    }
     let x = {
         let mut x = x;
         if x.contains(':') {
@@ -135,9 +123,12 @@ pub fn is_pattern(x: &str, parseable: bool) -> bool {
         x
     };
     let mut pat = false;
-    for y in ends.iter() {
-        if x.ends_with(y) {
-            let p = x.rev_before(y);
+    for y in ends0
+        .into_iter()
+        .flat_map(|z| suffixes.iter().map(move |&y| format!("{}{}", z, y)))
+    {
+        if x.ends_with(&y) {
+            let p = x.rev_before(&y);
             if !p.is_empty() && Regex::new(p).is_ok() {
                 let mut ok = true;
                 let mut special = false;
@@ -181,15 +172,12 @@ fn check_gene_fb(
         .iter()
         .flat_map(|&x| suffixes_g.iter().map(move |&y| format!("{}{}", x, y)))
         .collect::<Vec<_>>();
-    let fb_ends = fb_ends0
-        .iter()
-        .flat_map(|&x| suffixes.iter().map(move |&y| format!("{}{}", x, y)))
-        .collect::<Vec<_>>();
     for x in to_check {
-        let mut x = x.as_str();
-        if x.contains(':') {
-            x = x.after(":");
-        }
+        let x = if x.contains(':') {
+            x.after(":")
+        } else {
+            x.as_str()
+        };
         if !gex_info.have_gex && !gex_info.have_fb && (x == "n_gex" || x == "n_gex_cell") {
             if category == "parseable" {
                 return Err(format!(
@@ -237,8 +225,11 @@ fn check_gene_fb(
             }
         }
         if !gex_info.have_fb {
-            for y in fb_ends.iter() {
-                if x.ends_with(y) {
+            for y in fb_ends0
+                .into_iter()
+                .flat_map(|x| suffixes.iter().map(move |&y| format!("{}{}", x, y)))
+            {
+                if x.ends_with(&y) {
                     if category == "parseable" {
                         return Err(format!(
                             "\nParseable field {} does not make sense because feature \

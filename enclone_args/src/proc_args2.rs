@@ -149,7 +149,7 @@ pub fn is_string_arg(arg: &str, x: &str) -> Result<bool, String> {
 pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String> {
     let tall = Instant::now();
     let mut lvars_specified = false;
-    for arg in args {
+    for arg in args.iter().skip(1) {
         if arg.starts_with("LVARS=") {
             lvars_specified = true;
         }
