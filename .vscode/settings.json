@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": true,
+    "files.insertFinalNewline": true,
+    "rust-analyzer.checkOnSave.allTargets": true,
+    "rust-analyzer.checkOnSave.command": "clippy",
+    "rust-analyzer.imports.merge.glob": false
+}
