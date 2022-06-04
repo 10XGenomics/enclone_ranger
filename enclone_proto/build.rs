@@ -8,4 +8,5 @@ fn main() {
     let mut config = Config::new();
     config.type_attribute(".", "#[derive(::serde::Serialize, ::serde::Deserialize)]");
     config.compile_protos(&["types.proto"], &["."]).unwrap();
+    println!("cargo:rerun-if-changed=types.proto");
 }
