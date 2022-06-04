@@ -27,6 +27,10 @@ fn main() {
         OS,
         ARCH
     );
+    println!("cargo:rerun-if-env-changed=GITHUB_SHA");
+    println!("cargo:rerun-if-env-changed=GITHUB_REF");
+    println!("cargo:rerun-if-changed=src");
+    println!("cargo:rerun-if-changed=Cargo.toml");
     println!("cargo:rustc-env=VERSION_STRING={}", version_string);
 }
 
