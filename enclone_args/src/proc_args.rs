@@ -258,7 +258,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
                     args2.push(args[j].clone());
                 }
             }
-            let f = include_str!["../../enclone/src/enclone.testdata.bcr.gex"];
+            const F: &str = include_str!["enclone.testdata.bcr.gex"];
             for n in y.iter() {
                 if *n != "m1" {
                     if n.parse::<usize>().is_err() || n.force_usize() < 1 || n.force_usize() > 47 {
@@ -276,7 +276,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
                 }
                 let mut found = false;
                 let mut bcr_seen = false;
-                for s in f.lines() {
+                for s in F.lines() {
                     if s == format!("DONOR={}", n) {
                         found = true;
                     } else if found && s.starts_with("DONOR=") {
