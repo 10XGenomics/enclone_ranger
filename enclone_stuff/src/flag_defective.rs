@@ -25,12 +25,12 @@ pub fn flag_defective(
     // Compute freqs.
 
     let mut freqs = Vec::<Vec<Vec<(u32, u8)>>>::new();
-    let f = include_str!["../../enclone/src/fwr3_freqs.data"];
+    const F: &str = include_str!["fwr3_freqs.data"];
     let mut x = Vec::<(u32, u8)>::new();
     let mut y = Vec::<Vec<(u32, u8)>>::new();
     let mut rlast = 0;
     let mut ilast = 0;
-    for line in f.lines() {
+    for line in F.lines() {
         let fields = line.split(',').collect::<Vec<&str>>();
         let r = fields[0].force_usize();
         let i = fields[1].force_usize();
