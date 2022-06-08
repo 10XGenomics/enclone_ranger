@@ -52,6 +52,10 @@ pub fn get_known_features(gex_info: &GexInfo) -> Result<Vec<String>, String> {
                     for s in suffixes.iter() {
                         res.1.push(format!("{}_cu{}", ff[z], s));
                     }
+                } else if ff[2].starts_with("Antigen") {
+                    for s in suffixes.iter() {
+                        res.1.push(format!("{}_ag{}", ff[z], s));
+                    }
                 } else {
                     for s in suffixes_g.iter() {
                         res.1.push(format!("{}_g{}", ff[z], s));
@@ -77,7 +81,7 @@ pub fn get_known_features(gex_info: &GexInfo) -> Result<Vec<String>, String> {
 
 pub fn involves_gex_fb(x: &str) -> bool {
     let ends0 = [
-        "_g", "_ab", "_cr", "_cu", "_g_μ", "_ab_μ", "_cr_μ", "_cu_μ", "_g_%",
+        "_g", "_ab", "_ag", "_cr", "_cu", "_g_μ", "_ab_μ", "_ag_μ", "_cr_μ", "_cu_μ", "_g_%",
     ];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
     let mut ends = Vec::<String>::new();
@@ -109,7 +113,7 @@ pub fn involves_gex_fb(x: &str) -> bool {
 
 pub fn is_pattern(x: &str, parseable: bool) -> bool {
     let ends0 = [
-        "_g", "_ab", "_cr", "_cu", "_g_μ", "_ab_μ", "_cr_μ", "_cu_μ", "_g_%",
+        "_g", "_ab", "_ag", "_cr", "_cu", "_g_μ", "_ab_μ", "_ag_μ", "_cr_μ", "_cu_μ", "_g_%",
     ];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
     let x = {
@@ -165,7 +169,7 @@ fn check_gene_fb(
     category: &str,
 ) -> Result<(), String> {
     let g_ends0 = ["_g"];
-    let fb_ends0 = ["_ab", "_cr", "_cu"];
+    let fb_ends0 = ["_ab", "_cr", "_cu", "_ag"];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
     let suffixes_g = ["", "_min", "_max", "_μ", "_Σ", "_%"];
     let g_ends = g_ends0
@@ -778,7 +782,7 @@ pub fn check_one_lvar(
 pub fn build_ends() -> Vec<String> {
     let mut ends = Vec::<String>::new();
     let ends0 = [
-        "_g", "_ab", "_cr", "_cu", "_g_μ", "_ab_μ", "_cr_μ", "_cu_μ", "_g_%",
+        "_g", "_ab", "_ag", "_cr", "_cu", "_g_μ", "_ab_μ", "_ag_μ", "_cr_μ", "_cu_μ", "_g_%",
     ];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
     for x in ends0.iter() {
