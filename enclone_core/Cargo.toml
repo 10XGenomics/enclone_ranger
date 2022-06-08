@@ -16,7 +16,7 @@ edition = "2021"
 build = "build.rs"
 license-file = "LICENSE.txt"
 publish = false
-include = ["src/*.rs", "LICENSE.txt", "src/mammalian_fixed_len.table"]
+include = ["build.rs", "src/*.rs", "LICENSE.txt", "src/mammalian_fixed_len.table"]
 
 # Please do not edit crate versions within this file.  Instead edit the file master.toml
 # in the root of the enclone repo.
