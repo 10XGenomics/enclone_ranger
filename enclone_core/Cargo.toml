@@ -25,7 +25,7 @@ include = ["build.rs", "src/*.rs", "LICENSE.txt", "src/mammalian_fixed_len.table
 align_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 ansi_escape = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-attohttpc = { version = "0.18", default-features = false, features = ["compress", "tls-rustls"] }
+attohttpc = { version = "0.19", default-features = false, features = ["compress", "tls-rustls"] }
 bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 debruijn = "0.3"
