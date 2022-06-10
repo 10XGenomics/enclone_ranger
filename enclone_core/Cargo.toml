@@ -46,7 +46,7 @@ superslice = "1"
 tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-zstd = "0.9"
+zstd = ">=0.10, <0.12"
 
 [target.'cfg(not(windows))'.dependencies]
 tilde-expand = "0.1"
