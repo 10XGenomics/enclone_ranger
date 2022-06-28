@@ -36,14 +36,13 @@ pub fn make_donor_refs(
             j += 1;
         }
         // let j = next_diff12_5(alt_refs, i as i32) as usize;
-        for k in i..j {
-            let x = &alt_refs[k];
+        for (k, x) in alt_refs[i..j].iter().enumerate() {
             let donor_id = x.0;
             let ref_id = x.1;
             let alt = x.2.to_ascii_vec();
             let alt_name = format!(
                 "{}, donor {}, alt allele {}",
-                refdata.name[ref_id].clone(),
+                refdata.name[ref_id].as_str(),
                 donor_id,
                 k - i + 1
             );
@@ -416,10 +415,7 @@ pub fn make_loupe_clonotype(
 
     // Build Clonotype.
 
-    let mut n = 0;
-    for i in 0..ecl.len() {
-        n += ecl[i].cell_barcodes.len();
-    }
+    let n = ecl.iter().map(|e| e.cell_barcodes.len()).sum::<usize>();
     Clonotype {
         chains: xchains,
         exact_clonotypes: ecl,

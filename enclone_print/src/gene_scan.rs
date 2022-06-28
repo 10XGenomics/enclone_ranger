@@ -1,12 +1,11 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
 use enclone_core::defs::EncloneControl;
-use string_utils::TextUtils;
 
 pub fn gene_scan_test(
     ctl: &EncloneControl,
-    stats: &Vec<(String, Vec<String>)>,
-    stats_orig: &Vec<(String, Vec<String>)>,
+    stats: &[(String, Vec<String>)],
+    stats_orig: &[(String, Vec<String>)],
     nexacts: usize,
     n: usize,
     in_test: &mut Vec<bool>,
@@ -14,51 +13,62 @@ pub fn gene_scan_test(
 ) {
     // See if we're in the test and control sets for gene scan (non-exact case).
 
-    if ctl.gen_opt.gene_scan_test.is_some() && !ctl.gen_opt.gene_scan_exact {
-        let x = ctl.gen_opt.gene_scan_test.clone().unwrap();
-        let mut means = Vec::<f64>::new();
-        for i in 0..x.n() {
-            let mut vals = Vec::<f64>::new();
-            for j in 0..stats.len() {
-                if stats[j].0 == x.var[i] {
-                    for k in 0..stats[j].1.len() {
-                        if stats[j].1[k].parse::<f64>().is_ok() {
-                            vals.push(stats[j].1[k].force_f64());
-                        }
-                    }
-                    break;
-                }
-            }
-            let mut mean = 0.0;
-            for j in 0..vals.len() {
-                mean += vals[j];
-            }
-            mean /= n as f64;
-            means.push(mean);
+    if let Some(ref scan_test) = ctl.gen_opt.gene_scan_test {
+        if !ctl.gen_opt.gene_scan_exact {
+            let x = scan_test;
+            let means = x
+                .var
+                .iter()
+                .take(x.n())
+                .map(|xn| {
+                    stats
+                        .iter()
+                        .filter_map(|stat| {
+                            if stat.0 == *xn {
+                                Some(
+                                    stat.1
+                                        .iter()
+                                        .filter_map(|k| k.parse::<f64>().ok())
+                                        .sum::<f64>(),
+                                )
+                            } else {
+                                None
+                            }
+                        })
+                        .next()
+                        .unwrap_or_default()
+                        / n as f64
+                })
+                .collect::<Vec<_>>();
+
+            in_test.push(x.satisfied(&means));
+            let x = ctl.gen_opt.gene_scan_control.as_ref().unwrap();
+            let means = x
+                .var
+                .iter()
+                .take(x.n())
+                .map(|xn| {
+                    stats
+                        .iter()
+                        .filter_map(|stat| {
+                            if stat.0 == *xn {
+                                Some(
+                                    stat.1
+                                        .iter()
+                                        .filter_map(|k| k.parse::<f64>().ok())
+                                        .sum::<f64>(),
+                                )
+                            } else {
+                                None
+                            }
+                        })
+                        .next()
+                        .unwrap_or_default()
+                        / n as f64
+                })
+                .collect::<Vec<_>>();
+            in_control.push(x.satisfied(&means));
         }
-        in_test.push(x.satisfied(&means));
-        let x = ctl.gen_opt.gene_scan_control.clone().unwrap();
-        let mut means = Vec::<f64>::new();
-        for i in 0..x.n() {
-            let mut vals = Vec::<f64>::new();
-            for j in 0..stats.len() {
-                if stats[j].0 == x.var[i] {
-                    for k in 0..stats[j].1.len() {
-                        if stats[j].1[k].parse::<f64>().is_ok() {
-                            vals.push(stats[j].1[k].force_f64());
-                        }
-                    }
-                    break;
-                }
-            }
-            let mut mean = 0.0;
-            for j in 0..vals.len() {
-                mean += vals[j];
-            }
-            mean /= n as f64;
-            means.push(mean);
-        }
-        in_control.push(x.satisfied(&means));
     }
 
     // See if we're in the test and control sets for gene scan (exact case).
@@ -67,15 +77,15 @@ pub fn gene_scan_test(
         let x = ctl.gen_opt.gene_scan_test.clone().unwrap();
         for k in 0..nexacts {
             let mut means = Vec::<f64>::new();
-            for i in 0..x.n() {
+            for xn in x.var.iter().take(x.n()) {
                 let mut vals = Vec::<f64>::new();
                 let mut count = 0;
-                for j in 0..stats_orig.len() {
-                    if stats_orig[j].0 == x.var[i] {
+                for stat in stats_orig {
+                    if stat.0 == *xn {
                         if count == k {
-                            for l in 0..stats_orig[j].1.len() {
-                                if stats_orig[j].1[l].parse::<f64>().is_ok() {
-                                    vals.push(stats_orig[j].1[l].force_f64());
+                            for k in &stat.1 {
+                                if let Ok(v) = k.parse::<f64>() {
+                                    vals.push(v);
                                 }
                             }
                             break;
@@ -84,25 +94,21 @@ pub fn gene_scan_test(
                         }
                     }
                 }
-                let mut mean = 0.0;
-                for j in 0..vals.len() {
-                    mean += vals[j];
-                }
-                mean /= vals.len() as f64;
-                means.push(mean);
+                let n = vals.len() as f64;
+                means.push(vals.into_iter().sum::<f64>() / n);
             }
             in_test.push(x.satisfied(&means));
             let x = ctl.gen_opt.gene_scan_control.clone().unwrap();
             let mut means = Vec::<f64>::new();
-            for i in 0..x.n() {
+            for xn in x.var.iter().take(x.n()) {
                 let mut vals = Vec::<f64>::new();
                 let mut count = 0;
-                for j in 0..stats_orig.len() {
-                    if stats_orig[j].0 == x.var[i] {
+                for stat in stats_orig {
+                    if stat.0 == *xn {
                         if count == k {
-                            for l in 0..stats_orig[j].1.len() {
-                                if stats_orig[j].1[l].parse::<f64>().is_ok() {
-                                    vals.push(stats_orig[j].1[l].force_f64());
+                            for k in &stat.1 {
+                                if let Ok(v) = k.parse::<f64>() {
+                                    vals.push(v);
                                 }
                             }
                             break;
@@ -111,12 +117,7 @@ pub fn gene_scan_test(
                         }
                     }
                 }
-                let mut mean = 0.0;
-                for j in 0..vals.len() {
-                    mean += vals[j];
-                }
-                mean /= n as f64;
-                means.push(mean);
+                means.push(vals.into_iter().sum::<f64>() / n as f64);
             }
             in_control.push(x.satisfied(&means));
         }

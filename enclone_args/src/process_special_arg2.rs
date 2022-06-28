@@ -77,15 +77,16 @@ pub fn process_special_arg2(
                             file does not meet requirements.\n"
                             .to_string());
                     }
-                    let mut row = Vec::<f64>::new();
-                    for i in 0..fields.len() {
-                        if fields[i].parse::<f64>().is_err() {
-                            return Err("\nIllegal cdr3_aa_heavy≥n%:h:@f argument in GROUP: \
+                    let row = fields
+                        .into_iter()
+                        .map(|field| {
+                            field.parse::<f64>().map_err(|_| {
+                                "\nIllegal cdr3_aa_heavy≥n%:h:@f argument in GROUP: \
                                 file does not meet requirements.\n"
-                                .to_string());
-                        }
-                        row.push(fields[i].force_f64());
-                    }
+                                    .to_string()
+                            })
+                        })
+                        .collect::<Result<Vec<_>, _>>()?;
                     m.push(row);
                 }
                 if m.len() != 20 {
@@ -283,9 +284,9 @@ pub fn process_special_arg2(
         ctl.gen_opt.tree.push("const1".to_string());
     } else if arg.starts_with("TREE=") {
         ctl.gen_opt.tree_on = true;
-        let p = arg.after("TREE=").split(',').collect::<Vec<&str>>();
-        for i in 0..p.len() {
-            ctl.gen_opt.tree.push(p[i].to_string());
+        let p = arg.after("TREE=").split(',');
+        for pi in p {
+            ctl.gen_opt.tree.push(pi.to_string());
         }
     } else if arg.starts_with("FCELL=") // FCELL retained for backward compatibility
         || arg.starts_with("KEEP_CELL_IF")
@@ -329,17 +330,18 @@ pub fn process_special_arg2(
                 .push((x[2 * i].clone(), x[2 * i + 1].clone()));
         }
     } else if arg.starts_with("BARCODE=") {
-        let bcs = arg.after("BARCODE=").split(',').collect::<Vec<&str>>();
-        let mut x = Vec::<String>::new();
-        for j in 0..bcs.len() {
-            if !bcs[j].contains('-') {
-                return Err(
-                    "\nValue for a barcode in BARCODE argument is invalid, must contain -.\n"
-                        .to_string(),
-                );
-            }
-            x.push(bcs[j].to_string());
-        }
+        let bcs = arg.after("BARCODE=").split(',');
+        let x = bcs
+            .map(|bcj| {
+                if !bcj.contains('-') {
+                    return Err(
+                        "\nValue for a barcode in BARCODE argument is invalid, must contain -.\n"
+                            .to_string(),
+                    );
+                }
+                Ok(bcj.to_string())
+            })
+            .collect::<Result<Vec<_>, String>>()?;
         ctl.clono_filt_opt.barcode = x;
     } else if arg.starts_with("F=") {
         // deprecated but retained for backward compatibility
@@ -381,13 +383,13 @@ pub fn process_special_arg2(
             return Err("\nArgument to PLOT is invalid.\n".to_string());
         }
         ctl.plot_opt.plot_file = x[0].to_string();
-        for j in 1..x.len() {
-            if !x[j].contains("->") {
+        for &xj in &x[1..] {
+            if !xj.contains("->") {
                 return Err("\nArgument to PLOT is invalid.\n".to_string());
             }
             ctl.gen_opt
                 .origin_color_map
-                .insert(x[j].before("->").to_string(), x[j].after("->").to_string());
+                .insert(xj.before("->").to_string(), xj.after("->").to_string());
         }
     } else if arg.starts_with("PLOT2=") {
         *using_plot = true;
@@ -422,15 +424,11 @@ pub fn process_special_arg2(
                     .to_string(),
             );
         }
-        let fields = arg
-            .after("PLOT_BY_ISOTYPE_COLOR=")
-            .split(',')
-            .collect::<Vec<&str>>();
-        for i in 0..fields.len() {
-            ctl.plot_opt
-                .plot_by_isotype_color
-                .push(fields[i].to_string());
-        }
+        ctl.plot_opt.plot_by_isotype_color.extend(
+            arg.after("PLOT_BY_ISOTYPE_COLOR=")
+                .split(',')
+                .map(str::to_string),
+        );
     } else if arg.starts_with("PLOT_BY_MARK=") {
         ctl.plot_opt.plot_by_mark = true;
         ctl.plot_opt.plot_file = arg.after("PLOT_BY_MARK=").to_string();
@@ -444,33 +442,35 @@ pub fn process_special_arg2(
             .build_global();
     } else if arg.starts_with("PCOLS=") {
         ctl.parseable_opt.pcols.clear();
-        let p = arg.after("PCOLS=").split(',').collect::<Vec<&str>>();
-        for i in 0..p.len() {
-            let mut x = p[i].to_string();
-            x = x.replace("_sum", "_Σ");
+        for pi in arg.after("PCOLS=").split(',') {
+            let mut x = pi.replace("_sum", "_Σ");
             x = x.replace("_mean", "_μ");
-            ctl.parseable_opt.pcols.push(x.to_string());
+            ctl.parseable_opt.pcols.push(x);
             ctl.parseable_opt.pcols_sort = ctl.parseable_opt.pcols.clone();
-            ctl.parseable_opt.pcols_sortx = ctl.parseable_opt.pcols.clone();
-            for j in 0..ctl.parseable_opt.pcols_sortx.len() {
-                if ctl.parseable_opt.pcols_sortx[j].contains(':') {
-                    ctl.parseable_opt.pcols_sortx[j] =
-                        ctl.parseable_opt.pcols_sortx[j].before(":").to_string();
-                }
-            }
+            ctl.parseable_opt.pcols_sortx = ctl
+                .parseable_opt
+                .pcols
+                .iter()
+                .map(|cj| {
+                    if cj.contains(':') {
+                        cj.before(":").to_string()
+                    } else {
+                        cj.clone()
+                    }
+                })
+                .collect();
             unique_sort(&mut ctl.parseable_opt.pcols_sort);
             unique_sort(&mut ctl.parseable_opt.pcols_sortx);
         }
     } else if arg.starts_with("PCOLS_SHOW=") {
         ctl.parseable_opt.pcols_show.clear();
-        let p = arg.after("PCOLS_SHOW=").split(',').collect::<Vec<&str>>();
-        for i in 0..p.len() {
-            ctl.parseable_opt.pcols_show.push(p[i].to_string());
-        }
+        ctl.parseable_opt
+            .pcols_show
+            .extend(arg.after("PCOLS_SHOW=").split(',').map(str::to_string));
     } else if arg.starts_with("VJ=") {
         ctl.clono_filt_opt.vj = arg.after("VJ=").as_bytes().to_vec();
-        for c in ctl.clono_filt_opt.vj.iter() {
-            if !(*c == b'A' || *c == b'C' || *c == b'G' || *c == b'T') {
+        for &c in ctl.clono_filt_opt.vj.iter() {
+            if !(c == b'A' || c == b'C' || c == b'G' || c == b'T') {
                 return Err("\nIllegal value for VJ, must be over alphabet ACGT.\n".to_string());
             }
         }
@@ -586,25 +586,21 @@ pub fn process_special_arg2(
         }
         ctl.clono_filt_opt.const_igkl = Some(reg.unwrap());
     } else if arg.starts_with("CDR3=") {
-        let fields = arg.split('|').collect::<Vec<&str>>();
         let mut lev = true;
-        for i in 0..fields.len() {
-            if !Regex::new(r"[A-Z]+~[0-9]+")
-                .as_ref()
-                .unwrap()
-                .is_match(fields[i])
-            {
+        let re = Regex::new(r"[A-Z]+~[0-9]+").unwrap();
+        for field in arg.split('|') {
+            if !re.is_match(field) {
                 lev = false;
             }
         }
         if lev {
             let mut ok = true;
-            for i in 0..fields.len() {
-                if !fields[i].contains('~') {
+            for field in arg.split('|') {
+                if !field.contains('~') {
                     ok = false;
                 } else {
-                    let _f1 = fields[i].before("~");
-                    let f2 = fields[i].after("~");
+                    let _f1 = field.before("~");
+                    let f2 = field.after("~");
                     if f2.parse::<usize>().is_err() {
                         ok = false;
                     }

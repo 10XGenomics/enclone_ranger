@@ -32,21 +32,20 @@ pub fn set_speakers(ctl: &EncloneControl, parseable_fields: &mut Vec<String>, ma
         }
     }
     let mut all_lvars = lvars.clone();
-    for i in 0..LVARS_ALLOWED.len() {
-        let x = &LVARS_ALLOWED[i];
+    for x in LVARS_ALLOWED {
         if !have_gex
-            && (*x == "gex"
+            && (x == "gex"
                 || x.starts_with("gex_")
                 || x.ends_with("_g")
                 || x.ends_with("_g_μ")
-                || *x == "n_gex_cell"
-                || *x == "n_gex"
-                || *x == "n_b"
-                || *x == "clust"
-                || *x == "type"
-                || *x == "entropy"
-                || *x == "cred"
-                || *x == "cred_cell")
+                || x == "n_gex_cell"
+                || x == "n_gex"
+                || x == "n_b"
+                || x == "clust"
+                || x == "type"
+                || x == "entropy"
+                || x == "cred"
+                || x == "cred_cell")
         {
             continue;
         }
@@ -77,15 +76,15 @@ pub fn set_speakers(ctl: &EncloneControl, parseable_fields: &mut Vec<String>, ma
         ctl.parseable_opt.pchains.force_usize()
     };
     for col in 0..pchains {
-        for x in CVARS_ALLOWED.iter() {
+        for x in CVARS_ALLOWED {
             speakerc!(col, x);
         }
         if ctl.parseable_opt.pbarcode {
-            for x in CVARS_ALLOWED_PCELL.iter() {
+            for x in CVARS_ALLOWED_PCELL {
                 speakerc!(col, x);
             }
         }
-        for x in &[
+        for x in [
             "var_indices_dna",
             "var_indices_aa",
             "share_indices_dna",
@@ -99,11 +98,11 @@ pub fn set_speakers(ctl: &EncloneControl, parseable_fields: &mut Vec<String>, ma
         ] {
             speakerc!(col, x);
         }
-        for i in 0..pcols_sort.len() {
-            if pcols_sort[i].starts_with('q') && pcols_sort[i].ends_with(&format!("_{}", col + 1)) {
-                let x = pcols_sort[i].after("q").rev_before("_");
+        for pcol in pcols_sort {
+            if pcol.starts_with('q') && pcol.ends_with(&format!("_{}", col + 1)) {
+                let x = pcol.after("q").rev_before("_");
                 if x.parse::<usize>().is_ok() {
-                    parseable_fields.push(pcols_sort[i].clone());
+                    parseable_fields.push(pcol.clone());
                 }
             }
         }

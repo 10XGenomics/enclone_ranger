@@ -26,14 +26,13 @@ pub mod var_reg;
 use lazy_static::lazy_static;
 use std::cmp::max;
 use std::env;
+use std::fmt::Write;
 use std::io::BufRead;
 use std::sync::Mutex;
 use std::time::Duration;
 
 #[cfg(not(target_os = "windows"))]
 use string_utils::stringme;
-
-use string_utils::TextUtils;
 
 #[cfg(not(target_os = "windows"))]
 use tilde_expand::tilde_expand;
@@ -88,31 +87,26 @@ pub fn expand_integer_ranges(x: &str) -> String {
     if !token.is_empty() {
         tokens.push(token);
     }
-    let mut tokens2 = Vec::<String>::new();
-    for i in 0..tokens.len() {
-        if tokens[i].contains('-')
-            && tokens[i].before("-").parse::<usize>().is_ok()
-            && tokens[i].after("-").parse::<usize>().is_ok()
-        {
-            let n1 = tokens[i].before("-").force_usize();
-            let n2 = tokens[i].after("-").force_usize();
-            if n1 <= n2 {
-                for n in n1..=n2 {
-                    if n > n1 {
-                        tokens2.push(",".to_string());
+    let mut tokens2 = String::new();
+    for token in tokens {
+        if let Some((n1s, n2s)) = token.split_once('-') {
+            if let Ok(n1) = n1s.parse::<usize>() {
+                if let Ok(n2) = n2s.parse::<usize>() {
+                    if n1 <= n2 {
+                        for n in n1..=n2 {
+                            if n > n1 {
+                                tokens2.push(',');
+                            }
+                            write!(tokens2, "{}", n).unwrap();
+                        }
+                        continue;
                     }
-                    tokens2.push(format!("{}", n));
                 }
-                continue;
             }
         }
-        tokens2.push(tokens[i].clone());
+        tokens2 += token.as_str();
     }
-    let mut y = String::new();
-    for i in 0..tokens2.len() {
-        y += &tokens2[i];
-    }
-    y
+    tokens2
 }
 
 lazy_static! {
@@ -131,35 +125,30 @@ pub fn version_string() -> String {
 
 // Parse a line, breaking at blanks, but not if they're in quotes.  And strip the quotes.
 // Ridiculously similar to parse_csv, probably should refactor.
-
-pub fn parse_bsv(x: &str) -> Vec<String> {
-    let mut args = Vec::<String>::new();
-    let mut w = Vec::<char>::new();
-    for c in x.chars() {
-        w.push(c);
-    }
+pub fn parse_bsv(x: &str) -> Vec<&str> {
+    let mut args = Vec::<&str>::new();
+    let w = x.as_bytes();
     let (mut quotes, mut i) = (0, 0);
     while i < w.len() {
         let mut j = i;
         while j < w.len() {
-            if quotes % 2 == 0 && w[j] == ' ' {
+            if quotes % 2 == 0 && w[j] == b' ' {
                 break;
             }
-            if w[j] == '"' {
+            if w[j] == b'"' {
                 quotes += 1;
             }
             j += 1;
         }
+        // These will always be a char boundaries because it's either the end of
+        // the string or it's a space character, which is a single byte in
+        // UTF-8.  That remains true if i/j are '"' bytes.
         let (mut start, mut stop) = (i, j);
-        if stop - start >= 2 && w[start] == '"' && w[stop - 1] == '"' {
+        if stop - start >= 2 && w[start] == b'"' && w[stop - 1] == b'"' {
             start += 1;
             stop -= 1;
         }
-        let mut s = String::new();
-        for m in start..stop {
-            s.push(w[m]);
-        }
-        args.push(s);
+        args.push(&x[start..stop]);
         i = j + 1;
     }
     args

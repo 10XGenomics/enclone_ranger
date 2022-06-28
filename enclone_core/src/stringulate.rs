@@ -23,20 +23,17 @@ use string_utils::TextUtils;
 
 const DOUBLE: &str = "";
 
-pub fn flatten_vec_string(v: &[String]) -> String {
+pub fn flatten_vec_string(v: &[&str]) -> String {
     format!("{}{}{}", DOUBLE, v.iter().format(DOUBLE), DOUBLE)
 }
 
-pub fn unflatten_string(s: &str) -> Vec<String> {
-    let mut chars = Vec::new();
-    for c in s.chars() {
-        chars.push(c);
-    }
-    let mut mid = String::new();
-    for i in 2..chars.len() - 2 {
-        mid.push(chars[i]);
-    }
-    mid.split(&DOUBLE).map(str::to_owned).collect()
+pub fn unflatten_string(s: &str) -> Vec<&str> {
+    let mut chars = s.char_indices();
+    // Skip first two characters and the last character.
+    let start = chars.nth(2).unwrap().0;
+    let end = chars.nth_back(1).unwrap().0;
+    let mid = &s[start..end];
+    mid.split(&DOUBLE).collect()
 }
 
 pub struct HetString {
@@ -46,7 +43,7 @@ pub struct HetString {
 
 pub fn unpack_to_het_string(s: &str) -> Vec<HetString> {
     let mut v = Vec::<HetString>::new();
-    let fields: Vec<String> = s.split(&DOUBLE).map(str::to_owned).collect();
+    let fields: Vec<&str> = s.split(DOUBLE).collect();
     let mut i = 0;
     while i < fields.len() {
         if !fields[i].is_empty() {
@@ -90,8 +87,8 @@ impl DescriptionTable {
     pub fn from_string(x: &str) -> Self {
         let v = unflatten_string(x);
         DescriptionTable {
-            display_text: v[2].clone(),
-            spreadsheet_text: v[3].clone(),
+            display_text: v[2].to_string(),
+            spreadsheet_text: v[3].to_string(),
         }
     }
 }
@@ -133,12 +130,12 @@ impl FeatureBarcodeAlluvialTableSet {
     pub fn from_string(x: &str) -> Self {
         let v = unflatten_string(x);
         let n = v[1].force_usize() / 3;
-        let mut s = Vec::new();
+        let mut s = Vec::with_capacity(n);
         for i in 0..n {
             s.push(FeatureBarcodeAlluvialTable {
-                id: v[2 + 3 * i].clone(),
-                display_text: v[2 + 3 * i + 1].clone(),
-                spreadsheet_text: v[2 + 3 * i + 2].clone(),
+                id: v[2 + 3 * i].to_string(),
+                display_text: v[2 + 3 * i + 1].to_string(),
+                spreadsheet_text: v[2 + 3 * i + 2].to_string(),
             });
         }
         FeatureBarcodeAlluvialTableSet { s }
@@ -182,14 +179,42 @@ impl FeatureBarcodeAlluvialReadsTableSet {
     pub fn from_string(x: &str) -> Self {
         let v = unflatten_string(x);
         let n = v[1].force_usize() / 3;
-        let mut s = Vec::new();
+        let mut s = Vec::with_capacity(n);
         for i in 0..n {
             s.push(FeatureBarcodeAlluvialReadsTable {
-                id: v[2 + 3 * i].clone(),
-                display_text: v[2 + 3 * i + 1].clone(),
-                spreadsheet_text: v[2 + 3 * i + 2].clone(),
+                id: v[2 + 3 * i].to_string(),
+                display_text: v[2 + 3 * i + 1].to_string(),
+                spreadsheet_text: v[2 + 3 * i + 2].to_string(),
             });
         }
         FeatureBarcodeAlluvialReadsTableSet { s }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_unflatten_string() {
+        // All ascii.
+        let simple_case = "0123456789";
+        let simple = unflatten_string(simple_case);
+        assert_eq!(simple.len(), 1);
+        assert_eq!(simple[0], &simple_case[2..simple_case.len() - 2]);
+        // multi-byte characters.
+        let complex_case = format!("ƒƒƒ2{}345{}67ƒƒƒ", DOUBLE, DOUBLE);
+        let result = unflatten_string(complex_case.as_str());
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0], "ƒ2");
+        assert_eq!(result[1], "345");
+        assert_eq!(result[2], "67ƒ");
+    }
+
+    #[test]
+    fn test_flatten_vec_string() {
+        let expected = format!("{}ƒ123ƒ{}ƒƒ{}", DOUBLE, DOUBLE, DOUBLE);
+        let split = unflatten_string(expected.as_str());
+        assert_eq!(expected, flatten_vec_string(&split));
     }
 }

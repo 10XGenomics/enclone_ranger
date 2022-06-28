@@ -40,8 +40,8 @@ pub fn zero_one(
     {
         let mut rpos = 0;
         let mut zo = Vec::<u8>::new();
-        for m in 0..ops.len() {
-            match ops[m] {
+        for &om in ops {
+            match om {
                 Match => {
                     if rpos >= start && rpos < stop {
                         zo.push(1);
@@ -83,15 +83,14 @@ pub fn zero_one(
 
 pub fn match_bit_score(zos: &Vec<Vec<u8>>) -> f64 {
     let mut bits = 0.0_f64;
-    for i in 0..zos.len() {
-        let zo = &zos[i];
+    for zo in zos {
         for start in 0..zo.len() {
             for stop in start + 1..=zo.len() {
                 let b = &zo[start..stop];
                 let n = b.len();
                 let mut k = 0; // number of mismatches
-                for z in 0..n {
-                    if b[z] == 0 {
+                for &bz in b {
+                    if bz == 0 {
                         k += 1;
                     }
                 }
@@ -276,25 +275,25 @@ pub fn align_to_vdj_ref(
     scoring.yclip_suffix = 0;
     let mut aligner = Aligner::with_scoring(scoring);
     let mut gap_open_fn = vec![0_i32; concat.len() + 1];
-    for j in 1..=concat.len() {
-        if j as usize == vref.len()
-            || j as usize == vref.len() + dref.len()
-            || j as usize == vref.len() + dref.len() + d2ref.len()
+    for (j, gap) in gap_open_fn.iter_mut().enumerate().skip(1) {
+        if j == vref.len()
+            || j == vref.len() + dref.len()
+            || j == vref.len() + dref.len() + d2ref.len()
         {
-            gap_open_fn[j] = gap_open_at_boundary;
+            *gap = gap_open_at_boundary;
         } else {
-            gap_open_fn[j] = gap_open;
+            *gap = gap_open;
         }
     }
     let mut gap_extend_fn = vec![0_i32; concat.len() + 1];
-    for j in 1..=concat.len() {
-        if j as usize == vref.len()
-            || j as usize == vref.len() + dref.len()
-            || j as usize == vref.len() + dref.len() + d2ref.len()
+    for (j, gap) in gap_extend_fn.iter_mut().enumerate().skip(1) {
+        if j == vref.len()
+            || j == vref.len() + dref.len()
+            || j == vref.len() + dref.len() + d2ref.len()
         {
-            gap_extend_fn[j] = gap_extend_at_boundary;
+            *gap = gap_extend_at_boundary;
         } else {
-            gap_extend_fn[j] = gap_extend;
+            *gap = gap_extend;
         }
     }
     let mut al = aligner.custom_with_gap_fns(seq, &concat, &gap_open_fn, &gap_extend_fn);

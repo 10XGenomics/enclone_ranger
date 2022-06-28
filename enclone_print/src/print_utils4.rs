@@ -267,36 +267,36 @@ pub fn compute_some_stats(
     // Compute "cred" stats (credibility/# of neighboring cells that are also B cells).
 
     *cred = vec![Vec::<String>::new(); lvars.len()];
-    for k in 0..lvars.len() {
-        if lvars[k] == *"cred" {
-            for u in 0..nexacts {
-                let clonotype_id = exacts[u];
+    for (lvar, cred) in lvars.iter().zip(cred.iter_mut()) {
+        if lvar == "cred" {
+            for &clonotype_id in exacts.iter().take(nexacts) {
                 let ex = &exact_clonotypes[clonotype_id];
-                for l in 0..ex.clones.len() {
-                    let bc = &ex.clones[l][0].barcode;
-                    let li = ex.clones[l][0].dataset_index;
+                for clone in &ex.clones {
+                    let bc = &clone[0].barcode;
+                    let li = clone[0].dataset_index;
                     if gex_info.pca[li].contains_key(&bc.clone()) {
                         let mut creds = 0;
                         let mut z = Vec::<(f64, String)>::new();
                         let x = &gex_info.pca[li][&bc.clone()];
                         for y in gex_info.pca[li].iter() {
-                            let mut dist2 = 0.0;
-                            for m in 0..x.len() {
-                                dist2 += (y.1[m] - x[m]) * (y.1[m] - x[m]);
-                            }
+                            let dist2 = x
+                                .iter()
+                                .zip(y.1.iter())
+                                .map(|(&xm, &ym)| (ym - xm) * (ym - xm))
+                                .sum::<f64>();
                             z.push((dist2, y.0.clone()));
                         }
                         z.sort_by(|a, b| a.partial_cmp(b).unwrap());
                         let top = n_vdj_gex[li];
-                        for i in 0..top {
-                            if bin_member(&vdj_cells[li], &z[i].1) {
+                        for zi in z.iter().take(top) {
+                            if bin_member(&vdj_cells[li], &zi.1) {
                                 creds += 1;
                             }
                         }
                         let pc = 100.0 * creds as f64 / top as f64;
-                        cred[k].push(format!("{:.1}", pc));
+                        cred.push(format!("{:.1}", pc));
                     } else {
-                        cred[k].push("".to_string());
+                        cred.push("".to_string());
                     }
                 }
             }
@@ -313,12 +313,11 @@ pub fn compute_some_stats(
             let mut lis = Vec::<usize>::new();
             let mut count = 0;
             let mut to_index = Vec::<usize>::new();
-            for u in 0..nexacts {
-                let clonotype_id = exacts[u];
+            for &clonotype_id in exacts.iter().take(nexacts) {
                 let ex = &exact_clonotypes[clonotype_id];
-                for l in 0..ex.clones.len() {
-                    let bc = &ex.clones[l][0].barcode;
-                    let li = ex.clones[l][0].dataset_index;
+                for clone in &ex.clones {
+                    let bc = &clone[0].barcode;
+                    let li = clone[0].dataset_index;
                     if gex_info.pca[li].contains_key(&bc.clone()) {
                         bcs.push(bc.to_string());
                         lis.push(li);
@@ -355,8 +354,8 @@ pub fn compute_some_stats(
             let mut reps = Vec::<i32>::new();
             e.orbit_reps(&mut reps);
             reps.sort_unstable();
-            for i in 0..bcs.len() {
-                pe[k][to_index[i]] = format!("{}", bin_position(&ids, &e.class_id(i as i32)));
+            for (i, idx) in to_index.into_iter().take(bcs.len()).enumerate() {
+                pe[k][idx] = format!("{}", bin_position(&ids, &e.class_id(i as i32)));
             }
         }
     }
@@ -367,28 +366,28 @@ pub fn compute_some_stats(
     for k in 0..lvars.len() {
         if lvars[k].starts_with("ppe") {
             let n = lvars[k].after("ppe").force_usize();
-            let mut bcs = Vec::<String>::new();
+            let mut bcs = Vec::<&str>::new();
             let mut lis = Vec::<usize>::new();
             let mut count = 0;
             let mut to_index = Vec::<usize>::new();
-            for u in 0..nexacts {
-                let clonotype_id = exacts[u];
+            for &clonotype_id in exacts.iter().take(nexacts) {
                 let ex = &exact_clonotypes[clonotype_id];
-                for l in 0..ex.clones.len() {
-                    let bc = &ex.clones[l][0].barcode;
-                    let li = ex.clones[l][0].dataset_index;
+                for clone in &ex.clones {
+                    let bc = &clone[0].barcode;
+                    let li = clone[0].dataset_index;
                     if gex_info.pca[li].contains_key(&bc.clone()) {
-                        bcs.push(bc.to_string());
+                        bcs.push(bc.as_str());
                         lis.push(li);
                         to_index.push(count);
                     }
                     count += 1;
                 }
             }
-            let mut mat = vec![Vec::<f64>::new(); bcs.len()];
-            for i in 0..bcs.len() {
-                mat[i] = gex_info.pca[lis[i]][&bcs[i].clone()].clone();
-            }
+            let mat = bcs
+                .iter()
+                .zip(lis.iter())
+                .map(|(bc, &li)| gex_info.pca[li][&bc.to_string()].clone())
+                .collect::<Vec<_>>();
             let mut matg = Vec::<Vec<f64>>::new();
             for li in 0..ctl.origin_info.n() {
                 for i in gex_info.pca[li].iter() {
@@ -396,17 +395,16 @@ pub fn compute_some_stats(
                 }
             }
             let mut x = vec![0; bcs.len()];
-            for i1 in 0..mat.len() {
-                for i2 in 0..matg.len() {
-                    let m1 = &mat[i1];
-                    let m2 = &matg[i2];
-                    let mut d = 0.0;
-                    for j in 0..m1.len() {
-                        d += (m1[j] - m2[j]) * (m1[j] - m2[j]);
-                    }
-                    d = d.sqrt();
+            for (m1, x) in mat.iter().zip(x.iter_mut()) {
+                for m2 in &matg {
+                    let d = m1
+                        .iter()
+                        .zip(m2.iter())
+                        .map(|(&m1, &m2)| (m1 - m2) * (m1 - m2))
+                        .sum::<f64>()
+                        .sqrt();
                     if d <= n as f64 {
-                        x[i1] += 1;
+                        *x += 1;
                     }
                 }
             }
@@ -415,11 +413,12 @@ pub fn compute_some_stats(
                 for i2 in 0..mat.len() {
                     let m1 = &mat[i1];
                     let m2 = &mat[i2];
-                    let mut d = 0.0;
-                    for j in 0..m1.len() {
-                        d += (m1[j] - m2[j]) * (m1[j] - m2[j]);
-                    }
-                    d = d.sqrt();
+                    let d = m1
+                        .iter()
+                        .zip(m2.iter())
+                        .map(|(&m1, &m2)| (m1 - m2) * (m1 - m2))
+                        .sum::<f64>()
+                        .sqrt();
                     if d <= n as f64 {
                         y[i1] += 1;
                     }
@@ -438,43 +437,43 @@ pub fn compute_some_stats(
     for k in 0..lvars.len() {
         if lvars[k].starts_with("npe") {
             let n = lvars[k].after("npe").force_usize();
-            let mut bcs = Vec::<String>::new();
+            let mut bcs = Vec::<&str>::new();
             let mut lis = Vec::<usize>::new();
             let mut count = 0;
             let mut to_index = Vec::<usize>::new();
-            for u in 0..nexacts {
-                let clonotype_id = exacts[u];
+            for &clonotype_id in exacts.iter().take(nexacts) {
                 let ex = &exact_clonotypes[clonotype_id];
-                for l in 0..ex.clones.len() {
-                    let bc = &ex.clones[l][0].barcode;
-                    let li = ex.clones[l][0].dataset_index;
+                for clone in &ex.clones {
+                    let bc = &clone[0].barcode;
+                    let li = clone[0].dataset_index;
                     if gex_info.pca[li].contains_key(&bc.clone()) {
-                        bcs.push(bc.to_string());
+                        bcs.push(bc.as_str());
                         lis.push(li);
                         to_index.push(count);
                     }
                     count += 1;
                 }
             }
-            let mut mat = vec![Vec::<f64>::new(); bcs.len()];
-            for i in 0..bcs.len() {
-                mat[i] = gex_info.pca[lis[i]][&bcs[i].clone()].clone();
-            }
-            let mut y = vec![0; bcs.len()];
-            for i1 in 0..mat.len() {
-                for i2 in 0..mat.len() {
-                    let m1 = &mat[i1];
-                    let m2 = &mat[i2];
-                    let mut d = 0.0;
-                    for j in 0..m1.len() {
-                        d += (m1[j] - m2[j]) * (m1[j] - m2[j]);
-                    }
-                    d = d.sqrt();
-                    if d <= n as f64 {
-                        y[i1] += 1;
-                    }
-                }
-            }
+            let mat = bcs
+                .iter()
+                .zip(lis.iter())
+                .map(|(&bc, &li)| gex_info.pca[li][&bc.to_string()].clone())
+                .collect::<Vec<_>>();
+            let y = mat
+                .iter()
+                .map(|m1| {
+                    mat.iter()
+                        .filter(|m2| {
+                            m1.iter()
+                                .zip(m2.iter())
+                                .map(|(&m1, &m2)| (m1 - m2) * (m1 - m2))
+                                .sum::<f64>()
+                                .sqrt()
+                                <= n as f64
+                        })
+                        .count()
+                })
+                .collect::<Vec<_>>();
             npe[k] = vec![String::new(); count];
             for i in 0..bcs.len() {
                 npe[k][to_index[i]] = format!("{}", y[i]);
@@ -501,7 +500,7 @@ pub fn compute_bu(
     gex_info: &GexInfo,
     rsi: &ColInfo,
     sr: &mut Vec<(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)>,
-    fate: &[HashMap<String, String>],
+    fate: &[HashMap<String, &str>],
     nd_fields: &[String],
     alt_bcs: &[String],
     cred: &[Vec<String>],
@@ -524,20 +523,16 @@ pub fn compute_bu(
             let bc = &bcl.0;
             let li = bcl.1;
             let di = ex.clones[bcl.2][0].dataset_index;
-            row.push(format!("$  {}", bc.clone()));
+            row.push(format!("$  {}", bc));
             let ex = &exact_clonotypes[exacts[u]];
-            for k in 0..lvars.len() {
-                let var = lvars[k].clone();
-                let p = bin_position1_2(these_stats, &var);
+            for (k, var) in lvars.iter().enumerate() {
+                let p = bin_position1_2(these_stats, var);
                 let nr = row.len();
                 let mut filled = false;
                 for l in 0..ctl.origin_info.n() {
-                    if var == format!("n_{}", ctl.origin_info.dataset_id[l]) {
-                        let mut n = 0;
-                        if di == l {
-                            n = 1;
-                        }
-                        row.push(format!("{}", n));
+                    if var.starts_with("n_") && var[2..] == ctl.origin_info.dataset_id[l] {
+                        let n = if di == l { "1" } else { "0" };
+                        row.push(n.to_string());
                         filled = true;
                     }
                 }
@@ -547,7 +542,7 @@ pub fn compute_bu(
 
                 let mut in_var_def = false;
                 for i in 0..ctl.gen_opt.var_def.len() {
-                    if ctl.gen_opt.var_def[i].0 == var {
+                    if ctl.gen_opt.var_def[i].0 == *var {
                         in_var_def = true;
                     }
                 }
@@ -575,67 +570,61 @@ pub fn compute_bu(
                 {
                     let stats_me = &these_stats[p as usize].1;
                     row.push(stats_me[bcl.2].clone());
-                } else if var == *"n_b" {
+                } else if var == "n_b" {
                     let mut n = 0;
                     let li = ex.clones[bcl.2][0].dataset_index;
-                    if gex_info.cell_type[li].contains_key(&bc.clone())
+                    if gex_info.cell_type[li].contains_key(bc)
                         && gex_info.cell_type[li][&bc.clone()].starts_with('B')
                     {
                         n = 1;
                     }
                     row.push(format!("{}", n));
-                } else if var == *"filter" {
+                } else if var == "filter" {
                     let mut f = String::new();
-                    if fate[li].contains_key(&bc.clone()) {
-                        f = fate[li][&bc.clone()].clone();
-                        f = f.between(" ", " ").to_string();
+                    if fate[li].contains_key(bc) {
+                        f = fate[li][bc].between(" ", " ").to_string();
                     }
                     row.push(f);
-                } else if var == *"n_other" {
+                } else if var == "n_other" {
                     let mut n = 0;
                     let di = ex.clones[bcl.2][0].dataset_index;
                     let f = format!("n_{}", ctl.origin_info.dataset_id[di]);
-                    let mut found = false;
-                    for i in 0..nd_fields.len() {
-                        if f == nd_fields[i] {
-                            found = true;
-                        }
-                    }
+                    let found = nd_fields.iter().any(|ff| *ff == f);
                     if !found {
                         n = 1;
                     }
                     row.push(format!("{}", n));
-                } else if var == *"sec" {
+                } else if var == "sec" {
                     let mut n = 0;
-                    if ctl.origin_info.secmem[li].contains_key(&bc.clone()) {
-                        n = ctl.origin_info.secmem[li][&bc.clone()].0;
+                    if ctl.origin_info.secmem[li].contains_key(bc) {
+                        n = ctl.origin_info.secmem[li][bc].0;
                     }
                     row.push(format!("{}", n));
-                } else if var == *"mem" {
+                } else if var == "mem" {
                     let mut n = 0;
-                    if ctl.origin_info.secmem[li].contains_key(&bc.clone()) {
-                        n = ctl.origin_info.secmem[li][&bc.clone()].1;
+                    if ctl.origin_info.secmem[li].contains_key(bc) {
+                        n = ctl.origin_info.secmem[li][bc].1;
                     }
                     row.push(format!("{}", n));
-                } else if bin_member(alt_bcs, &var) {
+                } else if bin_member(alt_bcs, var) {
                     let mut val = String::new();
                     let alt = &ctl.origin_info.alt_bc_fields[li];
-                    for j in 0..alt.len() {
-                        if alt[j].0 == lvars[k] && alt[j].1.contains_key(&bc.clone()) {
-                            val = alt[j].1[&bc.clone()].clone();
+                    for aj in alt {
+                        if aj.0 == *var && aj.1.contains_key(bc) {
+                            val = aj.1[bc].clone();
                         }
                     }
                     row.push(val);
-                } else if var == *"datasets" {
-                    row.push(ctl.origin_info.dataset_id[li].clone().to_string());
-                } else if var == *"origins" {
-                    row.push(ctl.origin_info.origin_id[li].clone().to_string());
-                } else if var == *"donors" {
-                    row.push(ctl.origin_info.donor_id[li].clone().to_string());
-                } else if var == *"clust" && have_gex {
+                } else if var == "datasets" {
+                    row.push(ctl.origin_info.dataset_id[li].clone());
+                } else if var == "origins" {
+                    row.push(ctl.origin_info.origin_id[li].clone());
+                } else if var == "donors" {
+                    row.push(ctl.origin_info.donor_id[li].clone());
+                } else if var == "clust" && have_gex {
                     let mut cid = 0;
-                    if gex_info.cluster[li].contains_key(&bc.clone()) {
-                        cid = gex_info.cluster[li][&bc.clone()];
+                    if gex_info.cluster[li].contains_key(bc) {
+                        cid = gex_info.cluster[li][bc];
                     }
                     row.push(format!("{}", cid));
                 } else if var.starts_with("pe") && have_gex {
@@ -644,27 +633,28 @@ pub fn compute_bu(
                     row.push(npe[k][cell_count + bcl.2].to_string());
                 } else if var.starts_with("ppe") && have_gex {
                     row.push(ppe[k][cell_count + bcl.2].to_string());
-                } else if var == *"cred" && have_gex {
+                } else if var == "cred" && have_gex {
                     row.push(cred[k][cell_count + bcl.2].to_string());
-                } else if var == *"type" && have_gex {
-                    let mut cell_type = "".to_string();
-                    if gex_info.cell_type[li].contains_key(&bc.clone()) {
-                        cell_type = gex_info.cell_type[li][&bc.clone()].clone();
-                    }
+                } else if var == "type" && have_gex {
+                    let cell_type = if gex_info.cell_type[li].contains_key(bc) {
+                        gex_info.cell_type[li][bc].clone()
+                    } else {
+                        String::default()
+                    };
                     row.push(cell_type);
-                } else if var == *"n_gex" && have_gex {
+                } else if var == "n_gex" && have_gex {
                     let mut n_gex = 0;
                     if bin_member(&gex_info.gex_cell_barcodes[li], bc) {
                         n_gex = 1;
                     }
                     row.push(format!("{}", n_gex));
-                } else if var == *"mark" {
+                } else if var == "mark" {
                     let mut mark = String::new();
                     if ex.clones[bcl.2][0].marked {
                         mark = "x".to_string();
                     }
                     row.push(mark);
-                } else if var == *"entropy" && have_gex {
+                } else if var == "entropy" && have_gex {
                     // NOTE DUPLICATION WITH CODE BELOW.
                     let mut gex_count = 0;
                     let p = bin_position(&gex_info.gex_barcodes[li], bc);
@@ -672,9 +662,7 @@ pub fn compute_bu(
                         let mut raw_count = 0;
                         if gex_info.gex_matrices[li].initialized() {
                             let row = gex_info.gex_matrices[li].row(p as usize);
-                            for j in 0..row.len() {
-                                let f = row[j].0;
-                                let n = row[j].1;
+                            for (f, n) in row {
                                 if gex_info.is_gex[li][f] {
                                     raw_count += n;
                                 }
@@ -693,9 +681,7 @@ pub fn compute_bu(
                     if p >= 0 {
                         if gex_info.gex_matrices[li].initialized() {
                             let row = gex_info.gex_matrices[li].row(p as usize);
-                            for j in 0..row.len() {
-                                let f = row[j].0;
-                                let n = row[j].1;
+                            for (f, n) in row {
                                 if gex_info.is_gex[li][f] {
                                     let q = n as f64 / gex_count as f64;
                                     entropy -= q * q.log2();
@@ -722,9 +708,7 @@ pub fn compute_bu(
                         let mut raw_count = 0 as f64;
                         if gex_info.gex_matrices[li].initialized() {
                             let row = gex_info.gex_matrices[li].row(p as usize);
-                            for j in 0..row.len() {
-                                let f = row[j].0;
-                                let n = row[j].1;
+                            for (f, n) in row {
                                 if gex_info.is_gex[li][f] {
                                     raw_count += n as f64;
                                 }
@@ -743,18 +727,18 @@ pub fn compute_bu(
                             gex_count = raw_count;
                         }
                     }
-                    if var == *"gex" {
+                    if var == "gex" {
                         row.push(format!("{}", gex_count.round()));
                     } else {
-                        let mut y = var.clone();
+                        let mut y = var.as_str();
                         if y.contains(':') {
-                            y = y.after(":").to_string();
+                            y = y.after(":");
                         }
-                        let y0 = y.clone();
+                        let y0 = y;
                         let suffixes = ["_min", "_max", "_μ", "_Σ", "_cell", "_%"];
-                        for s in suffixes.iter() {
+                        for &s in suffixes.iter() {
                             if y.ends_with(s) {
-                                y = y.rev_before(s).to_string();
+                                y = y.rev_before(s);
                                 break;
                             }
                         }
@@ -763,23 +747,22 @@ pub fn compute_bu(
                         let mut count = 0.0;
                         let l = bcl.2;
                         if p >= 0 {
-                            let mut ux = Vec::<usize>::new();
-                            if ctl.clono_print_opt.regex_match[li].contains_key(&y) {
-                                ux = ctl.clono_print_opt.regex_match[li][&y].clone();
-                            }
+                            let ux = ctl.clono_print_opt.regex_match[li]
+                                .get(&y.to_string())
+                                .cloned()
+                                .unwrap_or_default();
                             if !ux.is_empty() {
                                 computed = true;
                                 for fid in ux.iter() {
                                     let counti = get_gex_matrix_entry(
-                                        ctl, gex_info, *fid, d_all, ind_all, li, l, p as usize, &y,
+                                        ctl, gex_info, *fid, d_all, ind_all, li, l, p as usize, y,
                                     );
                                     count += counti;
                                 }
-                            } else if gex_info.feature_id[li].contains_key(&y) {
+                            } else if let Some(&fid) = gex_info.feature_id[li].get(&y.to_string()) {
                                 computed = true;
-                                let fid = gex_info.feature_id[li][&y];
                                 count = get_gex_matrix_entry(
-                                    ctl, gex_info, fid, d_all, ind_all, li, l, p as usize, &y,
+                                    ctl, gex_info, fid, d_all, ind_all, li, l, p as usize, y,
                                 );
                             }
                         }
@@ -809,25 +792,25 @@ pub fn compute_bu(
             }
             let mut cx = vec!["".to_string(); ncall];
             let mut cp = 0;
-            for col in 0..cols {
-                if let Some(m) = mat[col][u] {
-                    for p in 0..rsi.cvars[col].len() {
-                        if rsi.cvars[col][p] == *"v_name_orig" {
+            for (m, cvars) in mat.iter().take(cols).zip(rsi.cvars.iter()) {
+                if let Some(m) = m[u] {
+                    for (cvar, cxp) in cvars.iter().zip(cx.iter_mut().skip(cp)) {
+                        if cvar == "v_name_orig" {
                             let v = &refdata.name[ex.clones[bcl.2][m].v_ref_id];
-                            cx[cp + p] = v.to_string();
-                        } else if rsi.cvars[col][p] == *"u" {
+                            *cxp = v.to_string();
+                        } else if cvar == "u" {
                             let numi = ex.clones[bcl.2][m].umi_count;
-                            cx[cp + p] = format!("{}", numi);
-                        } else if rsi.cvars[col][p] == *"r" {
+                            *cxp = format!("{}", numi);
+                        } else if cvar == "r" {
                             let r = ex.clones[bcl.2][m].read_count;
-                            cx[cp + p] = format!("{}", r);
-                        } else if rsi.cvars[col][p] == *"nval" {
+                            *cxp = format!("{}", r);
+                        } else if cvar == "nval" {
                             let mut n = 0;
                             if ex.clones[bcl.2][m].validated_umis.is_some() {
                                 n = ex.clones[bcl.2][m].validated_umis.as_ref().unwrap().len();
                             }
-                            cx[cp + p] = format!("{}", n);
-                        } else if rsi.cvars[col][p] == *"nnval" {
+                            *cxp = format!("{}", n);
+                        } else if cvar == "nnval" {
                             let mut n = 0;
                             if ex.clones[bcl.2][m].non_validated_umis.is_some() {
                                 n = ex.clones[bcl.2][m]
@@ -836,74 +819,77 @@ pub fn compute_bu(
                                     .unwrap()
                                     .len();
                             }
-                            cx[cp + p] = format!("{}", n);
-                        } else if rsi.cvars[col][p] == *"nival" {
+                            *cxp = format!("{}", n);
+                        } else if cvar == "nival" {
                             let mut n = 0;
                             if ex.clones[bcl.2][m].invalidated_umis.is_some() {
                                 n = ex.clones[bcl.2][m].invalidated_umis.as_ref().unwrap().len();
                             }
-                            cx[cp + p] = format!("{}", n);
-                        } else if rsi.cvars[col][p] == *"valumis" {
+                            *cxp = format!("{}", n);
+                        } else if cvar == "valumis" {
                             let mut n = Vec::<String>::new();
                             if ex.clones[bcl.2][m].validated_umis.is_some() {
                                 n = ex.clones[bcl.2][m].non_validated_umis.clone().unwrap();
                             }
-                            cx[cp + p] = format!("{}", n.iter().format(","));
-                        } else if rsi.cvars[col][p] == *"valbcumis" {
+                            *cxp = format!("{}", n.iter().format(","));
+                        } else if cvar == "valbcumis" {
                             let mut n = Vec::<String>::new();
                             if ex.clones[bcl.2][m].validated_umis.is_some() {
-                                n = ex.clones[bcl.2][m].validated_umis.clone().unwrap();
-                                for i in 0..n.len() {
-                                    n[i] = format!(
-                                        "{}{}",
-                                        ex.clones[bcl.2][m].barcode.before("-"),
-                                        n[i]
-                                    );
-                                }
+                                n = ex.clones[bcl.2][m]
+                                    .validated_umis
+                                    .as_ref()
+                                    .unwrap()
+                                    .iter()
+                                    .map(|ni| {
+                                        format!("{}{}", ex.clones[bcl.2][m].barcode.before("-"), ni)
+                                    })
+                                    .collect();
                             }
-                            cx[cp + p] = format!("{}", n.iter().format(","));
-                        } else if rsi.cvars[col][p] == *"nvalumis" {
+                            *cxp = format!("{}", n.iter().format(","));
+                        } else if cvar == "nvalumis" {
                             let mut n = Vec::<String>::new();
                             if ex.clones[bcl.2][m].non_validated_umis.is_some() {
                                 n = ex.clones[bcl.2][m].non_validated_umis.clone().unwrap();
                             }
-                            cx[cp + p] = format!("{}", n.iter().format(","));
-                        } else if rsi.cvars[col][p] == *"nvalbcumis" {
+                            *cxp = format!("{}", n.iter().format(","));
+                        } else if cvar == "nvalbcumis" {
                             let mut n = Vec::<String>::new();
                             if ex.clones[bcl.2][m].non_validated_umis.is_some() {
-                                n = ex.clones[bcl.2][m].non_validated_umis.clone().unwrap();
-                                for i in 0..n.len() {
-                                    n[i] = format!(
-                                        "{}{}",
-                                        ex.clones[bcl.2][m].barcode.before("-"),
-                                        n[i]
-                                    );
-                                }
+                                n = ex.clones[bcl.2][m]
+                                    .non_validated_umis
+                                    .as_ref()
+                                    .unwrap()
+                                    .iter()
+                                    .map(|ni| {
+                                        format!("{}{}", ex.clones[bcl.2][m].barcode.before("-"), ni)
+                                    })
+                                    .collect();
                             }
-                            cx[cp + p] = format!("{}", n.iter().format(","));
-                        } else if rsi.cvars[col][p] == *"ivalumis" {
+                            *cxp = format!("{}", n.iter().format(","));
+                        } else if cvar == "ivalumis" {
                             let mut n = Vec::<String>::new();
                             if ex.clones[bcl.2][m].invalidated_umis.is_some() {
                                 n = ex.clones[bcl.2][m].invalidated_umis.clone().unwrap();
                             }
-                            cx[cp + p] = format!("{}", n.iter().format(","));
-                        } else if rsi.cvars[col][p] == *"ivalbcumis" {
+                            *cxp = format!("{}", n.iter().format(","));
+                        } else if cvar == "ivalbcumis" {
                             let mut n = Vec::<String>::new();
                             if ex.clones[bcl.2][m].invalidated_umis.is_some() {
-                                n = ex.clones[bcl.2][m].invalidated_umis.clone().unwrap();
-                                for i in 0..n.len() {
-                                    n[i] = format!(
-                                        "{}{}",
-                                        ex.clones[bcl.2][m].barcode.before("-"),
-                                        n[i]
-                                    );
-                                }
+                                n = ex.clones[bcl.2][m]
+                                    .invalidated_umis
+                                    .as_ref()
+                                    .unwrap()
+                                    .iter()
+                                    .map(|ni| {
+                                        format!("{}{}", ex.clones[bcl.2][m].barcode.before("-"), ni)
+                                    })
+                                    .collect::<Vec<_>>();
                             }
-                            cx[cp + p] = format!("{}", n.iter().format(","));
+                            *cxp = format!("{}", n.iter().format(","));
                         }
                     }
                 }
-                cp += rsi.cvars[col].len();
+                cp += cvars.len();
             }
             row.append(&mut cx);
             subrows.push(row);

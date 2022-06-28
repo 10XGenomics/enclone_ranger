@@ -19,11 +19,11 @@ pub fn species(refdata: &RefData) -> &'static str {
         }
     }
     const K: usize = 60;
-    let mut kmers = Vec::<Vec<u8>>::new();
-    for i in 0..my_trac.len() {
-        if my_trac[i].len() >= K {
-            for j in 0..=my_trac[i].len() - K {
-                kmers.push(my_trac[i][j..j + K].to_vec());
+    let mut kmers = Vec::<&[u8]>::new();
+    for tr in &my_trac {
+        if tr.len() >= K {
+            for j in 0..=tr.len() - K {
+                kmers.push(&tr[j..j + K]);
             }
         }
     }
@@ -131,7 +131,7 @@ pub fn species(refdata: &RefData) -> &'static str {
         // Test the kmers.
 
         for i in 0..=trac.len() - K {
-            let kmer = trac[i..i + K].to_vec();
+            let kmer = &trac[i..i + K];
             if bin_member(&kmers, &kmer) {
                 count += 1;
             }
@@ -173,19 +173,19 @@ pub fn mark_innate(refdata: &RefData, ex: &mut Vec<ExactClonotype>) {
     let species = species(refdata);
     let inkt_cdr3 = innate_cdr3(species, "iNKT");
     let mait_cdr3 = innate_cdr3(species, "MAIT");
-    for i in 0..ex.len() {
+    for e in ex {
         let (mut have_mait_tra, mut have_mait_trb) = (false, false);
         let (mut have_mait_tra_cdr3, mut have_mait_trb_cdr3) = (false, false);
         let (mut have_inkt_tra, mut have_inkt_trb) = (false, false);
         let (mut have_inkt_tra_cdr3, mut have_inkt_trb_cdr3) = (false, false);
-        for j in 0..ex[i].share.len() {
-            let mut vname = refdata.name[ex[i].share[j].v_ref_id].clone();
+        for share in &e.share {
+            let mut vname = refdata.name[share.v_ref_id].as_str();
             if vname.contains('*') {
-                vname = vname.before("*").to_string();
+                vname = vname.before("*");
             }
-            let mut jname = refdata.name[ex[i].share[j].j_ref_id].clone();
+            let mut jname = refdata.name[share.j_ref_id].as_str();
             if jname.contains('*') {
-                jname = jname.before("*").to_string();
+                jname = jname.before("*");
             }
             if species == "human" {
                 if vname == "TRAV10" && jname == "TRAJ18" {
@@ -220,31 +220,31 @@ pub fn mark_innate(refdata: &RefData, ex: &mut Vec<ExactClonotype>) {
                     have_inkt_trb = true;
                 }
             }
-            if ex[i].share[j].left {
-                if bin_member(&inkt_cdr3, &ex[i].share[j].cdr3_aa) {
+            if share.left {
+                if bin_member(&inkt_cdr3, &share.cdr3_aa) {
                     have_inkt_trb_cdr3 = true;
                 }
-                if bin_member(&mait_cdr3, &ex[i].share[j].cdr3_aa) {
+                if bin_member(&mait_cdr3, &share.cdr3_aa) {
                     have_mait_trb_cdr3 = true;
                 }
             } else {
-                if bin_member(&inkt_cdr3, &ex[i].share[j].cdr3_aa) {
+                if bin_member(&inkt_cdr3, &share.cdr3_aa) {
                     have_inkt_tra_cdr3 = true;
                 }
-                if bin_member(&mait_cdr3, &ex[i].share[j].cdr3_aa) {
+                if bin_member(&mait_cdr3, &share.cdr3_aa) {
                     have_mait_tra_cdr3 = true;
                 }
             }
         }
-        for j in 0..ex[i].share.len() {
-            ex[i].share[j].inkt_alpha_chain_gene_match = have_inkt_tra;
-            ex[i].share[j].inkt_alpha_chain_junction_match = have_inkt_tra_cdr3;
-            ex[i].share[j].inkt_beta_chain_gene_match = have_inkt_trb;
-            ex[i].share[j].inkt_beta_chain_junction_match = have_inkt_trb_cdr3;
-            ex[i].share[j].mait_alpha_chain_gene_match = have_mait_tra;
-            ex[i].share[j].mait_alpha_chain_junction_match = have_mait_tra_cdr3;
-            ex[i].share[j].mait_beta_chain_gene_match = have_mait_trb;
-            ex[i].share[j].mait_beta_chain_junction_match = have_mait_trb_cdr3;
+        for share in e.share.iter_mut() {
+            share.inkt_alpha_chain_gene_match = have_inkt_tra;
+            share.inkt_alpha_chain_junction_match = have_inkt_tra_cdr3;
+            share.inkt_beta_chain_gene_match = have_inkt_trb;
+            share.inkt_beta_chain_junction_match = have_inkt_trb_cdr3;
+            share.mait_alpha_chain_gene_match = have_mait_tra;
+            share.mait_alpha_chain_junction_match = have_mait_tra_cdr3;
+            share.mait_beta_chain_gene_match = have_mait_trb;
+            share.mait_beta_chain_junction_match = have_mait_trb_cdr3;
         }
     }
 }

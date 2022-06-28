@@ -13,7 +13,7 @@ use vector_utils::{bin_member, bin_position};
 
 pub fn proc_lvar2(
     i: usize,
-    x: &String,
+    x: &str,
     pass: usize,
     u: usize,
     ctl: &EncloneControl,
@@ -26,7 +26,7 @@ pub fn proc_lvar2(
     ind_all: &mut [Vec<u32>],
     stats: &mut Vec<(String, Vec<String>)>,
     lvars: &[String],
-    _alt_bcs: &[String],
+    _alt_bcs: &[&str],
     gex_mean: f64,
     gex_sum: f64,
     gex_fcounts_unsorted: &[f64],
@@ -90,20 +90,20 @@ pub fn proc_lvar2(
     // Proceed.
 
     let (mut counts_sub, mut fcounts_sub) = (Vec::<usize>::new(), Vec::<f64>::new());
-    let xorig = x.clone();
-    let (mut x, mut y) = (x.to_string(), x.to_string());
+    let xorig = x;
+    let (mut x, mut y) = (x, x);
     if x.contains(':') {
-        x = x.before(":").to_string();
+        x = x.before(":");
     }
     if y.contains(':') {
-        y = y.after(":").to_string();
+        y = y.after(":");
     }
-    let y0 = y.clone();
+    let y0 = y;
     for _ in 1..=2 {
         let suffixes = ["_min", "_max", "_μ", "_Σ", "_cell", "_%"];
         for s in suffixes.iter() {
             if y.ends_with(s) {
-                y = y.rev_before(s).to_string();
+                y = y.rev_before(s);
                 break;
             }
         }
@@ -112,10 +112,10 @@ pub fn proc_lvar2(
     for l in 0..ex.clones.len() {
         let li = ex.clones[l][0].dataset_index;
         let bc = ex.clones[l][0].barcode.clone();
-        let mut ux = Vec::<usize>::new();
-        if ctl.clono_print_opt.regex_match[li].contains_key(&y) {
-            ux = ctl.clono_print_opt.regex_match[li][&y].clone();
-        }
+        let ux = ctl.clono_print_opt.regex_match[li]
+            .get(&y.to_string())
+            .cloned()
+            .unwrap_or_default();
         if !ux.is_empty() {
             let p = bin_position(&gex_info.gex_barcodes[li], &bc);
             if p >= 0 {
@@ -123,20 +123,20 @@ pub fn proc_lvar2(
                 let mut raw_count = 0.0;
                 for fid in ux.iter() {
                     let raw_counti = get_gex_matrix_entry(
-                        ctl, gex_info, *fid, d_all, ind_all, li, l, p as usize, &y,
+                        ctl, gex_info, *fid, d_all, ind_all, li, l, p as usize, y,
                     );
                     raw_count += raw_counti;
                 }
                 counts_sub.push(raw_count.round() as usize);
                 fcounts_sub.push(raw_count);
             }
-        } else if gex_info.feature_id[li].contains_key(&y) {
+        } else if gex_info.feature_id[li].contains_key(&y.to_string()) {
             computed = true;
             let p = bin_position(&gex_info.gex_barcodes[li], &bc);
             if p >= 0 {
-                let fid = gex_info.feature_id[li][&y];
+                let fid = gex_info.feature_id[li][&y.to_string()];
                 let raw_count =
-                    get_gex_matrix_entry(ctl, gex_info, fid, d_all, ind_all, li, l, p as usize, &y);
+                    get_gex_matrix_entry(ctl, gex_info, fid, d_all, ind_all, li, l, p as usize, y);
                 counts_sub.push(raw_count.round() as usize);
                 fcounts_sub.push(raw_count);
             }
@@ -151,17 +151,17 @@ pub fn proc_lvar2(
             f.push(format!("{}", x));
         }
         if !y0.ends_with("_%") {
-            stats.push((x.clone(), f));
+            stats.push((x.to_string(), f));
         } else {
             let mut f = Vec::<String>::new();
-            for i in 0..fcounts_sub.len() {
+            for &fc in &fcounts_sub {
                 let mut x = 0.0;
                 if gex_mean > 0.0 {
-                    x = 100.0 * fcounts_sub[i] / gex_mean;
+                    x = 100.0 * fc / gex_mean;
                 }
                 f.push(format!("{}", x));
             }
-            stats.push((x.clone(), f));
+            stats.push((x.to_string(), f));
         }
         let mut counts_sub_sorted = counts_sub.clone();
         counts_sub_sorted.sort_unstable();

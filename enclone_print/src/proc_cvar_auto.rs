@@ -23,7 +23,7 @@ use vector_utils::{bin_member, next_diff12_4, unique_sort};
 pub fn proc_cvar_auto(
     j: usize,
     pass: usize,
-    var: &String,
+    var: &str,
     ex: &ExactClonotype,
     exacts: &[usize],
     exact_clonotypes: &[ExactClonotype],
@@ -42,9 +42,9 @@ pub fn proc_cvar_auto(
     stats: &mut Vec<(String, Vec<String>)>,
     allele_data: &AlleleData,
 ) -> Result<bool, String> {
-    let mut vname = var.clone();
+    let mut vname = var;
     if var.contains(':') {
-        vname = var.after(":").to_string();
+        vname = var.after(":");
     }
     let cvars = &ctl.clono_print_opt.cvars;
     let mut abbrc = format!("{}{}", var, col + 1);
@@ -102,27 +102,21 @@ pub fn proc_cvar_auto(
         let mut refs = Vec::<Vec<u8>>::new();
         let alt_refs = &allele_data.alt_refs;
         refs.push(refdata.refs[ex.share[mid].v_ref_id].to_ascii_vec());
-        for i in 0..alt_refs.len() {
+        for ai in alt_refs {
             // The following does not work correctly if an exact subclonotype contains cells
             // from more than one donor.  But that is extremely rare.
             if ex.clones[0][0].donor_index.is_some()
-                && alt_refs[i].0 == ex.clones[0][0].donor_index.unwrap()
-                && alt_refs[i].1 == ex.share[mid].v_ref_id
+                && ai.0 == ex.clones[0][0].donor_index.unwrap()
+                && ai.1 == ex.share[mid].v_ref_id
             {
-                refs.push(alt_refs[i].2.to_ascii_vec());
+                refs.push(ai.2.to_ascii_vec());
             }
         }
-        let mut m = refs[0].len();
-        for i in 1..refs.len() {
-            m = min(m, refs[i].len());
-        }
+        let m = refs.iter().map(Vec::len).min().unwrap();
         let mut ps = Vec::<usize>::new();
         let mut variant = Vec::<Vec<u8>>::new();
         for p in 0..m {
-            let mut bases = Vec::<u8>::new();
-            for i in 0..refs.len() {
-                bases.push(refs[i][p]);
-            }
+            let bases = refs.iter().map(|r| r[p]).collect::<Vec<_>>();
             let mut bases_sorted = bases.clone();
             unique_sort(&mut bases_sorted);
             if bases_sorted.len() > 1 {
@@ -132,15 +126,15 @@ pub fn proc_cvar_auto(
         }
         let mut xs = Vec::<String>::new();
         for i in 0..refs.len() {
-            let mut x = String::new();
-            for j in 0..ps.len() {
-                x.push(variant[j][i] as char);
+            let mut x = String::with_capacity(ps.len());
+            for vj in variant.iter().take(ps.len()) {
+                x.push(vj[i] as char);
             }
             xs.push(x);
         }
         let mut me = String::new();
-        for j in 0..ps.len() {
-            let base = ex.share[mid].seq_del_amino[ps[j]];
+        for &psj in &ps {
+            let base = ex.share[mid].seq_del_amino[psj];
             me.push(base as char);
         }
         let mut details = String::new();
@@ -538,11 +532,11 @@ pub fn proc_cvar_auto(
             if opt.is_empty() {
                 opt_name = "none".to_string();
             } else {
-                for i in 0..opt.len() {
+                for (i, o) in opt.into_iter().enumerate() {
                     if i > 0 {
                         opt_name += ":";
                     }
-                    opt_name += &refdata.name[opt[i]];
+                    opt_name += &refdata.name[o];
                 }
             }
         }
@@ -609,11 +603,11 @@ pub fn proc_cvar_auto(
             if opt2.is_empty() {
                 opt2_name = "none".to_string();
             } else {
-                for i in 0..opt2.len() {
+                for (i, o) in opt2.into_iter().enumerate() {
                     if i > 0 {
                         opt2_name += ":";
                     }
-                    opt2_name += &refdata.name[opt2[i]];
+                    opt2_name += &refdata.name[o];
                 }
             }
         }
@@ -1007,11 +1001,14 @@ pub fn proc_cvar_auto(
         for k in 0..ex.ncells() {
             let mut n = String::new();
             if ex.clones[k][mid].invalidated_umis.is_some() {
-                let mut bc_umis = ex.clones[k][mid].invalidated_umis.clone().unwrap();
-                for i in 0..bc_umis.len() {
-                    bc_umis[i] = format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc_umis[i]);
-                }
-                n = format!("{}", bc_umis.iter().format(","));
+                n = ex.clones[k][mid]
+                    .invalidated_umis
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .map(|bc| format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc))
+                    .format(",")
+                    .to_string();
             }
             vals.push(n.to_string());
         }
@@ -1020,18 +1017,11 @@ pub fn proc_cvar_auto(
     } else if vname == "ivalumis" {
         let mut vals = Vec::<String>::new();
         for k in 0..ex.ncells() {
-            let mut n = String::new();
-            if ex.clones[k][mid].invalidated_umis.is_some() {
-                n = format!(
-                    "{}",
-                    ex.clones[k][mid]
-                        .invalidated_umis
-                        .as_ref()
-                        .unwrap()
-                        .iter()
-                        .format(",")
-                );
-            }
+            let n = ex.clones[k][mid]
+                .invalidated_umis
+                .as_ref()
+                .map(|umi| umi.iter().format(",").to_string())
+                .unwrap_or_default();
             vals.push(n.to_string());
         }
 
@@ -1115,14 +1105,16 @@ pub fn proc_cvar_auto(
     } else if vname == "nvalbcumis" {
         let mut vals = Vec::<String>::new();
         for k in 0..ex.ncells() {
-            let mut n = String::new();
-            if ex.clones[k][mid].non_validated_umis.is_some() {
-                let mut bc_umis = ex.clones[k][mid].non_validated_umis.clone().unwrap();
-                for i in 0..bc_umis.len() {
-                    bc_umis[i] = format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc_umis[i]);
-                }
-                n = format!("{}", bc_umis.iter().format(","));
-            }
+            let n = ex.clones[k][mid]
+                .non_validated_umis
+                .as_ref()
+                .map(|umi| {
+                    umi.iter()
+                        .map(|bc| format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc))
+                        .format(",")
+                        .to_string()
+                })
+                .unwrap_or_default();
             vals.push(n.to_string());
         }
 
@@ -1421,33 +1413,28 @@ pub fn proc_cvar_auto(
     } else if vname == "valbcumis" {
         let mut vals = Vec::<String>::new();
         for k in 0..ex.ncells() {
-            let mut n = String::new();
-            if ex.clones[k][mid].validated_umis.is_some() {
-                let mut bc_umis = ex.clones[k][mid].validated_umis.clone().unwrap();
-                for i in 0..bc_umis.len() {
-                    bc_umis[i] = format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc_umis[i]);
-                }
-                n = format!("{}", bc_umis.iter().format(","));
-            }
-            vals.push(n.to_string());
+            let n = ex.clones[k][mid]
+                .validated_umis
+                .as_ref()
+                .map(|umi| {
+                    umi.iter()
+                        .map(|bc| format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc))
+                        .format(",")
+                        .to_string()
+                })
+                .unwrap_or_default();
+            vals.push(n);
         }
 
         (String::new(), vals, "cell".to_string())
     } else if vname == "valumis" {
         let mut vals = Vec::<String>::new();
         for k in 0..ex.ncells() {
-            let mut n = String::new();
-            if ex.clones[k][mid].validated_umis.is_some() {
-                n = format!(
-                    "{}",
-                    ex.clones[k][mid]
-                        .validated_umis
-                        .as_ref()
-                        .unwrap()
-                        .iter()
-                        .format(",")
-                );
-            }
+            let n = ex.clones[k][mid]
+                .validated_umis
+                .as_ref()
+                .map(|umi| umi.iter().format(",").to_string())
+                .unwrap_or_default();
             vals.push(n.to_string());
         }
 
@@ -1489,8 +1476,8 @@ pub fn proc_cvar_auto(
                 m = n;
             }
         }
-        for u in 0..bad.len() {
-            if bad[u] {
+        for b in bad {
+            if b {
                 junk += 1;
             }
         }
@@ -1510,7 +1497,7 @@ pub fn proc_cvar_auto(
         let (exact, cell, _level) = &val;
         let mut varc = format!("{}{}", var, col + 1);
         if !exact.is_empty() {
-            if j < rsi.cvars[col].len() && cvars.contains(var) {
+            if j < rsi.cvars[col].len() && cvars.contains(&var.to_string()) {
                 cx[col][j] = exact.clone();
             }
             if pass == 2
@@ -1527,25 +1514,25 @@ pub fn proc_cvar_auto(
                 // Strip escape character sequences from exact.  Can happen in notes,
                 // maybe other places.
 
-                let mut val_clean = String::new();
-                let mut chars = Vec::<char>::new();
-                let valx = exact.to_string();
-                for c in valx.chars() {
-                    chars.push(c);
-                }
-                let mut escaped = false;
-                for l in 0..chars.len() {
-                    if chars[l] == '' {
-                        escaped = true;
-                    }
-                    if escaped {
-                        if chars[l] == 'm' {
-                            escaped = false;
+                let val_clean = if exact.contains('') {
+                    let mut val_clean = String::with_capacity(exact.len());
+                    let mut escaped = false;
+                    for ch in exact.chars() {
+                        if ch == '' {
+                            escaped = true;
                         }
-                        continue;
+                        if escaped {
+                            if ch == 'm' {
+                                escaped = false;
+                            }
+                            continue;
+                        }
+                        val_clean.push(ch);
                     }
-                    val_clean.push(chars[l]);
-                }
+                    val_clean
+                } else {
+                    exact.clone()
+                };
 
                 // Proceed.
 

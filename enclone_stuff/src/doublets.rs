@@ -26,7 +26,7 @@ pub fn delete_doublets(
     raw_joins: &[Vec<usize>],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
-    fate: &mut [HashMap<String, String>],
+    fate: &mut [HashMap<String, &str>],
 ) {
     if ctl.clono_filt_opt_def.doublet {
         let t = Instant::now();
@@ -86,15 +86,15 @@ pub fn delete_doublets(
             while j < priority.len() {
                 let k = next_diff(&priority, j);
                 let mut p = Vec::<usize>::new();
-                for l in j..k {
-                    p.push(exacts[l] as usize);
+                for &e in &exacts[j..k] {
+                    p.push(e);
                 }
                 res.1.push(p);
                 j = k;
             }
         });
-        for i in 0..results.len() {
-            pures.append(&mut results[i].1);
+        for mut r in results {
+            pures.append(&mut r.1);
         }
 
         // Define the number of cells in each pure subclonotype.
@@ -112,12 +112,12 @@ pub fn delete_doublets(
         let t = Instant::now();
         let mut shares = Vec::<(usize, usize)>::new();
         {
-            let mut content = Vec::<(String, usize)>::new();
-            for j in 0..pures.len() {
-                for id in pures[j].iter() {
-                    let ex = &exact_clonotypes[*id];
-                    for k in 0..ex.share.len() {
-                        content.push((ex.share[k].cdr3_dna.clone(), j));
+            let mut content = Vec::<(&str, usize)>::new();
+            for (j, pure) in pures.iter().enumerate() {
+                for &id in pure {
+                    let ex = &exact_clonotypes[id];
+                    for s in &ex.share {
+                        content.push((s.cdr3_dna.as_str(), j));
                     }
                 }
             }
@@ -163,8 +163,8 @@ pub fn delete_doublets(
                 let u = shares[j].0;
                 us.push(u);
                 let mut x = Vec::<usize>::new();
-                for l in j..k {
-                    let v = shares[l].1;
+                for v in &shares[j..k] {
+                    let v = v.1;
                     if MIN_MULT_DOUBLET * npure[u] <= npure[v] {
                         x.push(v);
                     }
@@ -190,8 +190,8 @@ pub fn delete_doublets(
                     }
                 }
             });
-            for j in 0..results.len() {
-                trips.append(&mut results[j].1.clone());
+            for mut r in results {
+                trips.append(&mut r.1);
             }
         }
         ctl.perf_stats(&t, "doublet filtering trips");
@@ -200,48 +200,45 @@ pub fn delete_doublets(
 
         let t = Instant::now();
         let mut to_delete = vec![false; exact_clonotypes.len()];
-        for j in 0..trips.len() {
-            let (v0, v1, v2) = (trips[j].2, trips[j].0, trips[j].1);
-            {
-                let verbose = false;
-                if verbose {
-                    println!("\n{}, {}, {}", v0, v1, v2);
-                    println!("DELETING");
-                    for (u, m) in pures[v0].iter().enumerate() {
-                        let ex = &exact_clonotypes[*m];
-                        let mut cdrs = Vec::<String>::new();
-                        for k in 0..ex.share.len() {
-                            cdrs.push(ex.share[k].cdr3_aa.clone());
-                        }
-                        println!("[{}] {}", u + 1, cdrs.iter().format(","));
+        for (v1, v2, v0) in trips {
+            let verbose = false;
+            if verbose {
+                println!("\n{}, {}, {}", v0, v1, v2);
+                println!("DELETING");
+                for (u, m) in pures[v0].iter().enumerate() {
+                    let ex = &exact_clonotypes[*m];
+                    let mut cdrs = Vec::<String>::new();
+                    for k in 0..ex.share.len() {
+                        cdrs.push(ex.share[k].cdr3_aa.clone());
                     }
-                    println!("USING");
-                    for (u, m) in pures[v1].iter().enumerate() {
-                        let ex = &exact_clonotypes[*m];
-                        let mut cdrs = Vec::<String>::new();
-                        for k in 0..ex.share.len() {
-                            cdrs.push(ex.share[k].cdr3_aa.clone());
-                        }
-                        println!("[{}] {}", u + 1, cdrs.iter().format(","));
-                    }
-                    println!("AND");
-                    for (u, m) in pures[v2].iter().enumerate() {
-                        let ex = &exact_clonotypes[*m];
-                        let mut cdrs = Vec::<String>::new();
-                        for k in 0..ex.share.len() {
-                            cdrs.push(ex.share[k].cdr3_aa.clone());
-                        }
-                        println!("[{}] {}", u + 1, cdrs.iter().format(","));
-                    }
+                    println!("[{}] {}", u + 1, cdrs.iter().format(","));
                 }
-                for m in pures[v0].iter() {
-                    to_delete[*m] = true;
+                println!("USING");
+                for (u, m) in pures[v1].iter().enumerate() {
+                    let ex = &exact_clonotypes[*m];
+                    let mut cdrs = Vec::<String>::new();
+                    for k in 0..ex.share.len() {
+                        cdrs.push(ex.share[k].cdr3_aa.clone());
+                    }
+                    println!("[{}] {}", u + 1, cdrs.iter().format(","));
                 }
+                println!("AND");
+                for (u, m) in pures[v2].iter().enumerate() {
+                    let ex = &exact_clonotypes[*m];
+                    let mut cdrs = Vec::<String>::new();
+                    for k in 0..ex.share.len() {
+                        cdrs.push(ex.share[k].cdr3_aa.clone());
+                    }
+                    println!("[{}] {}", u + 1, cdrs.iter().format(","));
+                }
+            }
+            for m in pures[v0].iter() {
+                to_delete[*m] = true;
             }
         }
         let mut orbits2 = Vec::<Vec<i32>>::new();
-        for i in 0..orbits.len() {
-            let mut o = orbits[i].clone();
+        for o in orbits.iter() {
+            let mut o = o.clone();
             let mut del2 = vec![false; o.len()];
             for j in 0..o.len() {
                 let id = info[o[j] as usize].clonotype_index;
@@ -252,7 +249,7 @@ pub fn delete_doublets(
                     for k in 0..ex.ncells() {
                         let li = ex.clones[k][0].dataset_index;
                         let bc = &ex.clones[k][0].barcode;
-                        fate[li].insert(bc.clone(), "failed DOUBLET filter".to_string());
+                        fate[li].insert(bc.clone(), "failed DOUBLET filter");
                     }
                 }
             }

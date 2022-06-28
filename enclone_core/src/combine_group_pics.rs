@@ -21,25 +21,26 @@ pub fn combine_group_pics(
     let mut done = false;
     if noprint && parseable_stdouth && !group_pics.is_empty() {
         let mut rows = Vec::<Vec<String>>::new();
-        for i in 0..group_pics.len() {
-            let r: Vec<String> = group_pics[i].split('\n').map(str::to_owned).collect();
-            for j in 0..r.len() - 1 {
-                let s = r[j].split('\t').map(str::to_owned).collect();
+        for pic in group_pics {
+            let r = pic.split('\n');
+            for rj in r.skip(1) {
+                let s = rj.split('\t').map(str::to_owned).collect();
                 rows.push(s);
             }
         }
         let mut same = true;
         let n = rows[0].len();
-        for i in 1..rows.len() {
-            if rows[i].len() != n {
+        for row in rows.iter().skip(1) {
+            if row.len() != n {
                 same = false;
             }
         }
         if same {
-            let mut justify = Vec::<u8>::new();
-            for x in rows[0].iter() {
-                justify.push(justification(x));
-            }
+            let justify = rows[0]
+                .iter()
+                .map(String::as_str)
+                .map(justification)
+                .collect();
             print_tabular(&mut glog, &rows, 2, Some(justify));
             done = true;
         }

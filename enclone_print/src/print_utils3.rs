@@ -159,8 +159,8 @@ pub fn consensus_codon_cdr3(
         let mut con = Vec::<u8>::new();
         for i in (0..n).step_by(3) {
             let mut codons = Vec::<Vec<u8>>::new();
-            for j in 0..cdr3s.len() {
-                codons.push(cdr3s[j][i..i + 3].to_vec());
+            for cdr3 in &cdr3s {
+                codons.push(cdr3[i..i + 3].to_vec());
             }
             codons.sort();
             let mut freq = Vec::<(u32, Vec<u8>)>::new();
@@ -199,12 +199,12 @@ pub fn define_column_info(
     // Define cvars.
 
     let mut cvars = Vec::<Vec<String>>::new();
-    for cx in 0..cols {
+    for m in mat.iter().take(cols) {
         let mut have_notes = false;
         let mut left = false;
-        for u in 0..exacts.len() {
-            let ex = &exact_clonotypes[exacts[u]];
-            if let Some(m) = mat[cx][u] {
+        for (&e, &m) in exacts.iter().zip(m.iter()) {
+            let ex = &exact_clonotypes[e];
+            if let Some(m) = m {
                 let ex = &ex.share[m];
                 if ex.left {
                     left = true;
@@ -246,10 +246,10 @@ pub fn define_column_info(
     let mut cdr3_lens = Vec::<usize>::new();
     let mut seq_lens = Vec::<usize>::new();
     let mut seq_del_lens = Vec::<usize>::new();
-    for cx in 0..cols {
-        for u in 0..exacts.len() {
-            let ex = &exact_clonotypes[exacts[u]];
-            if let Some(m) = mat[cx][u] {
+    for m in mat.iter().take(cols) {
+        for (&e, &m) in exacts.iter().zip(m.iter()) {
+            let ex = &exact_clonotypes[e];
+            if let Some(m) = m {
                 let exm = &ex.share[m];
                 cdr3_lens.push(exm.cdr3_aa.len());
                 seq_lens.push(exm.seq.len());
@@ -257,8 +257,7 @@ pub fn define_column_info(
 
                 // The logic below with testing i < start while incrementing start seems fishy.
 
-                if exm.cdr1_start.is_some() {
-                    let mut start = exm.cdr1_start.unwrap();
+                if let Some(mut start) = exm.cdr1_start {
                     for (i, c) in exm.seq_del.iter().enumerate() {
                         if i < start && *c == b'-' {
                             start += 1;
@@ -268,8 +267,7 @@ pub fn define_column_info(
                 } else {
                     cdr1_starts.push(None);
                 }
-                if exm.cdr2_start.is_some() {
-                    let mut start = exm.cdr2_start.unwrap();
+                if let Some(mut start) = exm.cdr2_start {
                     for (i, c) in exm.seq_del.iter().enumerate() {
                         if i < start && *c == b'-' {
                             start += 1;
@@ -331,20 +329,35 @@ pub fn define_column_info(
     let mut jids = vec![0; cols];
     let mut cids = vec![None; cols];
     let mut left = vec![false; cols];
-    for col in 0..cols {
+    for (m, (left, ((uids, (vids, (vpids, (vpids_d, vpids_a)))), (dids, (jids, cids))))) in mat
+        .iter()
+        .zip(
+            left.iter_mut().zip(
+                uids.iter_mut()
+                    .zip(
+                        vids.iter_mut().zip(
+                            vpids
+                                .iter_mut()
+                                .zip(vpids_d.iter_mut().zip(vpids_a.iter_mut())),
+                        ),
+                    )
+                    .zip(dids.iter_mut().zip(jids.iter_mut().zip(cids.iter_mut()))),
+            ),
+        )
+        .take(cols)
+    {
         let mut u = Vec::<usize>::new();
         let mut v = Vec::<usize>::new();
         let mut vp = Vec::<(usize, Option<usize>, Option<usize>, Option<usize>)>::new();
         let mut d = Vec::<usize>::new();
         let mut j = Vec::<usize>::new();
         let mut c = Vec::<usize>::new();
-        for e in 0..exacts.len() {
-            let clonotype_id = exacts[e];
+        for (&clonotype_id, &m) in exacts.iter().zip(m.iter()) {
             let ex = &exact_clonotypes[clonotype_id];
-            if let Some(m) = mat[col][e] {
+            if let Some(m) = m {
                 let x = &ex.share[m];
                 if x.left {
-                    left[col] = true;
+                    *left = true;
                 }
                 let ncells = ex.ncells();
                 if let Some(u_ref_id) = x.u_ref_id {
@@ -381,35 +394,35 @@ pub fn define_column_info(
         let mut uf = Vec::<(u32, usize)>::new();
         make_freq(&u, &mut uf);
         if !uf.is_empty() {
-            uids[col] = Some(uf[0].1);
+            *uids = Some(uf[0].1);
         }
         let mut vf = Vec::<(u32, usize)>::new();
         make_freq(&v, &mut vf);
-        vids[col] = vf[0].1;
+        *vids = vf[0].1;
         let mut to_delete = vec![false; vp.len()];
         for i in 0..vp.len() {
-            if vp[i].0 != vids[col] {
+            if vp[i].0 != *vids {
                 to_delete[i] = true;
             }
         }
         erase_if(&mut vp, &to_delete);
         let mut vpf = Vec::<(u32, (usize, Option<usize>, Option<usize>, Option<usize>))>::new();
         make_freq(&vp, &mut vpf);
-        vpids[col] = (vpf[0].1).1;
-        vpids_d[col] = (vpf[0].1).2;
-        vpids_a[col] = (vpf[0].1).3;
+        *vpids = (vpf[0].1).1;
+        *vpids_d = (vpf[0].1).2;
+        *vpids_a = (vpf[0].1).3;
         let mut df = Vec::<(u32, usize)>::new();
         make_freq(&d, &mut df);
         if !df.is_empty() {
-            dids[col] = Some(df[0].1);
+            *dids = Some(df[0].1);
         }
         let mut jf = Vec::<(u32, usize)>::new();
         make_freq(&j, &mut jf);
-        jids[col] = jf[0].1;
+        *jids = jf[0].1;
         let mut cf = Vec::<(u32, usize)>::new();
         make_freq(&c, &mut cf);
         if !cf.is_empty() {
-            cids[col] = Some(cf[0].1);
+            *cids = Some(cf[0].1);
         }
     }
 
@@ -418,13 +431,13 @@ pub fn define_column_info(
     let mut seqss = Vec::<Vec<Vec<u8>>>::new();
     let mut seqss_amino = Vec::<Vec<Vec<u8>>>::new();
     let nexacts = exacts.len();
-    for cx in 0..cols {
+    for cx in mat.iter().take(cols) {
         let mut seqs = Vec::<Vec<u8>>::new();
         let mut seqs_amino = Vec::<Vec<u8>>::new();
-        for u in 0..nexacts {
-            if let Some(m) = mat[cx][u] {
-                seqs.push(exact_clonotypes[exacts[u]].share[m].seq_del.clone());
-                seqs_amino.push(exact_clonotypes[exacts[u]].share[m].seq_del_amino.clone());
+        for (&m, &e) in cx.iter().zip(exacts.iter()).take(nexacts) {
+            if let Some(m) = m {
+                seqs.push(exact_clonotypes[e].share[m].seq_del.clone());
+                seqs_amino.push(exact_clonotypes[e].share[m].seq_del_amino.clone());
             } else {
                 seqs.push(Vec::<u8>::new());
                 seqs_amino.push(Vec::<u8>::new());
@@ -510,12 +523,12 @@ pub fn add_header_text(
 ) {
     let nexacts = exacts.len();
     let cols = mat.len();
-    for cx in 0..cols {
+    for (cx, mcx) in mat.iter().take(cols).enumerate() {
         let (mut vref, mut jref) = (Vec::<u8>::new(), Vec::<u8>::new());
-        for u in 0..nexacts {
-            if let Some(m) = mat[cx][u] {
-                vref = exact_clonotypes[exacts[u]].share[m].vs.to_ascii_vec();
-                jref = exact_clonotypes[exacts[u]].share[m].js.to_ascii_vec();
+        for (&m, &e) in mcx.iter().zip(exacts.iter()).take(nexacts) {
+            if let Some(m) = m {
+                vref = exact_clonotypes[e].share[m].vs.to_ascii_vec();
+                jref = exact_clonotypes[e].share[m].js.to_ascii_vec();
             }
         }
         let mut seqs = Vec::<Vec<u8>>::new();
@@ -697,19 +710,21 @@ pub fn process_complete(
     let cols = mat.len();
     if ctl.gen_opt.complete {
         let mut used = vec![false; cols];
-        for u in 0..nexacts {
-            if !bads[u] {
-                for m in 0..cols {
-                    if mat[m][u].is_some() {
-                        used[m] = true;
+        for (u, &b) in bads.iter().take(nexacts).enumerate() {
+            if !b {
+                for (used, m) in used.iter_mut().zip(mat.iter()).take(cols) {
+                    if m[u].is_some() {
+                        *used = true;
                     }
                 }
             }
         }
-        for u in 0..nexacts {
-            for m in 0..cols {
-                if used[m] && mat[m][u].is_none() {
-                    bads[u] = true;
+        for (&used, mat) in used.iter().zip(mat.iter()).take(cols) {
+            if used {
+                for (b, m) in bads.iter_mut().take(nexacts).zip(mat.iter()) {
+                    if m.is_none() {
+                        *b = true;
+                    }
                 }
             }
         }
@@ -720,34 +735,32 @@ pub fn process_complete(
 
 // Identify certain extra parseable variables.  These arise from parameterizable cvars.
 
-pub fn get_extra_parseables(ctl: &EncloneControl, pcols_sort: &[String]) -> Vec<String> {
-    let mut extra_parseables = Vec::<String>::new();
-    let mut exclusions = ctl.clono_print_opt.cvars.clone();
-    for v in CVARS_ALLOWED.iter() {
-        exclusions.push(v.to_string());
+pub fn get_extra_parseables<'a>(ctl: &'a EncloneControl, pcols_sort: &'a [String]) -> Vec<&'a str> {
+    let mut extra_parseables = Vec::<&str>::new();
+    let mut exclusions = ctl
+        .clono_print_opt
+        .cvars
+        .iter()
+        .map(String::as_str)
+        .collect::<Vec<_>>();
+    for v in CVARS_ALLOWED {
+        exclusions.push(v);
     }
-    for v in CVARS_ALLOWED_PCELL.iter() {
-        exclusions.push(v.to_string());
+    for v in CVARS_ALLOWED_PCELL {
+        exclusions.push(v);
     }
     unique_sort(&mut exclusions);
     for x in pcols_sort.iter() {
-        let mut chars = Vec::<char>::new();
-        for c in x.chars() {
-            chars.push(c);
-        }
-        let n = chars.len();
+        let chars = x.char_indices().collect::<Vec<_>>();
         let mut trim = 0;
-        for i in (0..n).rev() {
-            if !chars[i].is_digit(10) {
+        for c in chars.iter().rev() {
+            if !c.1.is_digit(10) {
                 break;
             }
             trim += 1;
         }
         if trim > 0 {
-            let mut v = String::new();
-            for i in 0..n - trim {
-                v.push(chars[i]);
-            }
+            let v = &x[..chars[chars.len() - trim - 1].0];
             if !bin_member(&exclusions, &v) {
                 extra_parseables.push(v);
             }

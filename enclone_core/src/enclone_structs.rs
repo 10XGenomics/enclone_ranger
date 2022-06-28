@@ -57,7 +57,7 @@ pub struct EncloneExacts {
     pub join_info: Vec<(usize, usize, bool, Vec<u8>)>,
     pub drefs: Vec<DonorReferenceItem>,
     pub sr: Vec<Vec<Double>>,
-    pub fate: Vec<HashMap<String, String>>, // GETS MODIFIED SUBSEQUENTLY
+    pub fate: Vec<HashMap<String, &'static str>>, // GETS MODIFIED SUBSEQUENTLY
     pub is_bcr: bool,
     pub allele_data: AlleleData,
 }

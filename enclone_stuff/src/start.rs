@@ -57,12 +57,12 @@ pub fn stirling2_ratio_table_double(n_max: usize) -> Vec<Vec<Double>> {
     s[0][0] = one;
     let mut z = Vec::<Double>::new();
     let mut n2n1 = vec![dd![0.0]; n_max + 1];
-    for n in 2..=n_max {
-        n2n1[n] = Double::from((n - 2) as u32) / Double::from((n - 1) as u32);
+    for (n, nn) in n2n1[2..=n_max].iter_mut().enumerate() {
+        *nn = Double::from((n - 2) as u32) / Double::from((n - 1) as u32);
     }
     let mut k1k = vec![dd![0.0]; n_max];
-    for k in 1..n_max {
-        k1k[k] = Double::from((k - 1) as u32) / Double::from(k as u32);
+    for (k, kk) in k1k[1..n_max].iter_mut().enumerate() {
+        *kk = Double::from((k - 1) as u32) / Double::from(k as u32);
     }
     let mut njn = Vec::<(usize, Double)>::new();
     for i in 0..n_max + 1 {
@@ -124,7 +124,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     let mut vdj_cells = Vec::<Vec<String>>::new();
     let mut gex_cells = Vec::<Vec<String>>::new();
     let mut gex_cells_specified = Vec::<bool>::new();
-    let mut fate = vec![HashMap::<String, String>::new(); ctl.origin_info.n()];
+    let mut fate = vec![HashMap::<String, &str>::new(); ctl.origin_info.n()];
     parse_json_annotations_files(
         ctl,
         &mut tig_bc,
@@ -159,9 +159,8 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     if ctl.gen_opt.require_unbroken_ok {
         return Ok(EncloneIntermediates::default());
     }
-    for i in 0..tig_bc.len() {
-        for j in 0..tig_bc[i].len() {
-            let x = &mut tig_bc[i][j];
+    for tigi in &mut tig_bc {
+        for x in tigi {
             x.fr1_start = fr1_starts[x.v_ref_id];
             x.fr2_start = fr2_starts[x.v_ref_id];
             x.fr3_start = fr3_starts[x.v_ref_id];
@@ -188,11 +187,11 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Record fate of non-cells.
 
     if ctl.gen_opt.ncell {
-        for i in 0..tig_bc.len() {
-            let bc = &tig_bc[i][0].barcode;
-            let li = tig_bc[i][0].dataset_index;
+        for tigi in &tig_bc {
+            let bc = &tigi[0].barcode;
+            let li = tigi[0].dataset_index;
             if !bin_member(&vdj_cells[li], bc) {
-                fate[li].insert(bc.clone(), "fails CELL filter".to_string());
+                fate[li].insert(bc.clone(), "fails CELL filter");
             }
         }
     }
@@ -221,10 +220,9 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         return Ok(EncloneIntermediates::default());
     }
     if !ctl.gen_opt.trace_barcode.is_empty() {
-        for u in 0..exact_clonotypes.len() {
-            let ex = &exact_clonotypes[u];
-            for j in 0..ex.clones.len() {
-                if ex.clones[j][0].barcode == ctl.gen_opt.trace_barcode {
+        for ex in &exact_clonotypes {
+            for clone in &ex.clones {
+                if clone[0].barcode == ctl.gen_opt.trace_barcode {
                     println!(
                         "\nfound {} in an initial exact subclonotype having {} cells",
                         ctl.gen_opt.trace_barcode,
@@ -243,28 +241,24 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     let t = Instant::now();
     let mut to_delete = vec![false; exact_clonotypes.len()];
-    let mut twosies = Vec::<(Vec<u8>, Vec<u8>)>::new();
-    for i in 0..exact_clonotypes.len() {
-        let ex = &exact_clonotypes[i];
+    let mut twosies = Vec::<(&[u8], &[u8])>::new();
+    for ex in &exact_clonotypes {
         if ex.share.len() == 2 && (ex.share[0].left ^ ex.share[1].left) && ex.ncells() >= 10 {
-            twosies.push((ex.share[0].seq.clone(), ex.share[1].seq.clone()));
+            twosies.push((ex.share[0].seq.as_ref(), ex.share[1].seq.as_ref()));
         }
     }
     unique_sort(&mut twosies);
-    for i in 0..exact_clonotypes.len() {
-        let ex = &exact_clonotypes[i];
+    for (ex, d) in exact_clonotypes.iter().zip(to_delete.iter_mut()) {
         if ex.share.len() == 4 {
-            for i1 in 0..4 {
-                for i2 in i1 + 1..4 {
-                    if ex.share[i1].left ^ ex.share[i2].left {
-                        let p = (ex.share[i1].seq.clone(), ex.share[i2].seq.clone());
+            for (i1, s1) in ex.share.iter().enumerate() {
+                for s2 in &ex.share[i1 + 1..4] {
+                    if s1.left ^ s2.left {
+                        let p = (s1.seq.as_ref(), s2.seq.as_ref());
                         if bin_member(&twosies, &p) {
-                            to_delete[i] = true;
-                            for j in 0..ex.clones.len() {
-                                fate[ex.clones[j][0].dataset_index].insert(
-                                    ex.clones[j][0].barcode.clone(),
-                                    "failed FOURSIE_KILL filter".to_string(),
-                                );
+                            *d = true;
+                            for clone in &ex.clones {
+                                fate[clone[0].dataset_index]
+                                    .insert(clone[0].barcode.clone(), "failed FOURSIE_KILL filter");
                             }
                         }
                     }
@@ -359,18 +353,13 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     let tbc = Instant::now();
     let mut to_bc = HashMap::<(usize, usize), Vec<String>>::new();
-    for i in 0..exact_clonotypes.len() {
-        for j in 0..exact_clonotypes[i].clones.len() {
-            let x = &exact_clonotypes[i].clones[j][0];
-            if let std::collections::hash_map::Entry::Vacant(e) = to_bc.entry((x.dataset_index, i))
-            {
-                e.insert(vec![x.barcode.clone()]);
-            } else {
-                to_bc
-                    .get_mut(&(x.dataset_index, i))
-                    .unwrap()
-                    .push(x.barcode.clone());
-            }
+    for (i, ex) in exact_clonotypes.iter().enumerate() {
+        for clone in &ex.clones {
+            let x = &clone[0];
+            to_bc
+                .entry((x.dataset_index, i))
+                .or_default()
+                .push(x.barcode.clone());
         }
     }
     ctl.perf_stats(&tbc, "computing to_bc");
@@ -433,30 +422,27 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     let txxx = Instant::now();
     let mut to_bc = HashMap::<(usize, usize), Vec<String>>::new();
-    for i in 0..exact_clonotypes.len() {
-        for j in 0..exact_clonotypes[i].clones.len() {
-            let x = &exact_clonotypes[i].clones[j][0];
-            if let std::collections::hash_map::Entry::Vacant(e) = to_bc.entry((x.dataset_index, i))
-            {
-                e.insert(vec![x.barcode.clone()]);
-            } else {
-                to_bc
-                    .get_mut(&(x.dataset_index, i))
-                    .unwrap()
-                    .push(x.barcode.clone());
-            }
+    for (i, ex) in exact_clonotypes.iter().enumerate() {
+        for clone in &ex.clones {
+            let x = &clone[0];
+            to_bc
+                .entry((x.dataset_index, i))
+                .or_default()
+                .push(x.barcode.clone());
         }
     }
 
     // Restructure raw joins.
 
     raw_joins.sort_unstable();
-    let mut raw_joins2 = vec![Vec::<usize>::new(); info.len()];
-    for i in 0..raw_joins.len() {
-        raw_joins2[raw_joins[i].0 as usize].push(raw_joins[i].1 as usize);
-        raw_joins2[raw_joins[i].1 as usize].push(raw_joins[i].0 as usize);
-    }
-    let raw_joins = raw_joins2;
+    let raw_joins = {
+        let mut raw_joins2 = vec![Vec::<usize>::new(); info.len()];
+        for r in raw_joins {
+            raw_joins2[r.0 as usize].push(r.1 as usize);
+            raw_joins2[r.1 as usize].push(r.0 as usize);
+        }
+        raw_joins2
+    };
 
     // Lock info.
 
@@ -469,10 +455,9 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         return Ok(EncloneIntermediates::default());
     }
     if !ctl.gen_opt.trace_barcode.is_empty() {
-        for u in 0..exact_clonotypes.len() {
-            let ex = &exact_clonotypes[u];
-            for j in 0..ex.clones.len() {
-                if ex.clones[j][0].barcode == ctl.gen_opt.trace_barcode {
+        for ex in &exact_clonotypes {
+            for clone in &ex.clones {
+                if clone[0].barcode == ctl.gen_opt.trace_barcode {
                     println!(
                         "\nfound {} in a pre-filter exact subclonotype having {} cells",
                         ctl.gen_opt.trace_barcode,
@@ -497,10 +482,9 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         &mut fate,
     );
     if !ctl.gen_opt.trace_barcode.is_empty() {
-        for u in 0..exact_clonotypes.len() {
-            let ex = &exact_clonotypes[u];
-            for j in 0..ex.clones.len() {
-                if ex.clones[j][0].barcode == ctl.gen_opt.trace_barcode {
+        for ex in &exact_clonotypes {
+            for clone in &ex.clones {
+                if clone[0].barcode == ctl.gen_opt.trace_barcode {
                     println!(
                         "\nfound {} in an post-umi-filter exact subclonotype having {} cells",
                         ctl.gen_opt.trace_barcode,
@@ -513,43 +497,44 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Remove cells that are not called cells by GEX or feature barcodes.
 
-    let mut orbits2 = Vec::<Vec<i32>>::new();
-    for i in 0..orbits.len() {
-        let mut o = orbits[i].clone();
-        let mut to_deletex = vec![false; o.len()];
-        for j in 0..o.len() {
-            let x: &CloneInfo = &info[o[j] as usize];
-            let ex = &mut exact_clonotypes[x.clonotype_index];
-            let mut to_delete = vec![false; ex.ncells()];
-            for k in 0..ex.ncells() {
-                let li = ex.clones[k][0].dataset_index;
-                let bc = &ex.clones[k][0].barcode;
-                if ctl.gen_opt.cellranger {
-                    if gex_cells_specified[li] && !bin_member(&gex_cells[li], bc) {
-                        to_delete[k] = true;
-                        fate[li].insert(bc.clone(), "failed GEX filter".to_string());
-                    }
-                } else if !ctl.origin_info.gex_path[li].is_empty() {
-                    let gbc = &gex_info.gex_cell_barcodes[li];
-                    if !bin_member(gbc, bc) {
-                        fate[li].insert(bc.clone(), "failed GEX filter".to_string());
-                        if !ctl.clono_filt_opt_def.ngex {
-                            to_delete[k] = true;
+    let mut orbits = {
+        let mut orbits2 = Vec::<Vec<i32>>::new();
+        for mut o in orbits {
+            let mut to_deletex = vec![false; o.len()];
+            for (&x, dx) in o.iter().zip(to_deletex.iter_mut()) {
+                let x: &CloneInfo = &info[x as usize];
+                let ex = &mut exact_clonotypes[x.clonotype_index];
+                let mut to_delete = vec![false; ex.ncells()];
+                for (clone, d) in ex.clones.iter().take(ex.ncells()).zip(to_delete.iter_mut()) {
+                    let li = clone[0].dataset_index;
+                    let bc = &clone[0].barcode;
+                    if ctl.gen_opt.cellranger {
+                        if gex_cells_specified[li] && !bin_member(&gex_cells[li], bc) {
+                            *d = true;
+                            fate[li].insert(bc.clone(), "failed GEX filter");
+                        }
+                    } else if !ctl.origin_info.gex_path[li].is_empty() {
+                        let gbc = &gex_info.gex_cell_barcodes[li];
+                        if !bin_member(gbc, bc) {
+                            fate[li].insert(bc.clone(), "failed GEX filter");
+                            if !ctl.clono_filt_opt_def.ngex {
+                                *d = true;
+                            }
                         }
                     }
                 }
+                erase_if(&mut ex.clones, &to_delete);
+                if ex.ncells() == 0 {
+                    *dx = true;
+                }
             }
-            erase_if(&mut ex.clones, &to_delete);
-            if ex.ncells() == 0 {
-                to_deletex[j] = true;
+            erase_if(&mut o, &to_deletex);
+            if !o.is_empty() {
+                orbits2.push(o);
             }
         }
-        erase_if(&mut o, &to_deletex);
-        if !o.is_empty() {
-            orbits2.push(o.clone());
-        }
-    }
-    orbits = orbits2;
+        orbits2
+    };
 
     // Filter using constraints imposed by FCELL.
 
@@ -615,8 +600,8 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                     j = k;
                 }
             });
-            for i in 0..results.len() {
-                exacts.push(results[i].1.clone());
+            for r in results {
+                exacts.push(r.1);
             }
         }
 
@@ -634,11 +619,10 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                 }
             }
             post_filter.sort();
-            for u in 0..exact_clonotypes.len() {
-                let ex = &mut exact_clonotypes[u];
+            for ex in exact_clonotypes.iter_mut() {
                 let mut to_delete = vec![false; ex.ncells()];
-                for i in 0..ex.clones.len() {
-                    let x = &ex.clones[i][0];
+                for (clone, d) in ex.clones.iter().zip(to_delete.iter_mut()) {
+                    let x = &clone[0];
                     if !bin_member(
                         &post_filter,
                         &(
@@ -646,19 +630,19 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                             x.barcode.clone(),
                         ),
                     ) {
-                        to_delete[i] = true;
+                        *d = true;
                     }
                 }
                 erase_if(&mut ex.clones, &to_delete);
             }
             let mut to_delete = vec![false; exacts.len()];
-            for j in 0..exacts.len() {
+            for (ex, d) in exacts.iter().zip(to_delete.iter_mut()) {
                 let mut ncells = 0;
-                for i in 0..exacts[j].len() {
-                    ncells += exact_clonotypes[exacts[j][i]].ncells();
+                for &e in ex {
+                    ncells += exact_clonotypes[e].ncells();
                 }
                 if ncells == 0 {
-                    to_delete[j] = true;
+                    *d = true;
                 }
             }
             erase_if(&mut exacts, &to_delete);
@@ -767,8 +751,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                 println!("mixes = {mixes_this}");
             }
             let mut merges2_this = 0;
-            for j in 0..cells_by_donor_this.len() {
-                let n = cells_by_donor_this[j];
+            for n in cells_by_donor_this {
                 if n > 1 {
                     merges2_this += (n * (n - 1)) / 2;
                     merges2 += (n * (n - 1)) / 2;
@@ -831,22 +814,20 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     let tmark = Instant::now();
     if ctl.clono_filt_opt_def.non_cell_mark {
-        for i in 0..exact_clonotypes.len() {
-            let ex = &mut exact_clonotypes[i];
-            for j in 0..ex.clones.len() {
-                let di = ex.clones[j][0].dataset_index;
-                if !bin_member(&vdj_cells[di], &ex.clones[j][0].barcode) {
-                    ex.clones[j][0].marked = true;
+        for ex in exact_clonotypes.iter_mut() {
+            for clone in ex.clones.iter_mut() {
+                let di = clone[0].dataset_index;
+                if !bin_member(&vdj_cells[di], &clone[0].barcode) {
+                    clone[0].marked = true;
                 }
             }
         }
     }
     ctl.perf_stats(&tmark, "marking vdj noncells");
     if !ctl.gen_opt.trace_barcode.is_empty() {
-        for u in 0..exact_clonotypes.len() {
-            let ex = &exact_clonotypes[u];
-            for j in 0..ex.clones.len() {
-                if ex.clones[j][0].barcode == ctl.gen_opt.trace_barcode {
+        for ex in &exact_clonotypes {
+            for clone in &ex.clones {
+                if clone[0].barcode == ctl.gen_opt.trace_barcode {
                     println!(
                         "\nfound {} in an intermediate exact subclonotype having {} cells",
                         ctl.gen_opt.trace_barcode,

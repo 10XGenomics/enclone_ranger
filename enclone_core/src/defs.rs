@@ -942,14 +942,14 @@ pub const POUT_SEP: &str = "\x07";
 // Potential join structure.
 
 #[derive(Default)]
-pub struct PotentialJoin {
+pub struct PotentialJoin<'a> {
     pub k1: usize,
     pub k2: usize,
     pub nrefs: usize,
     pub cd: isize,
     pub diffs: usize,
-    pub bcs1: Vec<String>,
-    pub bcs2: Vec<String>,
+    pub bcs1: Vec<&'a str>,
+    pub bcs2: Vec<&'a str>,
     pub shares: Vec<isize>,
     pub indeps: Vec<isize>,
     pub shares_details: Vec<Vec<usize>>,

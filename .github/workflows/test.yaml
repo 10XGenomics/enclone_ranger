@@ -130,7 +130,6 @@ jobs:
             -W clippy::enum_variant_names
             -W clippy::large-enum-variant
             -W clippy::missing_safety_doc
-            -A clippy::needless_range_loop
             -A clippy::type_complexity
             -A clippy::too_many_arguments
             -W clippy::result_unit_err

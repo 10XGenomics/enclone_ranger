@@ -33,13 +33,14 @@ pub fn build_table_stuff(
         row1.push("#  barcode".to_string());
     }
     justify.push(b'l');
-    for i in 0..lvars.len() {
-        let mut x = lvars[i].to_string();
-        if x.contains(':') {
-            x = x.before(":").to_string();
-        }
-        row1.push(x.clone());
-        justify.push(justification(&x));
+    for x in lvars {
+        let x = if x.contains(':') {
+            x.before(":")
+        } else {
+            x.as_str()
+        };
+        row1.push(x.to_string());
+        justify.push(justification(x));
     }
 
     // Insert main chain row.  Then insert chain info row if we're using CHAIN_SPLIT.
@@ -235,39 +236,33 @@ pub fn build_table_stuff(
                         true,
                     ),
                 ];
-                for z in 0..fields.len() {
-                    if amino.contains(&fields[z].0.to_string())
-                        && fields[z].3
-                        && fields[z].1 <= fields[z].2
-                    {
-                        let cs1 = fields[z].1 / 3;
+                for field in fields {
+                    if field.3 && field.1 <= field.2 && amino.contains(&field.0.to_string()) {
+                        let cs1 = field.1 / 3;
                         let mut ch_start = 0;
-                        for k in 0..show.len() {
-                            if k > 0
-                                && field_types[cx][k] != field_types[cx][k - 1]
-                                && !ctl.gen_opt.nospaces
-                            {
+                        for (k, (&s, &t)) in show.iter().zip(field_types[cx].iter()).enumerate() {
+                            if k > 0 && t != field_types[cx][k - 1] && !ctl.gen_opt.nospaces {
                                 ch_start += 1;
                             }
-                            if show[k] == cs1 {
+                            if s == cs1 {
                                 break;
                             }
                             ch_start += 1;
                         }
-                        let q = (fields[z].2 - fields[z].1) / 3;
+                        let q = (field.2 - field.1) / 3;
 
                         // Catch an error condition that has happened a few times.
 
                         if ch_start + q > ch.len() {
-                            let mut ds = Vec::<String>::new();
-                            for i in 0..ex.ncells() {
-                                let li = ex.clones[i][m].dataset_index;
-                                ds.push(ctl.origin_info.dataset_id[li].clone());
+                            let mut ds = Vec::<&str>::new();
+                            for clone in &ex.clones {
+                                let li = clone[m].dataset_index;
+                                ds.push(ctl.origin_info.dataset_id[li].as_str());
                             }
                             unique_sort(&mut ds);
                             let fields_msg = format!(
                                 "fields[z].0 = {}, fields[z].1 = {}, fields[z].2 = {},",
-                                fields[z].0, fields[z].1, fields[z].2,
+                                field.0, field.1, field.2,
                             );
                             panic!(
                                 "Internal error, out of range in \
@@ -289,8 +284,7 @@ pub fn build_table_stuff(
 
                         // Do the work.
 
-                        let mut t = fields[z].0.to_string();
-                        t.make_ascii_uppercase();
+                        let t = field.0.to_ascii_uppercase();
                         let t = t.as_bytes();
                         // The second form of this gets converted below.
                         let c = if t[0] == b'C' || !ctl.gen_opt.nospaces {
@@ -302,9 +296,14 @@ pub fn build_table_stuff(
                         if q >= 4 {
                             let left = (q - 3) / 2;
                             let right = q - left - 4;
-                            s += &c.repeat(left);
+                            s.reserve((left + right) * c.len() + t.len());
+                            for _ in 0..left {
+                                s += c;
+                            }
                             s += strme(t);
-                            s += &c.repeat(right);
+                            for _ in 0..right {
+                                s += c;
+                            }
                         } else if q == 3 {
                             s += strme(&t[0..1]);
                             s += strme(&t[2..4]);
@@ -314,11 +313,8 @@ pub fn build_table_stuff(
                         } else if q == 1 {
                             s += strme(&t[3..4]);
                         }
-                        let mut schars = Vec::<char>::new();
-                        for x in s.chars() {
-                            schars.push(x);
-                        }
-                        ch[ch_start..(q + ch_start)].copy_from_slice(&schars[..q]);
+                        let schars = s.chars().take(q).collect::<Vec<_>>();
+                        ch[ch_start..(q + ch_start)].copy_from_slice(&schars);
                     }
                 }
                 let mut s = String::new();
@@ -330,23 +326,19 @@ pub fn build_table_stuff(
                 // Convert ┅ to ═ in different color.
 
                 if ctl.gen_opt.nospaces {
-                    let mut chars = Vec::<char>::new();
-                    for c in s.chars() {
-                        chars.push(c);
-                    }
+                    let chars = s.chars().collect::<Vec<_>>();
                     s.clear();
-                    for i in 0..chars.len() {
-                        if (i == 0 || (i > 0 && chars[i - 1] != '┅')) && chars[i] == '┅' {
-                            s += "[01m[38;5;198m";
-                            s.push('═');
-                        } else if chars[i] == '┅' {
+                    for (i, &ch) in chars.iter().enumerate() {
+                        if (i == 0 || (i > 0 && chars[i - 1] != '┅')) && ch == '┅' {
+                            s += "[01m[38;5;198m=";
+                        } else if ch == '┅' {
                             s.push('═');
                             if i == chars.len() - 1 || (i < chars.len() - 1 && chars[i + 1] != '┅')
                             {
                                 s += "[0m";
                             }
                         } else {
-                            s.push(chars[i]);
+                            s.push(ch);
                         }
                     }
                     s = s.replace("FWR1", "[01m[38;5;198mFWR1[0m");

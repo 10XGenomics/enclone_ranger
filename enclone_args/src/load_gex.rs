@@ -9,6 +9,7 @@ use enclone_core::defs::{EncloneControl, GexInfo};
 use hdf5::Dataset;
 use mirror_sparse_matrix::MirrorSparseMatrix;
 use rayon::prelude::*;
+use std::fmt::Write;
 use std::{collections::HashMap, time::Instant};
 use vector_utils::{bin_position, unique_sort};
 
@@ -81,14 +82,13 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
                 "\nCurrently, SCAN requires that all datasets have identical \
                  features, and they do not.\n\
                 There are {} datasets and {} feature sets after removal of \
-                 duplicates.\n",
+                 duplicates.\nClassification of features sets:\n\n",
                 gex_features.len(),
                 allf.len()
             );
-            msg += &mut "Classification of features sets:\n\n".to_string();
-            for i in 0..gex_features.len() {
-                let p = bin_position(&allf, &gex_features[i]);
-                msg += &mut format!("{} ==> {}\n", ctl.origin_info.dataset_id[i], p);
+            for (f, id) in gex_features.iter().zip(ctl.origin_info.dataset_id.iter()) {
+                let p = bin_position(&allf, f);
+                writeln!(msg, "{} ==> {}", id, p).unwrap();
             }
             msg += "\n";
             return Err(msg);
@@ -120,11 +120,10 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
             }
         }
     }
-    fn compute_feature_id(gex_features: &Vec<String>) -> HashMap<String, usize> {
+    fn compute_feature_id(gex_features: &[String]) -> HashMap<String, usize> {
         let mut x = HashMap::<String, usize>::new();
-        for j in 0..gex_features.len() {
-            let f = &gex_features[j];
-            let ff = f.split('\t').collect::<Vec<&str>>();
+        for (j, f) in gex_features.iter().enumerate() {
+            let ff = f.splitn(4, '\t').take(3).collect::<Vec<&str>>();
             for z in 0..2 {
                 if ff[2].starts_with(&"Antibody") {
                     x.insert(format!("{}_ab", ff[z]), j);
@@ -146,17 +145,17 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     let mut feature_id = Vec::<HashMap<String, usize>>::new();
     pi.map(|i| compute_feature_id(&gex_features[i]))
         .collect_into_vec(&mut feature_id);
-    let mut is_gex = Vec::<Vec<bool>>::new();
-    for i in 0..gex_features.len() {
-        is_gex.push(vec![false; gex_features[i].len()]);
-        for j in 0..gex_features[i].len() {
-            let f = &gex_features[i][j];
-            let ff = f.split('\t').collect::<Vec<&str>>();
-            if ff[2].starts_with(&"Gene") {
-                is_gex[i][j] = true;
-            }
-        }
-    }
+    let is_gex = gex_features
+        .iter()
+        .map(|g| {
+            g.iter()
+                .map(|f| {
+                    let ff = f.split('\t').nth(2).unwrap();
+                    ff.starts_with("Gene")
+                })
+                .collect()
+        })
+        .collect();
     ctl.perf_stats(&t, "after load_gex");
 
     // Answer.

@@ -5,10 +5,10 @@ use string_utils::{stringme, TextUtils};
 
 #[derive(Clone, PartialEq)]
 pub struct LinearCondition {
-    pub coeff: Vec<f64>,  // left hand side (lhs) coefficients
-    pub var: Vec<String>, // left hand side variables (parallel to coefficients)
-    pub rhs: f64,         // right hand side; sum of lhs must exceed rhs
-    pub sense: String,    // le, ge, lt, gt
+    pub coeff: Vec<f64>,     // left hand side (lhs) coefficients
+    pub var: Vec<String>,    // left hand side variables (parallel to coefficients)
+    pub rhs: f64,            // right hand side; sum of lhs must exceed rhs
+    pub sense: &'static str, // le, ge, lt, gt
 }
 
 impl LinearCondition {
@@ -18,41 +18,33 @@ impl LinearCondition {
 
     pub fn new(x: &str) -> Result<LinearCondition, String> {
         let y = x.replace(' ', "");
-        let lhs: String;
-        let mut rhs: String;
-        let sense: String;
+        let lhs: &str;
+        let rhs: &str;
+        let sense: &str;
         if y.contains(">=") {
-            lhs = y.before(">=").to_string();
-            rhs = y.after(">=").to_string();
-            sense = "ge".to_string();
+            (lhs, rhs) = y.split_once(">=").unwrap();
+            sense = "ge";
         } else if y.contains('≥') {
-            lhs = y.before("≥").to_string();
-            rhs = y.after("≥").to_string();
-            sense = "ge".to_string();
+            (lhs, rhs) = y.split_once('≥').unwrap();
+            sense = "ge";
         } else if y.contains('⩾') {
-            lhs = y.before("⩾").to_string();
-            rhs = y.after("⩾").to_string();
-            sense = "ge".to_string();
+            (lhs, rhs) = y.split_once('⩾').unwrap();
+            sense = "ge";
         } else if y.contains("<=") {
-            lhs = y.before("<=").to_string();
-            rhs = y.after("<=").to_string();
-            sense = "le".to_string();
+            (lhs, rhs) = y.split_once("<=").unwrap();
+            sense = "le";
         } else if y.contains('≤') {
-            lhs = y.before("≤").to_string();
-            rhs = y.after("≤").to_string();
-            sense = "le".to_string();
+            (lhs, rhs) = y.split_once('≤').unwrap();
+            sense = "le";
         } else if y.contains('⩽') {
-            lhs = y.before("⩽").to_string();
-            rhs = y.after("⩽").to_string();
-            sense = "le".to_string();
+            (lhs, rhs) = y.split_once('⩽').unwrap();
+            sense = "le";
         } else if y.contains('<') {
-            lhs = y.before("<").to_string();
-            rhs = y.after("<").to_string();
-            sense = "lt".to_string();
+            (lhs, rhs) = y.split_once('<').unwrap();
+            sense = "lt";
         } else if y.contains('>') {
-            lhs = y.before(">").to_string();
-            rhs = y.after(">").to_string();
-            sense = "gt".to_string();
+            (lhs, rhs) = y.split_once('>').unwrap();
+            sense = "gt";
         } else {
             return Err(format!(
                 "\nImproperly formatted condition, no inequality symbol, \
@@ -60,7 +52,7 @@ impl LinearCondition {
                 x
             ));
         }
-        rhs = rhs.replace('E', "e");
+        let mut rhs = rhs.replace('E', "e");
         if !rhs.contains('.') && !rhs.contains('e') {
             rhs += ".0";
         }
@@ -100,12 +92,12 @@ impl LinearCondition {
         } else {
             parts.push(stringme(&lhsx[last + 1..]));
         }
-        for i in 0..parts.len() {
-            parts[i] = parts[i].replace('(', "");
-            parts[i] = parts[i].replace(')', "");
-            if parts[i].contains('*') {
-                let mut coeffi = parts[i].before("*").to_string();
-                let vari = parts[i].after("*");
+        for part in parts.iter_mut() {
+            *part = part.replace('(', "");
+            *part = part.replace(')', "");
+            if part.contains('*') {
+                let mut coeffi = part.before("*").to_string();
+                let vari = part.after("*");
                 if !coeffi.contains('.') && !coeffi.contains('e') {
                     coeffi += ".0";
                 }
@@ -121,12 +113,12 @@ impl LinearCondition {
             } else {
                 let mut coeffi = 1.0;
                 let mut start = 0;
-                if parts[i].starts_with('-') {
+                if part.starts_with('-') {
                     coeffi = -1.0;
                     start = 1;
                 }
                 coeff.push(coeffi);
-                var.push(parts[i][start..].to_string());
+                var.push(part[start..].to_string());
             }
         }
         Ok(LinearCondition {
@@ -138,15 +130,17 @@ impl LinearCondition {
     }
 
     pub fn satisfied(&self, val: &[f64]) -> bool {
-        let mut lhs = 0.0;
-        for i in 0..self.coeff.len() {
-            lhs += self.coeff[i] * val[i];
-        }
-        if self.sense == *"lt" {
+        let lhs: f64 = self
+            .coeff
+            .iter()
+            .zip(val.iter())
+            .map(|(&ci, &vi)| ci * vi)
+            .sum();
+        if self.sense == "lt" {
             lhs < self.rhs
-        } else if self.sense == *"gt" {
+        } else if self.sense == "gt" {
             lhs > self.rhs
-        } else if self.sense == *"le" {
+        } else if self.sense == "le" {
             lhs <= self.rhs
         } else {
             lhs >= self.rhs

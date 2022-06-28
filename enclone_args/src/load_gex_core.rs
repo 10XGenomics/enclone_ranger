@@ -248,8 +248,7 @@ pub fn load_gex(
                     csvs.push(a);
                 }
             }
-            for i in 0..csvs.len() {
-                let c = &csvs[i];
+            for c in &csvs {
                 if path_exists(c) {
                     csv = c.clone();
                     pathlist.push(c.to_string());
@@ -371,12 +370,12 @@ pub fn load_gex(
                 let m = std::fs::read_to_string(&metrics_file).unwrap();
                 let fields = parse_csv_pure(m.before("\n"));
                 let (mut class, mut name, mut value) = (None, None, None);
-                for i in 0..fields.len() {
-                    if fields[i] == "Library Type" {
+                for field in fields {
+                    if field == "Library Type" {
                         class = Some(i);
-                    } else if fields[i] == "Metric Name" {
+                    } else if field == "Metric Name" {
                         name = Some(i);
-                    } else if fields[i] == "Metric Value" {
+                    } else if field == "Metric Value" {
                         value = Some(i);
                     }
                 }
@@ -408,8 +407,8 @@ pub fn load_gex(
                     let s = line.unwrap();
                     let fields = parse_csv(&s);
                     if count == 0 {
-                        for j in 0..fields.len() {
-                            feature_pos.insert(fields[j].to_string(), j);
+                        for (j,field) in fields.iter().enumerate() {
+                            feature_pos.insert(field.to_string(), j);
                         }
                         xfields = fields.clone();
                     } else {
@@ -460,13 +459,9 @@ pub fn load_gex(
                 }
                 let s = line.unwrap();
                 let barcode = s.before(",");
-                let x = s.after(",").split(',').collect::<Vec<&str>>();
+                let y = s.after(",").split(',').map(str::force_f64).collect();
                 // This assert is turned off because in fact there are not always 10 components.
                 // assert_eq!(x.len(), 10);
-                let mut y = Vec::<f64>::new();
-                for i in 0..x.len() {
-                    y.push(x[i].force_f64());
-                }
                 r.9.insert(barcode.to_string(), y);
             }
 
@@ -509,17 +504,17 @@ pub fn load_gex(
                 let mut lib_field = 0;
                 let mut name_field = 0;
                 let mut value_field = 0;
-                for i in 0..fields.len() {
-                    if fields[i] == "Library Type" {
+                for field in &fields {
+                    if field == "Library Type" {
                         lib_field = i;
-                    } else if fields[i] == "Metric Name" {
+                    } else if field == "Metric Name" {
                         name_field = i;
-                    } else if fields[i] == "Metric Value" {
+                    } else if field == "Metric Value" {
                         value_field = i;
                     }
                 }
-                for j in 1..lines.len() {
-                    let fields = parse_csv(&lines[j]);
+                for (j,line) in lines.iter().enumerate().skip(1) {
+                    let fields = parse_csv(line);
                     if fields.len() < lib_field + 1
                         || fields.len() < name_field + 1
                         || fields.len() < value_field + 1
@@ -579,14 +574,14 @@ pub fn load_gex(
                 }
             } else {
                 let (mut rpc_field, mut fbrpc_field) = (None, None);
-                for line_no in 0..lines.len() {
-                    let s = &lines[line_no];
+                for (line_no,line) in lines.iter().enumerate() {
+                    let s = line;
                     let fields = parse_csv(s);
                     if line_no == 0 {
-                        for i in 0..fields.len() {
-                            if fields[i] == "Mean Reads per Cell" {
+                        for (i,field) in fields.iter().enumerate() {
+                            if field == "Mean Reads per Cell" {
                                 rpc_field = Some(i);
-                            } else if fields[i] == "Antibody: Mean Reads per Cell" || fields[i] == "Antigen: Mean Reads per Cell"{
+                            } else if field == "Antibody: Mean Reads per Cell" || field == "Antigen: Mean Reads per Cell"{
                                 fbrpc_field = Some(i);
                             }
                         }
@@ -807,33 +802,31 @@ pub fn load_gex(
         }
         unique_sort(&mut r.6);
     });
-    for i in 0..results.len() {
-        ctl.pathlist.append(&mut results[i].15.clone());
+    for r in &results {
+        ctl.pathlist.extend(r.15.iter().cloned());
     }
     ctl.perf_stats(&t, "in load_gex main loop");
 
     // Test for error.
 
     let t = Instant::now();
-    for i in 0..results.len() {
-        if !results[i].11.is_empty() {
-            return Err(results[i].11.clone());
+    for r in &results {
+        if !r.11.is_empty() {
+            return Err(r.11.clone());
         }
     }
 
     // Set have_gex and have_fb.
 
-    for i in 0..results.len() {
-        if results[i].4.is_some() {
+    for r in &results {
+        if r.4.is_some() {
             *have_gex = true;
         }
-        if results[i].5.is_some() {
+        if r.5.is_some() {
             *have_fb = true;
         }
     }
-    for i in 0..results.len() {
-        h5_paths.push(results[i].12.clone());
-    }
+    h5_paths.extend(results.iter().map(|r| r.12.clone()));
 
     // Add some metrics.
 
@@ -855,18 +848,18 @@ pub fn load_gex(
         let metric_name = x.0.to_string();
         let metric_display_name = x.1.to_string();
         let mut have = false;
-        for i in 0..results.len() {
-            if results[i].17.contains_key(&metric_name) {
+        for result in &results {
+            if result.17.contains_key(&metric_name) {
                 have = true;
             }
         }
         if have {
-            for i in 0..results.len() {
+            for result in results.iter_mut() {
                 let mut value = String::new();
-                if results[i].17.contains_key(&metric_name) {
-                    value = format!("{:.3}", results[i].17[&metric_name]);
+                if result.17.contains_key(&metric_name) {
+                    value = format!("{:.3}", result.17[&metric_name]);
                 }
-                results[i].18 += &mut format!("{},{}\n", metric_display_name, value);
+                result.18 += &mut format!("{},{}\n", metric_display_name, value);
             }
         }
     }

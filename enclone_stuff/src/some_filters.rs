@@ -28,7 +28,7 @@ pub fn some_filters(
     raw_joins: &[Vec<usize>],
     eq: &EquivRel,
     disintegrated: &[bool],
-    fate: &mut [HashMap<String, String>],
+    fate: &mut [HashMap<String, &str>],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {
@@ -56,7 +56,7 @@ pub fn some_filters(
 
     let tsig = Instant::now();
     const SIG_MULT: usize = 20;
-    let mut results = Vec::<(usize, Vec<(usize, String, String)>, Vec<usize>)>::new();
+    let mut results = Vec::<(usize, Vec<(usize, String, &'static str)>, Vec<usize>)>::new();
     for i in 0..orbits.len() {
         results.push((i, Vec::new(), Vec::new()));
     }
@@ -95,15 +95,15 @@ pub fn some_filters(
         let mut freq = Vec::<(usize, Vec<usize>)>::new();
         {
             let mut types = Vec::<(Vec<usize>, usize)>::new();
-            for u in 0..exacts.len() {
+            for (u, &e) in exacts.iter().enumerate() {
                 let mut t = Vec::<usize>::new();
-                for col in 0..mat.len() {
-                    if mat[col][u].is_some() {
+                for (col, m) in mat.iter().enumerate() {
+                    if m[u].is_some() {
                         t.push(col);
                     }
                 }
                 if t.len() >= 2 {
-                    types.push((t, exact_clonotypes[exacts[u]].ncells()));
+                    types.push((t, exact_clonotypes[e].ncells()));
                 }
             }
             types.sort();
@@ -111,8 +111,8 @@ pub fn some_filters(
             while i < types.len() {
                 let j = next_diff1_2(&types, i as i32) as usize;
                 let mut mult = 0;
-                for k in i..j {
-                    mult += types[k].1;
+                for t in &types[i..j] {
+                    mult += t.1;
                 }
                 freq.push((mult, types[i].0.clone()));
                 i = j;
@@ -156,8 +156,8 @@ pub fn some_filters(
         */
         for u in 0..exacts.len() {
             let mut t = Vec::<usize>::new();
-            for col in 0..mat.len() {
-                if mat[col][u].is_some() {
+            for (col, m) in mat.iter().enumerate() {
+                if m[u].is_some() {
                     t.push(col);
                 }
             }
@@ -168,7 +168,7 @@ pub fn some_filters(
                     res.1.push((
                         ex.clones[i][0].dataset_index,
                         ex.clones[i][0].barcode.clone(),
-                        "failed SIGNATURE filter".to_string(),
+                        "failed SIGNATURE filter",
                     ));
                 }
             }
@@ -177,15 +177,15 @@ pub fn some_filters(
     let mut to_delete = vec![false; exact_clonotypes.len()];
     for i in 0..results.len() {
         for j in 0..results[i].1.len() {
-            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
+            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2);
         }
         for j in 0..results[i].2.len() {
             to_delete[results[i].2[j]] = true;
         }
     }
     let mut orbits2 = Vec::<Vec<i32>>::new();
-    for i in 0..orbits.len() {
-        let mut o = orbits[i].clone();
+    for o in orbits.iter() {
+        let mut o = o.clone();
         let mut del = vec![false; o.len()];
         for j in 0..o.len() {
             let id = info[o[j] as usize].clonotype_index;
@@ -261,7 +261,7 @@ pub fn some_filters(
     // accounting for all the cells in all the exact subclonotypes, never occurs as Q60
     // doesn't occur as Q40 twice, and disagrees with the reference.
 
-    let mut results = Vec::<(usize, Vec<(usize, String, String)>, Vec<usize>)>::new();
+    let mut results = Vec::<(usize, Vec<(usize, String, &'static str)>, Vec<usize>)>::new();
     for i in 0..orbits.len() {
         results.push((i, Vec::new(), Vec::new()));
     }
@@ -327,22 +327,21 @@ pub fn some_filters(
         let mut neuter = false;
         if ctl.join_alg_opt.basic_h.is_some() {
             let mut ns = vec![Vec::<usize>::new(); cols];
-            for u in 0..exacts.len() {
-                let clonotype_id = exacts[u];
+            for (u, &clonotype_id) in exacts.iter().enumerate() {
                 let ex = &exact_clonotypes[clonotype_id];
-                for col in 0..cols {
-                    if let Some(m) = mat[col][u] {
+                for (m, nn) in mat.iter().zip(ns.iter_mut()) {
+                    if let Some(m) = m[u] {
                         if ex.share[m].annv.len() > 1 {
                             continue;
                         }
                         let n = ex.share[m].seq_del.len();
-                        ns[col].push(n);
+                        nn.push(n);
                     }
                 }
             }
-            for col in 0..cols {
-                unique_sort(&mut ns[col]);
-                if ns[col].len() > 1 {
+            for mut nn in ns {
+                unique_sort(&mut nn);
+                if nn.len() > 1 {
                     neuter = true;
                 }
             }
@@ -411,10 +410,10 @@ pub fn some_filters(
             }
             let mut q60 = false;
             let mut q40 = 0;
-            for m in j..k {
-                if vquals[m].3 >= 60 {
+            for v in &vquals[j..k] {
+                if v.3 >= 60 {
                     q60 = true;
-                } else if vquals[m].3 >= 40 {
+                } else if v.3 >= 40 {
                     q40 += 1;
                 }
             }
@@ -428,7 +427,7 @@ pub fn some_filters(
                     res.1.push((
                         ex.clones[i][0].dataset_index,
                         ex.clones[i][0].barcode.clone(),
-                        "failed QUAL filter".to_string(),
+                        "failed QUAL filter",
                     ));
                 }
             }
@@ -439,27 +438,23 @@ pub fn some_filters(
     let mut dels = Vec::<i32>::new();
     for i in 0..results.len() {
         for j in 0..results[i].1.len() {
-            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
+            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2);
         }
         for x in results[i].2.iter() {
             to_delete[*x] = true;
         }
     }
     dels.sort_unstable();
-    let mut orbits2 = Vec::<Vec<i32>>::new();
-    for i in 0..orbits.len() {
-        let mut o = orbits[i].clone();
+    for o in orbits.iter_mut() {
         let mut del = vec![false; o.len()];
-        for j in 0..o.len() {
-            let id = info[o[j] as usize].clonotype_index;
+        for (&oj, d) in o.iter().zip(del.iter_mut()) {
+            let id = info[oj as usize].clonotype_index;
             if to_delete[id] {
-                del[j] = true;
+                *d = true;
             }
         }
-        erase_if(&mut o, &del);
-        orbits2.push(o);
+        erase_if(o, &del);
     }
-    *orbits = orbits2;
 
     // Check for disjoint orbits (again again).
 
