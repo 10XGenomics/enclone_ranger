@@ -146,32 +146,32 @@ pub fn join_exacts(
             // Form the equivalence relation implied by the potential joins.
 
             let mut eq: EquivRel = EquivRel::new((j - i) as i32);
-            for pj in 0..pot.len() {
-                let (k1, k2) = (pot[pj].k1, pot[pj].k2);
+            for pot in &pot {
+                let (k1, k2) = (pot.k1, pot.k2);
                 eq.join((k1 - i) as i32, (k2 - i) as i32);
             }
 
             // Impose a higher bar on joins that involve only two cells. (not documented)
 
             let mut to_pot = vec![Vec::<usize>::new(); j - i];
-            for pj in 0..pot.len() {
-                let k1 = pot[pj].k1;
+            for (pj, pot) in pot.iter().enumerate() {
+                let k1 = pot.k1;
                 to_pot[k1 - i].push(pj);
             }
             let mut to_delete = vec![false; pot.len()];
             let mut reps = Vec::<i32>::new();
             eq.orbit_reps(&mut reps);
-            for s in 0..reps.len() {
+            for rep in reps {
                 // Examine a potential orbit.
 
                 let mut x = Vec::<i32>::new();
-                eq.orbit(reps[s], &mut x);
+                eq.orbit(rep, &mut x);
 
                 // Count the number of cells in the orbit.
 
                 let mut ncells = 0;
-                for t in 0..x.len() {
-                    let k = x[t] as usize + i;
+                for &t in &x {
+                    let k = t as usize + i;
                     let mult = exact_clonotypes[info[k].clonotype_index].ncells();
                     ncells += mult;
                 }
@@ -205,23 +205,23 @@ pub fn join_exacts(
         // Analyze potential joins.
 
         let mut eq: EquivRel = EquivRel::new((j - i) as i32);
-        for pj in 0..pot.len() {
-            let k1 = pot[pj].k1;
-            let k2 = pot[pj].k2;
-            let nrefs = pot[pj].nrefs;
-            let cd = pot[pj].cd;
-            let diffs = pot[pj].diffs;
-            let bcs1 = &pot[pj].bcs1;
-            let bcs2 = &pot[pj].bcs2;
-            let shares = &pot[pj].shares;
-            let indeps = &pot[pj].indeps;
-            let shares_details = &pot[pj].shares_details;
-            let share_pos_v = &pot[pj].share_pos_v;
-            let share_pos_j = &pot[pj].share_pos_j;
-            let score = pot[pj].score;
-            let err = pot[pj].err;
-            let p1 = pot[pj].p1;
-            let mult = pot[pj].mult;
+        for pj in pot {
+            let k1 = pj.k1;
+            let k2 = pj.k2;
+            let nrefs = pj.nrefs;
+            let cd = pj.cd;
+            let diffs = pj.diffs;
+            let bcs1 = &pj.bcs1;
+            let bcs2 = &pj.bcs2;
+            let shares = &pj.shares;
+            let indeps = &pj.indeps;
+            let shares_details = &pj.shares_details;
+            let share_pos_v = &pj.share_pos_v;
+            let share_pos_j = &pj.share_pos_j;
+            let score = pj.score;
+            let err = pj.err;
+            let p1 = pj.p1;
+            let mult = pj.mult;
 
             // Do nothing if join could have no effect on equivalence relation.
 
@@ -505,9 +505,9 @@ pub fn join_exacts(
             fwriteln!(
                 log,
                 "computed using k = {}, d = {}, n = {}",
-                pot[pj].k,
-                pot[pj].d,
-                pot[pj].n
+                pj.k,
+                pj.d,
+                pj.n
             );
             fwriteln!(
                 log,
@@ -602,9 +602,9 @@ pub fn join_exacts(
     results.par_iter_mut().for_each(joinf);
 
     ctl.perf_stats(&timer2, "in main part of join");
-    for l in 0..results.len() {
-        for j in 0..results[l].5.len() {
-            raw_joins.push((results[l].5[j].0 as i32, results[l].5[j].1 as i32));
+    for r in &results {
+        for &j in &r.5 {
+            raw_joins.push((j.0 as i32, j.1 as i32));
         }
     }
     finish_join(ctl, info, &results, join_info)

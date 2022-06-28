@@ -53,17 +53,16 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
                 if !p.is_empty() && Regex::new(p).is_ok() {
                     let mut ok = true;
                     let mut px = false;
-                    let b = p.as_bytes();
-                    for i in 0..p.len() {
-                        if !((b[i] >= b'A' && b[i] <= b'Z')
-                            || (b[i] >= b'a' && b[i] <= b'z')
-                            || (b[i] >= b'0' && b[i] <= b'9')
-                            || b".-_[]()|*".contains(&b[i]))
+                    for &b in p.as_bytes() {
+                        if !((b'A'..=b'Z').contains(&b)
+                            || (b'a'..=b'z').contains(&b)
+                            || (b'0'..=b'9').contains(&b)
+                            || b".-_[]()|*".contains(&b))
                         {
                             ok = false;
                             break;
                         }
-                        if b"[]()|*".contains(&b[i]) {
+                        if b"[]()|*".contains(&b) {
                             px = true;
                         }
                     }

@@ -21,16 +21,16 @@ pub fn uncompress_bytes(x: &[u8], uncompressed_size: usize) -> Vec<u8> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn u32_bytes(x: usize) -> Vec<u8> {
-    (x as u32).to_le_bytes().to_vec()
+pub fn u32_bytes(x: usize) -> [u8; 4] {
+    (x as u32).to_le_bytes()
 }
 
 pub fn u32_from_bytes(x: &[u8]) -> u32 {
     u32::from_le_bytes([x[0], x[1], x[2], x[3]])
 }
 
-pub fn f32_bytes(x: usize) -> Vec<u8> {
-    (x as f32).to_le_bytes().to_vec()
+pub fn f32_bytes(x: usize) -> [u8; 4] {
+    (x as f32).to_le_bytes()
 }
 
 pub fn f32_from_bytes(x: &[u8]) -> f32 {
@@ -41,8 +41,8 @@ pub fn f32_from_bytes(x: &[u8]) -> f32 {
 
 pub fn save_string(x: &String) -> Vec<u8> {
     let mut bytes = Vec::<u8>::new();
-    bytes.append(&mut u32_bytes(x.len()));
-    bytes.append(&mut x.as_bytes().to_vec());
+    bytes.extend(u32_bytes(x.len()));
+    bytes.extend(x.as_bytes());
     bytes
 }
 
@@ -65,12 +65,12 @@ pub fn restore_string(x: &[u8], pos: &mut usize) -> Result<String, ()> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn save_vec_string(x: &Vec<String>) -> Vec<u8> {
-    let mut bytes = Vec::<u8>::new();
-    bytes.append(&mut u32_bytes(x.len()));
-    for i in 0..x.len() {
-        bytes.append(&mut u32_bytes(x[i].len()));
-        bytes.append(&mut x[i].as_bytes().to_vec());
+pub fn save_vec_string(x: &[String]) -> Vec<u8> {
+    let mut bytes = Vec::<u8>::with_capacity(4 + 5 * x.len());
+    bytes.extend(u32_bytes(x.len()));
+    for xi in x {
+        bytes.extend(u32_bytes(xi.len()));
+        bytes.extend(xi.as_bytes());
     }
     bytes
 }
@@ -82,7 +82,7 @@ pub fn restore_vec_string(x: &[u8], pos: &mut usize) -> Result<Vec<String>, ()> 
     let n = u32_from_bytes(&x[*pos..*pos + 4]) as usize;
     *pos += 4;
     let mut y = vec![String::new(); n];
-    for j in 0..n {
+    for yj in &mut y {
         if *pos + 4 > x.len() {
             return Err(());
         }
@@ -92,23 +92,25 @@ pub fn restore_vec_string(x: &[u8], pos: &mut usize) -> Result<Vec<String>, ()> 
             return Err(());
         }
         let s = String::from_utf8(x[*pos..*pos + k].to_vec());
-        if s.is_err() {
-            return Err(());
+        match s {
+            Err(_) => return Err(()),
+            Ok(s) => {
+                *pos += k;
+                *yj = s;
+            }
         }
-        *pos += k;
-        y[j] = s.unwrap();
     }
     Ok(y)
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn save_vec_string_comp(x: &Vec<String>) -> Vec<u8> {
-    let mut bytes = Vec::<u8>::new();
+pub fn save_vec_string_comp(x: &[String]) -> Vec<u8> {
     let z = save_vec_string(x);
     let mut y = compress_bytes(&z);
-    bytes.append(&mut u32_bytes(y.len()));
-    bytes.append(&mut u32_bytes(z.len()));
+    let mut bytes = Vec::<u8>::with_capacity(8 + y.len());
+    bytes.extend(u32_bytes(y.len()));
+    bytes.extend(u32_bytes(z.len()));
     bytes.append(&mut y);
     bytes
 }
@@ -132,11 +134,11 @@ pub fn restore_vec_string_comp(x: &[u8], pos: &mut usize) -> Result<Vec<String>,
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn save_vec_vec_string(x: &Vec<Vec<String>>) -> Vec<u8> {
-    let mut bytes = Vec::<u8>::new();
-    bytes.append(&mut u32_bytes(x.len()));
-    for i in 0..x.len() {
-        bytes.append(&mut save_vec_string(&x[i]));
+pub fn save_vec_vec_string(x: &[Vec<String>]) -> Vec<u8> {
+    let mut bytes = Vec::<u8>::with_capacity(4 + 5 * x.len());
+    bytes.extend(u32_bytes(x.len()));
+    for xi in x {
+        bytes.append(&mut save_vec_string(xi));
     }
     bytes
 }
@@ -148,8 +150,8 @@ pub fn restore_vec_vec_string(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<Strin
     let n = u32_from_bytes(&x[*pos..*pos + 4]) as usize;
     *pos += 4;
     let mut y = vec![Vec::<String>::new(); n];
-    for j in 0..n {
-        y[j] = restore_vec_string(x, pos)?;
+    for yj in &mut y {
+        *yj = restore_vec_string(x, pos)?;
     }
     Ok(y)
 }
@@ -157,11 +159,11 @@ pub fn restore_vec_vec_string(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<Strin
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn save_vec_vec_u8(x: &Vec<Vec<u8>>) -> Vec<u8> {
-    let mut bytes = Vec::<u8>::new();
-    bytes.append(&mut u32_bytes(x.len()));
-    for i in 0..x.len() {
-        bytes.append(&mut u32_bytes(x[i].len()));
-        bytes.append(&mut x[i].clone());
+    let mut bytes = Vec::<u8>::with_capacity(4 + 5 * x.len());
+    bytes.extend(u32_bytes(x.len()));
+    for vi in x {
+        bytes.extend(u32_bytes(vi.len()));
+        bytes.extend(vi);
     }
     bytes
 }
@@ -173,7 +175,7 @@ pub fn restore_vec_vec_u8(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<u8>>, ()>
     let n = u32_from_bytes(&x[*pos..*pos + 4]) as usize;
     *pos += 4;
     let mut y = vec![Vec::<u8>::new(); n];
-    for j in 0..n {
+    for yj in &mut y {
         if *pos + 4 > x.len() {
             return Err(());
         }
@@ -182,7 +184,7 @@ pub fn restore_vec_vec_u8(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<u8>>, ()>
         if *pos + k > x.len() {
             return Err(());
         }
-        y[j] = x[*pos..*pos + k].to_vec();
+        *yj = x[*pos..*pos + k].to_vec();
         *pos += k;
     }
     Ok(y)
@@ -190,13 +192,13 @@ pub fn restore_vec_vec_u8(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<u8>>, ()>
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn save_vec_vec_u32(x: &Vec<Vec<u32>>) -> Vec<u8> {
-    let mut bytes = Vec::<u8>::new();
-    bytes.append(&mut u32_bytes(x.len()));
-    for i in 0..x.len() {
-        bytes.append(&mut u32_bytes(x[i].len()));
-        for j in 0..x[i].len() {
-            bytes.append(&mut x[i][j].to_le_bytes().to_vec());
+pub fn save_vec_vec_u32(x: &[Vec<u32>]) -> Vec<u8> {
+    let mut bytes = Vec::<u8>::with_capacity(4 + 8 * x.len());
+    bytes.extend(u32_bytes(x.len()));
+    for vi in x {
+        bytes.extend(u32_bytes(vi.len()));
+        for xj in vi {
+            bytes.extend(xj.to_le_bytes());
         }
     }
     bytes
@@ -209,7 +211,7 @@ pub fn restore_vec_vec_u32(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<u32>>, (
     let n = u32_from_bytes(&x[*pos..*pos + 4]) as usize;
     *pos += 4;
     let mut y = vec![Vec::<u32>::new(); n];
-    for j in 0..n {
+    for yj in &mut y {
         if *pos + 4 > x.len() {
             return Err(());
         }
@@ -218,8 +220,9 @@ pub fn restore_vec_vec_u32(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<u32>>, (
         if *pos + 4 * k > x.len() {
             return Err(());
         }
+        yj.reserve(4 * k);
         for _ in 0..k {
-            y[j].push(u32_from_bytes(&x[*pos..*pos + 4]));
+            yj.push(u32_from_bytes(&x[*pos..*pos + 4]));
             *pos += 4;
         }
     }
@@ -229,10 +232,10 @@ pub fn restore_vec_vec_u32(x: &[u8], pos: &mut usize) -> Result<Vec<Vec<u32>>, (
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn save_vec_bool(x: &Vec<bool>) -> Vec<u8> {
-    let mut bytes = Vec::<u8>::new();
-    bytes.append(&mut u32_bytes(x.len()));
-    for i in 0..x.len() {
-        bytes.push(if x[i] { 1 } else { 0 });
+    let mut bytes = Vec::<u8>::with_capacity(4 + x.len());
+    bytes.extend(u32_bytes(x.len()));
+    for &xi in x {
+        bytes.push(if xi { 1 } else { 0 });
     }
     bytes
 }
@@ -247,8 +250,8 @@ pub fn restore_vec_bool(x: &[u8], pos: &mut usize) -> Result<Vec<bool>, ()> {
         return Err(());
     }
     let mut y = vec![false; n];
-    for j in 0..n {
-        y[j] = x[*pos] == 1;
+    for (yj, &xj) in y[..n].iter_mut().zip(x[*pos..].iter()) {
+        *yj = xj == 1;
         *pos += 1;
     }
     Ok(y)
@@ -256,11 +259,11 @@ pub fn restore_vec_bool(x: &[u8], pos: &mut usize) -> Result<Vec<bool>, ()> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn save_vec_u32(x: &Vec<u32>) -> Vec<u8> {
-    let mut bytes = Vec::<u8>::new();
-    bytes.append(&mut u32_bytes(x.len()));
-    for i in 0..x.len() {
-        bytes.append(&mut x[i].to_le_bytes().to_vec());
+pub fn save_vec_u32(x: &[u32]) -> Vec<u8> {
+    let mut bytes = Vec::<u8>::with_capacity(4 * (x.len() + 1));
+    bytes.extend(u32_bytes(x.len()));
+    for &xi in x {
+        bytes.extend(xi.to_le_bytes());
     }
     bytes
 }
@@ -275,8 +278,8 @@ pub fn restore_vec_u32(x: &[u8], pos: &mut usize) -> Result<Vec<u32>, ()> {
         return Err(());
     }
     let mut y = vec![0; n];
-    for j in 0..n {
-        y[j] = u32_from_bytes(&x[*pos..*pos + 4]);
+    for yj in &mut y {
+        *yj = u32_from_bytes(&x[*pos..*pos + 4]);
         *pos += 4;
     }
     Ok(y)
@@ -284,8 +287,8 @@ pub fn restore_vec_u32(x: &[u8], pos: &mut usize) -> Result<Vec<u32>, ()> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn save_u32(x: u32) -> Vec<u8> {
-    x.to_le_bytes().to_vec()
+pub fn save_u32(x: u32) -> [u8; 4] {
+    x.to_le_bytes()
 }
 
 pub fn restore_u32(x: &[u8], pos: &mut usize) -> Result<u32, ()> {
@@ -299,8 +302,8 @@ pub fn restore_u32(x: &[u8], pos: &mut usize) -> Result<u32, ()> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn save_bool(x: bool) -> Vec<u8> {
-    vec![x as u8]
+pub fn save_bool(x: bool) -> [u8; 1] {
+    [x as u8]
 }
 
 pub fn restore_bool(x: &[u8], pos: &mut usize) -> Result<bool, ()> {
@@ -314,11 +317,11 @@ pub fn restore_bool(x: &[u8], pos: &mut usize) -> Result<bool, ()> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn save_vec_f32(x: &Vec<f32>) -> Vec<u8> {
-    let mut bytes = Vec::<u8>::new();
-    bytes.append(&mut f32_bytes(x.len()));
-    for i in 0..x.len() {
-        bytes.append(&mut x[i].to_le_bytes().to_vec());
+pub fn save_vec_f32(x: &[f32]) -> Vec<u8> {
+    let mut bytes = Vec::<u8>::with_capacity(4 * (x.len() + 1));
+    bytes.extend(f32_bytes(x.len()));
+    for &xi in x {
+        bytes.extend(xi.to_le_bytes());
     }
     bytes
 }
@@ -333,8 +336,8 @@ pub fn restore_vec_f32(x: &[u8], pos: &mut usize) -> Result<Vec<f32>, ()> {
         return Err(());
     }
     let mut y = vec![0.0; n];
-    for j in 0..n {
-        y[j] = f32_from_bytes(&x[*pos..*pos + 4]);
+    for yj in &mut y[..n] {
+        *yj = f32_from_bytes(&x[*pos..*pos + 4]);
         *pos += 4;
     }
     Ok(y)

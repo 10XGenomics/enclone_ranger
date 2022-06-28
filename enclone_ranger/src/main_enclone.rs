@@ -44,20 +44,20 @@ pub fn main_enclone_ranger(args: &Vec<String>) -> Result<(), String> {
         "GAMMA_DELTA",
     ];
     let mut found = vec![false; REQUIRED_ARGS.len()];
-    for i in 1..args.len() {
-        let mut arg = args[i].clone();
+    for arg in args {
+        let mut arg = arg.as_str();
         if arg.contains('=') {
-            arg = arg.before("=").to_string();
+            arg = arg.before("=");
         }
         let mut ok = false;
-        for (j, x) in REQUIRED_ARGS.iter().enumerate() {
-            if arg == *x {
+        for (j, &x) in REQUIRED_ARGS.iter().enumerate() {
+            if arg == x {
                 ok = true;
                 found[j] = true;
             }
         }
-        for x in ALLOWED_ARGS.iter() {
-            if arg == *x {
+        for x in ALLOWED_ARGS {
+            if arg == x {
                 ok = true;
             }
         }
@@ -65,11 +65,11 @@ pub fn main_enclone_ranger(args: &Vec<String>) -> Result<(), String> {
             panic!("Illegal argument {} passed to main_enclone_ranger.", arg);
         }
     }
-    for j in 0..REQUIRED_ARGS.len() {
-        if !found[j] {
+    for (found, arg) in found.into_iter().zip(REQUIRED_ARGS.into_iter()) {
+        if found {
             panic!(
                 "Required argument {} not passed to main_enclone_ranger",
-                REQUIRED_ARGS[j]
+                arg
             );
         }
     }
@@ -86,9 +86,9 @@ pub fn main_enclone_setup_ranger(args: &Vec<String>) -> Result<EncloneSetup, Str
     let mut ctl = EncloneControl::default();
     ctl.gen_opt.cellranger = true;
     ctl.gen_opt.internal_run = false;
-    for i in 1..args.len() {
-        if args[i].starts_with("PRE=") {
-            let pre = args[i].after("PRE=").split(',').collect::<Vec<&str>>();
+    for arg in args {
+        if arg.starts_with("PRE=") {
+            let pre = arg.after("PRE=").split(',').collect::<Vec<&str>>();
             ctl.gen_opt.pre.clear();
             for x in pre.iter() {
                 ctl.gen_opt.pre.push(x.to_string());

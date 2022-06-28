@@ -25,7 +25,7 @@ pub fn heavy_complexity(
         let ex = &exact_clonotypes[i];
         for r in 0..ex.share.len() {
             if ex.share[r].left && ex.share.len() == 2 && !ex.share[1 - r].left {
-                let mut seq = ex.share[r].seq_del.clone();
+                let seq = ex.share[r].seq_del.as_ref();
                 let mut vref = refdata.refs[ex.share[r].v_ref_id].to_ascii_vec();
                 if ex.share[r].v_ref_id_donor.is_some() {
                     vref = dref[ex.share[r].v_ref_id_donor.unwrap()]
@@ -51,8 +51,8 @@ pub fn heavy_complexity(
 
                 // Keep going.
 
-                vref = vref[vstart..vref.len()].to_vec();
-                let mut concat = vref.clone();
+                let vref = &vref[vstart..vref.len()];
+                let mut concat = vref.to_vec();
                 let mut drefx = Vec::<u8>::new();
                 let mut d2ref = Vec::<u8>::new();
                 let mut drefname = String::new();
@@ -79,8 +79,7 @@ pub fn heavy_complexity(
                 if !ds.is_empty() {
                     opt = ds[0].clone();
                 }
-                for j in 0..opt.len() {
-                    let d = opt[j];
+                for (j, d) in opt.into_iter().enumerate() {
                     if j == 0 {
                         drefx = refdata.refs[d].to_ascii_vec();
                     } else {
@@ -91,10 +90,10 @@ pub fn heavy_complexity(
                     }
                     drefname += &mut refdata.name[d].clone();
                 }
-                concat.append(&mut drefx.clone());
-                concat.append(&mut d2ref.clone());
-                let mut jref = refdata.refs[ex.share[r].j_ref_id].to_ascii_vec();
-                let jend = jflank(&seq, &jref);
+                concat.extend(&drefx);
+                concat.extend(&d2ref);
+                let jref = refdata.refs[ex.share[r].j_ref_id].to_ascii_vec();
+                let jend = jflank(seq, &jref);
                 let mut seq_start = vstart as isize;
                 // probably not exactly right
                 if ex.share[r].annv.len() > 1 {
@@ -112,15 +111,15 @@ pub fn heavy_complexity(
                     seq_end = seq.len(); // bug fix for problem found by customer,
                                          // couldn't reproduce internally
                 }
-                seq = seq[seq_start as usize..seq_end].to_vec();
-                jref = jref[0..jend].to_vec();
-                concat.append(&mut jref.clone());
+                let seq = &seq[seq_start as usize..seq_end];
+                let jref = &jref[..jend];
+                concat.extend(jref);
                 let (ops, _score) = align_to_vdj_ref(
-                    &seq,
-                    &vref,
+                    seq,
+                    vref,
                     &drefx,
                     &d2ref,
-                    &jref,
+                    jref,
                     &drefname,
                     true,
                     ctl.gen_opt.jscore_match,
@@ -176,16 +175,12 @@ pub fn heavy_complexity(
                     matches,
                     mismatches,
                     jun_ins,
-                    d: ds[0].clone(),
+                    d: ds.into_iter().next().unwrap(),
                     vstart,
                     indels,
                 };
             }
         }
     });
-    let mut comp = Vec::<Junction>::new();
-    for i in 0..results.len() {
-        comp.push(results[i].1.clone());
-    }
-    comp
+    results.into_iter().map(|ri| ri.1).collect()
 }

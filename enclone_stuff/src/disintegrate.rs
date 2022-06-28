@@ -26,8 +26,8 @@ pub fn disintegrate_onesies(
             .sum();
         let mut to_info = HashMap::<usize, usize>::new();
         let mut exacts2 = Vec::<ExactClonotype>::new();
-        for i in 0..info.len() {
-            to_info.insert(info[i].clonotype_index, i);
+        for (i, inf) in info.iter().enumerate() {
+            to_info.insert(inf.clonotype_index, i);
         }
         let mut to_exact_new = Vec::<Vec<usize>>::new();
         for i in 0..exact_clonotypes.len() {
@@ -55,11 +55,12 @@ pub fn disintegrate_onesies(
             to_exact_new.push(enew);
         }
         let mut join_info2 = Vec::new();
-        for i in 0..join_info.len() {
-            let (u1, u2) = (join_info[i].0, join_info[i].1);
+        for ji in join_info.iter() {
+            let (u1, u2) = (ji.0, ji.1);
             for v1 in to_exact_new[u1].iter() {
+                join_info2.reserve(to_exact_new[u2].len());
                 for v2 in to_exact_new[u2].iter() {
-                    let mut x = join_info[i].clone();
+                    let mut x = ji.clone();
                     x.0 = *v1;
                     x.1 = *v2;
                     join_info2.push(x);
@@ -105,14 +106,14 @@ pub fn disintegrate_onesies(
         let mut reps = Vec::<i32>::new();
         eq.orbit_reps(&mut reps);
         let mut eq2 = EquivRel::new(info.len() as i32);
-        for i in 0..reps.len() {
+        for rep in reps {
             let mut o = Vec::<i32>::new();
-            eq.orbit(reps[i], &mut o);
+            eq.orbit(rep, &mut o);
             if o.len() > 1 {
-                for j in 0..o.len() - 1 {
+                for (&o1, &o2) in o.iter().zip(o.iter().skip(1)) {
                     eq2.join(
-                        to_info2[o[j] as usize][0] as i32,
-                        to_info2[o[j + 1] as usize][0] as i32,
+                        to_info2[o1 as usize][0] as i32,
+                        to_info2[o2 as usize][0] as i32,
                     );
                 }
             }

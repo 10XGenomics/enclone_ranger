@@ -480,31 +480,20 @@ pub fn survives_filter(
     // Clonotypes having given CDR3 (given by Levenshtein distance pattern).
 
     if !ctl.clono_filt_opt.cdr3_lev.is_empty() {
-        let fields = ctl
-            .clono_filt_opt
-            .cdr3_lev
-            .split('|')
-            .collect::<Vec<&str>>();
-        let mut cdr3 = Vec::<String>::new();
-        let mut dist = Vec::<usize>::new();
-        for i in 0..fields.len() {
-            cdr3.push(fields[i].before("~").to_string());
-            dist.push(fields[i].after("~").force_usize());
-        }
-        let mut ok = false;
-        'exact_loop: for s in exacts.iter() {
-            let ex = &exact_clonotypes[*s];
-            for j in 0..ex.share.len() {
-                for k in 0..cdr3.len() {
-                    if levenshtein(ex.share[j].cdr3_aa.as_bytes(), cdr3[k].as_bytes()) as usize
-                        <= dist[k]
-                    {
-                        ok = true;
-                        break 'exact_loop;
-                    }
-                }
-            }
-        }
+        let fields = ctl.clono_filt_opt.cdr3_lev.split('|');
+        let cdr3 = fields
+            .map(|field| {
+                let (c, d) = field.split_once('~').unwrap();
+                (c, d.force_usize())
+            })
+            .collect::<Vec<_>>();
+        let ok = exacts.iter().any(move |s| {
+            exact_clonotypes[*s].share.iter().any(|share| {
+                cdr3.iter().any(|(cdr, dist)| {
+                    levenshtein(share.cdr3_aa.as_bytes(), cdr.as_bytes()) as usize <= *dist
+                })
+            })
+        });
         if !ok {
             return false;
         }
@@ -512,15 +501,15 @@ pub fn survives_filter(
 
     // Donors.
 
-    let mut donors = Vec::<usize>::new();
-    for u in 0..exacts.len() {
-        let ex = &exact_clonotypes[exacts[u]];
-        for m in 0..ex.clones.len() {
-            if ex.clones[m][0].donor_index.is_some() {
-                donors.push(ex.clones[m][0].donor_index.unwrap());
-            }
-        }
-    }
+    let mut donors = exacts
+        .iter()
+        .flat_map(|&u| {
+            exact_clonotypes[u]
+                .clones
+                .iter()
+                .filter_map(|clone| clone[0].donor_index)
+        })
+        .collect::<Vec<_>>();
     unique_sort(&mut donors);
     if ctl.clono_filt_opt.fail_only && donors.len() <= 1 {
         return false;

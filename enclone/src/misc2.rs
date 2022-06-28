@@ -30,24 +30,24 @@ use vector_utils::{
 pub fn filter_gelbead_contamination(
     ctl: &EncloneControl,
     clones: &mut Vec<Vec<TigData0>>,
-    fate: &mut Vec<(usize, String, String)>,
+    fate: &mut Vec<(usize, String, &'static str)>,
 ) {
     const GB_UMI_MULT: usize = 10;
     const GB_MIN_FRAC: f64 = 0.2;
-    let mut bch = vec![Vec::<(usize, String, usize, usize)>::new(); 2];
-    for l in 0..clones.len() {
-        let li = clones[l][0].dataset_index;
-        let bc = &clones[l][0].barcode;
+    let mut bch = vec![Vec::<(usize, &str, usize, usize)>::new(); 2];
+    for (l, clone) in clones.iter().enumerate() {
+        let li = clone[0].dataset_index;
+        let bc = clone[0].barcode.as_str();
         let mut numi = 0;
-        for j in 0..clones[l].len() {
-            numi += clones[l][j].umi_count;
+        for tig in clone {
+            numi += tig.umi_count;
         }
-        bch[0].push((li, bc[0..8].to_string(), numi, l));
-        bch[1].push((li, bc[8..16].to_string(), numi, l));
+        bch[0].push((li, &bc[0..8], numi, l));
+        bch[1].push((li, &bc[8..16], numi, l));
     }
     let mut bad = vec![false; clones.len()];
     for l in 0..2 {
-        bch[l].sort();
+        bch[l].sort_unstable();
         let mut m = 0;
         while m < bch[l].len() {
             let n = next_diff12_4(&bch[l], m as i32) as usize;
@@ -71,12 +71,12 @@ pub fn filter_gelbead_contamination(
             m = n;
         }
     }
-    for i in 0..bad.len() {
-        if bad[i] {
+    for (&b, clone) in bad.iter().zip(clones.iter()) {
+        if b {
             fate.push((
-                clones[i][0].dataset_index,
-                clones[i][0].barcode.clone(),
-                "failed WHITEF filter".to_string(),
+                clone[0].dataset_index,
+                clone[0].barcode.clone(),
+                "failed WHITEF filter",
             ));
         }
     }
@@ -121,8 +121,8 @@ pub fn create_exact_subclonotype_core(
             while i < calls.len() {
                 let j = next_diff1_2(&calls, i as i32) as usize;
                 let mut q = 0;
-                for k in i..j {
-                    q += calls[k].1 as usize;
+                for c in &calls[i..j] {
+                    q += c.1 as usize;
                 }
                 callsx.push((q, calls[i].0));
                 i = j;
@@ -156,8 +156,8 @@ pub fn create_exact_subclonotype_core(
             while i < calls.len() {
                 let j = next_diff1_2(&calls, i as i32) as usize;
                 let mut q = 0;
-                for k in i..j {
-                    q += calls[k].1 as usize;
+                for c in &calls[i..j] {
+                    q += c.1 as usize;
                 }
                 callsx.push((q, calls[i].0));
                 i = j;
@@ -271,7 +271,7 @@ pub fn find_exact_subclonotypes(
     ctl: &EncloneControl,
     tig_bc: &[Vec<TigData>],
     refdata: &RefData,
-    fate: &mut [HashMap<String, String>],
+    fate: &mut [HashMap<String, &'static str>],
 ) -> Vec<ExactClonotype> {
     let mut exact_clonotypes = Vec::<ExactClonotype>::new();
     let mut r = 0;
@@ -321,7 +321,7 @@ pub fn find_exact_subclonotypes(
     }
     ctl.perf_stats(&t, "finding exact subclonotypes one");
     let t = Instant::now();
-    let mut results = Vec::<(usize, Vec<ExactClonotype>, Vec<(usize, String, String)>)>::new();
+    let mut results = Vec::<(usize, Vec<ExactClonotype>, Vec<(usize, String, &str)>)>::new();
     for i in 0..groups.len() {
         results.push((i, Vec::new(), Vec::new()));
     }
@@ -363,24 +363,25 @@ pub fn find_exact_subclonotypes(
         // the case where a barcode was accidentally reused.
 
         let mut to_delete = vec![false; s - r];
-        let mut bc = Vec::<(String, usize)>::new();
-        for t in r..s {
-            bc.push((tig_bc[t][0].barcode.clone(), t));
-        }
-        bc.sort();
+        let mut bc = tig_bc[r..s]
+            .iter()
+            .enumerate()
+            .map(|(t, tig)| (tig[0].barcode.as_str(), t))
+            .collect::<Vec<_>>();
+        bc.sort_unstable();
         let mut i = 0;
         while i < bc.len() {
             let j = next_diff1_2(&bc, i as i32) as usize;
             if j - i >= 2 {
-                for k in i..j {
-                    let t = bc[k].1;
+                for bck in &bc[i..j] {
+                    let t = bck.1;
                     if ctl.clono_filt_opt_def.bc_dup {
                         to_delete[t - r] = true;
                     }
                     res.2.push((
                         tig_bc[t][0].dataset_index,
                         tig_bc[t][0].barcode.clone(),
-                        "failed BC_DUP filter".to_string(),
+                        "failed BC_DUP filter",
                     ));
                 }
             }
@@ -427,7 +428,7 @@ pub fn find_exact_subclonotypes(
             exact_clonotypes.append(&mut results[i].1);
         }
         for j in 0..results[i].2.len() {
-            fate[results[i].2[j].0].insert(results[i].2[j].1.clone(), results[i].2[j].2.clone());
+            fate[results[i].2[j].0].insert(results[i].2[j].1.clone(), results[i].2[j].2);
         }
     }
     if ctl.gen_opt.utr_con || ctl.gen_opt.con_con {
@@ -477,22 +478,21 @@ pub fn find_exact_subclonotypes(
 
     if !ctl.gen_opt.fasta.is_empty() {
         let mut f = open_for_write_new![&ctl.gen_opt.fasta];
-        for i in 0..exact_clonotypes.len() {
-            let x = &exact_clonotypes[i];
-            for j in 0..x.share.len() {
+        for (i, x) in exact_clonotypes.iter().enumerate() {
+            for (j, s) in x.share.iter().enumerate() {
                 fwriteln!(
                     f,
                     ">exact_clonotype{}.chain{}.VJ\n{}",
                     i,
                     j + 1,
-                    strme(&x.share[j].seq)
+                    strme(&s.seq)
                 );
             }
         }
     }
-    if ctl.gen_opt.exact.is_some() {
-        let ex = &exact_clonotypes[ctl.gen_opt.exact.unwrap()];
-        println!("\nEXACT CLONOTYPE {}", ctl.gen_opt.exact.unwrap());
+    if let Some(exact) = ctl.gen_opt.exact {
+        let ex = &exact_clonotypes[exact];
+        println!("\nEXACT CLONOTYPE {}", exact);
         for i in 0..ex.share.len() {
             let vid = ex.share[i].v_ref_id;
             let jid = ex.share[i].j_ref_id;
@@ -504,8 +504,8 @@ pub fn find_exact_subclonotypes(
                 ex.share[i].cdr3_aa
             );
         }
-        for i in 0..ex.clones.len() {
-            let x = &ex.clones[i][0];
+        for (i, clone) in ex.clones.iter().enumerate() {
+            let x = &clone[0];
             println!(
                 "clone {} = {}.{}",
                 i + 1,
@@ -523,20 +523,21 @@ pub fn find_exact_subclonotypes(
 
 // Search for SHM indels.  Exploratory.
 
-pub fn search_for_shm_indels(ctl: &EncloneControl, tig_bc: &Vec<Vec<TigData>>) {
+pub fn search_for_shm_indels(ctl: &EncloneControl, tig_bc: &[Vec<TigData>]) {
     if ctl.gen_opt.indels {
         println!("CDR3s associated with possible SHM indels");
-        let mut cs = Vec::<((String, usize), usize, String)>::new();
-        for i in 0..tig_bc.len() {
-            for j in 0..tig_bc[i].len() {
-                let x = &tig_bc[i][j];
-                cs.push((
-                    (x.cdr3_dna.clone(), x.v_ref_id),
-                    x.seq().len(),
-                    x.cdr3_aa.clone(),
-                ));
-            }
-        }
+        let mut cs: Vec<((&str, usize), usize, &str)> = tig_bc
+            .iter()
+            .flat_map(|tig| {
+                tig.iter().map(|x| {
+                    (
+                        (x.cdr3_dna.as_str(), x.v_ref_id),
+                        x.seq().len(),
+                        x.cdr3_aa.as_str(),
+                    )
+                })
+            })
+            .collect();
         unique_sort(&mut cs);
         let mut i = 0;
         while i < cs.len() {

@@ -1,4 +1,5 @@
 // Copyright (c) 2021 10x Genomics, Inc. All rights reserved.
+#![allow(clippy::needless_range_loop)]
 
 use io_utils::path_exists;
 
@@ -16,34 +17,27 @@ pub mod read_json;
 
 // parse_csv_pure: same as parse_csv, but don't strip out quotes
 
-pub fn parse_csv_pure(x: &str) -> Vec<String> {
-    let mut y = Vec::<String>::new();
-    let mut w = Vec::<char>::new();
-    for c in x.chars() {
-        w.push(c);
-    }
+pub fn parse_csv_pure(x: &str) -> Vec<&str> {
+    let w = x.char_indices().collect::<Vec<_>>();
+    let mut y = Vec::new();
     let (mut quotes, mut i) = (0, 0);
     while i < w.len() {
         let mut j = i;
         while j < w.len() {
-            if quotes % 2 == 0 && w[j] == ',' {
+            if quotes % 2 == 0 && w[j].1 == ',' {
                 break;
             }
-            if w[j] == '"' {
+            if w[j].1 == '"' {
                 quotes += 1;
             }
             j += 1;
         }
         let (start, stop) = (i, j);
-        let mut s = String::new();
-        for m in start..stop {
-            s.push(w[m]);
-        }
-        y.push(s);
+        y.push(&x[w[start].0..w[stop].0]);
         i = j + 1;
     }
-    if !w.is_empty() && *w.last().unwrap() == ',' {
-        y.push(String::new());
+    if !w.is_empty() && w.last().unwrap().1 == ',' {
+        y.push("");
     }
     y
 }

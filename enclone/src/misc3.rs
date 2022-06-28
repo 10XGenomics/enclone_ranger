@@ -136,40 +136,40 @@ pub fn study_consensus(
             );
             let _len = share[z].seq.len();
             let mut lefts = Vec::<Vec<u8>>::new();
-            for m in 0..clones.len() {
-                let start = clones[m][z].v_start;
-                let mut x = clones[m][z].full_seq[0..start].to_vec();
+            for clone in clones {
+                let start = clone[z].v_start;
+                let mut x = clone[z].full_seq[0..start].to_vec();
                 x.reverse();
-                lefts.push(x.to_vec());
+                lefts.push(x);
             }
             let mut rutrs = Vec::<Vec<u8>>::new();
-            for i in 0..utr_ids.len() {
-                let mut x = refdata.refs[utr_ids[i]].to_string().as_bytes().to_vec();
+            for &id in &utr_ids {
+                let mut x = refdata.refs[id].to_string().as_bytes().to_vec();
                 x.reverse();
-                rutrs.push(x.to_vec());
+                rutrs.push(x);
             }
             let mut minlen = 1_000_000;
             let mut maxlen = 0;
-            for i in 0..lefts.len() {
-                minlen = min(minlen, lefts[i].len());
-                maxlen = max(maxlen, lefts[i].len());
+            for left in &lefts {
+                minlen = min(minlen, left.len());
+                maxlen = max(maxlen, left.len());
             }
-            for i in 0..rutrs.len() {
-                minlen = min(minlen, rutrs[i].len());
-                maxlen = max(maxlen, rutrs[i].len());
+            for r in &rutrs {
+                minlen = min(minlen, r.len());
+                maxlen = max(maxlen, r.len());
             }
             let mut dots = Vec::<u8>::new();
             let mut diffs = 0;
             for j in 0..maxlen {
                 let mut bases = Vec::<u8>::new();
-                for i in 0..lefts.len() {
-                    if j < lefts[i].len() {
-                        bases.push(lefts[i][j]);
+                for left in &lefts {
+                    if j < left.len() {
+                        bases.push(left[j]);
                     }
                 }
-                for i in 0..rutrs.len() {
-                    if j < rutrs[i].len() {
-                        bases.push(rutrs[i][j]);
+                for r in &rutrs {
+                    if j < r.len() {
+                        bases.push(r[j]);
                     }
                 }
                 let mut diff = false;
@@ -186,14 +186,14 @@ pub fn study_consensus(
                 }
             }
             fwriteln!(log, "     {}", strme(&dots));
-            for i in 0..rutrs.len() {
-                fwriteln!(log, " U = {}", strme(&rutrs[i]));
+            for r in rutrs {
+                fwriteln!(log, " U = {}", strme(&r));
             }
-            for i in 0..lefts.len() {
+            for (i, left) in lefts.iter().enumerate() {
                 if i < 9 {
                     fwrite!(log, " ");
                 }
-                fwriteln!(log, "{} = {}", i + 1, strme(&lefts[i]));
+                fwriteln!(log, "{} = {}", i + 1, strme(left));
             }
             if !(minlen == maxlen && diffs == 0 && utr_ids.len() == 1) {
                 print!("{}", strme(&log));
@@ -251,26 +251,26 @@ pub fn study_consensus(
                 .collect::<Vec<_>>();
             let mut minlen = 1_000_000;
             let mut maxlen = 0;
-            for i in 0..rights.len() {
-                minlen = min(minlen, rights[i].len());
-                maxlen = max(maxlen, rights[i].len());
+            for r in &rights {
+                minlen = min(minlen, r.len());
+                maxlen = max(maxlen, r.len());
             }
-            for i in 0..rights.len() {
-                minlen = min(minlen, rights[i].len());
-                maxlen = max(maxlen, rights[i].len());
+            for r in &rights {
+                minlen = min(minlen, r.len());
+                maxlen = max(maxlen, r.len());
             }
             let mut dots = Vec::<u8>::new();
             let mut diffs = 0;
             for j in 0..maxlen {
                 let mut bases = Vec::<u8>::new();
-                for i in 0..rights.len() {
-                    if j < rights[i].len() {
-                        bases.push(rights[i][j]);
+                for r in &rights {
+                    if j < r.len() {
+                        bases.push(r[j]);
                     }
                 }
-                for i in 0..rconst.len() {
-                    if j < rconst[i].len() {
-                        bases.push(rconst[i][j]);
+                for r in &rconst {
+                    if j < r.len() {
+                        bases.push(r[j]);
                     }
                 }
                 let mut diff = false;

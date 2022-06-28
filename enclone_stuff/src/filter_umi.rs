@@ -15,7 +15,7 @@ pub fn filter_umi(
     ctl: &EncloneControl,
     exact_clonotypes: &mut [ExactClonotype],
     info: &[CloneInfo],
-    fate: &mut [HashMap<String, String>],
+    fate: &mut [HashMap<String, &str>],
 ) {
     let (mut is_tcr, mut is_bcr) = (true, true);
     if ctl.gen_opt.tcr {
@@ -40,16 +40,16 @@ pub fn filter_umi(
     let mut reps = Vec::<i32>::new();
     eq.orbit_reps(&mut reps);
     if is_tcr {
-        for i in 0..reps.len() {
+        for rep in reps {
             let mut o = Vec::<i32>::new();
-            eq.orbit(reps[i], &mut o);
+            eq.orbit(rep, &mut o);
             orbits.push(o);
         }
     } else {
         let mut umis = vec![Vec::<usize>::new(); ctl.origin_info.n()];
-        for i in 0..reps.len() {
+        for &rep in &reps {
             let mut o = Vec::<i32>::new();
-            eq.orbit(reps[i], &mut o);
+            eq.orbit(rep, &mut o);
             if o.solo() {
                 let x: &CloneInfo = &info[o[0] as usize];
                 let ex = &exact_clonotypes[x.clonotype_index];
@@ -89,9 +89,9 @@ pub fn filter_umi(
         }
         // if ctl.clono_filt_opt_def.umi_filt || ctl.clono_filt_opt_def.umi_filt_mark {
         const MIN_BASELINE_CELLS: usize = 20;
-        for i in 0..reps.len() {
+        for rep in reps {
             let mut o = Vec::<i32>::new();
-            eq.orbit(reps[i], &mut o);
+            eq.orbit(rep, &mut o);
             let mut ncells = 0;
             for j in 0..o.len() {
                 let x: &CloneInfo = &info[o[j] as usize];
@@ -127,15 +127,17 @@ pub fn filter_umi(
                         let ex = &mut exact_clonotypes[x.clonotype_index];
                         let mut to_delete = vec![false; ex.ncells()];
                         let mut ex_sum = 0;
-                        for k in 0..ex.ncells() {
-                            let li = ex.clones[k][0].dataset_index;
+                        for (k, (clone, d)) in
+                            ex.clones.iter_mut().zip(to_delete.iter_mut()).enumerate()
+                        {
+                            let li = clone[0].dataset_index;
                             if nu[li] >= MIN_BASELINE_CELLS {
                                 let (mut umish, mut umisl) = (0, 0);
-                                for l in 0..ex.share.len() {
-                                    if ex.share[l].left {
-                                        umish = max(umish, ex.clones[k][l].umi_count);
+                                for (s, c) in ex.share.iter().zip(clone.iter()) {
+                                    if s.left {
+                                        umish = max(umish, c.umi_count);
                                     } else {
-                                        umisl = max(umish, ex.clones[k][l].umi_count);
+                                        umisl = max(umish, c.umi_count);
                                     }
                                 }
                                 let umitot = umish + umisl;
@@ -155,9 +157,9 @@ pub fn filter_umi(
                                         nbads += 1;
                                     } else if pass == 3 && protected {
                                         if ex.share.len() == 1 {
-                                            to_delete[k] = true;
+                                            *d = true;
                                             if ctl.clono_filt_opt_def.umi_filt_mark {
-                                                ex.clones[k][0].marked = true;
+                                                clone[0].marked = true;
                                             }
                                         }
                                     } else if pass == 3
@@ -165,9 +167,9 @@ pub fn filter_umi(
                                             || (best_ex, best_cell) != (j, k)
                                             || ex.share.len() == 1)
                                     {
-                                        to_delete[k] = true;
+                                        *d = true;
                                         if ctl.clono_filt_opt_def.umi_filt_mark {
-                                            ex.clones[k][0].marked = true;
+                                            clone[0].marked = true;
                                         }
                                     }
                                 }
@@ -184,7 +186,7 @@ pub fn filter_umi(
                                 if to_delete[i] {
                                     fate[ex.clones[i][0].dataset_index].insert(
                                         ex.clones[i][0].barcode.clone(),
-                                        "failed UMI filter".to_string(),
+                                        "failed UMI filter",
                                     );
                                 }
                             }
@@ -215,9 +217,9 @@ pub fn filter_umi(
     if is_bcr {
         const MIN_UMI_RATIO: usize = 500;
         let mut orbits2 = Vec::<Vec<i32>>::new();
-        'orbit: for i in 0..orbits.len() {
+        'orbit: for o in orbits.iter() {
             let mut ncells = 0;
-            let mut o = orbits[i].clone();
+            let mut o = o.clone();
             for j in 0..o.len() {
                 let x: &CloneInfo = &info[o[j] as usize];
                 let ex = &exact_clonotypes[x.clonotype_index];
@@ -294,7 +296,7 @@ pub fn filter_umi(
                             if to_delete[j][i] {
                                 fate[ex.clones[i][0].dataset_index].insert(
                                     ex.clones[i][0].barcode.clone(),
-                                    "failed UMI_RATIO filter".to_string(),
+                                    "failed UMI_RATIO filter",
                                 );
                             }
                         }

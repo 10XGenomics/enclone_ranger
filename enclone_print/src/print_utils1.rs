@@ -265,7 +265,7 @@ pub fn compute_field_types(
 
 pub fn make_table(
     ctl: &EncloneControl,
-    rows: &mut Vec<Vec<String>>,
+    rows: &mut [Vec<String>],
     justify: &[u8],
     mlog: &[u8],
     logz: &mut String,
@@ -273,24 +273,24 @@ pub fn make_table(
     // In plain mode, strip escape characters.
 
     if !ctl.pretty {
-        for i in 0..rows.len() {
-            for j in 0..rows[i].len() {
+        for row in rows.iter_mut() {
+            for rj in row {
                 let mut x = Vec::<u8>::new();
                 let mut escaped = false;
-                let s = rows[i][j].as_bytes();
-                for l in 0..s.len() {
-                    if s[l] == b'' {
+                let s = rj.as_bytes();
+                for &byte in s {
+                    if byte == b'' {
                         escaped = true;
                     }
                     if escaped {
-                        if s[l] == b'm' {
+                        if byte == b'm' {
                             escaped = false;
                         }
                         continue;
                     }
-                    x.push(s[l]);
+                    x.push(byte);
                 }
-                rows[i][j] = stringme(&x);
+                *rj = stringme(&x);
             }
         }
     }
@@ -300,15 +300,15 @@ pub fn make_table(
     let log0 = stringme(mlog);
     let mut log = String::new();
     if ctl.debug_table_printing {
-        for i in 0..rows.len() {
+        for (i, row) in rows.iter().enumerate() {
             println!();
-            for j in 0..rows[i].len() {
+            for (j, rj) in row.iter().enumerate() {
                 println!(
                     "row = {}, col = {}, entry = {}, vis width = {}",
                     i,
                     j,
-                    rows[i][j],
-                    visible_width(&rows[i][j])
+                    rj,
+                    visible_width(rj)
                 );
             }
         }
@@ -331,10 +331,8 @@ pub fn make_table(
 
     // Process each row.
 
-    for i in 0..cs.len() {
-        for j in 0..cs[i].len() {
-            log.push(cs[i][j]);
-        }
+    for ci in cs {
+        log.extend(&ci);
         log.push('\n');
     }
 
@@ -342,10 +340,7 @@ pub fn make_table(
 
     let mut barcode = false;
     let mut header = false;
-    let mut x = Vec::<char>::new();
-    for c in log.chars() {
-        x.push(c);
-    }
+    let x: Vec<char> = log.chars().collect();
     let mut j = 0;
     while j < x.len() {
         // DEFAULT
@@ -497,28 +492,27 @@ pub fn start_gen(
             }
         };
     }
-    let nexacts = exacts.len();
     let mut n = 0;
-    for u in 0..nexacts {
-        n += exact_clonotypes[exacts[u]].ncells();
+    for &eu in exacts {
+        n += exact_clonotypes[eu].ncells();
     }
     if !ctl.parseable_opt.pout.is_empty() || !extra_args.is_empty() {
-        *out_data = vec![HashMap::<String, String>::new(); nexacts];
+        *out_data = vec![HashMap::<String, String>::new(); exacts.len()];
     }
-    for u in 0..exacts.len() {
-        let mut bc = Vec::<String>::new();
-        for x in exact_clonotypes[exacts[u]].clones.iter() {
-            bc.push(x[0].barcode.clone());
-        }
-        bc.sort();
+    for (u, &eu) in exacts.iter().enumerate() {
+        let mut bc = exact_clonotypes[eu]
+            .clones
+            .iter()
+            .map(|x| x[0].barcode.as_str())
+            .collect::<Vec<_>>();
+        bc.sort_unstable();
         speak!(u, "barcodes", format!("{}", bc.iter().format(",")));
         for d in ctl.origin_info.dataset_list.iter() {
             if !d.is_empty() {
-                let mut bc = Vec::<String>::new();
-                for i in 0..exact_clonotypes[exacts[u]].clones.len() {
-                    let q = &exact_clonotypes[exacts[u]].clones[i];
+                let mut bc = Vec::<&str>::new();
+                for q in &exact_clonotypes[eu].clones {
                     if ctl.origin_info.dataset_id[q[0].dataset_index] == *d {
-                        bc.push(q[0].barcode.clone());
+                        bc.push(q[0].barcode.as_str());
                     }
                 }
                 speak!(
@@ -529,20 +523,21 @@ pub fn start_gen(
             }
         }
         if ctl.parseable_opt.pbarcode {
-            let mut bc = Vec::<String>::new();
-            for x in exact_clonotypes[exacts[u]].clones.iter() {
-                bc.push(x[0].barcode.clone());
-            }
+            let bc = exact_clonotypes[eu]
+                .clones
+                .iter()
+                .map(|x| x[0].barcode.as_str())
+                .collect::<Vec<_>>();
             speak!(u, "barcode", format!("{}", bc.iter().format(POUT_SEP)));
             for d in ctl.origin_info.dataset_list.iter() {
                 if !d.is_empty() {
-                    let mut bc = Vec::<String>::new();
-                    for i in 0..exact_clonotypes[exacts[u]].clones.len() {
-                        let q = &exact_clonotypes[exacts[u]].clones[i];
+                    let mut bc = Vec::<&str>::new();
+                    for i in 0..exact_clonotypes[eu].clones.len() {
+                        let q = &exact_clonotypes[eu].clones[i];
                         if ctl.origin_info.dataset_id[q[0].dataset_index] == *d {
-                            bc.push(q[0].barcode.clone());
+                            bc.push(q[0].barcode.as_str());
                         } else {
-                            bc.push("".to_string());
+                            bc.push("");
                         }
                     }
                     speak!(
@@ -558,11 +553,11 @@ pub fn start_gen(
     // Start to print the clonotype.
 
     let mut donors = Vec::<usize>::new();
-    for u in 0..exacts.len() {
-        let ex = &exact_clonotypes[exacts[u]];
-        for m in 0..ex.clones.len() {
-            if ex.clones[m][0].donor_index.is_some() {
-                let d = ex.clones[m][0].donor_index.unwrap();
+    for &eu in exacts {
+        let ex = &exact_clonotypes[eu];
+        for cm in &ex.clones {
+            if cm[0].donor_index.is_some() {
+                let d = cm[0].donor_index.unwrap();
                 if !ctl.origin_info.donor_list[d].is_empty() {
                     donors.push(d);
                 }
@@ -587,20 +582,21 @@ pub fn start_gen(
         );
         let mut mixes = 0;
         if ctl.origin_info.donor_list.len() > 1 && ctl.clono_filt_opt_def.donor {
-            for j1 in 0..exacts.len() {
-                let ex1 = &exact_clonotypes[exacts[j1]];
-                for j2 in j1..exacts.len() {
-                    let ex2 = &exact_clonotypes[exacts[j2]];
-                    for k1 in 0..ex1.clones.len() {
-                        let x1 = &ex1.clones[k1][0];
-                        for k2 in 0..ex2.clones.len() {
-                            if (j1, k1) < (j2, k2) {
-                                let x2 = &ex2.clones[k2][0];
-                                if x1.donor_index.is_some()
-                                    && x2.donor_index.is_some()
-                                    && x1.donor_index.unwrap() != x2.donor_index.unwrap()
-                                {
-                                    mixes += 1;
+            for (j1, &ej1) in exacts.iter().enumerate() {
+                let ex1 = &exact_clonotypes[ej1];
+                for (j2, &ej2) in exacts.iter().enumerate().skip(j1) {
+                    let ex2 = &exact_clonotypes[ej2];
+                    for (k1, ck1) in ex1.clones.iter().enumerate() {
+                        let x1 = &ck1[0];
+                        if let Some(donor1) = x1.donor_index {
+                            for (k2, ck2) in ex2.clones.iter().enumerate().skip(k1) {
+                                if (j1, k1) < (j2, k2) {
+                                    let x2 = &ck2[0];
+                                    if let Some(donor2) = x2.donor_index {
+                                        if donor1 != donor2 {
+                                            mixes += 1;
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -609,23 +605,19 @@ pub fn start_gen(
             }
         }
         fwriteln!(&mut mlog, "total mixed cell pairs = {}", mixes);
-        let mut donor_names = Vec::<String>::new();
-        for i in 0..donors.len() {
-            donor_names.push(ctl.origin_info.donor_list[donors[i]].clone());
-        }
+        let donor_names: Vec<&str> = donors
+            .iter()
+            .map(|&donor| ctl.origin_info.donor_list[donor].as_str())
+            .collect();
         fwriteln!(&mut mlog, "donors = {}", donor_names.iter().format(","));
         fwriteln!(&mut mlog, "datasets in which these donors appear:");
-        for i in 0..donors.len() {
-            let mut datasets = Vec::<String>::new();
-            for u in 0..nexacts {
-                let ex = &exact_clonotypes[exacts[u]];
-                for l in 0..ex.clones.len() {
-                    if ex.clones[l][0].donor_index.is_some()
-                        && ex.clones[l][0].donor_index.unwrap() == donors[i]
-                    {
-                        datasets.push(
-                            ctl.origin_info.dataset_id[ex.clones[l][0].dataset_index].clone(),
-                        );
+        for (i, donor) in donors.into_iter().enumerate() {
+            let mut datasets = Vec::<&str>::new();
+            for &eu in exacts {
+                let ex = &exact_clonotypes[eu];
+                for clone in &ex.clones {
+                    if clone[0].donor_index.is_some() && clone[0].donor_index.unwrap() == donor {
+                        datasets.push(ctl.origin_info.dataset_id[clone[0].dataset_index].as_str());
                     }
                 }
             }
@@ -643,12 +635,10 @@ pub fn start_gen(
     // Print barcodes.
 
     if ctl.clono_print_opt.barcodes {
-        let mut bc = Vec::<String>::new();
-        for u in 0..nexacts {
-            let ex = &exact_clonotypes[exacts[u]];
-            for l in 0..ex.clones.len() {
-                bc.push(ex.clones[l][0].barcode.clone());
-            }
+        let mut bc = Vec::<&str>::new();
+        for &eu in exacts {
+            let ex = &exact_clonotypes[eu];
+            bc.extend(ex.clones.iter().map(|clone| clone[0].barcode.as_str()));
         }
         unique_sort(&mut bc);
         fwriteln!(&mut mlog, "• {}", bc.iter().format(","));
@@ -672,40 +662,42 @@ pub fn insert_position_rows(
         if zpass == 2 {
             drows = vec![vec![String::new(); row1.len()]; digits];
         }
-        for cx in 0..cols {
-            for m in 0..rsi.cvars[cx].len() {
+        for (cvar, (aa, (var, field_type))) in rsi
+            .cvars
+            .iter()
+            .zip(show_aa.iter().zip(vars.iter().zip(field_types.iter())))
+            .take(cols)
+        {
+            for rsim in cvar {
                 if zpass == 1 {
-                    if rsi.cvars[cx][m] == *"amino" {
-                        for p in show_aa[cx].iter() {
+                    if rsim == "amino" {
+                        for p in aa {
                             digits = max(digits, ndigits(*p));
                         }
-                    } else if rsi.cvars[cx][m] == *"var" {
-                        for p in vars[cx].iter() {
+                    } else if rsim == "var" {
+                        for p in var {
                             digits = max(digits, ndigits(*p));
                         }
                     }
                 } else {
-                    for i in 0..digits {
-                        if rsi.cvars[cx][m] == *"amino" {
+                    for (i, drow) in drows.iter_mut().enumerate() {
+                        if rsim == "amino" {
                             let mut ds = String::new();
-                            for (j, p) in show_aa[cx].iter().enumerate() {
-                                if j > 0
-                                    && field_types[cx][j] != field_types[cx][j - 1]
-                                    && !ctl.gen_opt.nospaces
-                                {
+                            for (j, (&p, &t)) in aa.iter().zip(field_type.iter()).enumerate() {
+                                if j > 0 && t != field_type[j - 1] && !ctl.gen_opt.nospaces {
                                     ds += " ";
                                 }
-                                print_digit(*p, i, digits, &mut ds);
+                                print_digit(p, i, digits, &mut ds);
                             }
-                            drows[i].push(ds);
-                        } else if rsi.cvars[cx][m] == *"var" {
+                            drow.push(ds);
+                        } else if rsim == "var" {
                             let mut ds = String::new();
-                            for p in vars[cx].iter() {
+                            for p in var {
                                 print_digit(*p, i, digits, &mut ds);
                             }
-                            drows[i].push(ds);
+                            drow.push(ds);
                         } else {
-                            drows[i].push(String::new());
+                            drow.push(String::new());
                         }
                     }
                 }
@@ -838,10 +830,7 @@ pub fn cdr3_aa_con(
     let classes = aa_classes();
     let mut c = String::new();
     for i in 0..cdr3s[0].len() {
-        let mut vals = Vec::<u8>::new();
-        for j in 0..cdr3s.len() {
-            vals.push(cdr3s[j].as_bytes()[i]);
-        }
+        let mut vals: Vec<u8> = cdr3s.iter().map(|cdr| cdr.as_bytes()[i]).collect();
         unique_sort(&mut vals);
         if vals.solo() {
             c.push(vals[0] as char);
@@ -874,9 +863,9 @@ pub fn get_gex_matrix_entry(
     if gex_info.gex_matrices[li].initialized() {
         raw_count = gex_info.gex_matrices[li].value(p as usize, fid) as f64;
     } else {
-        for j in 0..d_all[l].len() {
-            if ind_all[l][j] == fid as u32 {
-                raw_count = d_all[l][j] as f64;
+        for (&da, &ia) in d_all[l].iter().zip(ind_all[l].iter()) {
+            if ia == fid as u32 {
+                raw_count = da as f64;
                 break;
             }
         }

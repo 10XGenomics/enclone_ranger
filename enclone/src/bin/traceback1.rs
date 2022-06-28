@@ -41,8 +41,8 @@ fn test_traceback1() {
         let mut head = String::new();
         let lines = err.split('\n').collect::<Vec<&str>>();
         const MAX_LINES: usize = 60;
-        for i in 0..std::cmp::min(lines.len(), MAX_LINES) {
-            head += &format!("{}\n", lines[i]);
+        for &line in lines.iter().take(MAX_LINES) {
+            head += &format!("{}\n", line);
         }
         eprint!(
             "\n▓▓▓ test_traceback1 failed because did not find {} as expected;\n\n\

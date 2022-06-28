@@ -53,10 +53,17 @@ pub fn flag_defective(
 
     // Study the reference.
 
-    for i in 0..refdata.refs.len() {
+    for (i, ((((&rtype, refs), name), rh), broken)) in refdata
+        .rtype
+        .iter()
+        .zip(refdata.refs.iter())
+        .zip(refdata.name.iter())
+        .zip(refdata.rheaders_orig.iter())
+        .zip(broken.iter_mut())
+        .enumerate()
+    {
         // Determine chain type and exclude those other than IGH, IGK, IGL, TRA and TRB.
 
-        let rtype = refdata.rtype[i];
         let chain_type;
         if rtype == 0 {
             chain_type = "IGH";
@@ -79,25 +86,25 @@ pub fn flag_defective(
             // reference but has an extra base at the beginning.  See also comments below at
             // TRBV21-1.  Also, we're not actually checking for mouse.
 
-            if refdata.name[i] == "IGHG2B" {
+            if name == "IGHG2B" {
                 continue;
             }
 
             // Continue.
 
-            let seq = refdata.refs[i].to_ascii_vec();
+            let seq = refs.to_ascii_vec();
             let aa0 = aa_seq(&seq, 0);
             let aa2 = aa_seq(&seq, 2);
             if aa2.contains(&b'*') && !aa0.contains(&b'*') {
                 count += 1;
-                broken[i] = true;
+                *broken = true;
                 fwriteln!(
                     log,
                     "{}. The following C segment reference sequence appears to have \
                     an extra base at its beginning:\n",
                     count
                 );
-                fwriteln!(log, ">{}\n{}\n", refdata.rheaders_orig[i], strme(&seq));
+                fwriteln!(log, ">{}\n{}\n", rh, strme(&seq));
             }
         } else if refdata.is_v(i) {
             // This is very ugly.  We are exempting human TRBV21-1 because it is in our current
@@ -105,36 +112,36 @@ pub fn flag_defective(
             // reference, and then we should remove this test.  But probably in the future so as
             // not to inconvenience users.
 
-            if ctl.gen_opt.species != "mouse" && refdata.name[i] == "TRBV21-1" {
-                broken[i] = true;
+            if ctl.gen_opt.species != "mouse" && name == "TRBV21-1" {
+                *broken = true;
                 continue;
             }
 
             // This is very ugly.  We are exempting human IGHV1-12 because it is in our current
             // human reference, but is only 60 amino acids long.  Also we're not checking for mouse.
 
-            if refdata.name[i] == "IGHV1-12" {
-                broken[i] = true;
+            if name == "IGHV1-12" {
+                *broken = true;
                 continue;
             }
 
             // Ugly.  Frameshifted.  Also this is mouse and not checking for that.
 
-            if refdata.name[i] == "TRAV23" {
-                broken[i] = true;
+            if name == "TRAV23" {
+                *broken = true;
                 continue;
             }
 
             // Ugly.  Truncated on right.  Human.
 
-            if refdata.name[i] == "IGLV5-48" {
-                broken[i] = true;
+            if name == "IGLV5-48" {
+                *broken = true;
                 continue;
             }
 
             // Test for broken.
 
-            let seq = refdata.refs[i].to_ascii_vec();
+            let seq = refs.to_ascii_vec();
             let aa = aa_seq(&seq, 0);
             let mut reasons = Vec::<&'static str>::new();
             if !aa.starts_with(b"M") {
@@ -159,8 +166,8 @@ pub fn flag_defective(
             if stops > 0 {
                 let mut fixable = false;
                 const TRIM: usize = 10;
-                for j in 0..aa.len() - TRIM {
-                    if aa[j] == b'*' {
+                for (j, &aj) in aa[..aa.len() - TRIM].iter().enumerate() {
+                    if aj == b'*' {
                         let mut seqx = seq.clone();
                         for _ in 1..=2 {
                             let _ = seqx.remove(3 * j);
@@ -239,9 +246,9 @@ pub fn flag_defective(
                     reasons.iter().format(", and ")
                 );
                 count += 1;
-                broken[i] = true;
+                *broken = true;
                 fwriteln!(log, "{}. {}:\n", count, msg);
-                fwriteln!(log, ">{}\n{}\n", refdata.rheaders_orig[i], strme(&seq));
+                fwriteln!(log, ">{}\n{}\n", rh, strme(&seq));
             }
         }
     }

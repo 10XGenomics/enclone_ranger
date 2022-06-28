@@ -13,7 +13,6 @@ use std::env;
 use std::thread;
 use std::time;
 use std::time::Instant;
-use string_utils::TextUtils;
 use vector_utils::{bin_position, erase_if};
 
 pub fn filter_by_fcell(
@@ -54,8 +53,8 @@ pub fn filter_by_fcell(
                             "This directory is {} and its contents are:",
                             ctl.origin_info.gex_path[li]
                         );
-                        for i in 0..list.len() {
-                            eprintln!("{}.  {}", i + 1, list[i]);
+                        for (i, li) in list.into_iter().enumerate() {
+                            eprintln!("{}.  {}", i + 1, li);
                         }
                         let h5_path =
                             format!("{}/raw_feature_bc_matrix.h5", ctl.origin_info.gex_path[li]);
@@ -109,8 +108,8 @@ pub fn filter_by_fcell(
         // Proceed.
 
         let mut orbits2 = Vec::<Vec<i32>>::new();
-        for i in 0..orbits.len() {
-            let mut o = orbits[i].clone();
+        for o in orbits.iter() {
+            let mut o = o.clone();
             let mut to_deletex = vec![false; o.len()];
             for j in 0..o.len() {
                 let x: &CloneInfo = &info[o[j] as usize];
@@ -146,54 +145,54 @@ pub fn filter_by_fcell(
                         }
                     }
                 }
-                for l in 0..ex.ncells() {
-                    let li = ex.clones[l][0].dataset_index;
-                    let bc = &ex.clones[l][0].barcode;
+                for (l, (clone, d)) in ex
+                    .clones
+                    .iter()
+                    .take(ex.ncells())
+                    .zip(to_delete.iter_mut())
+                    .enumerate()
+                {
+                    let li = clone[0].dataset_index;
+                    let bc = &clone[0].barcode;
                     let mut keep = true;
                     for x in ctl.clono_filt_opt_def.fcell.iter() {
                         let alt = &ctl.origin_info.alt_bc_fields[li];
                         let vars = x.iter_variable_identifiers().collect::<Vec<&str>>();
                         let mut vals = Vec::<String>::new();
-                        for m in 0..vars.len() {
-                            let var = vars[m].to_string();
+                        for &var in &vars {
                             let mut val = String::new();
                             let mut found = false;
-                            'uloop: for u in 0..alt.len() {
-                                if alt[u].0 == var && alt[u].1.contains_key(&bc.clone()) {
-                                    val = alt[u].1[&bc.clone()].clone();
-                                    found = true;
-                                    break 'uloop;
+                            'uloop: for au in alt {
+                                if au.0 == var {
+                                    if let Some(v) = au.1.get(bc) {
+                                        val = v.clone();
+                                        found = true;
+                                        break 'uloop;
+                                    }
                                 }
                             }
-                            if !found && gex_info.feature_id[li].contains_key(&var) {
-                                let p = bin_position(&gex_info.gex_barcodes[li], bc);
-                                if p >= 0 {
-                                    let fid = gex_info.feature_id[li][&var];
-                                    let raw_count = get_gex_matrix_entry(
-                                        ctl, gex_info, fid, &d_all, &ind_all, li, l, p as usize,
-                                        &var,
-                                    );
-                                    val = format!("{:.2}", raw_count);
+                            if !found {
+                                if let Some(&fid) = gex_info.feature_id[li].get(&var.to_string()) {
+                                    let p = bin_position(&gex_info.gex_barcodes[li], bc);
+                                    if p >= 0 {
+                                        let raw_count = get_gex_matrix_entry(
+                                            ctl, gex_info, fid, &d_all, &ind_all, li, l,
+                                            p as usize, var,
+                                        );
+                                        val = format!("{:.2}", raw_count);
+                                    }
                                 }
                             }
                             vals.push(val);
                         }
                         let mut c = HashMapContext::new();
-                        for m in 0..vars.len() {
-                            if vals[m].parse::<i64>().is_ok() {
-                                c.set_value(
-                                    vars[m].into(),
-                                    evalexpr::Value::from(vals[m].force_i64()),
-                                )
-                                .unwrap();
-                            } else if vals[m].parse::<f64>().is_ok() {
-                                c.set_value(
-                                    vars[m].into(),
-                                    evalexpr::Value::from(vals[m].force_f64()),
-                                )
-                                .unwrap();
+                        for (&var, val) in vars.iter().zip(vals.iter()) {
+                            if let Ok(val) = val.parse::<i64>() {
+                                c.set_value(var.into(), evalexpr::Value::from(val)).unwrap();
+                            } else if let Ok(val) = val.parse::<f64>() {
+                                c.set_value(var.into(), evalexpr::Value::from(val)).unwrap();
                             } else {
-                                c.set_value(vars[m].into(), vals[m].clone().into()).unwrap();
+                                c.set_value(var.into(), val.clone().into()).unwrap();
                             }
                         }
                         let res = x.eval_with_context(&c);
@@ -203,7 +202,7 @@ pub fn filter_by_fcell(
                         }
                     }
                     if !keep {
-                        to_delete[l] = true;
+                        *d = true;
                     }
                 }
                 erase_if(&mut ex.clones, &to_delete);

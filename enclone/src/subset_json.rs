@@ -4,6 +4,7 @@
 // in a given sorted vector.
 
 use io_utils::open_userfile_for_read;
+use std::fmt::Write;
 use std::io::BufRead;
 use string_utils::TextUtils;
 use vector_utils::bin_member;
@@ -20,8 +21,8 @@ pub fn subset_all_contig_annotations_json(filename: &str, barcodes: &[String]) -
         }
         if s == "]" {
             if keep {
-                for i in 0..lines.len() {
-                    x += &format!("{}\n", lines[i]);
+                for line in &lines {
+                    writeln!(&mut x, "{}", line).unwrap();
                 }
             }
             break;
@@ -32,8 +33,8 @@ pub fn subset_all_contig_annotations_json(filename: &str, barcodes: &[String]) -
             keep = bin_member(barcodes, &t.to_string());
         } else if s.starts_with("    }") {
             if keep {
-                for i in 0..lines.len() {
-                    x += &format!("{}\n", lines[i]);
+                for line in &lines {
+                    writeln!(&mut x, "{}", line).unwrap();
                 }
             }
             lines.clear();

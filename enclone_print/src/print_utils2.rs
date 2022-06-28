@@ -67,9 +67,9 @@ pub fn row_fill(
     nd_fields: &[String],
     peer_groups: &[Vec<(usize, u8, u32)>],
     extra_args: &[String],
-    all_vars: &[String],
+    all_vars: &[&str],
     need_gex: bool,
-    fate: &[HashMap<String, String>],
+    fate: &[HashMap<String, &str>],
     cdr3_con: &[Vec<u8>],
     allele_data: &AlleleData,
 ) -> Result<(), String> {
@@ -81,9 +81,8 @@ pub fn row_fill(
     let clonotype_id = exacts[u];
     let ex = &exact_clonotypes[clonotype_id];
     let mut pcols_sort = ctl.parseable_opt.pcols_sort.clone();
-    for i in 0..pcols_sort.len() {
-        pcols_sort[i] = pcols_sort[i].replace("_Σ", "_sum");
-        pcols_sort[i] = pcols_sort[i].replace("_μ", "_mean");
+    for pcol in pcols_sort.iter_mut() {
+        *pcol = pcol.replace("_Σ", "_sum").replace("_μ", "_mean");
     }
     pcols_sort.sort();
     macro_rules! speakc {
@@ -184,8 +183,8 @@ pub fn row_fill(
                 m = n;
             }
         }
-        for u in 0..bad.len() {
-            if bad[u] {
+        for b in bad {
+            if b {
                 junk += 1;
             }
         }
@@ -217,9 +216,9 @@ pub fn row_fill(
                     let mut raw_count = 0;
                     if gex_info.gex_matrices[li].initialized() {
                         let row = gex_info.gex_matrices[li].row(p as usize);
-                        for j in 0..row.len() {
-                            let f = row[j].0;
-                            let n = row[j].1;
+                        for r in row {
+                            let f = r.0;
+                            let n = r.1;
                             if gex_info.is_gex[li][f] {
                                 raw_count += n;
                             }
@@ -284,30 +283,30 @@ pub fn row_fill(
     // WARNING!  If you add lead variables, you may need to add them to the function
     // LinearCondition::require_valid_variables.
 
-    let mut all_lvars = lvars.to_owned();
+    let mut all_lvars = lvars.iter().map(String::as_str).collect::<Vec<_>>();
     if ctl.parseable_opt.pout.is_empty() {
     } else if ctl.parseable_opt.pcols.is_empty() {
-        for i in 0..LVARS_ALLOWED.len() {
-            if !lvarsh.contains(&LVARS_ALLOWED[i].to_string()) {
-                all_lvars.push(LVARS_ALLOWED[i].to_string());
+        for var in LVARS_ALLOWED {
+            if !lvarsh.contains(&var.to_string()) {
+                all_lvars.push(var);
             }
         }
     } else {
         for i in 0..ctl.parseable_opt.pcols.len() {
             if !lvarsh.contains(&ctl.parseable_opt.pcols[i].to_string()) {
-                all_lvars.push(ctl.parseable_opt.pcols[i].to_string());
+                all_lvars.push(ctl.parseable_opt.pcols[i].as_str());
             }
         }
     }
     for x in extra_args {
-        if !lvarsh.contains(&*x) {
-            all_lvars.push(x.clone());
+        if !lvarsh.contains(x) {
+            all_lvars.push(x.as_str());
         }
     }
-    let mut alt_bcs = Vec::<String>::new();
+    let mut alt_bcs = Vec::<&str>::new();
     for li in 0..ctl.origin_info.alt_bc_fields.len() {
         for i in 0..ctl.origin_info.alt_bc_fields[li].len() {
-            alt_bcs.push(ctl.origin_info.alt_bc_fields[li][i].0.clone());
+            alt_bcs.push(ctl.origin_info.alt_bc_fields[li][i].0.as_str());
         }
     }
     unique_sort(&mut alt_bcs);
@@ -328,33 +327,31 @@ pub fn row_fill(
         };
     }
 
-    'lvar_loop: for i in 0..all_lvars.len() {
-        let x = &all_lvars[i];
-
+    'lvar_loop: for (i, &x) in all_lvars.iter().enumerate() {
         // Process VAR_DEF variables.
 
-        for j in 0..ctl.gen_opt.var_def.len() {
-            if *x == ctl.gen_opt.var_def[j].0 && i < lvars.len() {
+        for var_def in &ctl.gen_opt.var_def {
+            if x == var_def.0 && i < lvars.len() {
                 if pass == 2 {
-                    let comp = &ctl.gen_opt.var_def[j].2;
+                    let comp = &var_def.2;
                     let vars = vars_of_node(comp); // computing this here might be inefficient
                     let mut out_vals = Vec::<String>::new();
                     for k in 0..ex.clones.len() {
                         let mut in_vals = Vec::<String>::new();
-                        for v in 0..vars.len() {
-                            let var = decode_arith(&vars[v]);
+                        for var in &vars {
+                            let var = decode_arith(var);
                             let mut found = false;
-                            for m in 0..stats.len() {
-                                if stats[m].0 == var {
-                                    in_vals.push(stats[m].1[k].clone());
+                            for stat in stats.iter() {
+                                if stat.0 == var {
+                                    in_vals.push(stat.1[k].clone());
                                     found = true;
                                     break;
                                 }
                             }
                             if !found {
-                                for m in 0..stats_pass1[u].len() {
-                                    if stats_pass1[u][m].0 == var {
-                                        in_vals.push(stats_pass1[u][m].1[k].clone());
+                                for stat in &stats_pass1[u] {
+                                    if stat.0 == var {
+                                        in_vals.push(stat.1[k].clone());
                                         found = true;
                                         break;
                                     }
@@ -522,8 +519,8 @@ pub fn row_fill(
         let have_notes = rsi.cvars[col].contains(&"notes".to_string());
         let mut notes_pos = 0;
         let mut notes_in = false;
-        for j in 0..rsi_vars.len() {
-            if all_vars[j] == "notes" {
+        for (j, &var) in all_vars.iter().take(rsi_vars.len()).enumerate() {
+            if var == "notes" {
                 notes_pos = j;
                 notes_in = true;
             }
@@ -533,7 +530,7 @@ pub fn row_fill(
         if mid.is_none() {
             continue;
         }
-        for j in 0..all_vars.len() {
+        for (j, &var) in all_vars.iter().enumerate() {
             let mut jj = j;
             if !have_notes && notes_in && j >= notes_pos {
                 jj -= 1;
@@ -543,9 +540,8 @@ pub fn row_fill(
             // Also largely duplicated below.
 
             let mut needed = false;
-            let var = &all_vars[j];
             let varc = format!("{}{}", var, col + 1);
-            if jj < rsi.cvars[col].len() && cvars.contains(var)
+            if jj < rsi.cvars[col].len() && cvars.contains(&var.to_string())
                 || pass == 2
                     && !ctl.parseable_opt.pout.is_empty()
                     && (ctl.parseable_opt.pchains == "max"
@@ -610,40 +606,39 @@ pub fn row_fill(
 
         // Create column entry.
 
-        for j in 0..all_vars.len() {
+        for (j, &var) in all_vars.iter().enumerate() {
             let mut jj = j;
             if !have_notes && notes_in && j >= notes_pos {
                 jj -= 1;
             }
-            if all_vars[j] == "notes" && !have_notes {
+            if var == "notes" && !have_notes {
                 continue;
             }
 
             // Decide if there is nothing to compute.  This is almost certainly not optimal.
 
             let mut needed = false;
-            let var = &all_vars[j];
             if !ex.share[mid].left
-                && (*var == "d1_name"
-                    || *var == "d2_name"
-                    || *var == "d_delta"
-                    || *var == "d_Δ"
-                    || *var == "d1_score"
-                    || *var == "d2_score")
+                && (var == "d1_name"
+                    || var == "d2_name"
+                    || var == "d_delta"
+                    || var == "d_Δ"
+                    || var == "d1_score"
+                    || var == "d2_score")
             {
                 continue;
             }
             let varc = format!("{}{}", var, col + 1);
-            if jj < rsi.cvars[col].len() && cvars.contains(var)
+            if jj < rsi.cvars[col].len() && cvars.contains(&var.to_string())
                 || pass == 2
                     && !ctl.parseable_opt.pout.is_empty()
                     && (ctl.parseable_opt.pchains == "max"
                         || col < ctl.parseable_opt.pchains.force_usize())
                     && (pcols_sort.is_empty() || bin_member(&pcols_sort, &varc))
-                || *var == "amino"
-                || *var == "u_cell"
-                || *var == "r_cell"
-                || *var == "white"
+                || var == "amino"
+                || var == "u_cell"
+                || var == "r_cell"
+                || var == "white"
                 || ctl.clono_filt_opt_def.whitef
                 || extra_args.contains(&varc)
             {
@@ -680,7 +675,7 @@ pub fn row_fill(
                 out_data,
                 stats,
                 allele_data,
-            )? && *var == "amino"
+            )? && var == "amino"
                 && col_var
             {
                 let mut last_color = "black".to_string();

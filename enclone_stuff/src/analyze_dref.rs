@@ -18,7 +18,7 @@ use vector_utils::{bin_position, erase_if, next_diff1_2, next_diff1_3, unique_so
 pub fn analyze_donor_ref(
     refdata: &RefData,
     ctl: &EncloneControl,
-    alt_refs: &Vec<(usize, usize, DnaString, usize, bool)>,
+    alt_refs: &[(usize, usize, DnaString, usize, bool)],
 ) {
     // Analyze donor reference.
 
@@ -60,11 +60,11 @@ pub fn analyze_donor_ref(
 
         // Store the donor reference alleles;
 
-        for i in 0..alt_refs.len() {
-            let donor = alt_refs[i].0;
-            let ref_id = alt_refs[i].1;
+        for (i, ar) in alt_refs.iter().enumerate() {
+            let donor = ar.0;
+            let ref_id = ar.1;
             let name = &refdata.name[ref_id];
-            let alt_seq = &alt_refs[i].2;
+            let alt_seq = &ar.2;
             refs.push((
                 name.clone(),
                 format!("dref{}_{}", i, donor),
@@ -79,30 +79,30 @@ pub fn analyze_donor_ref(
         while i < refs.len() {
             let j = next_diff1_3(&refs, i as i32) as usize;
             let gene = &refs[i].0;
-            let mut alleles = Vec::<(Vec<u8>, String)>::new(); // (sequence, name)
+            let mut alleles = Vec::<(&[u8], &str)>::new(); // (sequence, name)
             let mut have_alt = false;
-            for k in i..j {
-                if refs[k].1.starts_with("dref") {
+            for r in &refs[i..j] {
+                if r.1.starts_with("dref") {
                     have_alt = true;
                 }
-                alleles.push((refs[k].2.clone(), refs[k].1.clone()));
+                alleles.push((r.2.as_ref(), r.1.as_str()));
             }
 
             // Delete reference alleles having very low count relative to others.
 
             let mut to_delete = vec![false; alleles.len()];
             let mut mm = 0;
-            for k in 0..alleles.len() {
-                if alleles[k].1.starts_with("dref") {
-                    let ii = alleles[k].1.between("dref", "_").force_usize();
+            for ak in &alleles {
+                if ak.1.starts_with("dref") {
+                    let ii = ak.1.between("dref", "_").force_usize();
                     mm = std::cmp::max(mm, alt_refs[ii].3);
                 }
             }
-            for k in 0..alleles.len() {
-                if alleles[k].1.starts_with("dref") {
-                    let ii = alleles[k].1.between("dref", "_").force_usize();
+            for (ak, d) in alleles.iter().zip(to_delete.iter_mut()) {
+                if ak.1.starts_with("dref") {
+                    let ii = ak.1.between("dref", "_").force_usize();
                     if alt_refs[ii].4 && alt_refs[ii].3 * 10 < mm {
-                        to_delete[k] = true;
+                        *d = true;
                     }
                 }
             }
@@ -114,26 +114,28 @@ pub fn analyze_donor_ref(
                 // Truncate alleles so that they all have the same length.
 
                 let mut m = 1000000;
-                for r in 0..alleles.len() {
-                    m = min(m, alleles[r].0.len());
+                for ar in &alleles {
+                    m = min(m, ar.0.len());
                 }
-                for r in 0..alleles.len() {
-                    alleles[r].0.truncate(m);
+                for ar in alleles.iter_mut() {
+                    if ar.0.len() > m {
+                        ar.0 = &ar.0[..m];
+                    }
                 }
 
                 // Now alleles = all the alleles for one gene, and there is at least one
                 // donor reference allele.  Combine identical alleles, and reorder.
 
                 alleles.sort();
-                let mut allelesg = Vec::<(Vec<String>, Vec<u8>)>::new();
+                let mut allelesg = Vec::<(Vec<&str>, &[u8])>::new();
                 let mut r = 0;
                 while r < alleles.len() {
                     let s = next_diff1_2(&alleles, r as i32) as usize;
-                    let mut names = Vec::<String>::new();
-                    for t in r..s {
-                        names.push(alleles[t].1.clone());
+                    let mut names = Vec::<&str>::new();
+                    for at in &alleles[r..s] {
+                        names.push(at.1);
                     }
-                    allelesg.push((names, alleles[r].0.clone()));
+                    allelesg.push((names, alleles[r].0));
                     r = s;
                 }
 
@@ -142,18 +144,18 @@ pub fn analyze_donor_ref(
                 let mut dp = Vec::<usize>::new();
                 for p in 0..m {
                     let mut bases = Vec::<u8>::new();
-                    for r in 0..allelesg.len() {
-                        bases.push(allelesg[r].1[p]);
+                    for ar in &allelesg {
+                        bases.push(ar.1[p]);
                     }
                     unique_sort(&mut bases);
                     if bases.len() > 1 {
                         dp.push(p);
                     }
                 }
-                let mut dm = vec![vec![0; dp.len()]; allelesg.len()];
-                for u in 0..dp.len() {
-                    for r in 0..allelesg.len() {
-                        dm[r][u] = allelesg[r].1[dp[u]];
+                let mut dm = vec![vec![0_u8; dp.len()]; allelesg.len()];
+                for (ar, dmr) in allelesg.iter().zip(dm.iter_mut()) {
+                    for (dmu, &dpu) in dmr.iter_mut().zip(dp.iter()) {
+                        *dmu = ar.1[dpu];
                     }
                 }
 
@@ -173,20 +175,19 @@ pub fn analyze_donor_ref(
 
                 // Make IMGT matrix.
 
-                let mut imgts = Vec::<String>::new();
-                for r in 0..allelesg.len() {
-                    for n in allelesg[r].0.iter() {
+                let mut imgts = Vec::<&str>::new();
+                for ar in &allelesg {
+                    for n in ar.0.iter() {
                         if !n.starts_with('d') && !n.starts_with('u') {
-                            imgts.push(n.to_string());
+                            imgts.push(n);
                         }
                     }
                 }
                 unique_sort(&mut imgts);
                 let nimgt = imgts.len();
                 let mut im = vec![vec![false; nimgt]; allelesg.len()];
-                for r in 0..allelesg.len() {
-                    for k in 0..allelesg[r].0.len() {
-                        let n = &allelesg[r].0[k];
+                for ar in &allelesg {
+                    for n in &ar.0 {
                         let p = bin_position(&imgts, n);
                         if p >= 0 {
                             im[r][p as usize] = true;
@@ -231,11 +232,11 @@ pub fn analyze_donor_ref(
                             for d in 0..ndonors {
                                 row.push(format!("{}", d + 1));
                             }
-                            for k in 0..nimgt {
-                                row.push(imgts[k].clone());
+                            for im in imgts {
+                                row.push(im.to_string());
                             }
-                            for u in 0..dp.len() {
-                                row.push(dp[u].to_string());
+                            for &u in &dp {
+                                row.push(u.to_string());
                             }
                             row
                         },
@@ -267,8 +268,8 @@ pub fn analyze_donor_ref(
                                 row.push(" ".to_string());
                             }
                         }
-                        for u in 0..dp.len() {
-                            row.push((alleleg.1[dp[u]] as char).to_string());
+                        for &u in &dp {
+                            row.push((alleleg.1[u] as char).to_string());
                         }
                         rows.push(row);
                     }

@@ -130,30 +130,26 @@ pub fn parse_variables(input: &str) -> Vec<Variable> {
     // Test upper-case rule.
 
     let classes = ["BC", "DATASET", "FEATURE", "INFO", "NAME", "REGA", "VARDEF"];
-    for i in 0..vars.len() {
-        let n = &vars[i].name;
-        let mut chars = Vec::<char>::new();
-        for c in n.chars() {
-            chars.push(c);
-        }
+    for var in &vars {
+        let chars = var.name.as_bytes();
         let mut j = 0;
         while j < chars.len() {
-            if chars[j] < 'A' || chars[j] > 'Z' {
+            if chars[j] < b'A' || chars[j] > b'Z' {
                 j += 1;
             } else {
                 let mut k = j + 1;
                 while k < chars.len() {
-                    if chars[k] < 'A' || chars[k] > 'Z' {
+                    if chars[k] < b'A' || chars[k] > b'Z' {
                         break;
                     }
                     k += 1;
                 }
-                let mut s = String::new();
-                for l in j..k {
-                    s.push(chars[l]);
-                }
-                if !classes.contains(&s.as_str()) {
-                    eprintln!("\nFound illegal class {} in variable name {}.\n", s, n);
+                let s: &str = &var.name[j..k];
+                if !classes.contains(&s) {
+                    eprintln!(
+                        "\nFound illegal class {} in variable name {}.\n",
+                        s, var.name
+                    );
                     std::process::exit(1);
                 }
                 j = k;

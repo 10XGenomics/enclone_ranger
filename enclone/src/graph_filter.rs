@@ -33,14 +33,13 @@ pub fn graph_filter(
     ctl: &EncloneControl,
     tig_bc: &mut Vec<Vec<TigData>>,
     graph: bool,
-    fate: &mut [HashMap<String, String>],
+    fate: &mut [HashMap<String, &str>],
 ) {
     let mut ndels = 0;
-    let mut seqs = Vec::<(Vec<u8>, bool, String, usize)>::new();
-    for i in 0..tig_bc.len() {
-        for j in 0..tig_bc[i].len() {
-            let x = &tig_bc[i][j];
-            seqs.push((x.seq().to_vec(), x.left, x.cdr3_aa.clone(), x.v_ref_id));
+    let mut seqs = Vec::<(&[u8], bool, &str, usize)>::new();
+    for tigi in tig_bc.iter() {
+        for x in tigi {
+            seqs.push((x.seq(), x.left, x.cdr3_aa.as_str(), x.v_ref_id));
         }
     }
     seqs.par_sort();
@@ -59,8 +58,8 @@ pub fn graph_filter(
             }
             j += 1;
         }
-        for k in i + 1..j {
-            to_delete[k] = true;
+        for d in &mut to_delete[i + 1..j] {
+            *d = true;
         }
         i = j;
     }
@@ -78,22 +77,20 @@ pub fn graph_filter(
         for j1 in 0..tig_bc[i].len() {
             if tig_bc[i][j1].left {
                 let x1 = &tig_bc[i][j1];
-                let p1 =
-                    lower_bound(&seqs, &(x1.seq().to_vec(), false, x1.cdr3_aa.clone(), 0)) as usize;
+                let p1 = lower_bound(&seqs, &(x1.seq(), false, x1.cdr3_aa.as_str(), 0)) as usize;
                 for j2 in 0..tig_bc[i].len() {
                     if !tig_bc[i][j2].left {
                         let x2 = &tig_bc[i][j2];
                         let p2 =
-                            lower_bound(&seqs, &(x2.seq().to_vec(), false, x2.cdr3_aa.clone(), 0))
-                                as usize;
+                            lower_bound(&seqs, &(x2.seq(), false, x2.cdr3_aa.as_str(), 0)) as usize;
                         res.1.push((p1, p2, min(x1.umi_count, x2.umi_count)));
                     }
                 }
             }
         }
     });
-    for i in 0..results.len() {
-        edges0.append(&mut results[i].1.clone());
+    for mut r in results {
+        edges0.append(&mut r.1);
     }
     edges0.sort_unstable();
     let mut edges1 = Vec::<(usize, usize, (usize, usize))>::new();
@@ -101,8 +98,8 @@ pub fn graph_filter(
     while i < edges0.len() {
         let j = next_diff12_3(&edges0, i as i32) as usize;
         let mut weight = 0;
-        for k in i..j {
-            weight += edges0[k].2;
+        for e in &edges0[i..j] {
+            weight += e.2;
         }
         edges1.push((edges0[i].0, edges0[i].1, (weight, j - i)));
         i = j;
@@ -113,10 +110,7 @@ pub fn graph_filter(
     for i in 0..seqs.len() {
         g.add_node(i as u32);
     }
-    for e in 0..edges1.len() {
-        let v = edges1[e].0;
-        let w = edges1[e].1;
-        let weight = edges1[e].2;
+    for (v, w, weight) in edges1 {
         g.add_edge(NodeIndex::<u32>::new(v), NodeIndex::<u32>::new(w), weight);
     }
 
@@ -338,9 +332,9 @@ pub fn graph_filter(
             }
         }
     });
-    for i in 0..results.len() {
-        kills.append(&mut results[i].1.clone());
-        log.append(&mut results[i].2.clone());
+    for (_, mut r1, mut r2) in results {
+        kills.append(&mut r1);
+        log.append(&mut r2);
     }
     kills.sort_unstable();
     // presumably badly inefficient
@@ -356,14 +350,14 @@ pub fn graph_filter(
                 continue;
             }
             let x1 = &tig_bc[i][j1];
-            let m1 = (x1.seq().to_vec(), x1.left, x1.cdr3_aa.clone(), x1.v_ref_id);
+            let m1 = (x1.seq(), x1.left, x1.cdr3_aa.as_str(), x1.v_ref_id);
             let p1 = bin_position(&seqs, &m1) as usize;
             for j2 in 0..tig_bc[i].len() {
                 if tig_bc[i][j2].left {
                     continue;
                 }
                 let x2 = &tig_bc[i][j2];
-                let m2 = (x2.seq().to_vec(), x2.left, x2.cdr3_aa.clone(), x2.v_ref_id);
+                let m2 = (x2.seq(), x2.left, x2.cdr3_aa.as_str(), x2.v_ref_id);
                 let p2 = bin_position(&seqs, &m2) as usize;
                 if bin_member(&kills, &(p1, p2)) {
                     res.1 = true;
@@ -379,10 +373,8 @@ pub fn graph_filter(
     }
     for i in 0..tig_bc.len() {
         if to_delete[i] {
-            fate[tig_bc[i][0].dataset_index].insert(
-                tig_bc[i][0].barcode.clone(),
-                "failed GRAPH_FILTER filter".to_string(),
-            );
+            fate[tig_bc[i][0].dataset_index]
+                .insert(tig_bc[i][0].barcode.clone(), "failed GRAPH_FILTER filter");
         }
     }
     if !ctl.gen_opt.ngraph_filter {

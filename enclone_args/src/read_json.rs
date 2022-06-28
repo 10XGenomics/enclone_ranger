@@ -111,15 +111,16 @@ fn parse_vector_entry_from_json(
     tigs: &mut Vec<TigData>,
     exiting: &AtomicBool,
 ) -> Result<(), String> {
-    let v: Result<Value, _> = serde_json::from_str(strme(x));
-    if v.is_err() {
-        return Err(format!(
-            "\nInternal error, failed to parse a value from a string.  The string is:\n{}\n",
-            strme(x)
-        ));
-    }
-    let v = v.unwrap();
-    let barcode = &v["barcode"].to_string().between("\"", "\"").to_string();
+    let v: Value = match serde_json::from_slice(x) {
+        Err(_) => {
+            return Err(format!(
+                "\nInternal error, failed to parse a value from a string.  The string is:\n{}\n",
+                strme(x)
+            ));
+        }
+        Ok(v) => v,
+    };
+    let barcode = v["barcode"].to_string().between("\"", "\"").to_string();
 
     // Get cell status.  Sometime after CR 4.0 was released, and before 4.1 was released,
     // we added new fields is_asm_cell and is_gex_cell to the json file.  The value of
@@ -156,7 +157,7 @@ fn parse_vector_entry_from_json(
     {
         return Ok(());
     }
-    let tigname = &v["contig_name"].to_string().between("\"", "\"").to_string();
+    let tigname = v["contig_name"].to_string().between("\"", "\"").to_string();
     let full_seq = &v["sequence"].to_string().between("\"", "\"").to_string();
     let mut left = false;
     let (mut v_ref_id, mut j_ref_id) = (1000000, 0);
@@ -186,8 +187,8 @@ fn parse_vector_entry_from_json(
     let val = v["validated_umis"].as_array();
     if let Some(val) = val {
         validated_umis_present = true;
-        for i in 0..val.len() {
-            validated_umis.push(val[i].to_string().between("\"", "\"").to_string());
+        for vi in val {
+            validated_umis.push(vi.to_string().between("\"", "\"").to_string());
         }
     }
     let mut non_validated_umis = Vec::<String>::new();
@@ -195,8 +196,8 @@ fn parse_vector_entry_from_json(
     let non_val = v["non_validated_umis"].as_array();
     if let Some(non_val) = non_val {
         non_validated_umis_present = true;
-        for i in 0..non_val.len() {
-            non_validated_umis.push(non_val[i].to_string().between("\"", "\"").to_string());
+        for nv in non_val {
+            non_validated_umis.push(nv.to_string().between("\"", "\"").to_string());
         }
     }
     let mut invalidated_umis = Vec::<String>::new();
@@ -204,8 +205,8 @@ fn parse_vector_entry_from_json(
     let inval = v["invalidated_umis"].as_array();
     if let Some(inval) = inval {
         invalidated_umis_present = true;
-        for i in 0..inval.len() {
-            invalidated_umis.push(inval[i].to_string().between("\"", "\"").to_string());
+        for inv in inval {
+            invalidated_umis.push(inv.to_string().between("\"", "\"").to_string());
         }
     }
 
@@ -247,13 +248,9 @@ fn parse_vector_entry_from_json(
                 {
                     entries = 2;
                 }
-                for l in j..j + entries {
-                    ann2.push(ann[l]);
-                }
+                ann2.extend(&ann[j..j + entries]);
             } else {
-                for l in j..k {
-                    ann2.push(ann[l]);
-                }
+                ann2.extend(&ann[j..k]);
             }
             j = k;
         }
@@ -298,13 +295,13 @@ fn parse_vector_entry_from_json(
             .slice(cdr3_start, cdr3_start + 3 * cdr3_aa.len())
             .to_string();
         let mut seen_j = false;
-        for i in 0..ann.len() {
-            let t = ann[i].2 as usize;
+        for anni in ann {
+            let t = anni.2 as usize;
             if refdata.is_u(t) {
                 u_ref_id = Some(t);
             } else if refdata.is_v(t) && !seen_j {
                 v_ref_id = t;
-                annv.push(ann[i]);
+                annv.push(anni);
                 chain_type = refdata.name[t][0..3].to_string();
                 if chain_type == *"IGH"
                     || chain_type == *"TRB"
@@ -312,8 +309,8 @@ fn parse_vector_entry_from_json(
                 {
                     left = true;
                 }
-                if ann[i].3 == 0 {
-                    tig_start = ann[i].0 as isize;
+                if anni.3 == 0 {
+                    tig_start = anni.0 as isize;
                     if tig_start > cdr3_start as isize {
                         panic!(
                             "Something is wrong with the CDR3 start for this contig:\n\n{}.",
@@ -322,20 +319,20 @@ fn parse_vector_entry_from_json(
                     }
                     cdr3_start -= tig_start as usize;
                 }
-                v_stop = (ann[i].0 + ann[i].1) as usize;
-                v_stop_ref = (ann[i].3 + ann[i].1) as usize;
+                v_stop = (anni.0 + anni.1) as usize;
+                v_stop_ref = (anni.3 + anni.1) as usize;
             } else if refdata.is_d(t) {
-                d_start = Some(ann[i].0 as usize);
+                d_start = Some(anni.0 as usize);
                 d_ref_id = Some(t);
             } else if refdata.is_j(t) {
                 j_ref_id = t;
-                tig_stop = (ann[i].0 + ann[i].1) as isize;
-                j_start = ann[i].0 as usize;
-                j_start_ref = ann[i].3 as usize;
+                tig_stop = (anni.0 + anni.1) as isize;
+                j_start = anni.0 as usize;
+                j_start_ref = anni.3 as usize;
                 seen_j = true;
             } else if refdata.is_c(t) {
                 c_ref_id = Some(t);
-                c_start = Some(ann[i].0 as usize);
+                c_start = Some(anni.0 as usize);
             }
         }
         for i in (0..annv.len()).rev() {
@@ -357,8 +354,7 @@ fn parse_vector_entry_from_json(
         }
         let ann = ann.unwrap();
         let mut cigarv = String::new(); // cigar for V segment
-        for i in 0..ann.len() {
-            let a = &ann[i];
+        for a in ann {
             let region_type = &a["feature"]["region_type"];
             let feature_id = a["feature"]["feature_id"].as_u64().unwrap() as usize;
             if !to_ref_index.contains_key(&feature_id) {
@@ -457,9 +453,9 @@ fn parse_vector_entry_from_json(
         let t = v_ref_id as i32;
         let (mut len1, mut len2) = (0, 0);
         let (mut ins, mut del) = (0, 0);
-        for i in 0..cg.len() {
-            let x = strme(&cg[i][0..cg[i].len() - 1]).force_i32();
-            if cg[i][cg[i].len() - 1] == b'M' {
+        for cgi in cg {
+            let x = strme(&cgi[0..cgi.len() - 1]).force_i32();
+            if cgi[cgi.len() - 1] == b'M' {
                 if len1 == 0 {
                     len1 = x;
                 } else if len2 == 0 {
@@ -471,10 +467,10 @@ fn parse_vector_entry_from_json(
                     break;
                 }
             }
-            if cg[i][cg[i].len() - 1] == b'I' {
+            if cgi[cgi.len() - 1] == b'I' {
                 ins = x;
             }
-            if cg[i][cg[i].len() - 1] == b'D' {
+            if cgi[cgi.len() - 1] == b'D' {
                 del = x;
             }
         }
@@ -547,62 +543,57 @@ fn parse_vector_entry_from_json(
     let quals0 = quals0.after("\"").as_bytes();
     let mut quals = Vec::<u8>::new();
     let mut slashed = false;
-    for i in 0..quals0.len() - 1 {
-        if !slashed && quals0[i] == b'\\'
+    for &qual in quals0.iter().take(quals0.len() - 1) {
+        if !slashed && qual == b'\\'
         /* && ( i == 0 || quals0[i-1] != b'\\' ) */
         {
             slashed = true;
             continue;
         }
         slashed = false;
-        quals.push(quals0[i]);
+        quals.push(qual);
     }
     assert_eq!(full_seq.len(), quals.len());
-    let seq = full_seq[tig_start..tig_stop].to_string();
-    for i in 0..quals.len() {
-        quals[i] -= 33_u8;
+    let seq = &full_seq[tig_start..tig_stop].to_string();
+    for qual in quals.iter_mut() {
+        *qual -= 33_u8;
     }
-    let full_quals = quals.clone();
-    let quals = quals[tig_start..tig_stop].to_vec();
+    let full_quals = quals;
+    let quals = full_quals[tig_start..tig_stop].to_vec();
     let umi_count = v["umi_count"].as_i64().unwrap() as usize;
     let read_count = v["read_count"].as_i64().unwrap() as usize;
-    let mut origin = None;
-    let mut donor = None;
-    let mut tag = None;
-    if origin_info.origin_for_bc[li].contains_key(&barcode.clone()) {
-        origin = Some(origin_info.origin_for_bc[li][&barcode.clone()].clone());
-    } else {
+    let origin = origin_info.origin_for_bc[li].get(&barcode).or_else(|| {
         // the way we use s1 here is flaky
         if !origin_info.origin_id[li].is_empty()
             && (origin_info.origin_id[li] != *"s1" || origin_info.origin_for_bc[li].is_empty())
         {
-            origin = Some(origin_info.origin_id[li].clone());
+            Some(&origin_info.origin_id[li])
+        } else {
+            None
         }
-    }
-    if origin_info.donor_for_bc[li].contains_key(&barcode.clone()) {
-        donor = Some(origin_info.donor_for_bc[li][&barcode.clone()].clone());
-    } else {
+    });
+    let donor = origin_info.donor_for_bc[li].get(&barcode).or_else(|| {
         // the way we use d1 here is flaky
         if !origin_info.origin_id[li].is_empty()
             && (origin_info.donor_id[li] != *"d1" || origin_info.donor_for_bc[li].is_empty())
         {
-            donor = Some(origin_info.donor_id[li].clone());
+            Some(&origin_info.donor_id[li])
+        } else {
+            None
         }
-    }
-    if origin_info.tag[li].contains_key(&barcode.clone()) {
-        tag = Some(origin_info.tag[li][&barcode.clone()].clone());
-    }
+    });
+    let tag = origin_info.tag[li].get(&barcode);
     let mut origin_index = None;
     let mut donor_index = None;
     let mut tag_index = None;
     if let Some(origin) = origin {
-        origin_index = Some(bin_position(&origin_info.origin_list, &origin) as usize);
+        origin_index = Some(bin_position(&origin_info.origin_list, origin) as usize);
         if let Some(donor) = donor {
-            donor_index = Some(bin_position(&origin_info.donor_list, &donor) as usize);
+            donor_index = Some(bin_position(&origin_info.donor_list, donor) as usize);
         }
     }
     if let Some(tag) = tag {
-        tag_index = Some(bin_position(&origin_info.tag_list, &tag) as usize);
+        tag_index = Some(bin_position(&origin_info.tag_list, tag) as usize);
     }
     let mut valu = None;
     if validated_umis_present {
@@ -642,8 +633,8 @@ fn parse_vector_entry_from_json(
         cdr3_start,
         quals,
         full_quals,
-        barcode: barcode.to_string(),
-        tigname: tigname.to_string(),
+        barcode,
+        tigname,
         left,
         dataset_index: li,
         origin_index,
@@ -652,7 +643,7 @@ fn parse_vector_entry_from_json(
         umi_count,
         read_count,
         chain_type,
-        annv: annv.clone(),
+        annv,
         validated_umis: valu,
         non_validated_umis: non_valu,
         invalidated_umis: invalu,
@@ -787,21 +778,21 @@ pub fn read_json(
             res.6 = resx;
         }
     });
-    for i in 0..results.len() {
-        if !results[i].6.is_empty() {
-            return Err(results[i].6.clone());
+    for result in &results {
+        if !result.6.is_empty() {
+            return Err(result.6.clone());
         }
     }
-    for i in 0..xs.len() {
-        vdj_cells.append(&mut results[i].1);
-        gex_cells.append(&mut results[i].2);
-        if results[i].3 {
+    for result in results.iter_mut().take(xs.len()) {
+        vdj_cells.append(&mut result.1);
+        gex_cells.append(&mut result.2);
+        if result.3 {
             *gex_cells_specified = true;
         }
-        if !results[i].4.is_empty() {
-            *cr_version = results[i].4.clone();
+        if !result.4.is_empty() {
+            *cr_version = result.4.clone();
         }
-        tigs.append(&mut results[i].5);
+        tigs.append(&mut result.5);
     }
     unique_sort(gex_cells);
     let mut tig_bc = Vec::<Vec<TigData>>::new();
@@ -818,10 +809,7 @@ pub fn read_json(
         // For now we require at most four contigs (but we don't yet merge foursies).
 
         if s - r <= 4 || ctl.clono_filt_opt_def.nmax {
-            let mut bc_tigs = Vec::<TigData>::new();
-            for u in r..s {
-                bc_tigs.push(tigs[u].clone());
-            }
+            let mut bc_tigs = tigs[r..s].to_vec();
             bc_tigs.sort();
             tig_bc.push(bc_tigs);
         }
@@ -836,11 +824,11 @@ pub fn read_json(
         let mut to_delete1 = vec![false; tig_bc.len()];
         let mut to_delete2 = vec![false; vdj_cells.len()];
         let mut to_delete3 = vec![false; gex_cells.len()];
-        for i in 0..tig_bc.len() {
+        for (bc, del) in tig_bc.iter().zip(to_delete1.iter_mut()) {
             let y: f64 = rng.gen();
             if y < 1.0 - ctl.gen_opt.subsample {
-                to_delete1[i] = true;
-                let bc = &tig_bc[i][0].barcode;
+                *del = true;
+                let bc = &bc[0].barcode;
                 let p = bin_position(vdj_cells, bc);
                 if p >= 0 {
                     to_delete2[p as usize] = true;
@@ -873,7 +861,7 @@ pub fn parse_json_annotations_files(
     vdj_cells: &mut Vec<Vec<String>>,
     gex_cells: &mut Vec<Vec<String>>,
     gex_cells_specified: &mut Vec<bool>,
-    fate: &mut [HashMap<String, String>],
+    fate: &mut [HashMap<String, &str>],
 ) -> Result<(), String> {
     // (origin index, contig name, V..J length): (?)
     let mut results = Vec::<(
@@ -936,9 +924,9 @@ pub fn parse_json_annotations_files(
             res.8 = resx.err().unwrap();
         }
     });
-    for i in 0..results.len() {
-        if !results[i].8.is_empty() {
-            return Err(results[i].8.clone());
+    for result in &results {
+        if !result.8.is_empty() {
+            return Err(result.8.clone());
         }
     }
     let mut versions = Vec::<String>::new();
@@ -957,18 +945,15 @@ pub fn parse_json_annotations_files(
         let cells = &results[i].5;
         let mut found = vec![false; cells.len()];
         let tigs = &results[i].2;
-        for j in 0..tigs.len() {
-            let p = bin_position(cells, &tigs[j][0].barcode);
+        for tig in tigs {
+            let p = bin_position(cells, &tig[0].barcode);
             if p >= 0 {
                 found[p as usize] = true;
             }
         }
         for j in 0..found.len() {
             if !found[j] {
-                fate[i].insert(
-                    cells[j].clone(),
-                    "failed to find productive contig".to_string(),
-                );
+                fate[i].insert(cells[j].clone(), "failed to find productive contig");
             }
         }
     }
