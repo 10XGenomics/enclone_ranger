@@ -64,16 +64,15 @@ pub fn evaluate_d(
 
     let mut concat = Vec::<u8>::new();
     let vstart = vref.len() - vflank(tig, vref);
-    let vref = vref[vstart..vref.len()].to_vec();
-    concat.append(&mut vref.clone());
+    let vref = &vref[vstart..vref.len()];
+    concat.extend(vref);
 
     // Append the D segment or segments.
 
     let mut dref = Vec::<u8>::new();
     let mut d2ref = Vec::<u8>::new();
     let mut drefname = String::new();
-    for j in 0..ds.len() {
-        let d = ds[j];
+    for (j, &d) in ds.iter().enumerate() {
         if j == 0 {
             dref = refdata.refs[d].to_ascii_vec();
         } else if j == 1 {
@@ -82,10 +81,10 @@ pub fn evaluate_d(
         if j > 0 {
             drefname += ":";
         }
-        drefname += &mut refdata.name[d].clone();
+        drefname += refdata.name[d].as_str();
     }
-    concat.append(&mut dref.clone());
-    concat.append(&mut d2ref.clone());
+    concat.extend(&dref);
+    concat.extend(&d2ref);
 
     // Append the J segment.
 
@@ -97,15 +96,15 @@ pub fn evaluate_d(
     if seq_end <= seq_start as usize {
         seq_end = tig.len(); // bug fix for problem found by customer, couldn't reproduce internally
     }
-    let seq = tig[seq_start as usize..seq_end].to_vec();
-    let jref = jref[0..jend].to_vec();
-    concat.append(&mut jref.clone());
+    let seq = &tig[seq_start as usize..seq_end];
+    let jref = &jref[0..jend];
+    concat.extend(jref);
     let (ops, count) = align_to_vdj_ref(
-        &seq,
-        &vref,
+        seq,
+        vref,
         &dref,
         &d2ref,
-        &jref,
+        jref,
         &drefname,
         true,
         jscore_match,
@@ -160,12 +159,12 @@ pub fn opt_d(
     }
     let jref = refdata.refs[j_ref_id].to_ascii_vec();
     const MIN_BITS_FOR_D2: f64 = 14.0;
-    for di in 0..todo.len() {
+    for di in &todo {
         let (ops, count) = evaluate_d(
             tig,
             &vref,
             seq_start as usize,
-            &todo[di],
+            di,
             &jref,
             refdata,
             jscore_match,
@@ -175,34 +174,34 @@ pub fn opt_d(
             jscore_bits_multiplier,
         );
         counts.push(count);
-        if !todo[di].is_empty() {
-            let drefx = refdata.refs[todo[di][0]].to_ascii_vec();
+        if !di.is_empty() {
+            let drefx = refdata.refs[di[0]].to_ascii_vec();
             let vstart = vref.len() - vflank(tig, &vref);
             let vref = vref[vstart..vref.len()].to_vec();
             let zos = zero_one(&ops, vref.len(), vref.len() + drefx.len());
             let bits = match_bit_score(&zos);
             if bits >= MIN_BITS_FOR_D2 {
-                good_d.push(todo[di][0]);
+                good_d.push(di[0]);
             }
         }
-        ds.push(todo[di].clone());
+        ds.push(di.clone());
         if count > comp {
             comp = count;
         }
     }
     if cdr3_aa.len() >= 20 {
         todo.clear();
-        for i1 in good_d.iter() {
-            for i2 in good_d.iter() {
-                todo.push(vec![*i1, *i2]);
+        for &i1 in &good_d {
+            for &i2 in &good_d {
+                todo.push(vec![i1, i2]);
             }
         }
-        for di in 0..todo.len() {
+        for di in &todo {
             let (_ops, count) = evaluate_d(
                 tig,
                 &vref,
                 seq_start as usize,
-                &todo[di],
+                di,
                 &jref,
                 refdata,
                 jscore_match,
@@ -212,7 +211,7 @@ pub fn opt_d(
                 jscore_bits_multiplier,
             );
             counts.push(count);
-            ds.push(todo[di].clone());
+            ds.push(di.clone());
             if count > comp {
                 comp = count;
             }
@@ -221,16 +220,17 @@ pub fn opt_d(
 
     // Reverse sort sync (counts, ds).
 
-    let mut counts_ds = Vec::new();
-    for i in 0..counts.len() {
-        counts_ds.push((counts[i], ds[i].clone()));
-    }
+    let mut counts_ds = counts
+        .iter()
+        .zip(ds.iter())
+        .map(|(&c, d)| (c, d.clone()))
+        .collect::<Vec<_>>();
     counts_ds.sort_by(|a, b| b.partial_cmp(a).unwrap()); // reverse sort
     counts.clear();
     ds.clear();
-    for i in 0..counts_ds.len() {
-        counts.push(counts_ds[i].0);
-        ds.push(counts_ds[i].1.clone());
+    for count in counts_ds {
+        counts.push(count.0);
+        ds.push(count.1);
     }
 
     // Done.

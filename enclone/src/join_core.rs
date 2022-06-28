@@ -8,16 +8,16 @@ use qd::Double;
 use std::collections::HashMap;
 use vdj_ann::refx::RefData;
 
-pub fn join_core(
+pub fn join_core<'a>(
     is_bcr: bool,
     i: usize,
     j: usize,
     ctl: &EncloneControl,
     exact_clonotypes: &[ExactClonotype],
     info: &[CloneInfo],
-    to_bc: &HashMap<(usize, usize), Vec<String>>,
+    to_bc: &'a HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
-    pot: &mut Vec<PotentialJoin>,
+    pot: &mut Vec<PotentialJoin<'a>>,
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {

@@ -19,8 +19,8 @@ use vector_utils::unique_sort;
 pub fn build_info(
     refdata: &RefData,
     ctl: &EncloneControl,
-    exact_clonotypes: &mut Vec<ExactClonotype>,
-    fate: &mut [HashMap<String, String>],
+    exact_clonotypes: &mut [ExactClonotype],
+    fate: &mut [HashMap<String, &str>],
 ) -> Vec<CloneInfo> {
     // Build info about clonotypes.  We create a data structure info.
     // An entry in info is a clonotype having appropriate properties.
@@ -33,10 +33,10 @@ pub fn build_info(
         usize,
         Vec<CloneInfo>,
         ExactClonotype,
-        Vec<(usize, String, String)>,
+        Vec<(usize, String, &'static str)>,
     )>::new();
-    for i in 0..exact_clonotypes.len() {
-        results.push((i, Vec::new(), exact_clonotypes[i].clone(), Vec::new()));
+    for (i, ct) in exact_clonotypes.iter().enumerate() {
+        results.push((i, Vec::new(), ct.clone(), Vec::new()));
     }
     results.par_iter_mut().for_each(|res| {
         let i = res.0;
@@ -142,9 +142,9 @@ pub fn build_info(
                 let mut mis = Vec::<(usize, usize, Vec<u8>)>::new();
                 for j in ins_pos_low..ins_pos_high {
                     let mut y = Vec::<u8>::new();
-                    for k in 0..aa_full.len() {
+                    for (k, &aa) in aa_full.iter().enumerate() {
                         if k < j || k >= j + ins_len_aa {
-                            y.push(aa_full[k]);
+                            y.push(aa);
                         }
                     }
                     let mut m = 0;
@@ -323,7 +323,7 @@ pub fn build_info(
                 res.3.push((
                     ex.clones[j][0].dataset_index,
                     ex.clones[j][0].barcode.clone(),
-                    "failed IMPROPER filter".to_string(),
+                    "failed IMPROPER filter",
                 ));
             }
         }
@@ -361,7 +361,7 @@ pub fn build_info(
         info.append(&mut results[i].1);
         exact_clonotypes[i] = results[i].2.clone();
         for j in 0..results[i].3.len() {
-            fate[results[i].3[j].0].insert(results[i].3[j].1.clone(), results[i].3[j].2.clone());
+            fate[results[i].3[j].0].insert(results[i].3[j].1.clone(), results[i].3[j].2);
         }
     }
 

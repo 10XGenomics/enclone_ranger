@@ -59,25 +59,24 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
             for x in fields.iter() {
                 fieldnames.push(x.to_string());
             }
-            for i in 0..fields.len() {
-                if fields[i] == "color" {
+            for (i, field) in fields.into_iter().enumerate() {
+                if field == "color" {
                     color_pos = Some(i);
                 }
-                if fields[i] == "barcode" {
+                if field == "barcode" {
                     barcode_pos = i;
-                } else if fields[i] == "dataset" {
+                } else if field == "dataset" {
                     dataset_pos = i;
-                } else if fields[i] == "origin" {
+                } else if field == "origin" {
                     origin_pos = Some(i);
-                } else if fields[i] == "donor" {
+                } else if field == "donor" {
                     donor_pos = Some(i);
-                } else if fields[i] == "tag" {
+                } else if field == "tag" {
                     tag_pos = Some(i);
                 } else {
                     to_alt[i] = alt_bc_fields[0].len() as isize;
-                    for li in 0..ctl.origin_info.n() {
-                        alt_bc_fields[li]
-                            .push((fields[i].to_string(), HashMap::<String, String>::new()));
+                    for li in alt_bc_fields.iter_mut().take(ctl.origin_info.n()) {
+                        li.push((field.to_string(), HashMap::<String, String>::new()));
                     }
                 }
             }
@@ -186,17 +185,15 @@ pub fn proc_args_post(
                 ctl.gen_opt.info.as_ref().unwrap()
             ));
         }
-        for i in 0..fields.len() {
-            if fields[i] != "vj_seq1" && fields[i] != "vj_seq2" {
-                ctl.gen_opt.info_fields.push(fields[i].to_string());
-                ctl.gen_opt
-                    .info_fields
-                    .push(format!("log10({})", fields[i]));
+        for &field in &fields {
+            if field != "vj_seq1" && field != "vj_seq2" {
+                ctl.gen_opt.info_fields.push(field.to_string());
+                ctl.gen_opt.info_fields.push(format!("log10({})", field));
             }
         }
         let mut tags = Vec::<String>::new();
-        for i in 1..lines.len() {
-            let vals = parse_csv(&lines[i]);
+        for (i, line) in lines.iter().enumerate().skip(1) {
+            let vals = parse_csv(line);
             if vals.len() != fields.len() {
                 eprintln!(
                     "\nINFO file line {} has length {} whereas the file has {} fields. \
@@ -204,7 +201,7 @@ pub fn proc_args_post(
                     i + 1,
                     vals.len(),
                     fields.len(),
-                    lines[i]
+                    line
                 );
             }
             let (mut vj1, mut vj2) = (String::new(), String::new());
@@ -273,9 +270,9 @@ pub fn proc_args_post(
         var_def_vars.push(vars_of_node(x));
     }
     let mut edges = Vec::<(usize, usize)>::new();
-    for i in 0..n {
-        for j in 0..n {
-            if bin_member(&var_def_vars[j], &ctl.gen_opt.var_def[i].0) {
+    for (i, vari) in ctl.gen_opt.var_def.iter().take(n).enumerate() {
+        for (j, varj) in var_def_vars.iter().take(n).enumerate() {
+            if bin_member(varj, &vari.0) {
                 edges.push((i, j));
             }
         }
@@ -283,9 +280,7 @@ pub fn proc_args_post(
     let mut reach = vec![vec![false; n]; n];
     loop {
         let mut progress = false;
-        for k in 0..edges.len() {
-            let i = edges[k].0;
-            let j = edges[k].1;
+        for &(i, j) in &edges {
             if !reach[i][j] {
                 reach[i][j] = true;
                 progress = true;
@@ -305,8 +300,8 @@ pub fn proc_args_post(
             break;
         }
     }
-    for i in 0..n {
-        if reach[i][i] {
+    for (i, r) in reach.into_iter().enumerate().take(n) {
+        if r[i] {
             return Err(
                 "\nVAR_DEF arguments define a circular chain of dependencies.\n".to_string(),
             );
@@ -318,8 +313,8 @@ pub fn proc_args_post(
     loop {
         let mut progress = false;
         for i in 0..n {
-            for j in 0..n {
-                if bin_member(&var_def_vars[j], &ctl.gen_opt.var_def[i].0) {
+            for (j, var_def_j) in var_def_vars.iter_mut().enumerate().take(n) {
+                if bin_member(var_def_j, &ctl.gen_opt.var_def[i].0) {
                     let sub = encode_arith(&ctl.gen_opt.var_def[i].0);
                     ctl.gen_opt.var_def[j].1 = ctl.gen_opt.var_def[j]
                         .1
@@ -327,7 +322,7 @@ pub fn proc_args_post(
                     ctl.gen_opt.var_def[j].2 =
                         build_operator_tree(&ctl.gen_opt.var_def[j].1).unwrap();
                     let x = &ctl.gen_opt.var_def[j].2;
-                    var_def_vars[j] = vars_of_node(x);
+                    *var_def_j = vars_of_node(x);
                     progress = true;
                 }
             }
@@ -518,25 +513,24 @@ pub fn proc_args_post(
     let t = Instant::now();
     check_cvars(ctl)?;
     if !metas.is_empty() {
-        let mut v = Vec::<String>::new();
-        for i in 0..metas.len() {
-            let f = get_path_fail(&metas[i], ctl, "META")?;
-            v.push(f.clone());
+        let mut v = Vec::<String>::with_capacity(metas.len());
+        for meta in metas {
+            let f = get_path_fail(meta, ctl, "META")?;
             if f.contains('/') {
                 let d = f.rev_before("/").to_string();
                 if !ctl.gen_opt.pre.contains(&d) {
                     ctl.gen_opt.pre.push(d);
                 }
             }
+            v.push(f);
         }
         proc_meta(&v, ctl)?;
     }
     if !metaxs.is_empty() {
-        let lines0 = metaxs[metaxs.len() - 1].split(';').collect::<Vec<&str>>();
-        let mut lines = Vec::<String>::new();
-        for i in 0..lines0.len() {
-            lines.push(lines0[i].to_string());
-        }
+        let lines: Vec<_> = metaxs[metaxs.len() - 1]
+            .split(';')
+            .map(str::to_string)
+            .collect();
         proc_meta_core(&lines, ctl)?;
     }
     ctl.perf_stats(&t, "in proc_meta");
@@ -575,8 +569,7 @@ pub fn proc_args_post(
         "CONST_IGL",
     ];
     if !ctl.gen_opt.bcr {
-        for i in 1..args.len() {
-            let arg = &args[i];
+        for arg in &args[1..] {
             for x in bcr_only.iter() {
                 if arg == x || arg.starts_with(&format!("{}=", x)) {
                     return Err(format!("\nThe option {} does not make sense for TCR.\n", x));

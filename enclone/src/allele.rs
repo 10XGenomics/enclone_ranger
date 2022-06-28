@@ -123,24 +123,20 @@ pub fn find_alleles(
                 }
                 j += 1;
             }
-            let mut all = Vec::<(usize, Vec<u8>, Vec<usize>, usize, usize, String)>::new();
-            for k in i..j {
-                all.push(allx[k].clone());
-            }
-            alls.push(all);
+            alls.push(allx[i..j].to_owned());
             i = j;
         }
 
         // Process donor by donor.
 
-        for di in 0..alls.len() {
+        for (di, all) in alls.iter().enumerate() {
             // Data here are given by "all", the relevant entries of which are:
             // 1: V..J sequence for one chain of a given info entry
             // 2: the reference ID(s) of the partner chain(s) -- possibly not used
             // 3: the index in exact_clonotypes
             // 4: the dataset ID.
 
-            let mut all = alls[di].clone();
+            let mut all = all.clone();
             let donor_id = all[0].0;
 
             // If two entries have
@@ -167,11 +163,11 @@ pub fn find_alleles(
             let mut to_delete = vec![false; all.len()];
             {
                 let mut trace = Vec::<((usize, usize, usize, usize), usize)>::new();
-                for i in 0..all.len() {
-                    let u = all[i].3;
+                for (i, item) in all.iter().enumerate() {
+                    let u = item.3;
                     let ex = &exact_clonotypes[u];
                     for j1 in 0..ex.share.len() {
-                        if ex.share[j1].seq_del == all[i].1 {
+                        if ex.share[j1].seq_del == item.1 {
                             for j2 in 0..ex.share.len() {
                                 let (s1, s2) = (&ex.share[j1], &ex.share[j2]);
                                 if s2.left != s1.left {
@@ -230,9 +226,9 @@ pub fn find_alleles(
                     let j = next_diff1_3(&bases, i as i32) as usize;
                     let mut x = Vec::<usize>::new();
                     let mut y = Vec::<Vec<usize>>::new();
-                    for m in i..j {
-                        x.push(bases[m].1);
-                        y.push(bases[m].2.clone());
+                    for base in &bases[i..j] {
+                        x.push(base.1);
+                        y.push(base.2.clone());
                     }
                     freqs.push((j - i, x, y, bases[i].0));
                     i = j;
@@ -284,11 +280,10 @@ pub fn find_alleles(
             // and sort.
 
             let mut types = Vec::<(Vec<u8>, usize)>::new();
-            for loc in 0..all.len() {
+            for (loc, item) in all.iter().enumerate() {
                 let mut t = Vec::<u8>::new();
-                for i in 0..ps.len() {
-                    let p = ps[i];
-                    let base = all[loc].1[p];
+                for &p in &ps {
+                    let base = item.1[p];
                     t.push(base);
                 }
                 types.push((t, loc));
@@ -329,8 +324,8 @@ pub fn find_alleles(
                 {
                     let mut q = Vec::<Vec<usize>>::new();
                     let mut barcodes = Vec::<String>::new();
-                    for k in i..j {
-                        let m = types[k].1;
+                    for t in &types[i..j] {
+                        let m = t.1;
                         q.push(all[m].2.clone());
                         barcodes.push(all[m].5.clone());
                     }
@@ -402,10 +397,14 @@ pub fn find_alleles(
                 // option was used.
 
                 let mut to_delete = vec![false; keep[0].0.len()];
-                for i in 0..keep[0].0.len() {
+                for (i, (&p, d)) in ps
+                    .iter()
+                    .take(keep[0].0.len())
+                    .zip(to_delete.iter_mut())
+                    .enumerate()
+                {
                     let mut is_ref = true;
-                    for j in 0..keep.len() {
-                        let p = ps[i];
+                    for j in &keep {
                         let x = refdata.refs[id].get(p);
                         let c;
                         if x == 0 {
@@ -417,21 +416,21 @@ pub fn find_alleles(
                         } else {
                             c = b'T';
                         }
-                        if c != keep[j].0[i] {
+                        if c != j.0[i] {
                             is_ref = false;
                         }
                     }
                     if is_ref && !analysis_mode {
-                        to_delete[i] = true;
+                        *d = true;
                     }
                 }
                 erase_if(&mut ps, &to_delete);
-                for j in 0..keep.len() {
-                    erase_if(&mut keep[j].0, &to_delete);
+                for j in keep.iter_mut() {
+                    erase_if(&mut j.0, &to_delete);
                 }
                 let mut keep0 = Vec::<Vec<u8>>::new();
-                for i in 0..keep.len() {
-                    keep0.push(keep[i].0.clone());
+                for i in &keep {
+                    keep0.push(i.0.clone());
                 }
                 keep0.sort();
                 keep.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -441,18 +440,18 @@ pub fn find_alleles(
                 for x in keep.iter() {
                     if !x.3 || analysis_mode {
                         let mut b = refdata.refs[id].clone();
-                        for i in 0..ps.len() {
+                        for (&x0, &ps) in x.0.iter().zip(ps.iter()) {
                             let c;
-                            if x.0[i] == b'A' {
+                            if x0 == b'A' {
                                 c = 0;
-                            } else if x.0[i] == b'C' {
+                            } else if x0 == b'C' {
                                 c = 1;
-                            } else if x.0[i] == b'G' {
+                            } else if x0 == b'G' {
                                 c = 2;
                             } else {
                                 c = 3;
                             }
-                            b.set_mut(ps[i], c);
+                            b.set_mut(ps, c);
                         }
                         res.1.push((donor_id, id, b, x.1, x.3));
                     }
@@ -494,8 +493,8 @@ pub fn find_alleles(
             }
         }
     });
-    for i in 0..results.len() {
-        alt_refs.append(&mut results[i].1);
+    for mut r in results {
+        alt_refs.append(&mut r.1);
     }
     alt_refs.sort();
     alt_refs

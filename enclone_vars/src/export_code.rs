@@ -8,6 +8,7 @@
 use crate::var::{parse_variables, Variable};
 use io_utils::{fwrite, fwriteln, open_for_write_new};
 use itertools::Itertools;
+use std::fmt::Write as _;
 use std::io::{BufWriter, Write};
 use std::process::Command;
 use string_utils::TextUtils;
@@ -17,19 +18,15 @@ use string_utils::TextUtils;
 // Find upper case strings in var.
 
 fn get_uppers(var: &str) -> Vec<(String, usize)> {
-    let mut uppers = Vec::<(String, usize)>::new();
-    {
-        let mut chars = Vec::<char>::new();
-        for c in var.chars() {
-            chars.push(c);
-        }
-        let mut s = String::new();
+    let uppers = {
+        let mut uppers = Vec::<(String, usize)>::new();
+        let mut s = String::with_capacity(var.len());
         let mut start = 0;
-        for i in 0..chars.len() {
-            if chars[i].is_ascii_uppercase() {
-                s.push(chars[i]);
+        for (i, ch) in var.chars().enumerate() {
+            if ch.is_ascii_uppercase() {
+                s.push(ch);
             } else if !s.is_empty() {
-                uppers.push((s.clone(), start));
+                uppers.push((s.to_string(), start));
                 start = i + 1;
                 s.clear();
             }
@@ -37,7 +34,8 @@ fn get_uppers(var: &str) -> Vec<(String, usize)> {
         if !s.is_empty() {
             uppers.push((s, start));
         }
-    }
+        uppers
+    };
     if uppers.len() > 1 {
         eprintln!(
             "\nIllegal variable {}, has more than one uppercase string in it.\n",
@@ -65,12 +63,12 @@ fn process_var<W: Write>(
     let mut name = false;
     let bc = var == "BC";
     let info = var == "INFO";
-    for i in 0..uppers.len() {
-        if uppers[i].0 == "REGA" {
+    for upper in &uppers {
+        if upper.0 == "REGA" {
             rega = true;
-        } else if uppers[i].0 == "DATASET" {
+        } else if upper.0 == "DATASET" {
             dataset = true;
-        } else if uppers[i].0 == "NAME" {
+        } else if upper.0 == "NAME" {
             name = true;
         }
     }
@@ -102,10 +100,7 @@ fn process_var<W: Write>(
 fn parse_value_return_lines(code: &mut String, level: &str, exact: &mut String, cell: &mut String) {
     *exact = "String::new()".to_string();
     *cell = "Vec::new()".to_string();
-    let mut lines = Vec::<String>::new();
-    for line in code.lines() {
-        lines.push(line.to_string());
-    }
+    let lines = code.lines().collect::<Vec<_>>();
     let n = lines.len();
     if n > 0 {
         let mut sub = 0;
@@ -119,8 +114,8 @@ fn parse_value_return_lines(code: &mut String, level: &str, exact: &mut String, 
             }
         }
         let mut code2 = String::new();
-        for i in 0..lines.len() - sub {
-            code2 += &mut format!("{}\n", lines[i]);
+        for &line in &lines[..lines.len() - sub] {
+            writeln!(code2, "{}", line).unwrap();
         }
         *code = code2;
     }
@@ -165,26 +160,29 @@ fn quote_str_or_char(s: &str) -> String {
 
 fn emit_code_to_test_for_var<W: Write>(var: &str, f: &mut BufWriter<W>, class: &str) {
     let uppers = get_uppers(var);
-    let mut rega = None;
-    let mut dataset = None;
-    let mut name = None;
+    assert!(uppers.len() <= 1);
     let bc = var == "BC";
     let info = var == "INFO";
-    for i in 0..uppers.len() {
-        if uppers[i].0 == "REGA" {
-            rega = Some(uppers[i].1);
-        } else if uppers[i].0 == "DATASET" {
-            dataset = Some(uppers[i].1);
-        } else if uppers[i].0 == "NAME" {
-            name = Some(uppers[i].1);
+    let (rega, dataset, name) = {
+        let mut rega = None;
+        let mut dataset = None;
+        let mut name = None;
+        for upper in uppers {
+            if upper.0 == "REGA" {
+                rega = Some(upper.1);
+            } else if upper.0 == "DATASET" {
+                dataset = Some(upper.1);
+            } else if upper.0 == "NAME" {
+                name = Some(upper.1);
+            }
         }
-    }
+        (rega, dataset, name)
+    };
     let nranges = var.matches('{').count();
 
     // Test for implemented.
 
     assert_eq!(nranges, var.matches('}').count());
-    assert!(uppers.len() <= 1);
     assert!(nranges <= 1 || rega.is_none());
     assert!(nranges == 0 || dataset.is_none());
     assert!(nranges == 0 || name.is_none());

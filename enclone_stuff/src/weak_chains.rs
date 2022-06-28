@@ -21,13 +21,13 @@ pub fn weak_chains(
     exact_clonotypes: &[ExactClonotype],
     info: &[CloneInfo],
     raw_joins: &[Vec<usize>],
-    fate: &mut [HashMap<String, String>],
+    fate: &mut [HashMap<String, &str>],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {
     // Note mat calculation duplicated with print_clonotypes and also doublet detection.
 
-    let mut results = Vec::<(usize, Vec<(usize, String, String)>, Vec<usize>)>::new();
+    let mut results = Vec::<(usize, Vec<(usize, String, &'static str)>, Vec<usize>)>::new();
     for i in 0..orbits.len() {
         results.push((i, Vec::new(), Vec::new()));
     }
@@ -65,13 +65,16 @@ pub fn weak_chains(
             let nexacts = exacts.len();
             let mut ncells = vec![0; cols];
             let mut col_entries = vec![Vec::<usize>::new(); cols];
-            for u in 0..nexacts {
-                for col in 0..cols {
-                    let mid = mat[col][u];
+            for (u, &clonotype_id) in exacts.iter().enumerate().take(nexacts) {
+                for ((nc, ce), m) in ncells
+                    .iter_mut()
+                    .zip(col_entries.iter_mut())
+                    .zip(mat.iter().take(cols))
+                {
+                    let mid = m[u];
                     if mid.is_some() {
-                        col_entries[col].push(u);
-                        let clonotype_id = exacts[u];
-                        ncells[col] += exact_clonotypes[clonotype_id].clones.len();
+                        ce.push(u);
+                        *nc += exact_clonotypes[clonotype_id].clones.len();
                     }
                 }
             }
@@ -90,7 +93,7 @@ pub fn weak_chains(
                             res.1.push((
                                 ex.clones[i][0].dataset_index,
                                 ex.clones[i][0].barcode.clone(),
-                                "failed WEAK_CHAINS filter".to_string(),
+                                "failed WEAK_CHAINS filter",
                             ));
                         }
                     }
@@ -102,25 +105,21 @@ pub fn weak_chains(
     let mut dels = Vec::<i32>::new();
     for i in 0..results.len() {
         for j in 0..results[i].1.len() {
-            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
+            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2);
         }
         for x in results[i].2.iter() {
             to_delete[*x] = true;
         }
     }
     dels.sort_unstable();
-    let mut orbits2 = Vec::<Vec<i32>>::new();
-    for i in 0..orbits.len() {
-        let mut o = orbits[i].clone();
-        let mut del = vec![false; o.len()];
-        for j in 0..o.len() {
-            let id = info[o[j] as usize].clonotype_index;
-            if to_delete[id] {
-                del[j] = true;
-            }
-        }
-        erase_if(&mut o, &del);
-        orbits2.push(o);
+    for o in orbits.iter_mut() {
+        let del = o
+            .iter()
+            .map(|&oj| {
+                let id = info[oj as usize].clonotype_index;
+                to_delete[id]
+            })
+            .collect::<Vec<_>>();
+        erase_if(o, &del);
     }
-    *orbits = orbits2;
 }

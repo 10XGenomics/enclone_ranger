@@ -13,8 +13,8 @@ use std::io::Write;
 fn main() {
     PrettyTrace::new().on();
     let outs = export_code(0);
-    for i in 0..outs.len() {
-        let mut f = open_for_write_new![&outs[i].0];
-        fwrite!(f, "{}", outs[i].1);
+    for out in outs {
+        let mut f = open_for_write_new![&out.0];
+        fwrite!(f, "{}", out.1);
     }
 }

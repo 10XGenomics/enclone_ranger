@@ -38,23 +38,22 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
         tokens.push(token);
     }
     let mut tokens2 = Vec::<String>::new();
-    for i in 0..tokens.len() {
-        if tokens[i].starts_with('S') {
-            let setid = tokens[i].after("S");
+    for token in tokens {
+        if let Some(setid) = token.strip_prefix('S') {
             if ctl.gen_opt.internal_run {
                 let url = format!("{}/{}", ctl.gen_opt.config["sets"], setid);
                 let m = fetch_url(&url)?;
                 if m.contains("\"analysis_ids\":[") {
-                    let mut ids = m.between("\"analysis_ids\":[", "]").to_string();
-                    ids = ids.replace(' ', "");
+                    let ids = m.between("\"analysis_ids\":[", "]");
+                    let mut ids = ids.replace(' ', "");
                     ids = ids.replace('\n', "");
-                    let ids = ids.split(',').collect::<Vec<&str>>();
-                    let mut ids2 = Vec::<String>::new();
+                    let ids = ids.split(',');
+                    let mut ids2 = Vec::<&str>::new();
 
                     // Remove wiped analysis IDs.
 
-                    for j in 0..ids.len() {
-                        let url = format!("{}/{}", ctl.gen_opt.config["ones"], ids[j]);
+                    for id in ids {
+                        let url = format!("{}/{}", ctl.gen_opt.config["ones"], id);
                         let m = fetch_url(&url)?;
                         if m.contains("502 Bad Gateway") {
                             return Err(format!(
@@ -65,7 +64,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                             ));
                         }
                         if !m.contains("\"wiped\"") {
-                            ids2.push(ids[j].to_string());
+                            ids2.push(id);
                         }
                     }
                     let mut enclone = "~/enclone".to_string();
@@ -87,11 +86,11 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
 
                     // Proceed.
 
-                    for j in 0..ids2.len() {
+                    for (j, id) in ids2.into_iter().enumerate() {
                         if j > 0 {
                             tokens2.push(",".to_string());
                         }
-                        tokens2.push(ids2[j].to_string());
+                        tokens2.push(id.to_string());
                     }
                     continue;
                 } else {
@@ -108,22 +107,22 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                     let mut s = String::new();
                     f.read_to_string(&mut s).unwrap();
                     s = s.before("\n").to_string();
-                    let ids2 = s.split(',').collect::<Vec<&str>>();
-                    for j in 0..ids2.len() {
+                    let ids2 = s.split(',');
+                    for (j, id) in ids2.enumerate() {
                         if j > 0 {
                             tokens2.push(",".to_string());
                         }
-                        tokens2.push(ids2[j].to_string());
+                        tokens2.push(id.to_string());
                     }
                     continue;
                 }
             }
         }
-        tokens2.push(tokens[i].clone());
+        tokens2.push(token);
     }
     let mut y = String::new();
-    for i in 0..tokens2.len() {
-        y += &tokens2[i];
+    for t in tokens2 {
+        y += t.as_str();
     }
     Ok(y)
 }
@@ -326,7 +325,7 @@ fn parse_bc(mut bc: String, ctl: &mut EncloneControl, call_type: &str) -> Result
     let mut barcode_color = HashMap::<String, String>::new();
     let mut alt_bc_fields = Vec::<(String, HashMap<String, String>)>::new();
     let spinlock: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-    if bc != *"" {
+    if !bc.is_empty() {
         bc = get_path_or_internal_id(&bc, ctl, call_type, &spinlock)?;
         let f = open_userfile_for_read(&bc);
         let mut first = true;
@@ -562,9 +561,9 @@ pub fn proc_xcr(
             } else {
                 (*s).split(',').collect::<Vec<&str>>()
             };
-            for i in 0..datasets.len() {
-                if datasets[i].ends_with('/') {
-                    datasets[i] = datasets[i].rev_before("/");
+            for ds in datasets.iter_mut() {
+                if ds.ends_with('/') {
+                    *ds = ds.rev_before("/");
                 }
             }
             let datasets_gex: Vec<&str>;
@@ -693,12 +692,12 @@ pub fn proc_xcr(
             }
         }
     });
-    for i in 0..results.len() {
-        if !results[i].3.is_empty() {
-            return Err(results[i].3.clone());
+    for result in results {
+        if !result.3.is_empty() {
+            return Err(result.3);
         }
-        ctl.origin_info.dataset_path.push(results[i].0.clone());
-        ctl.origin_info.gex_path.push(results[i].1.clone());
+        ctl.origin_info.dataset_path.push(result.0);
+        ctl.origin_info.gex_path.push(result.1);
     }
     ctl.perf_stats(&t, "in proc_xcr 4");
     Ok(())
@@ -711,10 +710,7 @@ pub fn proc_meta_core(lines: &[String], mut ctl: &mut EncloneControl) -> Result<
     let mut donors = Vec::<String>::new();
     for (count, s) in lines.iter().enumerate() {
         if count == 0 {
-            let x = s.split(',').collect::<Vec<&str>>();
-            for i in 0..x.len() {
-                fields.push(x[i].to_string());
-            }
+            fields.extend(s.split(',').map(str::to_string));
             let mut fields_sorted = fields.clone();
             unique_sort(&mut fields_sorted);
             if fields_sorted.len() < fields.len() {
@@ -857,13 +853,11 @@ pub fn proc_meta_core(lines: &[String], mut ctl: &mut EncloneControl) -> Result<
             if current_ref {
                 ctl.gen_opt.current_ref = true;
             }
-            let mut dp = None;
-            for j in 0..donors.len() {
-                if donor == donors[j] {
-                    dp = Some(j);
-                    break;
-                }
-            }
+            let dp = donors
+                .iter()
+                .enumerate()
+                .filter_map(|(j, dj)| if donor == *dj { Some(j) } else { None })
+                .next();
             if dp.is_none() {
                 donors.push(donor.clone());
             }

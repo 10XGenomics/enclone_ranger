@@ -64,13 +64,13 @@ pub fn get_known_features(gex_info: &GexInfo) -> Result<Vec<String>, String> {
             }
         }
     });
-    for i in 0..results.len() {
-        if !results[i].2.is_empty() {
-            return Err(results[i].2.clone());
+    for result in &results {
+        if !result.2.is_empty() {
+            return Err(result.2.clone());
         }
     }
-    for i in 0..results.len() {
-        known_features.append(&mut results[i].1.clone());
+    for result in &results {
+        known_features.extend(result.1.iter().cloned());
     }
     known_features.par_sort();
     known_features.dedup();
@@ -137,16 +137,16 @@ pub fn is_pattern(x: &str, parseable: bool) -> bool {
                 let mut ok = true;
                 let mut special = false;
                 let p = p.as_bytes();
-                for i in 0..p.len() {
-                    if !((p[i] >= b'A' && p[i] <= b'Z')
-                        || (p[i] >= b'a' && p[i] <= b'z')
-                        || (p[i] >= b'0' && p[i] <= b'9')
-                        || b".-_[]()|*".contains(&p[i]))
+                for &pi in p {
+                    if !((b'A'..=b'Z').contains(&pi)
+                        || (b'a'..=b'z').contains(&pi)
+                        || (b'0'..=b'9').contains(&pi)
+                        || b".-_[]()|*".contains(&pi))
                     {
                         ok = false;
                         break;
                     }
-                    if b"[]()|*".contains(&p[i]) {
+                    if b"[]()|*".contains(&pi) {
                         special = true;
                     }
                 }
@@ -258,16 +258,16 @@ fn check_gene_fb(
 
     // Do the check.
 
-    for i in 0..to_check.len() {
-        let mut x = to_check[i].clone();
+    for ci in to_check {
+        let mut x = ci.as_str();
         if x.contains(':') {
-            x = x.after(":").to_string();
+            x = x.after(":");
         }
-        let mut y = x.clone();
+        let mut y = x;
         if category == "parseable" && y.ends_with("_cell") {
-            y = y.before("_cell").to_string();
+            y = y.before("_cell");
         }
-        if !bin_member(&known_features, &y) {
+        if !bin_member(&known_features, &y.to_string()) {
             let mut n_var = false;
             if x.starts_with("n_") {
                 n_var = true;
@@ -357,14 +357,10 @@ fn check_gene_fb(
                 }
             }
             if !n_var {
-                let mut alts = Vec::<String>::new();
-                let mut xl = x.clone();
-                xl.make_ascii_lowercase();
+                let mut alts = Vec::<&str>::new();
                 for y in known_features.iter() {
-                    let mut yl = y.to_string();
-                    yl.make_ascii_lowercase();
-                    if xl == yl {
-                        alts.push(y.to_string());
+                    if x.eq_ignore_ascii_case(y) {
+                        alts.push(y.as_str());
                     }
                 }
                 if category == "lead" {
@@ -756,8 +752,8 @@ pub fn check_one_lvar(
     }
     if !LVARS_ALLOWED.contains(&x.as_str()) {
         let mut end_ok = false;
-        for i in 0..ends.len() {
-            if x.ends_with(&ends[i]) {
+        for end in ends {
+            if x.ends_with(end) {
                 end_ok = true;
             }
         }

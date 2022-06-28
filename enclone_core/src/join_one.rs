@@ -63,16 +63,16 @@ pub fn partial_bernoulli_sum(n: usize, k: usize) -> f64 {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn join_one(
+pub fn join_one<'a>(
     is_bcr: bool,
     k1: usize,
     k2: usize,
     ctl: &EncloneControl,
     exact_clonotypes: &[ExactClonotype],
     info: &[CloneInfo],
-    to_bc: &HashMap<(usize, usize), Vec<String>>,
+    to_bc: &'a HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
-    pot: &mut Vec<PotentialJoin>,
+    pot: &mut Vec<PotentialJoin<'a>>,
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) -> bool {
@@ -435,12 +435,20 @@ pub fn join_one(
 
     // Reject if barcode overlap. (not documented)
 
-    let (mut bcs1, mut bcs2) = (Vec::<String>::new(), Vec::<String>::new());
+    let (mut bcs1, mut bcs2) = (Vec::<&'a str>::new(), Vec::<&'a str>::new());
     for origin in info[k1].origin.iter() {
-        bcs1.append(&mut to_bc[&(*origin, info[k1].clonotype_id)].clone());
+        bcs1.extend(
+            to_bc[&(*origin, info[k1].clonotype_id)]
+                .iter()
+                .map(String::as_str),
+        );
     }
     for origin in info[k2].origin.iter() {
-        bcs2.append(&mut to_bc[&(*origin, info[k2].clonotype_id)].clone());
+        bcs2.extend(
+            to_bc[&(*origin, info[k2].clonotype_id)]
+                .iter()
+                .map(String::as_str),
+        );
     }
     unique_sort(&mut bcs1);
     unique_sort(&mut bcs2);
@@ -487,10 +495,7 @@ pub fn join_one(
 
     let mut mult;
     if ctl.join_alg_opt.old_mult {
-        let mut cn = 0;
-        for l in 0..x1.len() {
-            cn += x1[l].len();
-        }
+        let cn: usize = x1.iter().map(String::len).sum();
         mult = partial_bernoulli_sum(3 * cn, cd as usize);
         assert!(!mult.is_infinite()); // TODO: IS THIS SAFE?
     } else {
@@ -583,15 +588,14 @@ pub fn join_one(
                         ok = false;
                     }
                     if ok {
-                        let vref = vref1[vstart..vref1.len()].to_vec();
-                        let mut concat = vref;
-                        for i in 0..d.len() {
-                            concat.append(&mut refdata.refs[d[i]].to_ascii_vec());
+                        let mut concat = vref1[vstart..vref1.len()].to_vec();
+                        for &di in d {
+                            concat.append(&mut refdata.refs[di].to_ascii_vec());
                         }
-                        let mut jref = refdata.refs[j_ref_id].to_ascii_vec();
+                        let jref = refdata.refs[j_ref_id].to_ascii_vec();
                         let jend = jflank(&seq1, &jref); // note using seq1
-                        jref = jref[0..jend].to_vec();
-                        concat.append(&mut jref.clone());
+                        let jref = &jref[0..jend];
+                        concat.extend(jref);
                         let mut seq_start = vstart as isize;
                         if ex1.share[h1].annv.len() > 1 {
                             let q1 = ex1.share[h1].annv[0].0 + ex1.share[h1].annv[0].1;
@@ -608,8 +612,8 @@ pub fn join_one(
                         seq1 = seq1[seq_start as usize..seq_end].to_vec();
                         seq2 = seq2[seq_start as usize..seq_end].to_vec();
                         let mut share = 0;
-                        for i in 0..indels.len() {
-                            if indels[i].1 < 0 {
+                        for indel in indels {
+                            if indel.1 < 0 {
                                 share += 1;
                             }
                         }
@@ -617,18 +621,18 @@ pub fn join_one(
                         let mut i = 0;
                         let n = min(seq1.len(), seq2.len());
                         'seq: while i < n {
-                            for j in 0..indels.len() {
-                                if indels[j].0 == i {
-                                    if indels[j].1 > 0 {
-                                        for k in 0..indels[j].1 as usize {
+                            for indel in indels {
+                                if indel.0 == i {
+                                    if indel.1 > 0 {
+                                        for k in 0..indel.1 as usize {
                                             if seq1[i + k] == seq2[i + k] {
                                                 share += 1;
                                             }
                                         }
-                                        i += indels[j].1 as usize;
+                                        i += indel.1 as usize;
                                         continue 'seq;
                                     } else {
-                                        ref_pos += -indels[j].1 as usize;
+                                        ref_pos += -indel.1 as usize;
                                     }
                                 }
                             }

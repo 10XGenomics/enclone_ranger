@@ -86,9 +86,9 @@ pub fn process_special_arg1(
         }
         ctl.gen_opt.all_bc_filename = parts[0].to_string();
         test_writeable(&ctl.gen_opt.all_bc_filename, ctl.gen_opt.evil_eye)?;
-        for i in 1..parts.len() {
-            ctl.gen_opt.all_bc_fields.push(parts[i].to_string());
-        }
+        ctl.gen_opt
+            .all_bc_fields
+            .extend(parts.into_iter().skip(1).map(str::to_string));
         ctl.gen_opt.all_bc_fields_orig = ctl.gen_opt.all_bc_fields.clone();
     } else if arg.starts_with("STATE_NARRATIVE=") {
         let mut narrative = arg.after("STATE_NARRATIVE=").to_string();
@@ -158,24 +158,25 @@ pub fn process_special_arg1(
             .collect();
         ctl.clono_filt_opt.dataset = Some(d);
     } else if arg.starts_with("HONEY=") {
-        let mut parts = Vec::<Vec<String>>::new();
-        {
+        let parts = {
+            let mut parts = Vec::<Vec<&str>>::new();
             let subparts = arg.after("HONEY=").split(',').collect::<Vec<&str>>();
             if subparts.is_empty() || !subparts[0].contains('=') {
                 return Err("\nSyntax for HONEY=... is incorrect.\n".to_string());
             }
-            let mut part = Vec::<String>::new();
-            for i in 0..subparts.len() {
-                if subparts[i].contains('=') && !part.is_empty() {
+            let mut part = Vec::<&str>::new();
+            for subpart in subparts {
+                if subpart.contains('=') && !part.is_empty() {
                     parts.push(part.clone());
                     part.clear();
                 }
-                part.push(subparts[i].to_string());
+                part.push(subpart);
             }
             if !part.is_empty() {
                 parts.push(part);
             }
-        }
+            parts
+        };
         ctl.plot_opt.use_legend = true;
         let mut out_count = 0;
         let mut legend_count = 0;
@@ -183,10 +184,10 @@ pub fn process_special_arg1(
         let (mut min, mut max) = (None, None);
         let (mut var, mut display_var) = (String::new(), String::new());
         let mut schema = String::new();
-        for p in parts.iter() {
+        for p in parts {
             let mut p = p.clone();
-            let part_name = p[0].before("=").to_string();
-            p[0] = p[0].after("=").to_string();
+            let part_name = p[0].before("=");
+            p[0] = p[0].after("=");
             let err = format!(
                 "\nUnrecognized {} specification {}.\n",
                 part_name,
@@ -196,13 +197,15 @@ pub fn process_special_arg1(
                 if p.len() > 2 {
                     return Err(err);
                 }
-                let filename = p[0].clone();
-                if p.len() == 2 && p[1].parse::<usize>().is_ok() {
-                    ctl.plot_opt.png_width = Some(p[1].force_usize());
-                    if !filename.ends_with(".png") {
-                        return Err("\nWidth specification for the HONEY argument only \
+                let filename = p[0];
+                if p.len() == 2 {
+                    if let Ok(pi) = p[1].parse::<usize>() {
+                        ctl.plot_opt.png_width = Some(pi);
+                        if !filename.ends_with(".png") {
+                            return Err("\nWidth specification for the HONEY argument only \
                             makes sense if the filename ends with .png.\n"
-                            .to_string());
+                                .to_string());
+                        }
                     }
                 }
                 if filename != "stdout"
@@ -215,7 +218,7 @@ pub fn process_special_arg1(
                         "\nHONEY out filename needs to end with .svg or .png.\n".to_string()
                     );
                 }
-                ctl.plot_opt.plot_file = filename;
+                ctl.plot_opt.plot_file = filename.to_string();
                 out_count += 1;
             } else if part_name == "legend" {
                 if p.solo() && p[0] == "none" {
@@ -364,20 +367,20 @@ pub fn process_special_arg1(
         }
         ctl.gen_opt.chains_to_jun_align.push(n.force_usize());
     } else if arg.starts_with("FB_SHOW=") {
-        let fields = arg.after("FB_SHOW=").split(',').collect::<Vec<&str>>();
+        let fields = arg.after("FB_SHOW=").split(',');
         let mut found_k = false;
         let mut ok = true;
-        for i in 0..fields.len() {
-            if fields[i].parse::<usize>().is_ok() {
+        for field in fields {
+            if field.parse::<usize>().is_ok() {
                 if found_k {
                     return Err("\nFB_SHOW argument contains more than one integer.\n".to_string());
                 }
                 found_k = true;
             } else {
-                if fields[i].len() != 15 {
+                if field.len() != 15 {
                     ok = false;
                 }
-                for c in fields[i].chars() {
+                for c in field.chars() {
                     if c != 'A' && c != 'C' && c != 'G' && c != 'T' {
                         ok = false;
                     }
@@ -429,23 +432,22 @@ pub fn process_special_arg1(
             remove_file(&val).unwrap_or_else(|_| panic!("could not remove file {}", val));
         }
         ctl.plot_opt.sim_mat_plot_vars.clear();
-        for j in 1..fields.len() {
-            ctl.plot_opt.sim_mat_plot_vars.push(fields[j].to_string());
-        }
+        ctl.plot_opt
+            .sim_mat_plot_vars
+            .extend(fields.into_iter().skip(1).map(str::to_string));
     } else if arg.starts_with("G=") {
         let mut x = Vec::<usize>::new();
         if arg != "G=all" {
-            let s = arg.after("G=").split(',').collect::<Vec<&str>>();
+            let s = arg.after("G=").split(',');
             let mut ok = false;
-            for i in 0..s.len() {
-                if s[i].parse::<usize>().is_ok() {
-                    let n = s[i].force_usize();
+            for si in s {
+                if si.parse::<usize>().is_ok() {
+                    let n = si.force_usize();
                     if n >= 1 {
                         x.push(n);
                         ok = true;
                     }
-                } else if s[i].contains('-') {
-                    let (a, b) = (s[i].before("-"), s[i].after("-"));
+                } else if let Some((a, b)) = si.split_once('-') {
                     if a.parse::<usize>().is_ok() && b.parse::<usize>().is_ok() {
                         let (a, b) = (a.force_usize(), b.force_usize());
                         if 1 <= a && a <= b {

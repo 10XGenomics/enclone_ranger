@@ -36,33 +36,27 @@ pub fn emit_codon_color_escape(c: &[u8], log: &mut Vec<u8>) {
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn color_by_property(c: &[u8], log: &mut Vec<u8>) {
-    for i in 0..c.len() {
+    for &ci in c {
         let mut color = 7;
-        if c[i] == b'A'
-            || c[i] == b'G'
-            || c[i] == b'I'
-            || c[i] == b'L'
-            || c[i] == b'P'
-            || c[i] == b'V'
-        {
+        if ci == b'A' || ci == b'G' || ci == b'I' || ci == b'L' || ci == b'P' || ci == b'V' {
             color = 0;
-        } else if c[i] == b'F' || c[i] == b'W' || c[i] == b'Y' {
+        } else if ci == b'F' || ci == b'W' || ci == b'Y' {
             color = 1;
-        } else if c[i] == b'D' || c[i] == b'E' {
+        } else if ci == b'D' || ci == b'E' {
             color = 2;
-        } else if c[i] == b'R' || c[i] == b'H' || c[i] == b'K' {
+        } else if ci == b'R' || ci == b'H' || ci == b'K' {
             color = 3;
-        } else if c[i] == b'S' || c[i] == b'T' {
+        } else if ci == b'S' || ci == b'T' {
             color = 4;
-        } else if c[i] == b'C' || c[i] == b'M' {
+        } else if ci == b'C' || ci == b'M' {
             color = 5;
-        } else if c[i] == b'N' || c[i] == b'Q' {
+        } else if ci == b'N' || ci == b'Q' {
             color = 6;
         }
         if color < 7 {
             print_color(color, log);
         }
-        fwrite!(log, "{}", c[i] as char);
+        fwrite!(log, "{}", ci as char);
         if color < 7 {
             emit_end_escape(log);
         }

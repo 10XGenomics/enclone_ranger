@@ -27,14 +27,14 @@ pub fn finish_join(
 
     let (mut joins, mut errors) = (0, 0);
     let timer3 = Instant::now();
-    for l in 0..results.len() {
-        joins += results[l].2;
-        errors += results[l].3;
-        for i in 0..results[l].4.len() {
-            let u1 = results[l].4[i].0;
-            let u2 = results[l].4[i].1;
-            let err = results[l].4[i].2;
-            let log = results[l].4[i].3.clone();
+    for r in results {
+        joins += r.2;
+        errors += r.3;
+        for i in &r.4 {
+            let u1 = i.0;
+            let u2 = i.1;
+            let err = i.2;
+            let log = i.3.clone();
             join_info.push((u1, u2, err, log));
         }
     }
@@ -48,9 +48,9 @@ pub fn finish_join(
     // Make equivalence relation.
 
     let mut eq: EquivRel = EquivRel::new(info.len() as i32);
-    for l in 0..results.len() {
-        for j in 0..results[l].5.len() {
-            eq.join(results[l].5[j].0 as i32, results[l].5[j].1 as i32);
+    for r in results {
+        for j in &r.5 {
+            eq.join(j.0 as i32, j.1 as i32);
         }
     }
 
@@ -58,8 +58,7 @@ pub fn finish_join(
     // clonotypes into two-chain clonotypes.
 
     let mut ox = Vec::<(usize, i32)>::new();
-    for i in 0..info.len() {
-        let x: &CloneInfo = &info[i];
+    for (i, x) in info.iter().enumerate() {
         ox.push((x.clonotype_id, eq.class_id(i as i32)));
     }
     ox.sort_unstable();
@@ -84,9 +83,9 @@ pub fn finish_join(
     if white {
         let mut bads = 0;
         let mut denom = 0;
-        for i in 0..results.len() {
-            bads += results[i].2;
-            denom += results[i].3;
+        for r in results {
+            bads += r.2;
+            denom += r.3;
         }
         let bad_rate = percent_ratio(bads, denom);
         println!("whitelist contamination rate = {:.2}%", bad_rate);

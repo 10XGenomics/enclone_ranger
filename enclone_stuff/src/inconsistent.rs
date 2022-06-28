@@ -26,7 +26,7 @@ pub fn test_vdj_gex_inconsistent(
     exact_clonotypes: &[ExactClonotype],
     vdj_cells: &[Vec<String>],
     gex_info: &GexInfo,
-) -> Result<(), String> {
+) -> Result<(), &'static str> {
     let tinc = Instant::now();
 
     let mut results = Vec::<(usize, String)>::new();
@@ -41,10 +41,9 @@ pub fn test_vdj_gex_inconsistent(
             let (mut heavy, mut light) = (vec![false; vdj.len()], vec![false; vdj.len()]);
             let mut exid = vec![0; vdj.len()];
             let mut inex = vec![false; vdj.len()];
-            for i in 0..exact_clonotypes.len() {
-                let ex = &exact_clonotypes[i];
-                for j in 0..ex.clones.len() {
-                    let p = bin_position(vdj, &ex.clones[j][0].barcode);
+            for (i, ex) in exact_clonotypes.iter().enumerate() {
+                for clone in &ex.clones {
+                    let p = bin_position(vdj, &clone[0].barcode);
                     if p >= 0 {
                         inex[p as usize] = true;
                         exid[p as usize] = i;
@@ -52,13 +51,13 @@ pub fn test_vdj_gex_inconsistent(
                 }
             }
             let mut numi = vec![0; vdj.len()];
-            for i in 0..tig_bc.len() {
-                if tig_bc[i][0].dataset_index == li {
-                    let p = bin_position(vdj, &tig_bc[i][0].barcode);
+            for tigi in tig_bc {
+                if tigi[0].dataset_index == li {
+                    let p = bin_position(vdj, &tigi[0].barcode);
                     if p >= 0 {
-                        for j in 0..tig_bc[i].len() {
-                            numi[p as usize] += tig_bc[i][j].umi_count;
-                            if tig_bc[i][j].left {
+                        for tig in tigi {
+                            numi[p as usize] += tig.umi_count;
+                            if tig.left {
                                 heavy[p as usize] = true;
                             } else {
                                 light[p as usize] = true;
@@ -76,13 +75,13 @@ pub fn test_vdj_gex_inconsistent(
             reverse_sort(&mut x);
             let mut used = vec![false; exact_clonotypes.len()];
             let (mut total, mut good) = (0, 0);
-            for i in 0..x.len() {
-                let m = x[i].2;
+            for xi in x {
+                let m = xi.2;
                 if inex[m] && used[exid[m]] {
                     continue;
                 }
                 total += 1;
-                if x[i].1 {
+                if xi.1 {
                     good += 1;
                 }
                 if inex[m] {
@@ -109,14 +108,14 @@ pub fn test_vdj_gex_inconsistent(
         }
     });
     let mut fail = false;
-    for i in 0..results.len() {
-        if !results[i].1.is_empty() {
+    for r in &results {
+        if !r.1.is_empty() {
             fail = true;
         }
     }
     if fail {
-        for i in 0..results.len() {
-            eprint!("{}", results[i].1);
+        for r in results {
+            eprint!("{}", r.1);
         }
         return Err(
             "\nThis test is restricted to VDJ cells having both chain types, uses at most \
@@ -124,8 +123,7 @@ pub fn test_vdj_gex_inconsistent(
             UMI counts.\n\
             \nThe data suggest a laboratory or informatic mixup.  If you believe \
             that this is not the case,\nyou can force enclone to run by adding \
-            the argument ALLOW_INCONSISTENT to the command line.\n"
-                .to_string(),
+            the argument ALLOW_INCONSISTENT to the command line.\n",
         );
     }
     ctl.perf_stats(&tinc, "testing for inconsistency");

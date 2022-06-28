@@ -23,10 +23,7 @@ pub fn merge_onesies(
                 to_orbit[orbits[i][j] as usize] = Some(i);
             }
         }
-        let mut ncells_total = 0;
-        for i in 0..exact_clonotypes.len() {
-            ncells_total += exact_clonotypes[i].ncells();
-        }
+        let ncells_total = exact_clonotypes.iter().map(ExactClonotype::ncells).sum();
         let mut onesies = Vec::<usize>::new();
         for i in 0..info.len() {
             if to_orbit[i].is_some()
@@ -104,12 +101,12 @@ pub fn merge_onesies(
         let mut orbits2 = Vec::<Vec<i32>>::new();
         let mut repsx = Vec::<i32>::new();
         eqo.orbit_reps(&mut repsx);
-        for i in 0..repsx.len() {
+        for r in repsx {
             let mut ox = Vec::<i32>::new();
-            eqo.orbit(repsx[i], &mut ox);
+            eqo.orbit(r, &mut ox);
             let mut o = Vec::<i32>::new();
-            for j in 0..ox.len() {
-                o.append(&mut orbits[ox[j] as usize].clone());
+            for oj in ox {
+                o.append(&mut orbits[oj as usize].clone());
             }
             orbits2.push(o);
         }

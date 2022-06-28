@@ -19,15 +19,15 @@ use vector_utils::next_diff1_3;
 
 // copied from tenkit2/pack_dna.rs:
 
-pub fn reverse_complement(x: &mut Vec<u8>) {
+pub fn reverse_complement(x: &mut [u8]) {
     x.reverse();
-    for j in 0..x.len() {
-        x[j] = match x[j] {
+    for xj in x {
+        *xj = match *xj {
             b'A' => b'T',
             b'C' => b'G',
             b'G' => b'C',
             b'T' => b'A',
-            _ => x[j],
+            _ => *xj,
         }
     }
 }
@@ -40,7 +40,7 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
     let ch3;
     let fol;
     if species == "human" {
-        ch3 = vec![
+        ch3 = [
             ('-', "chr14:105600482-105600805"),
             ('-', "chr14:105840368-105840691"),
             ('-', "chr14:105854918-105855235"),
@@ -59,7 +59,7 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
             ("GGGGTG", "S"),
         ];
     } else {
-        ch3 = vec![
+        ch3 = [
             ('-', "chr12:113414273-113414593"),
             ('-', "chr12:113271711-113272031"),
             ('-', "chr12:113421370-113421686"),
@@ -95,13 +95,13 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
 
         // Traverse the boundaries.
 
-        for i in 0..ch3.len() {
+        for ch3i in ch3 {
             // Call samtools.
 
             let o = Command::new("samtools")
                 .arg("view")
                 .arg(&bam)
-                .arg(&ch3[i].1)
+                .arg(&ch3i.1)
                 .output()
                 .expect("failed to execute samtools");
 
@@ -114,11 +114,11 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
                 let cigar = fields[5];
                 let seq = fields[9];
                 let (mut barcode, mut umi) = (String::new(), String::new());
-                for j in 11..fields.len() {
-                    if fields[j].starts_with("CB:Z:") {
-                        barcode = fields[j].after("CB:Z:").to_string();
-                    } else if fields[j].starts_with("UB:Z:") {
-                        umi = fields[j].after("UB:Z:").to_string();
+                for fj in &fields[11..] {
+                    if fj.starts_with("CB:Z:") {
+                        barcode = fj.after("CB:Z:").to_string();
+                    } else if fj.starts_with("UB:Z:") {
+                        umi = fj.after("UB:Z:").to_string();
                     }
                 }
                 if barcode.is_empty() {
@@ -146,15 +146,15 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
 
                 let mut ref_pos = pos;
                 let mut read_pos = 1;
-                let low = ch3[i].1.after(":").before("-").force_usize();
-                let high = ch3[i].1.after("-").force_usize();
+                let low = ch3i.1.after(":").before("-").force_usize();
+                let high = ch3i.1.after("-").force_usize();
                 let mut ext = 0;
                 let mut ext_seq = Vec::<u8>::new();
-                for j in 0..cg.len() {
-                    let x = cg[j][cg[j].len() - 1];
-                    let n = strme(&cg[j][0..cg[j].len() - 1]).force_usize();
+                for cgj in cg {
+                    let x = cgj[cgj.len() - 1];
+                    let n = strme(&cgj[..cgj.len() - 1]).force_usize();
                     if x == b'M' {
-                        if ch3[i].0 == '-' {
+                        if ch3i.0 == '-' {
                             if read_pos > 1
                                 && ref_pos < high
                                 && ref_pos + n > low
@@ -192,9 +192,9 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
                 } else {
                     stringme(&ext_seq[0..9])
                 };
-                for j in 0..fol.len() {
-                    if strme(&ext_seq).starts_with(&fol[j].0) {
-                        class = fol[j].1.to_string();
+                for &fj in &fol {
+                    if strme(&ext_seq).starts_with(fj.0) {
+                        class = fj.1.to_string();
                     }
                 }
                 data.push((barcode, umi, class));
@@ -220,10 +220,10 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
                     l += 1;
                 }
                 let (mut s, mut m) = (0, 0);
-                for z in k..l {
-                    if data[z].2.starts_with('M') {
+                for dz in &data[k..l] {
+                    if dz.2.starts_with('M') {
                         m += 1;
-                    } else if data[z].2.starts_with('S') {
+                    } else if dz.2.starts_with('S') {
                         s += 1;
                     }
                 }

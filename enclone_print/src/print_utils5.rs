@@ -39,11 +39,22 @@ pub fn vars_and_shares(
 
     // Go through the columns.
 
-    for cx in 0..cols {
+    for (cx, ((mat, (&vid, &vpid)), (ref_diff, (seqss, seqss_amino)))) in rsi
+        .mat
+        .iter()
+        .zip(rsi.vids.iter().zip(rsi.vpids.iter()))
+        .zip(
+            ref_diff_pos
+                .iter_mut()
+                .zip(rsi.seqss.iter().zip(rsi.seqss_amino.iter())),
+        )
+        .take(cols)
+        .enumerate()
+    {
         // go through each column
         let (mut vref, mut jref) = (Vec::<u8>::new(), Vec::<u8>::new());
         let mut vseq2 = Vec::<u8>::new();
-        for (&exact, &m) in exacts.iter().zip(rsi.mat[cx].iter()) {
+        for (&exact, &m) in exacts.iter().zip(mat.iter()) {
             if let Some(m) = m {
                 // Reference assigned multiple times here, is wrong.
                 // Also where using allelized reference, need to explain.
@@ -51,18 +62,15 @@ pub fn vars_and_shares(
                 vref = exact_clonotypes[exact].share[m].vs.to_ascii_vec();
                 jref = exact_clonotypes[exact].share[m].js.to_ascii_vec();
             }
-            let vseq1 = refdata.refs[rsi.vids[cx]].to_ascii_vec();
-            if let Some(vpid) = rsi.vpids[cx] {
+            let vseq1 = refdata.refs[vid].to_ascii_vec();
+            if let Some(vpid) = vpid {
                 vseq2 = dref[vpid].nt_sequence.clone();
             } else {
                 vseq2 = vseq1;
             }
         }
 
-        for (&exact, (&m, ref_diff)) in exacts
-            .iter()
-            .zip(rsi.mat[cx].iter().zip(ref_diff_pos[cx].iter_mut()))
-        {
+        for (&exact, (&m, ref_diff)) in exacts.iter().zip(mat.iter().zip(ref_diff.iter_mut())) {
             if let Some(m) = m {
                 let seq = &exact_clonotypes[exact].share[m].seq_del_amino;
                 let n = seq.len();
@@ -77,17 +85,13 @@ pub fn vars_and_shares(
             }
         }
 
-        let n = rsi.seqss[cx]
-            .iter()
-            .map(std::vec::Vec::len)
-            .max()
-            .unwrap_or(0);
+        let n = seqss.iter().map(std::vec::Vec::len).max().unwrap_or(0);
         let (mut v, mut s) = (Vec::<usize>::new(), Vec::<usize>::new());
         let (mut v_amino, mut s_amino) = (Vec::<usize>::new(), Vec::<usize>::new());
         for p in 0..n {
             let mut bases = Vec::<u8>::new();
             let mut bases_amino = Vec::<u8>::new();
-            for (seqss, seqss_amino) in rsi.seqss[cx].iter().zip(rsi.seqss_amino[cx].iter()) {
+            for (seqss, seqss_amino) in seqss.iter().zip(seqss_amino.iter()) {
                 // ◼ Hideous workaround for the problem that a productive pair
                 // ◼ could have two contigs with identical CDR3_AA sequences.
                 // (but also because we now have some null seq entries?)
@@ -128,7 +132,7 @@ pub fn vars_and_shares(
         unique_sort(&mut va);
         let mut sa = s_amino.iter().map(|&x| x / 3).collect::<Vec<_>>();
         unique_sort(&mut sa);
-        for u in 0..nexacts {
+        for u in out_data.iter_mut().take(nexacts) {
             macro_rules! speakc {
                 ($u:expr, $col:expr, $var:expr, $val:expr) => {
                     if ctl.parseable_opt.pout.len() > 0
@@ -137,7 +141,7 @@ pub fn vars_and_shares(
                     {
                         let varc = format!("{}{}", $var, $col + 1);
                         if pass == 2 && (pcols_sort.is_empty() || bin_member(&pcols_sort, &varc)) {
-                            out_data[$u].insert(varc, $val);
+                            $u.insert(varc, $val);
                         }
                     }
                 };
@@ -401,8 +405,8 @@ pub fn build_diff_row(
                     row.push(v);
                 }
             }
-            for i in 0..row.len() {
-                row[i] = format!("[01m{}[0m", row[i]);
+            for r in row.iter_mut() {
+                *r = format!("[01m{}[0m", *r);
             }
         }
         rows.push(row);

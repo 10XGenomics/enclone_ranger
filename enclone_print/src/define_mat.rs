@@ -73,15 +73,15 @@ pub fn define_mat(
 
     let nexacts = exacts.len();
     let mut to_exacts = HashMap::<usize, usize>::new();
-    for u in 0..nexacts {
-        to_exacts.insert(exacts[u], u);
+    for (u, &x) in exacts.iter().enumerate() {
+        to_exacts.insert(x, u);
     }
 
     // Get the info indices corresponding to this clonotype.
 
     let mut infos = Vec::<usize>::new();
-    for i in 0..od.len() {
-        let x = od[i].2 as usize;
+    for i in od {
+        let x = i.2 as usize;
         if to_exacts.contains_key(&info[x].clonotype_index) {
             infos.push(x);
         }
@@ -91,8 +91,8 @@ pub fn define_mat(
     // Define map of exacts to infos.
 
     let mut to_infos = vec![Vec::<usize>::new(); nexacts];
-    for i in 0..infos.len() {
-        let u = to_exacts[&info[infos[i]].clonotype_index];
+    for &i in &infos {
+        let u = to_exacts[&info[i].clonotype_index];
         to_infos[u].push(i);
     }
 
@@ -213,11 +213,7 @@ pub fn define_mat(
     let mut i = 0;
     while i < rxi.len() {
         let j = next_diff12_3(&rxi, i as i32) as usize;
-        for k in i..j {
-            if k < i + MAX_USE {
-                rxir.push(rxi[k]);
-            }
-        }
+        rxir.extend(&rxi[i..j.min(i + MAX_USE)]);
         i = j;
     }
 
@@ -369,9 +365,9 @@ pub fn define_mat(
     chainsp.sort();
     let mut chainso = Vec::<(usize, usize)>::new();
     let mut chainsox = Vec::<(usize, usize, usize)>::new();
-    for i in 0..chainsp.len() {
-        chainso.push((chainsp[i].2, chainsp[i].3));
-        chainsox.push((chainsp[i].2, chainsp[i].3, i));
+    for (i, c) in chainsp.into_iter().enumerate() {
+        chainso.push((c.2, c.3));
+        chainsox.push((c.2, c.3, i));
     }
     chainsox.sort_unstable();
     for i in 0..r.len() {
@@ -385,11 +381,11 @@ pub fn define_mat(
     // to an index into the orbit reps for the chains.
 
     let mut rpos = HashMap::<(usize, usize), usize>::new();
-    for i in 0..chains.len() {
+    for (i, chain) in chains.into_iter().enumerate() {
         let c = e.class_id(i as i32);
         let f = chainsox[c as usize].2 as i32;
         let q = bin_position(&r, &f) as usize;
-        rpos.insert((chains[i].0, chains[i].1), q);
+        rpos.insert((chain.0, chain.1), q);
     }
 
     // Find the maximum multiplicity of each orbit, and the number of columns.
@@ -411,7 +407,7 @@ pub fn define_mat(
     // to the given column col of the clonotype, which may or may not be defined.
 
     let mut mat = vec![vec![None; nexacts]; cols];
-    for cx in 0..cols {
+    for (cx, cc) in mat.iter_mut().enumerate() {
         // for every column
         'exact: for u in 0..nexacts {
             // for every exact subclonotype
@@ -421,12 +417,10 @@ pub fn define_mat(
                 // for every chain in the exact subclonotype:
                 let q = rpos[&(u, m)];
                 let mut col = mm0[q];
-                for j in 0..q {
-                    col += mm[j];
-                }
+                col += mm.iter().take(q).sum::<usize>();
                 mm0[q] += 1;
                 if col == cx {
-                    mat[cx][u] = Some(m);
+                    cc[u] = Some(m);
                     continue 'exact;
                 }
             }

@@ -24,8 +24,7 @@ pub fn split_orbits(
     dref: &[DonorReferenceItem],
 ) {
     let mut orbits2 = Vec::<Vec<i32>>::new();
-    for i in 0..orbits.len() {
-        let o = orbits[i].clone();
+    for o in orbits.iter() {
         let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
         for id in o.iter() {
             let x: &CloneInfo = &info[*id as usize];
@@ -57,23 +56,23 @@ pub fn split_orbits(
         // Define map of indices into exacts.
 
         let nexacts = exacts.len();
-        let mut to_exacts = HashMap::<usize, usize>::new();
-        for u in 0..nexacts {
-            to_exacts.insert(exacts[u], u);
+        let mut to_exacts = HashMap::<usize, usize>::with_capacity(nexacts);
+        for (u, &e) in exacts.iter().enumerate() {
+            to_exacts.insert(e, u);
         }
 
         // Get the info indices corresponding to this clonotype.
 
         let mut infos = Vec::<usize>::new();
-        for i in 0..o.len() {
-            infos.push(o[i] as usize);
+        for &oi in o {
+            infos.push(oi as usize);
         }
 
         // Define map of exacts to infos.
 
         let mut to_infos = vec![Vec::<usize>::new(); nexacts];
-        for i in 0..infos.len() {
-            let u = to_exacts[&info[infos[i]].clonotype_index];
+        for (i, &infoi) in infos.iter().enumerate() {
+            let u = to_exacts[&info[infoi].clonotype_index];
             to_infos[u].push(i);
         }
 
@@ -96,22 +95,22 @@ pub fn split_orbits(
         // Determine which pairs of configurations share both chain types, and if so, call
         // them joined.
 
-        let mut matu = Vec::<Vec<Option<usize>>>::new();
+        let mut matu = Vec::<Vec<Option<usize>>>::with_capacity(nexacts);
         for u in 0..nexacts {
-            let mut m = Vec::<Option<usize>>::new();
-            for c in 0..cols {
-                m.push(mat[c][u]);
+            let mut m = Vec::<Option<usize>>::with_capacity(cols);
+            for mm in mat.iter().take(cols) {
+                m.push(mm[u]);
             }
             matu.push(m);
         }
         unique_sort(&mut matu);
         let mut eqm = vec![vec![false; matu.len()]; matu.len()];
-        for j1 in 0..matu.len() {
-            for j2 in 0..matu.len() {
+        for (mj1, eqm) in matu.iter().zip(eqm.iter_mut()) {
+            for (mj2, eqm) in matu.iter().zip(eqm.iter_mut()) {
                 let (mut l, mut r) = (false, false);
-                for m in 0..cols {
-                    if matu[j1][m].is_some() && matu[j2][m].is_some() {
-                        if left[m] {
+                for ((&mm1, &mm2), &ll) in mj1.iter().zip(mj2.iter()).zip(left.iter()).take(cols) {
+                    if mm1.is_some() && mm2.is_some() {
+                        if ll {
                             l = true;
                         } else {
                             r = true;
@@ -119,7 +118,7 @@ pub fn split_orbits(
                     }
                 }
                 if l && r {
-                    eqm[j1][j2] = true;
+                    *eqm = true;
                 }
             }
         }
@@ -129,20 +128,20 @@ pub fn split_orbits(
         let mut eqx = EquivRel::new(o.len() as i32);
         let mut lists = vec![Vec::<usize>::new(); matu.len()];
         for u in 0..nexacts {
-            let mut m = Vec::<Option<usize>>::new();
-            for c in 0..cols {
-                m.push(mat[c][u]);
+            let mut m = Vec::<Option<usize>>::with_capacity(cols);
+            for mat in mat.iter().take(cols) {
+                m.push(mat[u]);
             }
             lists[bin_position(&matu, &m) as usize].push(u);
         }
-        for j1 in 0..matu.len() {
-            for j2 in j1..matu.len() {
-                if eqm[j1][j2] {
-                    let u1 = lists[j1][0];
-                    for u2 in lists[j2].iter() {
-                        for i1 in to_infos[u1].iter() {
-                            for i2 in to_infos[*u2].iter() {
-                                eqx.join(*i1 as i32, *i2 as i32);
+        for (l1, eqm) in lists.iter().zip(eqm.into_iter()) {
+            for (l2, eqm) in lists.iter().zip(eqm.into_iter()) {
+                if eqm {
+                    let u1 = l1[0];
+                    for &u2 in l2.iter() {
+                        for &i1 in to_infos[u1].iter() {
+                            for &i2 in to_infos[u2].iter() {
+                                eqx.join(i1 as i32, i2 as i32);
                             }
                         }
                     }
@@ -154,31 +153,31 @@ pub fn split_orbits(
 
         // Join onesies where possible.  This should probably be more efficient.
 
-        for u1 in 0..nexacts {
-            let ex1 = &exact_clonotypes[exacts[u1]];
+        for (&e1, info1) in exacts.iter().zip(to_infos.iter()).take(nexacts) {
+            let ex1 = &exact_clonotypes[e1];
             if ex1.share.solo() {
                 let mut is = Vec::<usize>::new();
-                for u2 in 0..nexacts {
-                    let ex2 = &exact_clonotypes[exacts[u2]];
+                for (&e2, info2) in exacts.iter().take(nexacts).zip(to_infos.iter()) {
+                    let ex2 = &exact_clonotypes[e2];
                     if ex2.share.solo() {
                         if ex1.share[0].seq == ex2.share[0].seq {
-                            eqx.join(to_infos[u1][0] as i32, to_infos[u2][0] as i32);
+                            eqx.join(info1[0] as i32, info2[0] as i32);
                         }
                     } else {
                         for j in 0..ex2.share.len() {
                             if ex2.share[j].seq == ex1.share[0].seq {
-                                is.push(to_infos[u2][0]);
+                                is.push(info2[0]);
                             }
                         }
                     }
                 }
                 let mut rs = Vec::<usize>::new();
-                for j in 0..is.len() {
-                    rs.push(eqx.class_id(is[j] as i32) as usize);
+                for &ij in &is {
+                    rs.push(eqx.class_id(ij as i32) as usize);
                 }
                 unique_sort(&mut rs);
                 if rs.solo() {
-                    eqx.join(to_infos[u1][0] as i32, is[0] as i32);
+                    eqx.join(info1[0] as i32, is[0] as i32);
                 }
             }
         }
@@ -190,12 +189,12 @@ pub fn split_orbits(
         } else {
             let mut repsx = Vec::<i32>::new();
             eqx.orbit_reps(&mut repsx);
-            for j in 0..repsx.len() {
+            for r in repsx {
                 let mut ox = Vec::<i32>::new();
-                eqx.orbit(repsx[j], &mut ox);
+                eqx.orbit(r, &mut ox);
                 let mut o2 = Vec::<i32>::new();
-                for k in 0..ox.len() {
-                    o2.push(o[ox[k] as usize]);
+                for ko in ox {
+                    o2.push(o[ko as usize]);
                 }
                 orbits2.push(o2);
             }

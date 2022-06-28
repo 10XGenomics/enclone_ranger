@@ -3,6 +3,7 @@
 // Slurp in needed data from an h5 file.
 
 use hdf5::types::FixedAscii;
+use itertools::Itertools;
 
 pub fn slurp_h5(
     h5_path: &str,
@@ -25,9 +26,7 @@ pub fn slurp_h5(
     }
     let barcodes0 = barcodes0.unwrap();
 
-    for i in 0..barcodes0.len() {
-        barcodes.push(barcodes0[i].to_string());
-    }
+    barcodes.extend(barcodes0.into_iter().map_into());
 
     // Read features from the h5 file.
 

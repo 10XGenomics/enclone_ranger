@@ -18,7 +18,7 @@ use vector_utils::{bin_member, bin_position, unique_sort};
 pub fn proc_lvar_auto(
     i: usize,
     pass: usize,
-    var: &String,
+    var: &str,
     exacts: &[usize],
     exact_clonotypes: &[ExactClonotype],
     u: usize,
@@ -30,7 +30,7 @@ pub fn proc_lvar_auto(
     stats: &mut Vec<(String, Vec<String>)>,
     lvars: &[String],
     row: &mut Vec<String>,
-    fate: &[HashMap<String, String>],
+    fate: &[HashMap<String, &str>],
     dref: &[DonorReferenceItem],
     varmat: &[Vec<Vec<u8>>],
     fp: &[Vec<usize>],
@@ -46,19 +46,14 @@ pub fn proc_lvar_auto(
     d_readers: &[Option<Reader>],
     ind_readers: &[Option<Reader>],
     h5_data: &[(usize, Vec<u32>, Vec<u32>)],
-    alt_bcs: &[String],
+    alt_bcs: &[&str],
 ) -> Result<bool, String> {
     let clonotype_id = exacts[u];
     let ex = &exact_clonotypes[clonotype_id];
     let mat = &rsi.mat;
     let cols = varmat[0].len();
     let verbose = ctl.gen_opt.row_fill_verbose;
-    let mut vname = var.clone();
-    let mut abbr = var.clone();
-    if var.contains(':') {
-        abbr = var.before(":").to_string();
-        vname = var.after(":").to_string();
-    }
+    let (abbr, vname) = var.split_once(':').unwrap_or((var, var));
 
     macro_rules! speak {
         ($u:expr, $var:expr, $val:expr) => {
@@ -77,24 +72,26 @@ pub fn proc_lvar_auto(
     }
 
     let val = if false {
-        (String::new(), Vec::<String>::new(), String::new())
-    } else if bin_member(alt_bcs, var) {
+        (String::new(), Vec::<String>::new(), "")
+    } else if bin_member(alt_bcs, &var) {
         let mut r = Vec::<String>::new();
-        for l in 0..ex.clones.len() {
-            let li = ex.clones[l][0].dataset_index;
-            let bc = ex.clones[l][0].barcode.clone();
+        for clone in &ex.clones {
+            let li = clone[0].dataset_index;
+            let bc = clone[0].barcode.clone();
             let mut val = String::new();
             let alt = &ctl.origin_info.alt_bc_fields[li];
-            for j in 0..alt.len() {
-                if alt[j].0 == *var && alt[j].1.contains_key(&bc.clone()) {
-                    val = alt[j].1[&bc.clone()].clone();
+            for aj in alt {
+                if aj.0 == *var {
+                    if let Some(v) = aj.1.get(&bc) {
+                        val = v.clone();
+                    }
                 }
             }
             r.push(val);
         }
 
-        (String::new(), r, "cell".to_string())
-    } else if bin_member(&ctl.gen_opt.info_fields, var) {
+        (String::new(), r, "cell")
+    } else if bin_member(&ctl.gen_opt.info_fields, &var.to_string()) {
         let mut val = String::new();
         for q in 0..ctl.gen_opt.info_fields.len() {
             if *var == ctl.gen_opt.info_fields[q]
@@ -119,14 +116,14 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (val, Vec::new(), "exact".to_string())
+        (val, Vec::new(), "exact")
     } else if vname == "clonotype_ncells" {
         let mut n = 0;
         for u in exacts.iter() {
             n += exact_clonotypes[*u].ncells();
         }
 
-        (format!("{}", n), Vec::new(), "clono".to_string())
+        (format!("{}", n), Vec::new(), "clono")
     } else if vname == "clust" {
         let mut clust = Vec::<usize>::new();
         for j in 0..ex.clones.len() {
@@ -144,7 +141,7 @@ pub fn proc_lvar_auto(
         }
         clust.sort_unstable();
 
-        (abbrev_list(&clust), clustf, "cell-exect".to_string())
+        (abbrev_list(&clust), clustf, "cell-exect")
     } else if vname.starts_with("count_")
         && vname.after("count_").ends_with("")
         && !vname.between2("count_", "").contains('_')
@@ -160,7 +157,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", n),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_")
         && vname.after("count_").ends_with("_cell")
@@ -178,7 +175,7 @@ pub fn proc_lvar_auto(
         (
             String::new(),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_cdr_")
         && vname.after("count_cdr_").ends_with("")
@@ -213,7 +210,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", n),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_cdr_")
         && vname.after("count_cdr_").ends_with("_cell")
@@ -249,7 +246,7 @@ pub fn proc_lvar_auto(
         (
             String::new(),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_cdr")
         && vname.ends_with("")
@@ -297,7 +294,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", n),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_cdr")
         && vname.ends_with("_cell")
@@ -349,7 +346,7 @@ pub fn proc_lvar_auto(
         (
             String::new(),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_fwr_")
         && vname.after("count_fwr_").ends_with("")
@@ -391,7 +388,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", n),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_fwr_")
         && vname.after("count_fwr_").ends_with("_cell")
@@ -434,7 +431,7 @@ pub fn proc_lvar_auto(
         (
             String::new(),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_fwr")
         && vname.ends_with("")
@@ -492,7 +489,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", n),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname.starts_with("count_fwr")
         && vname.ends_with("_cell")
@@ -554,7 +551,7 @@ pub fn proc_lvar_auto(
         (
             String::new(),
             vec![format!("{}", n); ex.ncells()],
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname == "cred" {
         let mut credsx = Vec::<f64>::new();
@@ -563,19 +560,20 @@ pub fn proc_lvar_auto(
             let li = ex.clones[l][0].dataset_index;
             if gex_info.pca[li].contains_key(&bc.clone()) {
                 let mut creds = 0;
-                let mut z = Vec::<(f64, String)>::new();
+                let mut z = Vec::<(f64, &str)>::new();
                 let x = &gex_info.pca[li][&bc.clone()];
                 for y in gex_info.pca[li].iter() {
-                    let mut dist2 = 0.0;
-                    for m in 0..x.len() {
-                        dist2 += (y.1[m] - x[m]) * (y.1[m] - x[m]);
-                    }
-                    z.push((dist2, y.0.clone()));
+                    let dist2 =
+                        y.1.iter()
+                            .zip(x.iter())
+                            .map(|(&y, &x)| (y - x) * (y - x))
+                            .sum::<f64>();
+                    z.push((dist2, y.0.as_str()));
                 }
                 z.sort_by(|a, b| a.partial_cmp(b).unwrap());
                 let top = n_vdj_gex[li];
-                for i in 0..top {
-                    if bin_member(&vdj_cells[li], &z[i].1) {
+                for &zi in &z[..top] {
+                    if bin_member(&vdj_cells[li], &zi.1.to_string()) {
                         creds += 1;
                     }
                 }
@@ -587,16 +585,12 @@ pub fn proc_lvar_auto(
         }
         let credsx_unsorted = credsx.clone();
         credsx.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let mut r = Vec::<String>::new();
-        for j in 0..credsx_unsorted.len() {
-            r.push(format!("{:.1}", credsx_unsorted[j]));
-        }
+        let r = credsx_unsorted
+            .into_iter()
+            .map(|c| format!("{:.1}", c))
+            .collect();
 
-        (
-            format!("{:.1}", median_f64(&credsx)),
-            r,
-            "cell-exact".to_string(),
-        )
+        (format!("{:.1}", median_f64(&credsx)), r, "cell-exact")
     } else if vname == "cred_cell" {
         let mut credsx = Vec::<f64>::new();
         for l in 0..ex.clones.len() {
@@ -604,19 +598,20 @@ pub fn proc_lvar_auto(
             let li = ex.clones[l][0].dataset_index;
             if gex_info.pca[li].contains_key(&bc.clone()) {
                 let mut creds = 0;
-                let mut z = Vec::<(f64, String)>::new();
+                let mut z = Vec::<(f64, &str)>::new();
                 let x = &gex_info.pca[li][&bc.clone()];
                 for y in gex_info.pca[li].iter() {
-                    let mut dist2 = 0.0;
-                    for m in 0..x.len() {
-                        dist2 += (y.1[m] - x[m]) * (y.1[m] - x[m]);
-                    }
-                    z.push((dist2, y.0.clone()));
+                    let dist2 =
+                        y.1.iter()
+                            .zip(x.iter())
+                            .map(|(&y, &x)| (y - x) * (y - x))
+                            .sum::<f64>();
+                    z.push((dist2, y.0.as_str()));
                 }
                 z.sort_by(|a, b| a.partial_cmp(b).unwrap());
                 let top = n_vdj_gex[li];
-                for i in 0..top {
-                    if bin_member(&vdj_cells[li], &z[i].1) {
+                for &zi in &z[..top] {
+                    if bin_member(&vdj_cells[li], &zi.1.to_string()) {
                         creds += 1;
                     }
                 }
@@ -628,13 +623,13 @@ pub fn proc_lvar_auto(
         }
         let credsx_unsorted = credsx.clone();
         credsx.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let mut r = Vec::<String>::new();
-        for j in 0..credsx_unsorted.len() {
-            r.push(format!("{:.1}", credsx_unsorted[j]));
-        }
+        let r = credsx_unsorted
+            .into_iter()
+            .map(|c| format!("{:.1}", c))
+            .collect();
 
         let _exact = format!("{:.1}", median_f64(&credsx));
-        (String::new(), r, "cell-exact".to_string())
+        (String::new(), r, "cell-exact")
     } else if vname == "datasets" {
         let mut datasets = Vec::<String>::new();
         for j in 0..ex.clones.len() {
@@ -646,7 +641,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", datasets_unique.iter().format(",")),
             datasets,
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname == "datasets_cell" {
         let mut datasets = Vec::<String>::new();
@@ -657,7 +652,7 @@ pub fn proc_lvar_auto(
         unique_sort(&mut datasets_unique);
 
         let _exact = format!("{}", datasets_unique.iter().format(","));
-        (String::new(), datasets, "cell-exact".to_string())
+        (String::new(), datasets, "cell-exact")
     } else if vname == "donors" {
         let mut donors = Vec::<String>::new();
         for j in 0..ex.clones.len() {
@@ -674,7 +669,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", donors.iter().format(",")),
             donors_unsorted,
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname == "donors_cell" {
         let mut donors = Vec::<String>::new();
@@ -690,7 +685,7 @@ pub fn proc_lvar_auto(
         unique_sort(&mut donors);
 
         let _exact = format!("{}", donors.iter().format(","));
-        (String::new(), donors_unsorted, "cell-exact".to_string())
+        (String::new(), donors_unsorted, "cell-exact")
     } else if vname == "dref" {
         let mut diffs = 0;
         for m in 0..cols {
@@ -717,7 +712,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", diffs), Vec::new(), "exact".to_string())
+        (format!("{}", diffs), Vec::new(), "exact")
     } else if vname == "dref_aa" {
         let mut diffs = 0;
         for m in 0..cols {
@@ -752,7 +747,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", diffs), Vec::new(), "exact".to_string())
+        (format!("{}", diffs), Vec::new(), "exact")
     } else if vname == "dref_max" {
         let mut mx = 0;
         for m in 0..cols {
@@ -781,7 +776,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", mx), Vec::new(), "exact".to_string())
+        (format!("{}", mx), Vec::new(), "exact")
     } else if vname == "entropy" {
         let mut total_counts = Vec::<usize>::new();
         for l in 0..ex.clones.len() {
@@ -793,9 +788,7 @@ pub fn proc_lvar_auto(
                     let mut raw_count = 0;
                     if gex_info.gex_matrices[li].initialized() {
                         let row = gex_info.gex_matrices[li].row(p as usize);
-                        for j in 0..row.len() {
-                            let f = row[j].0;
-                            let n = row[j].1;
+                        for (f, n) in row {
                             if gex_info.is_gex[li][f] {
                                 raw_count += n;
                             }
@@ -833,20 +826,18 @@ pub fn proc_lvar_auto(
             }
         }
         let mut entropies = Vec::<f64>::new();
-        for l in 0..ex.clones.len() {
-            let li = ex.clones[l][0].dataset_index;
-            let bc = ex.clones[l][0].barcode.clone();
+        for (clone, tc) in ex.clones.iter().zip(total_counts.into_iter()) {
+            let li = clone[0].dataset_index;
+            let bc = clone[0].barcode.as_str();
             if !gex_info.gex_barcodes.is_empty() {
                 let mut entropy = 0.0;
-                let p = bin_position(&gex_info.gex_barcodes[li], &bc);
+                let p = bin_position(&gex_info.gex_barcodes[li], &bc.to_string());
                 if p >= 0 {
                     if gex_info.gex_matrices[li].initialized() {
                         let row = gex_info.gex_matrices[li].row(p as usize);
-                        for j in 0..row.len() {
-                            let f = row[j].0;
-                            let n = row[j].1;
+                        for (f, n) in row {
                             if gex_info.is_gex[li][f] {
-                                let q = n as f64 / total_counts[l] as f64;
+                                let q = n as f64 / tc as f64;
                                 entropy -= q * q.log2();
                             }
                         }
@@ -875,7 +866,7 @@ pub fn proc_lvar_auto(
                         for j in 0..d.len() {
                             if gex_info.is_gex[li][ind[j] as usize] {
                                 let n = d[j] as usize;
-                                let q = n as f64 / total_counts[l] as f64;
+                                let q = n as f64 / tc as f64;
                                 entropy -= q * q.log2();
                             }
                         }
@@ -895,7 +886,7 @@ pub fn proc_lvar_auto(
             e.push(format!("{:.2}", x));
         }
 
-        (format!("{:.2}", entropy), e, "cell-exact".to_string())
+        (format!("{:.2}", entropy), e, "cell-exact")
     } else if vname == "entropy_cell" {
         let mut total_counts = Vec::<usize>::new();
         for l in 0..ex.clones.len() {
@@ -907,9 +898,7 @@ pub fn proc_lvar_auto(
                     let mut raw_count = 0;
                     if gex_info.gex_matrices[li].initialized() {
                         let row = gex_info.gex_matrices[li].row(p as usize);
-                        for j in 0..row.len() {
-                            let f = row[j].0;
-                            let n = row[j].1;
+                        for (f, n) in row {
                             if gex_info.is_gex[li][f] {
                                 raw_count += n;
                             }
@@ -947,20 +936,18 @@ pub fn proc_lvar_auto(
             }
         }
         let mut entropies = Vec::<f64>::new();
-        for l in 0..ex.clones.len() {
-            let li = ex.clones[l][0].dataset_index;
-            let bc = ex.clones[l][0].barcode.clone();
+        for (clone, &tc) in ex.clones.iter().zip(total_counts.iter()) {
+            let li = clone[0].dataset_index;
+            let bc = clone[0].barcode.as_str();
             if !gex_info.gex_barcodes.is_empty() {
                 let mut entropy = 0.0;
-                let p = bin_position(&gex_info.gex_barcodes[li], &bc);
+                let p = bin_position(&gex_info.gex_barcodes[li], &bc.to_string());
                 if p >= 0 {
                     if gex_info.gex_matrices[li].initialized() {
                         let row = gex_info.gex_matrices[li].row(p as usize);
-                        for j in 0..row.len() {
-                            let f = row[j].0;
-                            let n = row[j].1;
+                        for (f, n) in row {
                             if gex_info.is_gex[li][f] {
-                                let q = n as f64 / total_counts[l] as f64;
+                                let q = n as f64 / tc as f64;
                                 entropy -= q * q.log2();
                             }
                         }
@@ -989,7 +976,7 @@ pub fn proc_lvar_auto(
                         for j in 0..d.len() {
                             if gex_info.is_gex[li][ind[j] as usize] {
                                 let n = d[j] as usize;
-                                let q = n as f64 / total_counts[l] as f64;
+                                let q = n as f64 / tc as f64;
                                 entropy -= q * q.log2();
                             }
                         }
@@ -1010,7 +997,7 @@ pub fn proc_lvar_auto(
         }
 
         let _exact = format!("{:.2}", entropy);
-        (String::new(), e, "cell-exact".to_string())
+        (String::new(), e, "cell-exact")
     } else if vname == "far" {
         let mut dist = -1_isize;
         for i2 in 0..varmat.len() {
@@ -1033,7 +1020,7 @@ pub fn proc_lvar_auto(
             format!("{}", dist)
         };
 
-        (d, Vec::new(), "exact".to_string())
+        (d, Vec::new(), "exact")
     } else if vname.starts_with("fb")
         && vname.ends_with("")
         && vname.between2("fb", "").parse::<i64>().is_ok()
@@ -1048,7 +1035,7 @@ pub fn proc_lvar_auto(
             String::new()
         };
 
-        ((*fb).to_string(), Vec::new(), "exact".to_string())
+        ((*fb).to_string(), Vec::new(), "exact")
     } else if vname.starts_with("fb")
         && vname.ends_with("_n")
         && vname.between2("fb", "_n").parse::<i64>().is_ok()
@@ -1081,7 +1068,7 @@ pub fn proc_lvar_auto(
             median = rounded_median(&counts_sorted);
         }
 
-        (format!("{}", median), counts, "cell-exact".to_string())
+        (format!("{}", median), counts, "cell-exact")
     } else if vname.starts_with("fb")
         && vname.ends_with("_n_cell")
         && vname.between2("fb", "_n_cell").parse::<i64>().is_ok()
@@ -1115,21 +1102,21 @@ pub fn proc_lvar_auto(
         }
 
         let _exact = format!("{}", median);
-        (String::new(), counts, "cell-exact".to_string())
+        (String::new(), counts, "cell-exact")
     } else if vname == "filter" {
         let mut fates = Vec::<String>::new();
         for j in 0..ex.clones.len() {
-            let mut f = String::new();
+            let mut f = "";
             let bc = &ex.clones[j][0].barcode;
             let li = ex.clones[j][0].dataset_index;
             if fate[li].contains_key(&bc.clone()) {
-                f = fate[li][&bc.clone()].clone();
-                f = f.between(" ", " ").to_string();
+                f = fate[li][bc];
+                f = f.between(" ", " ");
             }
-            fates.push(f);
+            fates.push(f.to_string());
         }
 
-        (String::new(), fates, "cell".to_string())
+        (String::new(), fates, "cell")
     } else if vname == "gex" {
         let mut f = Vec::<String>::new();
         for x in gex_fcounts_unsorted.iter() {
@@ -1139,7 +1126,7 @@ pub fn proc_lvar_auto(
         counts.sort_unstable();
         let gex_median = rounded_median(&counts);
 
-        (format!("{}", gex_median), f, "cell-exact".to_string())
+        (format!("{}", gex_median), f, "cell-exact")
     } else if vname == "gex_cell" {
         let mut f = Vec::<String>::new();
         for x in gex_fcounts_unsorted.iter() {
@@ -1150,12 +1137,12 @@ pub fn proc_lvar_auto(
         let gex_median = rounded_median(&counts);
 
         let _exact = format!("{}", gex_median);
-        (String::new(), f, "cell-exact".to_string())
+        (String::new(), f, "cell-exact")
     } else if vname == "gex_max" {
         (
             format!("{}", gex_counts_unsorted.iter().max().unwrap()),
             Vec::new(),
-            "exact".to_string(),
+            "exact",
         )
     } else if vname == "gex_mean" {
         let gex_sum = gex_fcounts_unsorted.iter().sum::<f64>();
@@ -1164,22 +1151,18 @@ pub fn proc_lvar_auto(
         (
             format!("{}", gex_mean.round() as usize),
             Vec::new(),
-            "exact".to_string(),
+            "exact",
         )
     } else if vname == "gex_min" {
         (
             format!("{}", gex_counts_unsorted.iter().min().unwrap()),
             Vec::new(),
-            "exact".to_string(),
+            "exact",
         )
     } else if vname == "gex_sum" || vname == "gex_Σ" {
         let gex_sum = gex_fcounts_unsorted.iter().sum::<f64>();
 
-        (
-            format!("{}", gex_sum.round() as usize),
-            Vec::new(),
-            "exact".to_string(),
-        )
+        (format!("{}", gex_sum.round() as usize), Vec::new(), "exact")
     } else if vname == "gex_μ" {
         let gex_sum = gex_fcounts_unsorted.iter().sum::<f64>();
         let gex_mean = gex_sum / gex_fcounts_unsorted.len() as f64;
@@ -1187,7 +1170,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", gex_mean.round() as usize),
             Vec::new(),
-            "exact".to_string(),
+            "exact",
         )
     } else if vname.starts_with('g')
         && vname.ends_with("")
@@ -1202,7 +1185,7 @@ pub fn proc_lvar_auto(
             String::new()
         };
 
-        (answer, Vec::new(), "exact".to_string())
+        (answer, Vec::new(), "exact")
     } else if vname == "hcomp" {
         let mut hcomp = String::new();
         if ex.share.len() == 2 {
@@ -1213,7 +1196,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (hcomp, Vec::new(), "exact".to_string())
+        (hcomp, Vec::new(), "exact")
     } else if vname == "inkt" {
         let mut s = String::new();
         let alpha_g = ex.share[0].inkt_alpha_chain_gene_match;
@@ -1239,7 +1222,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (s, Vec::new(), "exact".to_string())
+        (s, Vec::new(), "exact")
     } else if vname == "jun_ins" {
         let mut jun_ins = String::new();
         if ex.share.len() == 2 {
@@ -1250,7 +1233,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (jun_ins, Vec::new(), "exact".to_string())
+        (jun_ins, Vec::new(), "exact")
     } else if vname == "jun_mat" {
         let mut jun_mat = String::new();
         if ex.share.len() == 2 {
@@ -1261,7 +1244,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (jun_mat, Vec::new(), "exact".to_string())
+        (jun_mat, Vec::new(), "exact")
     } else if vname == "jun_sub" {
         let mut jun_mis = String::new();
         if ex.share.len() == 2 {
@@ -1272,7 +1255,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (jun_mis, Vec::new(), "exact".to_string())
+        (jun_mis, Vec::new(), "exact")
     } else if vname == "mait" {
         let mut s = String::new();
         let alpha_g = ex.share[0].mait_alpha_chain_gene_match;
@@ -1298,7 +1281,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (s, Vec::new(), "exact".to_string())
+        (s, Vec::new(), "exact")
     } else if vname == "mark" {
         let mut n = 0;
         for j in 0..ex.clones.len() {
@@ -1307,7 +1290,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", n), Vec::new(), "exact".to_string())
+        (format!("{}", n), Vec::new(), "exact")
     } else if vname == "mem" {
         let mut n = 0;
         let mut y = Vec::<String>::new();
@@ -1324,7 +1307,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", n), y, "cell-exact".to_string())
+        (format!("{}", n), y, "cell-exact")
     } else if vname == "mem_cell" {
         let mut n = 0;
         let mut y = Vec::<String>::new();
@@ -1342,16 +1325,16 @@ pub fn proc_lvar_auto(
         }
 
         let _exact = format!("{}", n);
-        (String::new(), y, "cell-exact".to_string())
+        (String::new(), y, "cell-exact")
     } else if vname == "n" {
         let counts = vec!["1.0".to_string(); mults[u]];
 
-        (format!("{}", mults[u]), counts, "cell-exact".to_string())
+        (format!("{}", mults[u]), counts, "cell-exact")
     } else if vname == "n_cell" {
         let counts = vec!["1.0".to_string(); mults[u]];
 
         let _exact = format!("{}", mults[u]);
-        (String::new(), counts, "cell-exact".to_string())
+        (String::new(), counts, "cell-exact")
     } else if vname.starts_with("n_")
         && vname.after("n_").ends_with("")
         && (bin_member(
@@ -1385,7 +1368,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", count), counts, "cell-exact".to_string())
+        (format!("{}", count), counts, "cell-exact")
     } else if vname.starts_with("n_")
         && vname.after("n_").ends_with("_cell")
         && (bin_member(
@@ -1420,7 +1403,7 @@ pub fn proc_lvar_auto(
         }
 
         let _exact = format!("{}", count);
-        (String::new(), counts, "cell-exact".to_string())
+        (String::new(), counts, "cell-exact")
     } else if vname == "n_b" {
         let mut n_b = 0;
         let mut ns = Vec::<String>::new();
@@ -1437,7 +1420,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", n_b), ns, "cell-exact".to_string())
+        (format!("{}", n_b), ns, "cell-exact")
     } else if vname == "n_b_cell" {
         let mut n_b = 0;
         let mut ns = Vec::<String>::new();
@@ -1455,7 +1438,7 @@ pub fn proc_lvar_auto(
         }
 
         let _exact = format!("{}", n_b);
-        (String::new(), ns, "cell-exact".to_string())
+        (String::new(), ns, "cell-exact")
     } else if vname == "n_gex" {
         let mut n = Vec::<String>::new();
         let mut n_gex = 0;
@@ -1464,7 +1447,7 @@ pub fn proc_lvar_auto(
             n_gex += *x;
         }
 
-        (format!("{}", n_gex), n, "cell-exact".to_string())
+        (format!("{}", n_gex), n, "cell-exact")
     } else if vname == "n_gex_cell" {
         let mut n = Vec::<String>::new();
         let mut n_gex = 0;
@@ -1474,19 +1457,14 @@ pub fn proc_lvar_auto(
         }
 
         let _exact = format!("{}", n_gex);
-        (String::new(), n, "cell-exact".to_string())
+        (String::new(), n, "cell-exact")
     } else if vname == "n_other" {
         let mut n = 0;
         let mut ns = Vec::<String>::new();
         for j in 0..ex.clones.len() {
-            let mut found = false;
             let di = ex.clones[j][0].dataset_index;
             let f = format!("n_{}", ctl.origin_info.dataset_id[di]);
-            for i in 0..nd_fields.len() {
-                if f == nd_fields[i] {
-                    found = true;
-                }
-            }
+            let found = nd_fields.iter().any(|ff| *ff == f);
             if !found {
                 n += 1;
                 ns.push("1.0".to_string());
@@ -1495,19 +1473,14 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", n), ns, "cell-exact".to_string())
+        (format!("{}", n), ns, "cell-exact")
     } else if vname == "n_other_cell" {
         let mut n = 0;
         let mut ns = Vec::<String>::new();
         for j in 0..ex.clones.len() {
-            let mut found = false;
             let di = ex.clones[j][0].dataset_index;
             let f = format!("n_{}", ctl.origin_info.dataset_id[di]);
-            for i in 0..nd_fields.len() {
-                if f == nd_fields[i] {
-                    found = true;
-                }
-            }
+            let found = nd_fields.iter().any(|ff| *ff == f);
             if !found {
                 n += 1;
                 ns.push("1.0".to_string());
@@ -1517,39 +1490,35 @@ pub fn proc_lvar_auto(
         }
 
         let _exact = format!("{}", n);
-        (String::new(), ns, "cell-exact".to_string())
+        (String::new(), ns, "cell-exact")
     } else if vname == "nbc" {
         let mut nbc = Vec::<String>::new();
         for j in 0..ex.clones.len() {
             let bc = ex.clones[j][0].barcode.before("-").as_bytes();
             let mut n = 0_u64;
-            for k in 0..bc.len() {
+            for (k, &b) in bc.iter().enumerate() {
                 if k > 0 {
                     n *= 4;
                 }
-                if bc[k] == b'C' {
+                if b == b'C' {
                     n += 1;
-                } else if bc[k] == b'G' {
+                } else if b == b'G' {
                     n += 2;
-                } else if bc[k] == b'T' {
+                } else if b == b'T' {
                     n += 3;
                 }
             }
             nbc.push(format!("{:010}", n));
         }
 
-        (String::new(), nbc, "cell".to_string())
+        (String::new(), nbc, "cell")
     } else if vname == "nchains" {
-        (
-            format!("{}", rsi.mat.len()),
-            Vec::new(),
-            "clono".to_string(),
-        )
+        (format!("{}", rsi.mat.len()), Vec::new(), "clono")
     } else if vname == "nchains_present" {
         (
             format!("{}", exact_clonotypes[exacts[u]].share.len()),
             Vec::new(),
-            "exact".to_string(),
+            "exact",
         )
     } else if vname == "near" {
         let mut dist = 1_000_000;
@@ -1573,9 +1542,9 @@ pub fn proc_lvar_auto(
             format!("{}", dist)
         };
 
-        (near, Vec::new(), "exact".to_string())
+        (near, Vec::new(), "exact")
     } else if vname == "npe" {
-        (String::new(), Vec::new(), "cell".to_string())
+        (String::new(), Vec::new(), "cell")
     } else if vname == "origins" {
         let mut origins = Vec::<String>::new();
         for j in 0..ex.clones.len() {
@@ -1593,7 +1562,7 @@ pub fn proc_lvar_auto(
         (
             format!("{}", origins.iter().format(",")),
             origins_unsorted,
-            "cell-exact".to_string(),
+            "cell-exact",
         )
     } else if vname == "origins_cell" {
         let mut origins = Vec::<String>::new();
@@ -1610,9 +1579,9 @@ pub fn proc_lvar_auto(
         unique_sort(&mut origins);
 
         let _exact = format!("{}", origins.iter().format(","));
-        (String::new(), origins_unsorted, "cell-exact".to_string())
+        (String::new(), origins_unsorted, "cell-exact")
     } else if vname == "pe" || vname == "ppe" {
-        (String::new(), Vec::new(), "cell".to_string())
+        (String::new(), Vec::new(), "cell")
     } else if vname == "sec" {
         let mut n = 0;
         let mut y = Vec::<String>::new();
@@ -1629,7 +1598,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", n), y, "cell-exact".to_string())
+        (format!("{}", n), y, "cell-exact")
     } else if vname == "sec_cell" {
         let mut n = 0;
         let mut y = Vec::<String>::new();
@@ -1647,7 +1616,7 @@ pub fn proc_lvar_auto(
         }
 
         let _exact = format!("{}", n);
-        (String::new(), y, "cell-exact".to_string())
+        (String::new(), y, "cell-exact")
     } else if vname == "type" {
         let mut cell_types = Vec::<String>::new();
         /*
@@ -1663,18 +1632,14 @@ pub fn proc_lvar_auto(
         */
         cell_types.sort();
 
-        (abbrev_list(&cell_types), Vec::new(), "exact".to_string())
+        (abbrev_list(&cell_types), Vec::new(), "exact")
     } else {
-        (
-            "$UNDEFINED".to_string(),
-            Vec::<String>::new(),
-            String::new(),
-        )
+        ("$UNDEFINED".to_string(), Vec::<String>::new(), "")
     };
     if val.0 == "$UNDEFINED" {
         Ok(false)
     } else {
-        let (exact, cell, level) = &val;
+        let (exact, cell, level) = val;
         if level == "cell" && !var.ends_with("_cell") {
             if verbose {
                 eprint!("lvar {} ==> {}; ", var, String::new());
@@ -1702,15 +1667,15 @@ pub fn proc_lvar_auto(
                 speak!(u, abbr, exact.to_string());
             }
             if cell.is_empty() {
-                stats.push((abbr, vec![exact.to_string(); ex.ncells()]));
+                stats.push((abbr.to_string(), vec![exact; ex.ncells()]));
             } else {
-                stats.push((abbr, cell.to_vec()));
+                stats.push((abbr.to_string(), cell.to_vec()));
             }
         } else if !cell.is_empty() {
             if pass == 2 {
                 speak!(u, abbr, format!("{}", cell.iter().format(POUT_SEP)));
             }
-            stats.push((abbr, cell.to_vec()));
+            stats.push((abbr.to_string(), cell.to_vec()));
         }
         Ok(true)
     }

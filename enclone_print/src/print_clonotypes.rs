@@ -69,7 +69,7 @@ pub fn print_clonotypes(
     out_datas: &mut Vec<Vec<HashMap<String, String>>>,
     tests: &mut Vec<usize>,
     controls: &mut Vec<usize>,
-    fate: &mut [HashMap<String, String>],
+    fate: &mut [HashMap<String, &str>],
     allele_data: &AlleleData,
 ) -> Result<(), String> {
     let lvars = &ctl.clono_print_opt.lvars;
@@ -80,38 +80,33 @@ pub fn print_clonotypes(
 
     // Determine if any lvars need gex info.
 
-    let mut need_gex = false;
-    {
-        let mut all_lvars = lvars.clone();
-        if ctl.parseable_opt.pout.is_empty() {
-        } else if ctl.parseable_opt.pcols.is_empty() {
-            for i in 0..LVARS_ALLOWED.len() {
-                all_lvars.push(LVARS_ALLOWED[i].to_string());
+    let need_gex = {
+        lvars.iter().map(String::as_str).any(involves_gex_fb)
+            || {
+                if ctl.parseable_opt.pout.is_empty() {
+                    false
+                } else if ctl.parseable_opt.pcols.is_empty() {
+                    LVARS_ALLOWED.into_iter().any(involves_gex_fb)
+                } else {
+                    ctl.parseable_opt
+                        .pcols
+                        .iter()
+                        .map(String::as_str)
+                        .any(involves_gex_fb)
+                }
             }
-        } else {
-            for i in 0..ctl.parseable_opt.pcols.len() {
-                all_lvars.push(ctl.parseable_opt.pcols[i].to_string());
-            }
-        }
-        for x in extra_args.iter() {
-            all_lvars.push(x.clone());
-        }
-        for x in all_lvars.iter() {
-            if involves_gex_fb(&*x) {
-                need_gex = true;
-            }
-        }
-    }
+            || extra_args.iter().map(String::as_str).any(involves_gex_fb)
+    };
 
     // Define parseable output columns.  The entire machinery for parseable output is controlled
     // by macros that begin with "speak".
 
-    let mut parseable_fields = Vec::<String>::new();
     let mut max_chains = 4;
     // This seems like a bug, since rsi is uninitialized upon entry to print_clonotypes.
-    for i in 0..rsi.len() {
-        max_chains = max(max_chains, rsi[i].mat.len());
+    for r in rsi.iter() {
+        max_chains = max(max_chains, r.mat.len());
     }
+    let mut parseable_fields = Vec::<String>::new();
     set_speakers(ctl, &mut parseable_fields, max_chains);
     let pcols_sort = &ctl.parseable_opt.pcols_sort;
 
@@ -122,23 +117,21 @@ pub fn print_clonotypes(
     // Compute all_vars.
 
     let rsi_vars = &ctl.clono_print_opt.cvars;
-    let mut all_vars = rsi_vars.clone();
-    for j in 0..CVARS_ALLOWED.len() {
-        let var = &CVARS_ALLOWED[j];
+    let mut all_vars = rsi_vars.iter().map(String::as_str).collect::<Vec<_>>();
+    for var in CVARS_ALLOWED {
         if !rsi_vars.contains(&var.to_string()) {
-            all_vars.push(var.to_string());
+            all_vars.push(var);
         }
     }
-    for j in 0..CVARS_ALLOWED_PCELL.len() {
-        let var = &CVARS_ALLOWED_PCELL[j];
+    for var in CVARS_ALLOWED_PCELL {
         if !rsi_vars.contains(&var.to_string()) {
-            all_vars.push(var.to_string());
+            all_vars.push(var);
         }
     }
     all_vars.append(&mut extra_parseables);
     for x in extra_args.iter() {
         if !rsi_vars.contains(x) {
-            all_vars.push(x.clone());
+            all_vars.push(x.as_str());
         }
     }
 
@@ -164,10 +157,15 @@ pub fn print_clonotypes(
     // Compute number of vdj cells that are gex.
 
     let mut n_vdj_gex = Vec::<usize>::new();
-    for li in 0..ctl.origin_info.n() {
+    for (gex, vdj) in gex_info
+        .pca
+        .iter()
+        .zip(vdj_cells.iter())
+        .take(ctl.origin_info.n())
+    {
         let mut n = 0;
-        for y in gex_info.pca[li].iter() {
-            if bin_member(&vdj_cells[li], y.0) {
+        for y in gex.iter() {
+            if bin_member(vdj, y.0) {
                 n += 1;
             }
         }
@@ -198,7 +196,7 @@ pub fn print_clonotypes(
         isize,
         Vec<bool>,
         Vec<bool>,
-        Vec<(usize, String, String)>,
+        Vec<(usize, String, &'static str)>,
         Vec<bool>,
         String,
     )>::new();
@@ -452,16 +450,19 @@ pub fn print_clonotypes(
                 // Build varmat.
 
                 let mut varmat = vec![vec![vec![b'-']; cols]; nexacts];
-                for col in 0..cols {
-                    for u in 0..nexacts {
-                        let m = mat[col][u];
+                for (col, (mat, (seqss, vars))) in mat
+                    .iter()
+                    .zip(rsi.seqss.iter().zip(vars.iter()))
+                    .take(cols)
+                    .enumerate()
+                {
+                    for (u, (m, seq)) in varmat.iter_mut().zip(mat.iter().zip(seqss.iter())) {
                         if m.is_some() {
                             let mut v = Vec::<u8>::new();
-                            let seq = rsi.seqss[col][u].clone();
-                            for p in vars[col].iter() {
-                                v.push(seq[*p]);
+                            for &p in vars {
+                                v.push(seq[p]);
                             }
-                            varmat[u][col] = v;
+                            u[col] = v;
                         }
                     }
                 }
@@ -476,9 +477,7 @@ pub fn print_clonotypes(
                         && x.after("nd").force_usize() >= 1
                     {
                         lvarsc.clear();
-                        for m in 0..i {
-                            lvarsc.push(lvars[m].clone());
-                        }
+                        lvarsc.extend(lvars.iter().take(i).cloned());
                         let k = x.after("nd").force_usize();
                         let mut n = vec![0_usize; ctl.origin_info.n()];
                         for u in 0..nexacts {
@@ -502,20 +501,18 @@ pub fn print_clonotypes(
                                 break;
                             }
                         }
-                        for l in 0..k {
+                        for (l, ds) in datasets.iter().take(k).enumerate() {
                             if l >= n.len() {
                                 break;
                             }
-                            nd_fields.push(format!("n_{}", datasets[l].clone()));
-                            lvarsc.push(format!("n_{}", datasets[l].clone()));
+                            nd_fields.push(format!("n_{}", ds.as_str()));
+                            lvarsc.push(format!("n_{}", ds.as_str()));
                         }
                         if n.len() > k {
                             nd_fields.push("n_other".to_string());
                             lvarsc.push("n_other".to_string());
                         }
-                        for m in i + 1..lvars.len() {
-                            lvarsc.push(lvars[m].clone());
-                        }
+                        lvarsc.extend(lvars.iter().skip(i + 1).cloned());
                         break;
                     }
                 }
@@ -529,36 +526,30 @@ pub fn print_clonotypes(
 
                 let mut sr = Vec::<(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)>::new();
                 let mut groups = HashMap::<usize, Vec<usize>>::new();
-                for i in 0..lvars.len() {
-                    if lvars[i].starts_with('g') && lvars[i].after("g").parse::<usize>().is_ok() {
-                        let d = lvars[i].after("g").force_usize();
+                for lvar in &lvars {
+                    if let Some(Ok(d)) = lvar.strip_prefix('g').map(str::parse::<usize>) {
                         if groups.contains_key(&d) {
                             continue;
                         }
                         let mut e: EquivRel = EquivRel::new(nexacts as i32);
-                        for u1 in 0..nexacts {
-                            let ex1 = &exact_clonotypes[exacts[u1]];
-                            for u2 in u1 + 1..nexacts {
+                        for (u1, &e1) in exacts.iter().take(nexacts).enumerate() {
+                            let ex1 = &exact_clonotypes[e1];
+                            for (u2, &e2) in exacts.iter().enumerate().take(nexacts).skip(u1 + 1) {
                                 if e.class_id(u1 as i32) == e.class_id(u2 as i32) {
                                     continue;
                                 }
-                                let ex2 = &exact_clonotypes[exacts[u2]];
+                                let ex2 = &exact_clonotypes[e2];
                                 let mut diffs = 0;
-                                'comp: for cx in 0..cols {
-                                    let m1 = mat[cx][u1];
-                                    if m1.is_none() {
-                                        continue;
-                                    }
-                                    let m2 = mat[cx][u2];
-                                    if m2.is_none() {
-                                        continue;
-                                    }
-                                    let (m1, m2) = (m1.unwrap(), m2.unwrap());
-                                    for p in vars[cx].iter() {
-                                        if ex1.share[m1].seq_del[*p] != ex2.share[m2].seq_del[*p] {
-                                            diffs += 1;
-                                            if diffs > d {
-                                                break 'comp;
+                                'comp: for (mm, vars) in mat.iter().zip(vars.iter()).take(cols) {
+                                    if let (Some(m1), Some(m2)) = (mm[u1], mm[u2]) {
+                                        let (s1, s2) =
+                                            (&ex1.share[m1].seq_del, &ex2.share[m2].seq_del);
+                                        for &p in vars {
+                                            if s1[p] != s2[p] {
+                                                diffs += 1;
+                                                if diffs > d {
+                                                    break 'comp;
+                                                }
                                             }
                                         }
                                     }
@@ -701,10 +692,8 @@ pub fn print_clonotypes(
                             typex[col] = true;
                         }
                     }
-                    for r in 0..cx.len() {
-                        for s in 0..cx[r].len() {
-                            row.push(cx[r][s].clone());
-                        }
+                    for mut cxr in cx {
+                        row.append(&mut cxr);
                     }
                     res.5 = gex_low;
 
@@ -766,10 +755,10 @@ pub fn print_clonotypes(
                         }
                         j += 1;
                     }
-                    let mut all = Vec::<String>::new();
-                    for k in i..j {
-                        all.append(&mut stats[k].1.clone());
-                    }
+                    let all = stats[i..j]
+                        .iter()
+                        .flat_map(|s| s.1.iter().cloned())
+                        .collect();
                     stats2.push((stats[i].0.clone(), all));
                     i = j;
                 }
@@ -790,13 +779,13 @@ pub fn print_clonotypes(
                     let mut maxs = Vec::<f64>::new();
                     // traverse the coefficients on the left hand side (each having a variable)
                     let mut fail = false;
-                    for i in 0..x.n() {
+                    for vi in x.var.iter().take(x.n()) {
                         let mut vals = Vec::<f64>::new(); // the stats for the variable
-                        for j in 0..stats.len() {
-                            if stats[j].0 == x.var[i] {
-                                for k in 0..stats[j].1.len() {
-                                    if stats[j].1[k].parse::<f64>().is_ok() {
-                                        vals.push(stats[j].1[k].force_f64());
+                        for stat in &stats {
+                            if stat.0 == *vi {
+                                for sk in &stat.1 {
+                                    if let Ok(sk) = sk.parse::<f64>() {
+                                        vals.push(sk);
                                     }
                                 }
                                 break;
@@ -806,11 +795,11 @@ pub fn print_clonotypes(
                         let mut mean = 0.0;
                         let mut max = -1_000_000_000.0_f64;
                         let mut count = 0;
-                        for j in 0..vals.len() {
-                            if !vals[j].is_nan() {
-                                min = min.min(vals[j]);
-                                mean += vals[j];
-                                max = max.max(vals[j]);
+                        for val in vals {
+                            if !val.is_nan() {
+                                min = min.min(val);
+                                mean += val;
+                                max = max.max(val);
                                 count += 1;
                             }
                         }
@@ -828,8 +817,8 @@ pub fn print_clonotypes(
                         if ctl.clono_group_opt.asymmetric_center == "from_filters" {
                             in_center = false;
                         } else {
-                            for u in 0..nexacts {
-                                bads[u] = true;
+                            for b in bads.iter_mut().take(nexacts) {
+                                *b = true;
                             }
                         }
                     }
@@ -837,8 +826,8 @@ pub fn print_clonotypes(
                         if ctl.clono_group_opt.asymmetric_center == "from_filters" {
                             in_center = false;
                         } else {
-                            for u in 0..nexacts {
-                                bads[u] = true;
+                            for b in bads.iter_mut().take(nexacts) {
+                                *b = true;
                             }
                         }
                     }
@@ -846,8 +835,8 @@ pub fn print_clonotypes(
                         if ctl.clono_group_opt.asymmetric_center == "from_filters" {
                             in_center = false;
                         } else {
-                            for u in 0..nexacts {
-                                bads[u] = true;
+                            for b in bads.iter_mut().take(nexacts) {
+                                *b = true;
                             }
                         }
                     }
@@ -917,15 +906,16 @@ pub fn print_clonotypes(
             }
         }
     });
-    for i in 0..results.len() {
-        if !results[i].13.is_empty() {
-            return Err(results[i].13.clone());
+    let exacts = exacts;
+    for r in &results {
+        if !r.13.is_empty() {
+            return Err(r.13.clone());
         }
     }
 
-    for i in 0..results.len() {
-        for j in 0..results[i].11.len() {
-            fate[results[i].11[j].0].insert(results[i].11[j].1.clone(), results[i].11[j].2.clone());
+    for ri in &results {
+        for vj in &ri.11 {
+            fate[vj.0].insert(vj.1.clone(), vj.2);
         }
     }
 
@@ -936,45 +926,45 @@ pub fn print_clonotypes(
     // Write loupe output.
 
     let mut all_loupe_clonotypes = Vec::<Clonotype>::new();
-    for i in 0..results.len() {
-        all_loupe_clonotypes.append(&mut results[i].6);
+    for r in results.iter_mut() {
+        all_loupe_clonotypes.append(&mut r.6);
     }
     loupe_out(ctl, all_loupe_clonotypes, refdata, dref);
 
     // Set up to group and print clonotypes.
 
-    for i in 0..orbits.len() {
-        for j in 0..results[i].1.len() {
-            pics.push(results[i].1[j].clone());
-            exacts.push(results[i].2[j].0.clone());
-            rsi.push(results[i].2[j].1.clone());
-            in_center.push(results[i].12[j]);
+    for ri in results.iter_mut().take(orbits.len()) {
+        for (v1, (v2, &v12)) in ri.1.iter().zip(ri.2.iter().zip(ri.12.iter())) {
+            pics.push(v1.clone());
+            exacts.push(v2.0.clone());
+            rsi.push(v2.1.clone());
+            in_center.push(v12);
         }
-        out_datas.append(&mut results[i].7);
+        out_datas.append(&mut ri.7);
     }
 
     // Gather some data for gene scan.
 
     if ctl.gen_opt.gene_scan_test.is_some() && !ctl.gen_opt.gene_scan_exact {
-        for i in 0..orbits.len() {
-            for j in 0..results[i].1.len() {
-                if results[i].9[j] {
+        for (i, r) in results.iter().take(orbits.len()).enumerate() {
+            for (&v9, &v10) in r.9.iter().zip(r.10.iter()) {
+                if v9 {
                     tests.push(i);
                 }
-                if results[i].10[j] {
+                if v10 {
                     controls.push(i);
                 }
             }
         }
     }
     if ctl.gen_opt.gene_scan_test.is_some() && ctl.gen_opt.gene_scan_exact {
-        for i in 0..exacts.len() {
-            for j in 0..exacts[i].len() {
-                if results[i].9[j] {
-                    tests.push(exacts[i][j]);
+        for (r, e) in results.iter().zip(exacts.iter()) {
+            for (&ej, (&v9, &v10)) in e.iter().zip(r.9.iter().zip(r.10.iter())) {
+                if v9 {
+                    tests.push(ej);
                 }
-                if results[i].10[j] {
-                    controls.push(exacts[i][j]);
+                if v10 {
+                    controls.push(ej);
                 }
             }
         }
