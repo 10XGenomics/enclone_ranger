@@ -19,6 +19,7 @@ use enclone_proto::types::{
     InvariantTCellAnnotation, Metadata, Region, UniversalReference, UniversalReferenceItem,
 };
 use io_utils::write_obj;
+use std::fmt::Write;
 
 // Export donor reference/inferred alt allele sequences
 pub fn make_donor_refs(
@@ -54,14 +55,14 @@ pub fn make_donor_refs(
                     matches += 1;
                 } else {
                     if matches > 0 {
-                        cigar.push_str(&format!("{}=", matches));
+                        write!(cigar, "{}=", matches).unwrap();
                     }
                     cigar.push_str("1X");
                     matches = 0;
                 }
             }
             if matches > 0 {
-                cigar.push_str(&format!("{}=", matches));
+                write!(cigar, "{}=", matches).unwrap();
             }
             drefs.push(DonorReferenceItem {
                 universal_idx: ref_id as u32,

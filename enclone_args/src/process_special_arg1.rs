@@ -14,6 +14,7 @@ use evalexpr::build_operator_tree;
 use expr_tools::test_functions_in_node;
 use io_utils::path_exists;
 use itertools::Itertools;
+use std::fmt::Write;
 use std::fs::{read_to_string, remove_file, File};
 use string_utils::TextUtils;
 use vector_utils::{unique_sort, VecUtils};
@@ -425,7 +426,7 @@ pub fn process_special_arg1(
                     } else {
                         "does not exist"
                     };
-                    emsg += &mut format!("Note that the path {} {}.\n", dir, msg);
+                    writeln!(emsg, "Note that the path {} {}.", dir, msg).unwrap();
                 }
                 return Err(emsg);
             }
@@ -516,7 +517,7 @@ pub fn process_special_arg1(
                     } else {
                         "does not exist"
                     };
-                    emsg += &mut format!("Note that the path {} {}.\n", dir, msg);
+                    writeln!(emsg, "Note that the path {} {}.", dir, msg).unwrap();
                 }
                 return Err(emsg);
             }

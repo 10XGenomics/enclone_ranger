@@ -8,6 +8,7 @@ use io_utils::{dir_list, open_for_read, open_for_write_new, open_userfile_for_re
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::collections::HashMap;
+use std::fmt::Write as _;
 use std::fs::File;
 use std::io::{BufRead, BufReader, Read, Write};
 use std::sync::atomic::{AtomicUsize, Ordering};
@@ -154,7 +155,7 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
                 if path_exists(&*x) {
                     count = dir_list(&*x).len().to_string();
                 }
-                pre_msg += &mut format!("{}: {}\n", x, count);
+                writeln!(pre_msg, "{}: {}", x, count).unwrap();
             }
             return Err(format!(
                 "\nIn directory {}, unable to find the\npath {},\n\
@@ -224,7 +225,7 @@ fn get_path_or_internal_id(
                     } else {
                         msg += "Here are the configuration variables that are defined:\n\n";
                         for (key, value) in ctl.gen_opt.config.iter() {
-                            msg += &mut format!("{} = {}", key, value);
+                            write!(msg, "{} = {}", key, value).unwrap();
                         }
                         msg += "\n";
                     }

@@ -13,6 +13,7 @@ use io_utils::{fwrite, fwriteln};
 use itertools::Itertools;
 use std::cmp::max;
 use std::collections::HashMap;
+use std::fmt::Write as _;
 use std::io::Write;
 use string_utils::{stringme, strme};
 use tables::{print_tabular_vbox, visible_width};
@@ -368,7 +369,7 @@ pub fn make_table(
         if c == '$' {
             if ctl.pretty {
                 if !ctl.nogray {
-                    *logz += &format!("[38;5;{}m[48;5;{}m ", TEXTCOLOR, BACKGROUND);
+                    write!(*logz, "[38;5;{}m[48;5;{}m ", TEXTCOLOR, BACKGROUND).unwrap();
                     barcode = true;
                 } else {
                     logz.push(' ');
@@ -384,8 +385,8 @@ pub fn make_table(
         // In a barcode line, hop around │ symbols, which should not be colorized.
         } else if barcode && c == '│' && x[j + 1] != '\n' {
             // *logz += "[0m│";
-            *logz += &format!("[0m[48;5;{}m│", BACKGROUND);
-            *logz += &format!("[38;5;{}m[48;5;{}m", TEXTCOLOR, BACKGROUND);
+            write!(*logz, "[0m[48;5;{}m│", BACKGROUND).unwrap();
+            write!(*logz, "[38;5;{}m[48;5;{}m", TEXTCOLOR, BACKGROUND).unwrap();
         } else if barcode && c == '│' && x[j + 1] == '\n' {
             *logz += "[0m│";
             // *logz += &format!("[0m[48;5;{}m│[0m", BACKGROUND);
@@ -425,31 +426,31 @@ pub fn make_table(
 
 pub fn print_digit(p: usize, i: usize, digits: usize, ds: &mut String) {
     if digits == 1 {
-        *ds += &format!("{}", p);
+        write!(*ds, "{}", p).unwrap();
     } else if digits == 2 {
         if i == 0 {
             if p >= 10 {
-                *ds += &format!("{}", p / 10);
+                write!(*ds, "{}", p / 10).unwrap();
             } else {
                 ds.push(' ');
             }
         } else {
-            *ds += &format!("{}", p % 10);
+            write!(*ds, "{}", p % 10).unwrap();
         }
     } else if i == 0 {
         if p >= 100 {
-            *ds += &format!("{}", p / 100);
+            write!(*ds, "{}", p / 100).unwrap();
         } else {
             ds.push(' ');
         }
     } else if i == 1 {
         if p >= 10 {
-            *ds += &format!("{}", (p % 100) / 10);
+            write!(*ds, "{}", (p % 100) / 10).unwrap();
         } else {
             ds.push(' ');
         }
     } else {
-        *ds += &format!("{}", p % 10);
+        write!(*ds, "{}", p % 10).unwrap();
     }
 }
 

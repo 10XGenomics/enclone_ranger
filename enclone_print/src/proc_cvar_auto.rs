@@ -16,6 +16,7 @@ use itertools::Itertools;
 use stats_utils::percent_ratio;
 use std::cmp::min;
 use std::collections::HashMap;
+use std::fmt::Write as _;
 use string_utils::{stringme, TextUtils};
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, next_diff12_4, unique_sort};
@@ -161,7 +162,7 @@ pub fn proc_cvar_auto(
                 if tb != rb {
                     ndiffs += 1;
                     if ndiffs <= 5 {
-                        cdiff += &format!("{}{}", i, tb as char);
+                        write!(cdiff, "{}{}", i, tb as char).unwrap();
                     }
                 }
             }
@@ -169,7 +170,7 @@ pub fn proc_cvar_auto(
                 cdiff += "...";
             }
             if extra > 0 {
-                cdiff += &format!("+{}", extra);
+                write!(cdiff, "+{}", extra).unwrap();
             }
         } else if clen > 0 {
             cdiff = format!("+{}", clen);
@@ -1332,7 +1333,7 @@ pub fn proc_cvar_auto(
                 if tb != rb {
                     ndiffs += 1;
                     if ndiffs <= 5 {
-                        udiff += &format!("{}{}", rpos, tb as char);
+                        write!(udiff, "{}{}", rpos, tb as char).unwrap();
                     }
                 }
             }
@@ -1340,7 +1341,7 @@ pub fn proc_cvar_auto(
                 udiff += "...";
             }
             if extra > 0 {
-                udiff += &format!("+{}", extra);
+                write!(udiff, "+{}", extra).unwrap();
             }
         } else if ulen > 0 {
             udiff = format!("+{}", ulen);

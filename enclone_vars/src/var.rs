@@ -2,6 +2,7 @@
 
 // Variable specification.  Fields are currently Strings, but could be given more structure.
 
+use std::fmt::Write as _;
 use string_utils::{stringme, TextUtils};
 
 pub struct Variable {
@@ -87,7 +88,7 @@ pub fn parse_variables(input: &str) -> Vec<Variable> {
                 if !this_group[n - 1].ends_with('\n') {
                     this_group[n - 1] += "\n";
                 }
-                this_group[n - 1] += &mut format!(" {}", line.after(INDENT));
+                write!(this_group[n - 1], " {}", line.after(INDENT)).unwrap();
                 if FIELDS[fc - 1] == "code" {
                     this_group[n - 1] += "\n";
                 }

@@ -24,6 +24,7 @@
 use bio_edit::alignment::pairwise::{Aligner, Scoring, MIN_SCORE};
 use bio_edit::alignment::AlignmentMode;
 use bio_edit::alignment::AlignmentOperation::{Del, Ins, Match, Subst};
+use std::fmt::Write;
 use string_utils::strme;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -131,10 +132,10 @@ pub fn cigar(
     use bio_edit::alignment::AlignmentOperation;
     let clip_str = "S";
     let add_op = |op: AlignmentOperation, k, cigar: &mut String| match op {
-        AlignmentOperation::Match => cigar.push_str(&format!("{}{}", k, "=")),
-        AlignmentOperation::Subst => cigar.push_str(&format!("{}{}", k, "X")),
-        AlignmentOperation::Del => cigar.push_str(&format!("{}{}", k, "D")),
-        AlignmentOperation::Ins => cigar.push_str(&format!("{}{}", k, "I")),
+        AlignmentOperation::Match => write!(cigar, "{}=", k).unwrap(),
+        AlignmentOperation::Subst => write!(cigar, "{}X", k).unwrap(),
+        AlignmentOperation::Del => write!(cigar, "{}D", k).unwrap(),
+        AlignmentOperation::Ins => write!(cigar, "{}I", k).unwrap(),
         _ => {}
     };
 
@@ -145,7 +146,7 @@ pub fn cigar(
 
     let mut last = ops[0];
     if xstart > 0 {
-        cigar.push_str(&format!("{}{}", xstart, clip_str))
+        write!(cigar, "{}{}", xstart, clip_str).unwrap();
     }
     let mut k = 1;
     for &op in ops[1..].iter() {
@@ -159,7 +160,7 @@ pub fn cigar(
     }
     add_op(last, k, &mut cigar);
     if xlen > xend {
-        cigar.push_str(&format!("{}{}", xlen - xend, clip_str))
+        write!(cigar, "{}{}", xlen - xend, clip_str).unwrap()
     }
     cigar
 }
