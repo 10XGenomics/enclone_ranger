@@ -96,12 +96,10 @@ pub fn test_vdj_gex_inconsistent(
                 if bino < 0.00002 {
                     res.1 = format!(
                         "\nThe VDJ dataset with path\n{}\nand the GEX dataset with path\n\
-                        {}\nshow insufficient sharing of barcodes.  ",
-                        ctl.origin_info.dataset_path[li], ctl.origin_info.gex_path[li],
-                    );
-                    res.1 += &mut format!(
-                        "Of the {} VDJ cells that were tested,\nonly {} were GEX cells.\n",
-                        total, good
+                        {}\nshow insufficient sharing of barcodes.  \
+                        Of the {} VDJ cells that were tested,\n\
+                        only {} were GEX cells.\n",
+                        ctl.origin_info.dataset_path[li], ctl.origin_info.gex_path[li], total, good
                     );
                 }
             }

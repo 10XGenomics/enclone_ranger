@@ -19,6 +19,7 @@ use serde_json::Value;
 use std::{
     collections::HashMap,
     convert::TryInto,
+    fmt::Write,
     fs::{read_to_string, remove_file, File},
     io::{BufRead, Read},
     time::Instant,
@@ -859,7 +860,7 @@ pub fn load_gex(
                 if result.17.contains_key(&metric_name) {
                     value = format!("{:.3}", result.17[&metric_name]);
                 }
-                result.18 += &mut format!("{},{}\n", metric_display_name, value);
+                writeln!(result.18, "{},{}", metric_display_name, value).unwrap();
             }
         }
     }

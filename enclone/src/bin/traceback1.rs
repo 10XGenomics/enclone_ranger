@@ -23,6 +23,7 @@ fn test_traceback1() {
     use assert_cmd;
     use assert_cmd::prelude::*;
     use enclone_core::version_string;
+    use std::fmt::Write;
     use std::{env, process::Command};
     let mut cmd = Command::cargo_bin("traceback1").expect(
         "\nAttempt to run traceback1 failed.  The most likely explanation for this is that\n\
@@ -42,7 +43,7 @@ fn test_traceback1() {
         let lines = err.split('\n').collect::<Vec<&str>>();
         const MAX_LINES: usize = 60;
         for &line in lines.iter().take(MAX_LINES) {
-            head += &format!("{}\n", line);
+            writeln!(head, "{}", line).unwrap();
         }
         eprint!(
             "\n▓▓▓ test_traceback1 failed because did not find {} as expected;\n\n\

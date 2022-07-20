@@ -19,6 +19,7 @@ use itertools::Itertools;
 use ndarray::s;
 use stats_utils::percent_ratio;
 use std::collections::{HashMap, HashSet};
+use std::fmt::Write;
 use string_utils::{stringme, strme, TextUtils};
 use vdj_ann::refx::RefData;
 use vector_utils::next_diff12_4;
@@ -485,13 +486,15 @@ pub fn row_fill(
             ex.clones[0][0].barcode,
         );
         if !ctl.gen_opt.row_fill_verbose {
-            msg += &format!(
+            write!(
+                msg,
                 "\n\nYou may find it helpful to add the options\n\
                 BARCODE={} ROW_FILL_VERBOSE\n\
                 to the command line.  Depending on other arguments, you might also need to \
                 add MAX_CORES=1.",
                 ex.clones[0][0].barcode
-            );
+            )
+            .unwrap();
         }
         panic!("{}", msg);
     }
