@@ -23,7 +23,6 @@ jobs:
     steps:
 
       - name: Install Rust
-        if: env.run_tests
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_VERSION }}
@@ -55,7 +54,6 @@ jobs:
     steps:
 
       - name: Install Rust
-        if: env.run_tests
         uses: actions-rs/toolchain@v1
         with:
           toolchain: ${{ env.RUST_VERSION }}
