@@ -30,7 +30,7 @@ bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox
 chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 debruijn = "0.3"
 enclone_proto = { path = "../enclone_proto" }
-evalexpr = "7"
+evalexpr = "8"
 io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 itertools = "0.10"
 lazy_static = "1"
