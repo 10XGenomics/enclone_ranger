@@ -91,8 +91,8 @@ pub fn define_mat(
     // Define map of exacts to infos.
 
     let mut to_infos = vec![Vec::<usize>::new(); nexacts];
-    for &i in &infos {
-        let u = to_exacts[&info[i].clonotype_index];
+    for (i, &inf) in infos.iter().enumerate() {
+        let u = to_exacts[&info[inf].clonotype_index];
         to_infos[u].push(i);
     }
 
