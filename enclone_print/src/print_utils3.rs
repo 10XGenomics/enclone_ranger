@@ -754,7 +754,7 @@ pub fn get_extra_parseables<'a>(ctl: &'a EncloneControl, pcols_sort: &'a [String
         let chars = x.char_indices().collect::<Vec<_>>();
         let mut trim = 0;
         for c in chars.iter().rev() {
-            if !c.1.is_digit(10) {
+            if !c.1.is_ascii_digit() {
                 break;
             }
             trim += 1;

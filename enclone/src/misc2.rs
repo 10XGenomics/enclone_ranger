@@ -12,6 +12,7 @@ use rayon::prelude::*;
 use std::cmp::{max, min};
 use std::collections::HashMap;
 
+use std::fmt::Write as _;
 use std::io::Write;
 use std::time::Instant;
 use string_utils::strme;
@@ -616,15 +617,17 @@ pub fn check_for_barcode_reuse(
                         If you wish to override this behavior,\nplease rerun with the argument \
                         ACCEPT_REUSE.\n\nHere are the instances of reuse that were observed:\n\n".to_string();
                 }
-                msg += &mut format!(
-                    "{}, {} ==> {} of {}, {} barcodes ({:.1}%)\n",
+                writeln!(
+                    msg,
+                    "{}, {} ==> {} of {}, {} barcodes ({:.1}%)",
                     ctl.origin_info.dataset_id[l1],
                     ctl.origin_info.dataset_id[l2],
                     n,
                     n1,
                     n2,
                     100.0 * frac
-                );
+                )
+                .unwrap();
             }
             i = j;
         }

@@ -7,6 +7,7 @@ use crate::print_utils5::{build_diff_row, insert_consensus_row};
 use enclone_core::defs::{justification, ColInfo, EncloneControl, ExactClonotype};
 use enclone_proto::types::DonorReferenceItem;
 use std::collections::HashMap;
+use std::fmt::Write;
 use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::bin_member;
@@ -298,9 +299,9 @@ pub fn finish_table(
                 }
                 if (d1 == 0) ^ (d2 == 0) {
                     if d1 == 0 {
-                        *logz += &format!("{} ==> {}", u1 + 1, u2 + 1);
+                        write!(*logz, "{} ==> {}", u1 + 1, u2 + 1).unwrap();
                     } else {
-                        *logz += &format!("{} ==> {}", u2 + 1, u1 + 1);
+                        write!(*logz, "{} ==> {}", u2 + 1, u1 + 1).unwrap();
                     }
                     let s = format!(
                         "; u1 = {}, u2 = {}, d1 = {}, d2 = {}, d = {}\n",

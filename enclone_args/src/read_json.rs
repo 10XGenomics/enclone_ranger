@@ -31,8 +31,8 @@ use io_utils::{open_maybe_compressed, path_exists, read_vector_entry_from_json};
 use rand::Rng;
 use rayon::prelude::*;
 use serde_json::Value;
-use std::sync::atomic::AtomicBool;
-use std::sync::atomic::Ordering;
+use std::fmt::Write;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::{collections::HashMap, io::BufReader};
 use string_utils::{stringme, strme, TextUtils};
 use vdj_ann::{annotate, refx, transcript};
@@ -54,23 +54,22 @@ fn json_error(
              file"
             .to_string();
         if json.is_some() {
-            msgx += &mut format!("\n{}.", json.unwrap());
+            write!(msgx, "\n{}.", json.unwrap()).unwrap();
         } else {
             msgx += ".";
         }
         if ctl.gen_opt.internal_run {
-            msgx += &mut format!("\n\npossibly relevant internal data: {}\n", msg);
+            writeln!(msgx, "\n\npossibly relevant internal data: {}", msg).unwrap();
         }
         if ctl.gen_opt.internal_run {
-            msgx += &mut "\n\nATTENTION INTERNAL 10X USERS!\n\
+            msgx += "\n\nATTENTION INTERNAL 10X USERS!\n\
                 Quite possibly you are using data from a cellranger run carried out using a \
                 version\n\
                 between 3.1 and 4.0.  For certain of these versions, it is necessary to add the\n\
                 argument CURRENT_REF to your command line.  If that doesn't work, \
-                please see below.\n"
-                .to_string();
+                please see below.\n";
         }
-        msgx += &mut "\n\nHere is what you should do:\n\n\
+        msgx += "\n\nHere is what you should do:\n\n\
              1. If you used cellranger version ≥ 4.0, the problem is very likely\n\
                 that the directory outs/vdj_reference was not retained, so enclone\n\
                 didn't see it, and had to guess what the reference sequence was.\n\
@@ -86,8 +85,7 @@ fn json_error(
                   reannotation (and MOUSE if you used mouse); only works with human and mouse.\n\n\
              Note that one way to get the error is to specify TCR when you meant BCR, or the\n\
              other way.\n\n\
-             If you're stuck, please write to us at enclone@10xgenomics.com.\n"
-            .to_string();
+             If you're stuck, please write to us at enclone@10xgenomics.com.\n";
     }
     Err(msgx)
 }

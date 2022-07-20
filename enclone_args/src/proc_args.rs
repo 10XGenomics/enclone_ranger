@@ -10,6 +10,7 @@ use enclone_core::defs::{ClonotypeHeuristics, EncloneControl};
 use enclone_core::test_def::replace_at_test;
 use enclone_core::{require_readable_file, tilde_expand_me};
 use itertools::Itertools;
+use std::fmt::Write;
 use std::{process::Command, time::Instant};
 use string_utils::{strme, TextUtils};
 
@@ -289,15 +290,15 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
                                     bcrv.push(s.after("PUBLIC_BCR_SUBSET=").to_string());
                                 } else {
                                     let n = bcrv.len();
-                                    bcrv[n - 1] +=
-                                        &mut format!(",{}", s.after("PUBLIC_BCR_SUBSET="));
+                                    write!(bcrv[n - 1], ",{}", s.after("PUBLIC_BCR_SUBSET="))
+                                        .unwrap();
                                 }
                             }
                         } else if s.starts_with("BCR=") {
                             if bcr_seen {
                                 if args[i].starts_with("BIB=") {
                                     let n = bcrv.len();
-                                    bcrv[n - 1] += &mut format!(",{}", s.after("BCR="));
+                                    write!(bcrv[n - 1], ",{}", s.after("BCR=")).unwrap();
                                 }
                             } else {
                                 bcrv.push(s.after("BCR=").to_string());

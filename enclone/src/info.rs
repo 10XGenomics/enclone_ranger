@@ -13,6 +13,7 @@ use enclone_core::print_tools::emit_codon_color_escape;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::convert::TryInto;
+use std::fmt::Write;
 use string_utils::strme;
 use vector_utils::unique_sort;
 
@@ -244,9 +245,9 @@ pub fn build_info(
                         vsnx += "; ";
                     }
                     if delta > 0 {
-                        vsnx += &mut format!("gap from J stop to C start = {}", delta);
+                        write!(vsnx, "gap from J stop to C start = {}", delta).unwrap();
                     } else if delta != -1 || ctl.gen_opt.jc1 {
-                        vsnx += &mut format!("J and C segs overlap by {}", -delta);
+                        write!(vsnx, "J and C segs overlap by {}", -delta).unwrap();
                     }
                 }
             }

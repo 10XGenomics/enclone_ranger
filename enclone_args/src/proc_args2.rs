@@ -3,6 +3,7 @@
 use enclone_core::defs::EncloneControl;
 use io_utils::{open_userfile_for_read, path_exists};
 use rayon::prelude::*;
+use std::fmt::Write;
 use std::fs::{remove_file, File};
 use std::{io::BufRead, time::Instant};
 use string_utils::TextUtils;
@@ -29,7 +30,7 @@ pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
             } else {
                 "does not exist"
             };
-            msgx += &mut format!("Note that the path {} {}.\n", dir, msg);
+            writeln!(msgx, "Note that the path {} {}.", dir, msg).unwrap();
         }
         return Err(msgx);
     }
