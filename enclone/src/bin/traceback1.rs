@@ -30,12 +30,9 @@ fn test_traceback1() {
         somehow you did not run \"cargo b\".  Please try that now, and be sure you are doing\n\
         it from the top-level enclone directory.\n",
     );
-    let cmd = cmd.output().unwrap_or_else(|_| {
-        panic!(
-            "{}",
-            "very strange, failed to execute test_traceback1".to_string()
-        )
-    });
+    let cmd = cmd
+        .output()
+        .unwrap_or_else(|_| panic!("{}", "very strange, failed to execute test_traceback1"));
     let morsel = "traceback1.rs:17";
     let err = std::str::from_utf8(&cmd.stderr).unwrap();
     if !err.contains(&morsel) {

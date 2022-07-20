@@ -254,11 +254,11 @@ pub fn align_to_vdj_ref(
 
     // Build concatenation.
 
-    let mut concat = Vec::<u8>::new();
-    concat.append(&mut vref.to_vec());
-    concat.append(&mut dref.to_vec());
-    concat.append(&mut d2ref.to_vec());
-    concat.append(&mut jref.to_vec());
+    let mut concat = Vec::<u8>::with_capacity(vref.len() + dref.len() + d2ref.len() + jref.len());
+    concat.extend(vref);
+    concat.extend(dref);
+    concat.extend(d2ref);
+    concat.extend(jref);
 
     // Set clip penalties.  Note that yclip_suffix was set to zero.   This was
     // accompanied by a change to bio_edit in commit ccabb0dd1768738bdeee5b62458048d74f6dcfab,

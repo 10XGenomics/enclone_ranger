@@ -31,9 +31,8 @@ pub fn process_special_arg2(
             );
         }
         ctl.clono_group_opt.style = "symmetric".to_string();
-        let c = arg.after("GROUP=").split(',').collect::<Vec<&str>>();
-        for x in c.iter() {
-            let x = *x;
+        let c = arg.after("GROUP=").split(',');
+        for x in c {
             if x == "vj_refname" {
                 ctl.clono_group_opt.vj_refname = true;
             } else if x == "v_heavy_refname" {
@@ -476,7 +475,7 @@ pub fn process_special_arg2(
         }
     } else if arg.starts_with("AMINO=") {
         ctl.clono_print_opt.amino.clear();
-        for x in arg.after("AMINO=").split(',').collect::<Vec<&str>>() {
+        for x in arg.after("AMINO=").split(',') {
             if !x.is_empty() {
                 ctl.clono_print_opt.amino.push(x.to_string());
             }
@@ -515,7 +514,7 @@ pub fn process_special_arg2(
         }
     } else if arg.starts_with("CVARS=") {
         ctl.clono_print_opt.cvars.clear();
-        for x in arg.after("CVARS=").split(',').collect::<Vec<&str>>() {
+        for x in arg.after("CVARS=").split(',') {
             if !x.is_empty() {
                 ctl.clono_print_opt.cvars.push(x.to_string());
             }
@@ -525,7 +524,7 @@ pub fn process_special_arg2(
             *x = x.replace("_mean", "_μ");
         }
     } else if arg.starts_with("CVARSP=") {
-        for x in arg.after("CVARSP=").split(',').collect::<Vec<&str>>() {
+        for x in arg.after("CVARSP=").split(',') {
             if !x.is_empty() {
                 ctl.clono_print_opt.cvars.push(x.to_string());
             }
@@ -536,7 +535,7 @@ pub fn process_special_arg2(
         }
     } else if arg.starts_with("LVARS=") {
         ctl.clono_print_opt.lvars.clear();
-        for x in arg.after("LVARS=").split(',').collect::<Vec<&str>>() {
+        for x in arg.after("LVARS=").split(',') {
             ctl.clono_print_opt.lvars.push(x.to_string());
         }
         for x in ctl.clono_print_opt.lvars.iter_mut() {
@@ -544,7 +543,7 @@ pub fn process_special_arg2(
             *x = x.replace("_mean", "_μ");
         }
     } else if arg.starts_with("LVARSP=") {
-        let lvarsp = arg.after("LVARSP=").split(',').collect::<Vec<&str>>();
+        let lvarsp = arg.after("LVARSP=").split(',');
         for x in lvarsp {
             ctl.clono_print_opt.lvars.push(x.to_string());
         }
@@ -554,12 +553,12 @@ pub fn process_special_arg2(
         }
     } else if arg.starts_with("DVARS=") {
         ctl.gen_opt.dvars.clear();
-        for x in arg.after("DVARS=").split(',').collect::<Vec<&str>>() {
+        for x in arg.after("DVARS=").split(',') {
             ctl.gen_opt.dvars.push(x.to_string());
         }
     } else if arg.starts_with("GVARS=") {
         ctl.gen_opt.gvars.clear();
-        for x in arg.after("GVARS=").split(',').collect::<Vec<&str>>() {
+        for x in arg.after("GVARS=").split(',') {
             ctl.gen_opt.gvars.push(x.to_string());
         }
     } else if is_f64_arg(arg, "MAX_SCORE")? {
@@ -628,17 +627,17 @@ pub fn process_special_arg2(
         ctl.clono_filt_opt.min_chains = arg.after("CHAINS=").force_usize();
         ctl.clono_filt_opt.max_chains = arg.after("CHAINS=").force_usize();
     } else if arg.starts_with("SEG=") {
-        let fields = arg.after("SEG=").split('|').collect::<Vec<&str>>();
-        let mut y = Vec::<String>::new();
-        for x in fields.iter() {
-            y.push(x.to_string());
-        }
+        let mut y = arg
+            .after("SEG=")
+            .split('|')
+            .map(str::to_string)
+            .collect::<Vec<_>>();
         y.sort();
         ctl.clono_filt_opt.seg.push(y);
     } else if arg.starts_with("SEGN=") {
-        let fields = arg.after("SEGN=").split('|').collect::<Vec<&str>>();
+        let fields = arg.after("SEGN=").split('|');
         let mut y = Vec::<String>::new();
-        for x in fields.iter() {
+        for x in fields {
             if x.parse::<i32>().is_err() {
                 return Err("\nInvalid argument to SEGN.\n".to_string());
             }
@@ -647,17 +646,17 @@ pub fn process_special_arg2(
         y.sort();
         ctl.clono_filt_opt.segn.push(y);
     } else if arg.starts_with("NSEG=") {
-        let fields = arg.after("NSEG=").split('|').collect::<Vec<&str>>();
+        let fields = arg.after("NSEG=").split('|');
         let mut y = Vec::<String>::new();
-        for x in fields.iter() {
+        for x in fields {
             y.push(x.to_string());
         }
         y.sort();
         ctl.clono_filt_opt.nseg.push(y);
     } else if arg.starts_with("NSEGN=") {
-        let fields = arg.after("NSEGN=").split('|').collect::<Vec<&str>>();
+        let fields = arg.after("NSEGN=").split('|');
         let mut y = Vec::<String>::new();
-        for x in fields.iter() {
+        for x in fields {
             if x.parse::<i32>().is_err() {
                 return Err("\nInvalid argument to NSEGN.\n".to_string());
             }
@@ -669,8 +668,8 @@ pub fn process_special_arg2(
         ctl.clono_filt_opt.ncells_low = arg.after("CELLS=").force_usize();
         ctl.clono_filt_opt.ncells_high = ctl.clono_filt_opt.ncells_low;
     } else if arg.starts_with("META=") {
-        let v = arg.after("META=").split(',').collect::<Vec<&str>>();
-        for f in v.iter() {
+        let v = arg.after("META=").split(',');
+        for f in v {
             let mut f = f.to_string();
             tilde_expand_me(&mut f);
             metas.push(f);
