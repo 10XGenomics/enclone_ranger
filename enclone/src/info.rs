@@ -200,7 +200,7 @@ pub fn build_info(
                         "has deletion of {} bases relative to reference",
                         x.annv[1].3 - x.annv[0].1
                     ));
-                    vs_notesx.push("".to_string());
+                    vs_notesx.push(String::new());
                 // insertion
                 } else if x.annv[1].3 == x.annv[0].3 + x.annv[0].1 {
                     /*
@@ -215,7 +215,7 @@ pub fn build_info(
                         r.push(rt.get(m));
                     }
                     vs.push(r.clone());
-                    vs_notes.push("".to_string());
+                    vs_notes.push(String::new());
                 } else {
                     // maybe can't happen
                     vs.push(rt.clone());
@@ -223,13 +223,13 @@ pub fn build_info(
                     // This caused a traceback on "enclone 123085 RE".  It is interesting because
                     // the traceback did not get back to the main program, even with
                     // "enclone 123085 RE NOPRETTY".
-                    vs_notes.push("".to_string());
-                    vsnx = "".to_string();
+                    vs_notes.push(String::new());
+                    vsnx = String::new();
                 }
             } else {
                 vs.push(rt.clone());
                 vs_notes.push(String::new());
-                vsnx = "".to_string();
+                vsnx = String::new();
             }
             cdr3s.push(x.cdr3_dna.clone());
             cdr3_aa.push(x.cdr3_aa.clone());

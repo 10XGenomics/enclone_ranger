@@ -563,11 +563,11 @@ pub fn check_for_barcode_reuse(
 ) -> Result<(), String> {
     if !ctl.gen_opt.accept_reuse {
         const MIN_REUSE_FRAC_TO_SHOW: f64 = 0.25;
-        let mut all = Vec::<(String, usize, usize)>::new();
+        let mut all = Vec::<(&str, usize, usize)>::new();
         let mut total = vec![0; ctl.origin_info.dataset_id.len()];
-        for i in 0..tig_bc.len() {
-            all.push((tig_bc[i][0].barcode.clone(), tig_bc[i][0].dataset_index, i));
-            total[tig_bc[i][0].dataset_index] += 1;
+        for (i, tig_i) in tig_bc.iter().enumerate() {
+            all.push((tig_i[0].barcode.as_str(), tig_i[0].dataset_index, i));
+            total[tig_i[0].dataset_index] += 1;
         }
         all.par_sort();
         let mut reuse = Vec::<(usize, usize)>::new();
@@ -610,12 +610,12 @@ pub fn check_for_barcode_reuse(
             if frac >= MIN_REUSE_FRAC_TO_SHOW {
                 if !found {
                     found = true;
-                    msg += &mut "\nSignificant barcode reuse detected.  If at least 25% of the barcodes \
+                    msg += "\nSignificant barcode reuse detected.  If at least 25% of the barcodes \
                         in one dataset\nare present in another dataset, is is likely that two datasets \
                         arising from the\nsame library were included as input to enclone.  Since this \
                         would normally occur\nonly by accident, enclone exits.  \
                         If you wish to override this behavior,\nplease rerun with the argument \
-                        ACCEPT_REUSE.\n\nHere are the instances of reuse that were observed:\n\n".to_string();
+                        ACCEPT_REUSE.\n\nHere are the instances of reuse that were observed:\n\n";
                 }
                 writeln!(
                     msg,

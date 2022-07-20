@@ -72,20 +72,22 @@ pub fn define_mat(
     // Define map of indices into exacts.
 
     let nexacts = exacts.len();
-    let mut to_exacts = HashMap::<usize, usize>::new();
-    for (u, &x) in exacts.iter().enumerate() {
-        to_exacts.insert(x, u);
-    }
+    let to_exacts: HashMap<usize, usize> =
+        exacts.iter().enumerate().map(|(u, &x)| (x, u)).collect();
 
     // Get the info indices corresponding to this clonotype.
 
-    let mut infos = Vec::<usize>::new();
-    for i in od {
-        let x = i.2 as usize;
-        if to_exacts.contains_key(&info[x].clonotype_index) {
-            infos.push(x);
-        }
-    }
+    let mut infos: Vec<usize> = od
+        .iter()
+        .filter_map(|i| {
+            let x = i.2 as usize;
+            if to_exacts.contains_key(&info[x].clonotype_index) {
+                Some(x)
+            } else {
+                None
+            }
+        })
+        .collect();
     infos.sort_unstable();
 
     // Define map of exacts to infos.
@@ -101,11 +103,11 @@ pub fn define_mat(
 
     let mut chains = Vec::<(usize, usize)>::new();
     let mut seq_chains = Vec::<(Vec<u8>, usize, usize)>::new();
-    for u in 0..nexacts {
-        let ex = &exact_clonotypes[exacts[u]];
-        for m in 0..ex.share.len() {
+    for (u, &exu) in exacts.iter().enumerate() {
+        let ex = &exact_clonotypes[exu];
+        for (m, share) in ex.share.iter().enumerate() {
             chains.push((u, m));
-            seq_chains.push((ex.share[m].seq.clone(), u, m));
+            seq_chains.push((share.seq.clone(), u, m));
         }
     }
     seq_chains.sort();
@@ -113,12 +115,11 @@ pub fn define_mat(
     // Gather the raw joins.
 
     let mut raw_joinsx = vec![Vec::<usize>::new(); infos.len()];
-    for i1 in 0..infos.len() {
-        let j1 = infos[i1];
+    for (&j1, raw_i1) in infos.iter().zip(raw_joinsx.iter_mut()) {
         for x in raw_joins[j1].iter() {
-            let i2 = bin_position(&infos, &*x);
+            let i2 = bin_position(&infos, x);
             if i2 >= 0 {
-                raw_joinsx[i1].push(i2 as usize);
+                raw_i1.push(i2 as usize);
             }
         }
     }
@@ -132,10 +133,9 @@ pub fn define_mat(
     //   equivalence relation was built.  This we address partially.
 
     let mut extras = Vec::<(usize, usize)>::new();
-    for i1 in 0..raw_joinsx.len() {
-        for i2 in raw_joinsx[i1].iter() {
-            let i2 = *i2;
-            let (j1, j2) = (infos[i1], infos[i2]);
+    for (i1, (raw_i1, &j1)) in raw_joinsx.iter().zip(infos.iter()).enumerate() {
+        for &i2 in raw_i1.iter() {
+            let j2 = infos[i2];
             let (u1, u2) = (
                 info[j1].clonotype_index as usize,
                 info[j2].clonotype_index as usize,
@@ -189,8 +189,8 @@ pub fn define_mat(
     // much we pick.
 
     let mut rxi = Vec::<(usize, usize, usize)>::new(); // (heavy orbit, light orbit, infos index)
-    for i in 0..infos.len() {
-        let z = &info[infos[i]];
+    for (i, &inf_i) in infos.iter().enumerate() {
+        let z = &info[inf_i];
         let u = z.clonotype_index;
         let v = to_exacts[&u];
         if z.exact_cols.len() != 2 {
@@ -306,23 +306,22 @@ pub fn define_mat(
             }
             let (u1, u2) = (threesp[t1], threesp[t2]);
             let (ex1, ex2) = (&exact_clonotypes[exacts[u1]], &exact_clonotypes[exacts[u2]]);
-            for m1 in 0..ex1.share.len() {
+            for (m1, ex1_sm1) in ex1.share.iter().enumerate() {
                 let p1 = bin_position(&chains, &(u1, m1));
                 let q1 = bin_position(&r, &p1) as usize;
                 if q1 == t1[mismatch] {
-                    for m2 in 0..ex2.share.len() {
+                    for (m2, ex2_sm2) in ex2.share.iter().enumerate() {
                         let p2 = bin_position(&chains, &(u2, m2));
                         let q2 = bin_position(&r, &p2) as usize;
                         if q2 == t2[mismatch] {
-                            let (seq1, seq2) = (&ex1.share[m1].seq, &ex2.share[m2].seq);
+                            let (seq1, seq2) = (&ex1_sm1.seq, &ex2_sm2.seq);
                             if seq1.len() == seq2.len() {
                                 const MAX_DIFFS: usize = 10;
-                                let mut diffs = 0;
-                                for j in 0..seq1.len() {
-                                    if seq1[j] != seq2[j] {
-                                        diffs += 1;
-                                    }
-                                }
+                                let diffs = seq1
+                                    .iter()
+                                    .zip(seq2.iter())
+                                    .filter(|(&s1, &s2)| s1 != s2)
+                                    .count();
                                 if diffs <= MAX_DIFFS {
                                     e.join(p1, p2);
                                     break 't2_loop;
@@ -344,19 +343,19 @@ pub fn define_mat(
     // to mimic the behavior of the previous version of this algorithm, to minimiize churn.  Then
     // update the representatives.
 
-    let mut chainsp = Vec::<(String, usize, usize, usize)>::new();
-    for u in 0..nexacts {
-        let ex = &exact_clonotypes[exacts[u]];
-        for m in 0..ex.share.len() {
-            let mut c = ex.share[m].chain_type.clone();
+    let mut chainsp = Vec::<(String, usize, usize, usize)>::with_capacity(exacts.len());
+    for (u, &exu) in exacts.iter().enumerate() {
+        let ex = &exact_clonotypes[exu];
+        for (m, share_m) in ex.share.iter().enumerate() {
+            let mut c = share_m.chain_type.clone();
             if c.starts_with("TRB") {
                 c = c.replacen("TRB", "TRX", 1);
             } else if c.starts_with("TRA") {
                 c = c.replacen("TRA", "TRY", 1);
             }
             chainsp.push((
-                format!("{}:{}", c, ex.share[m].cdr3_aa),
-                ex.share[m].seq.len(),
+                format!("{}:{}", c, share_m.cdr3_aa),
+                share_m.seq.len(),
                 u,
                 m,
             ));
@@ -370,8 +369,8 @@ pub fn define_mat(
         chainsox.push((c.2, c.3, i));
     }
     chainsox.sort_unstable();
-    for i in 0..r.len() {
-        r[i] = chainsox[r[i] as usize].2 as i32;
+    for ri in r.iter_mut() {
+        *ri = chainsox[*ri as usize].2 as i32;
     }
     r.sort_unstable();
 
@@ -391,8 +390,8 @@ pub fn define_mat(
     // Find the maximum multiplicity of each orbit, and the number of columns.
 
     let mut mm = vec![0; r.len()];
-    for u in 0..nexacts {
-        let ex = &exact_clonotypes[exacts[u]];
+    for (u, &exu) in exacts.iter().enumerate() {
+        let ex = &exact_clonotypes[exu];
         let mut mm0 = vec![0; r.len()];
         for m in 0..ex.share.len() {
             mm0[rpos[&(u, m)]] += 1;
@@ -409,9 +408,9 @@ pub fn define_mat(
     let mut mat = vec![vec![None; nexacts]; cols];
     for (cx, cc) in mat.iter_mut().enumerate() {
         // for every column
-        'exact: for u in 0..nexacts {
+        'exact: for (u, &exu) in exacts.iter().enumerate() {
             // for every exact subclonotype
-            let ex = &exact_clonotypes[exacts[u]];
+            let ex = &exact_clonotypes[exu];
             let mut mm0 = vec![0; r.len()];
             for m in 0..ex.share.len() {
                 // for every chain in the exact subclonotype:
