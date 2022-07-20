@@ -22,12 +22,13 @@ pub fn subset_all_contig_annotations_json(filename: &str, barcodes: &[String]) -
         if s == "]" {
             if keep {
                 for line in &lines {
-                    writeln!(&mut x, "{}", line).unwrap();
+                    writeln!(x, "{}", line).unwrap();
                 }
             }
             break;
         }
-        lines.push(s.clone());
+        lines.push(s);
+        let s = lines.last().unwrap().as_str();
         if s.starts_with("        \"barcode\": \"") {
             let t = s.between("        \"barcode\": \"", "\"");
             keep = bin_member(barcodes, &t.to_string());
