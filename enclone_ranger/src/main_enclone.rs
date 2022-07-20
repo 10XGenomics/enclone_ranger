@@ -43,30 +43,26 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
         "TCRGD",
         "GAMMA_DELTA",
     ];
-    let mut found = vec![false; REQUIRED_ARGS.len()];
+    let mut found = [false; REQUIRED_ARGS.len()];
     for arg in args.iter().skip(1) {
         let mut arg = arg.as_str();
         if arg.contains('=') {
             arg = arg.before("=");
         }
         let mut ok = false;
-        for (j, &x) in REQUIRED_ARGS.iter().enumerate() {
+        for (f, &x) in found.iter_mut().zip(REQUIRED_ARGS.iter()) {
             if arg == x {
                 ok = true;
-                found[j] = true;
+                *f = true;
             }
         }
-        for x in ALLOWED_ARGS {
-            if arg == x {
-                ok = true;
-            }
-        }
+        ok = ok || ALLOWED_ARGS.contains(&arg);
         if !ok {
             panic!("Illegal argument {} passed to main_enclone_ranger.", arg);
         }
     }
     for (found, arg) in found.into_iter().zip(REQUIRED_ARGS.into_iter()) {
-        if found {
+        if !found {
             panic!(
                 "Required argument {} not passed to main_enclone_ranger",
                 arg
@@ -88,11 +84,10 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
     ctl.gen_opt.internal_run = false;
     for arg in args.iter().skip(1) {
         if arg.starts_with("PRE=") {
-            let pre = arg.after("PRE=").split(',');
             ctl.gen_opt.pre.clear();
-            for x in pre {
-                ctl.gen_opt.pre.push(x.to_string());
-            }
+            ctl.gen_opt
+                .pre
+                .extend(arg.after("PRE=").split(',').map(str::to_string));
         }
     }
     ctl.start_time = Some(tall);
@@ -133,10 +128,13 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
         is_tcr = false;
     }
     make_vdj_ref_data_core(&mut refdata, refx2, &ext_refx, is_tcr, is_bcr, None);
-    let mut to_ref_index = HashMap::<usize, usize>::new();
-    for i in 0..refdata.refs.len() {
-        to_ref_index.insert(refdata.id[i] as usize, i);
-    }
+    let to_ref_index: HashMap<usize, usize> = refdata
+        .id
+        .iter()
+        .take(refdata.refs.len())
+        .enumerate()
+        .map(|(i, &id)| (id as usize, i))
+        .collect();
 
     // Determine if the species is human or mouse or unknown.
 

@@ -12,9 +12,9 @@
 // (A)CH2-(B)Mx [membrane].
 
 use enclone_core::defs::EncloneControl;
-use std::collections::HashMap;
 use std::process::Command;
-use string_utils::{stringme, strme, TextUtils};
+use std::{collections::HashMap, path::Path};
+use string_utils::{strme, TextUtils};
 use vector_utils::next_diff1_3;
 
 // copied from tenkit2/pack_dna.rs:
@@ -45,7 +45,7 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
             ('-', "chr14:105840368-105840691"),
             ('-', "chr14:105854918-105855235"),
         ];
-        fol = vec![
+        fol = [
             ("TACCTG", "M1"),
             ("GTGAAA", "M2"),
             ("GTGAAG", "M2"),
@@ -57,14 +57,15 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
             ("GCCCGC", "S"),
             ("GGACAG", "S"),
             ("GGGGTG", "S"),
-        ];
+        ]
+        .as_ref();
     } else {
         ch3 = [
             ('-', "chr12:113414273-113414593"),
             ('-', "chr12:113271711-113272031"),
             ('-', "chr12:113421370-113421686"),
         ];
-        fol = vec![
+        fol = [
             ("GAGCTAGAC", "M1"),
             ("GAGCTGGAA", "M1"),
             ("GAGGGGGAG", "M1"),
@@ -84,14 +85,15 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
             ("GAGGTGCAC", "S"),
             ("GCCAGCGCT", "S"),
             ("GGCCAGCGC", "S"),
-        ];
+        ]
+        .as_ref();
     }
 
     // Traverse the datasets.
 
-    for q in 0..ctl.origin_info.n() {
+    for gex_path in ctl.origin_info.gex_path.iter().take(ctl.origin_info.n()) {
         let mut data = Vec::<(String, String, String)>::new(); // (barcode, umi, class)
-        let bam = format!("{}/possorted_genome_bam.bam", ctl.origin_info.gex_path[q]);
+        let bam = Path::new(gex_path).join("possorted_genome_bam.bam");
 
         // Traverse the boundaries.
 
@@ -113,12 +115,12 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
                 let pos = fields[3].force_usize();
                 let cigar = fields[5];
                 let seq = fields[9];
-                let (mut barcode, mut umi) = (String::new(), String::new());
-                for fj in &fields[11..] {
+                let (mut barcode, mut umi) = ("", "");
+                for &fj in &fields[11..] {
                     if fj.starts_with("CB:Z:") {
-                        barcode = fj.after("CB:Z:").to_string();
+                        barcode = fj.after("CB:Z:");
                     } else if fj.starts_with("UB:Z:") {
-                        umi = fj.after("UB:Z:").to_string();
+                        umi = fj.after("UB:Z:");
                     }
                 }
                 if barcode.is_empty() {
@@ -188,16 +190,16 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
                 // Print.
 
                 let mut class = if species == "human" {
-                    stringme(&ext_seq[0..6])
+                    strme(&ext_seq[0..6])
                 } else {
-                    stringme(&ext_seq[0..9])
+                    strme(&ext_seq[0..9])
                 };
-                for &fj in &fol {
+                for &fj in fol {
                     if strme(&ext_seq).starts_with(fj.0) {
-                        class = fj.1.to_string();
+                        class = fj.1;
                     }
                 }
-                data.push((barcode, umi, class));
+                data.push((barcode.to_string(), umi.to_string(), class.to_string()));
             }
         }
 
@@ -234,7 +236,7 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
                 }
                 k = l;
             }
-            h.insert(data[i].0.clone(), (sec, mem));
+            h.insert(data[i].0.to_string(), (sec, mem));
             i = j;
         }
         ctl.origin_info.secmem.push(h);

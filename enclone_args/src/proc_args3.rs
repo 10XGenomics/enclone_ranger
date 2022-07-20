@@ -247,7 +247,7 @@ fn get_path_or_internal_id(
                     ));
                 }
                 if m.contains("\"path\":\"") {
-                    let path = m.between("\"path\":\"", "\"").to_string();
+                    let path = m.between("\"path\":\"", "\"");
                     if !p.contains('/') {
                         pp = format!("{}/outs", path);
                     } else {
