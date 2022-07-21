@@ -37,7 +37,7 @@ pub fn make_donor_refs(
             j += 1;
         }
         // let j = next_diff12_5(alt_refs, i as i32) as usize;
-        for (k, x) in alt_refs[i..j].iter().enumerate() {
+        for (k, x) in alt_refs.iter().enumerate().take(j).skip(i) {
             let donor_id = x.0;
             let ref_id = x.1;
             let alt = x.2.to_ascii_vec();

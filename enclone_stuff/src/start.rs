@@ -57,11 +57,11 @@ pub fn stirling2_ratio_table_double(n_max: usize) -> Vec<Vec<Double>> {
     s[0][0] = one;
     let mut z = Vec::<Double>::new();
     let mut n2n1 = vec![dd![0.0]; n_max + 1];
-    for (n, nn) in n2n1[2..=n_max].iter_mut().enumerate() {
+    for (n, nn) in n2n1.iter_mut().enumerate().skip(2) {
         *nn = Double::from((n - 2) as u32) / Double::from((n - 1) as u32);
     }
     let mut k1k = vec![dd![0.0]; n_max];
-    for (k, kk) in k1k[1..n_max].iter_mut().enumerate() {
+    for (k, kk) in k1k.iter_mut().enumerate().skip(1) {
         *kk = Double::from((k - 1) as u32) / Double::from(k as u32);
     }
     let mut njn = Vec::<(usize, Double)>::new();
