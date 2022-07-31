@@ -27,7 +27,7 @@ attohttpc = { version = ">=0.18, <0.20", default-features = false, features = ["
 debruijn = "0.3"
 enclone_core = { path = "../enclone_core" }
 enclone_vars = { path = "../enclone_vars" }
-evalexpr = "8"
+evalexpr = ">=7, <9"
 expr_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 itertools = "0.10"

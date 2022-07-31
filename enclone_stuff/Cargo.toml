@@ -28,7 +28,7 @@ enclone_proto = { path = "../enclone_proto" }
 enclone = { path = "../enclone" }
 enclone_args = { path = "../enclone_args" }
 equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-evalexpr = "8"
+evalexpr = ">=7, <9"
 io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 itertools = "0.10"
 ndarray = "0.15"
