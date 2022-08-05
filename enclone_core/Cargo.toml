@@ -13,10 +13,9 @@ authors = ["""David Jaffe <david.jaffe@10xgenomics.com>,
               Patrick Marks <patrick.marks@10xgenomics.com>,
               Wyatt McDonnell <wyatt.mcdonnell@10xgenomics.com>"""]
 edition = "2021"
-build = "build.rs"
 license-file = "LICENSE.txt"
 publish = false
-include = ["build.rs", "src/*.rs", "LICENSE.txt", "src/mammalian_fixed_len.table"]
+include = ["src/*.rs", "LICENSE.txt", "src/mammalian_fixed_len.table"]
 
 # Please do not edit crate versions within this file.  Instead edit the file master.toml
 # in the root of the enclone repo.
@@ -27,7 +26,6 @@ amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.gi
 ansi_escape = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 attohttpc = { version = "0.19", default-features = false, features = ["compress", "tls-rustls"] }
 bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
 debruijn = "0.3"
 enclone_proto = { path = "../enclone_proto" }
 evalexpr = ">=7, <9"
@@ -61,7 +59,3 @@ default-features = false
 git = "https://github.com/10XGenomics/hdf5-rust.git"
 branch = "conda_nov2021"
 default-features = false
-
-[build-dependencies]
-chrono = { version = "0.4", default-features = false, features = ["std", "clock"] }
-string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
