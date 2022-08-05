@@ -22,7 +22,6 @@ fn main() {
 fn test_traceback1() {
     use assert_cmd;
     use assert_cmd::prelude::*;
-    use enclone_core::version_string;
     use std::fmt::Write;
     use std::{env, process::Command};
     let mut cmd = Command::cargo_bin("traceback1").expect(
@@ -44,11 +43,10 @@ fn test_traceback1() {
         }
         eprint!(
             "\n▓▓▓ test_traceback1 failed because did not find {} as expected;\n\n\
-             this was using enclone version {} : {}\n\n\
+             this was using enclone version {} \n\n\
              ▓▓▓ traceback begins with\n{}",
             morsel,
             env!("CARGO_PKG_VERSION"),
-            version_string(),
             head,
         );
         std::process::exit(1);

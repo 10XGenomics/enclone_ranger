@@ -22,7 +22,6 @@ use enclone_args::read_json::parse_json_annotations_files;
 use enclone_core::defs::{AlleleData, CloneInfo, TigData};
 use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup};
 use enclone_core::hcomp::heavy_complexity;
-use enclone_core::version_string;
 use enclone_print::loupe::make_donor_refs;
 use equiv::EquivRel;
 use io_utils::{fwriteln, open_for_read};
@@ -567,12 +566,10 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
         if ctl.gen_opt.echo {
             let args: Vec<String> = env::args().collect();
-            println!("\n {} : {}", env!("CARGO_PKG_VERSION"), version_string());
             println!("{}", args.iter().format(" "));
         }
         if ctl.gen_opt.echoc {
             let args: Vec<String> = env::args().collect();
-            println!("\n# {} : {}", env!("CARGO_PKG_VERSION"), version_string());
             println!("# {}", args.iter().format(" "));
         }
 
