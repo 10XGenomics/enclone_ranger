@@ -6,7 +6,6 @@
 
 use debruijn::dna_string::DnaString;
 use enclone_core::defs::EncloneControl;
-use enclone_core::version_string;
 use itertools::Itertools;
 use std::cmp::min;
 use std::env;
@@ -25,7 +24,6 @@ pub fn analyze_donor_ref(
     if !ctl.gen_opt.external_ref.is_empty() {
         if ctl.gen_opt.echo {
             let args: Vec<String> = env::args().collect();
-            println!("\n{} : {}", env!("CARGO_PKG_VERSION"), version_string());
             println!("{}", args.iter().format(" "));
         }
         let mut erefdata = RefData::new();

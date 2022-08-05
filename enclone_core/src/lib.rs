@@ -15,7 +15,6 @@ pub mod mammalian_fixed_len;
 pub mod median;
 pub mod opt_d;
 pub mod packing;
-pub mod prepare_for_apocalypse;
 pub mod print_tools;
 pub mod set_speakers;
 pub mod slurp;
@@ -25,7 +24,6 @@ pub mod var_reg;
 
 use lazy_static::lazy_static;
 use std::cmp::max;
-use std::env;
 use std::fmt::Write;
 use std::io::BufRead;
 use std::sync::Mutex;
@@ -112,15 +110,6 @@ pub fn expand_integer_ranges(x: &str) -> String {
 lazy_static! {
     pub static ref BUG_REPORT_ADDRESS: Mutex<Vec<String>> = Mutex::new(Vec::<String>::new());
     pub static ref REMOTE_HOST: Mutex<Vec<String>> = Mutex::new(Vec::<String>::new());
-}
-
-const VERSION_STRING: &str = env!("VERSION_STRING");
-
-// WARNING: the version string will not be up to date unless enclone_core/build.rs is touched
-// before compiling.  Use current_version_string() to always get the current version.
-
-pub fn version_string() -> String {
-    VERSION_STRING.to_string()
 }
 
 // Parse a line, breaking at blanks, but not if they're in quotes.  And strip the quotes.
