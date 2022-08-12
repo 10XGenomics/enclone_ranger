@@ -26,6 +26,7 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
     const REQUIRED_ARGS: [&str; 9] = [
         "CELLRANGER",
         "DONOR_REF_FILE",
+        "FATE_FILE",
         "FORCE_EXTERNAL",
         "MAX_CORES",
         "NOPAGER",
