@@ -29,6 +29,8 @@ use qd::Double;
 use rayon::prelude::*;
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
+use std::fs::File;
+use std::io::BufWriter;
 use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
@@ -930,6 +932,15 @@ pub fn print_clonotypes(
         all_loupe_clonotypes.append(&mut r.6);
     }
     loupe_out(ctl, all_loupe_clonotypes, refdata, dref);
+
+    // Write out the fate of each filtered cell. It would be better to collect
+    // details of filtering in an enum as opposed to a string
+    if !ctl.gen_opt.fate_file.is_empty() {
+        let mut wtr = BufWriter::new(
+            File::create(&ctl.gen_opt.fate_file).expect("Unable to open FATE_FILE for writing"),
+        );
+        serde_json::to_writer_pretty(&mut wtr, fate).map_err(|e| e.to_string())?;
+    }
 
     // Set up to group and print clonotypes.
 
