@@ -934,8 +934,7 @@ pub fn print_clonotypes(
     }
     loupe_out(ctl, all_loupe_clonotypes, refdata, dref);
 
-    // Write out the fate of each filtered cell. It would be better to collect
-    // details of filtering in an enum as opposed to a string
+    // Write out the fate of each filtered barcode.
     if !ctl.gen_opt.fate_file.is_empty() {
         let mut wtr = BufWriter::new(
             File::create(&ctl.gen_opt.fate_file).expect("Unable to open FATE_FILE for writing"),
