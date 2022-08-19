@@ -2,7 +2,10 @@
 
 // Miscellaneous functions.
 
-use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype, TigData};
+use enclone_core::{
+    barcode_fate::BarcodeFate,
+    defs::{CloneInfo, EncloneControl, ExactClonotype, TigData},
+};
 use equiv::EquivRel;
 use itertools::Itertools;
 #[cfg(not(target_os = "windows"))]
@@ -195,7 +198,7 @@ pub fn lookup_heavy_chain_reuse(
 pub fn cross_filter(
     ctl: &EncloneControl,
     tig_bc: &mut Vec<Vec<TigData>>,
-    fate: &mut [HashMap<String, &str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
 ) {
     // Get the list of dataset origins.  Here we allow the same origin name to have been used
     // for more than one donor, as we haven't explicitly prohibited that.
@@ -284,7 +287,7 @@ pub fn cross_filter(
     for (i, tigi) in tig_bc.iter().enumerate() {
         for tig in tigi {
             if tig.umi_count < UMIS_SAVE && bin_member(&blacklist, &tig.seq()) {
-                fate[tigi[0].dataset_index].insert(tigi[0].barcode.clone(), "failed CROSS filter");
+                fate[tigi[0].dataset_index].insert(tigi[0].barcode.clone(), BarcodeFate::Cross);
                 if !ctl.clono_filt_opt_def.ncross {
                     to_delete[i] = true;
                 }

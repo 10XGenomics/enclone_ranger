@@ -4,6 +4,7 @@ use crate::doublets::delete_doublets;
 use crate::merge_onesies::merge_onesies;
 use crate::split_orbits::split_orbits;
 use crate::weak_chains::weak_chains;
+use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
 use enclone_print::define_mat::define_mat;
 use enclone_print::print_utils3::define_column_info;
@@ -28,7 +29,7 @@ pub fn some_filters(
     raw_joins: &[Vec<usize>],
     eq: &EquivRel,
     disintegrated: &[bool],
-    fate: &mut [HashMap<String, &str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {
@@ -56,7 +57,7 @@ pub fn some_filters(
 
     let tsig = Instant::now();
     const SIG_MULT: usize = 20;
-    let mut results = Vec::<(usize, Vec<(usize, String, &'static str)>, Vec<usize>)>::new();
+    let mut results = Vec::<(usize, Vec<(usize, String, BarcodeFate)>, Vec<usize>)>::new();
     for i in 0..orbits.len() {
         results.push((i, Vec::new(), Vec::new()));
     }
@@ -168,7 +169,7 @@ pub fn some_filters(
                     res.1.push((
                         ex.clones[i][0].dataset_index,
                         ex.clones[i][0].barcode.clone(),
-                        "failed SIGNATURE filter",
+                        BarcodeFate::Signature,
                     ));
                 }
             }
@@ -177,7 +178,7 @@ pub fn some_filters(
     let mut to_delete = vec![false; exact_clonotypes.len()];
     for i in 0..results.len() {
         for j in 0..results[i].1.len() {
-            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2);
+            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
         }
         for j in 0..results[i].2.len() {
             to_delete[results[i].2[j]] = true;
@@ -261,7 +262,7 @@ pub fn some_filters(
     // accounting for all the cells in all the exact subclonotypes, never occurs as Q60
     // doesn't occur as Q40 twice, and disagrees with the reference.
 
-    let mut results = Vec::<(usize, Vec<(usize, String, &'static str)>, Vec<usize>)>::new();
+    let mut results = Vec::<(usize, Vec<(usize, String, BarcodeFate)>, Vec<usize>)>::new();
     for i in 0..orbits.len() {
         results.push((i, Vec::new(), Vec::new()));
     }
@@ -427,7 +428,7 @@ pub fn some_filters(
                     res.1.push((
                         ex.clones[i][0].dataset_index,
                         ex.clones[i][0].barcode.clone(),
-                        "failed QUAL filter",
+                        BarcodeFate::Qual,
                     ));
                 }
             }
@@ -438,7 +439,7 @@ pub fn some_filters(
     let mut dels = Vec::<i32>::new();
     for i in 0..results.len() {
         for j in 0..results[i].1.len() {
-            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2);
+            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
         }
         for x in results[i].2.iter() {
             to_delete[*x] = true;
