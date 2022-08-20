@@ -2,7 +2,10 @@
 
 // Filter B cells based on UMI counts.
 
-use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
+use enclone_core::{
+    barcode_fate::BarcodeFate,
+    defs::{CloneInfo, EncloneControl, ExactClonotype},
+};
 use equiv::EquivRel;
 use stats_utils::binomial_sum;
 use std::cmp::max;
@@ -15,7 +18,7 @@ pub fn filter_umi(
     ctl: &EncloneControl,
     exact_clonotypes: &mut [ExactClonotype],
     info: &[CloneInfo],
-    fate: &mut [HashMap<String, &str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
 ) {
     let (mut is_tcr, mut is_bcr) = (true, true);
     if ctl.gen_opt.tcr {
@@ -184,10 +187,8 @@ pub fn filter_umi(
                         if pass == 3 {
                             for i in 0..ex.clones.len() {
                                 if to_delete[i] {
-                                    fate[ex.clones[i][0].dataset_index].insert(
-                                        ex.clones[i][0].barcode.clone(),
-                                        "failed UMI filter",
-                                    );
+                                    fate[ex.clones[i][0].dataset_index]
+                                        .insert(ex.clones[i][0].barcode.clone(), BarcodeFate::Umi);
                                 }
                             }
                             if ctl.clono_filt_opt_def.umi_filt {
@@ -294,10 +295,8 @@ pub fn filter_umi(
                     if pass == 2 {
                         for i in 0..ex.clones.len() {
                             if to_delete[j][i] {
-                                fate[ex.clones[i][0].dataset_index].insert(
-                                    ex.clones[i][0].barcode.clone(),
-                                    "failed UMI_RATIO filter",
-                                );
+                                fate[ex.clones[i][0].dataset_index]
+                                    .insert(ex.clones[i][0].barcode.clone(), BarcodeFate::UmiRatio);
                             }
                         }
                         if ctl.clono_filt_opt_def.umi_ratio_filt {

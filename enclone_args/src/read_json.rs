@@ -26,6 +26,7 @@ use self::annotate::{annotate_seq, get_cdr3_using_ann, print_some_annotations};
 use self::refx::RefData;
 use self::transcript::is_valid;
 use debruijn::dna_string::DnaString;
+use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, OriginInfo, TigData};
 use io_utils::{open_maybe_compressed, path_exists, read_vector_entry_from_json};
 use rand::Rng;
@@ -859,7 +860,7 @@ pub fn parse_json_annotations_files(
     vdj_cells: &mut Vec<Vec<String>>,
     gex_cells: &mut Vec<Vec<String>>,
     gex_cells_specified: &mut Vec<bool>,
-    fate: &mut [HashMap<String, &str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
 ) -> Result<(), String> {
     // (origin index, contig name, V..J length): (?)
     let mut results = Vec::<(
@@ -951,7 +952,7 @@ pub fn parse_json_annotations_files(
         }
         for j in 0..found.len() {
             if !found[j] {
-                fate[i].insert(cells[j].clone(), "failed to find productive contig");
+                fate[i].insert(cells[j].clone(), BarcodeFate::NonProductive);
             }
         }
     }

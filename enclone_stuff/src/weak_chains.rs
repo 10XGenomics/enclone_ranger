@@ -3,7 +3,10 @@
 // Based on the number of cells in each column, decide which exact subclonotypes
 // look like junk.  Preliminary heuristic.
 
-use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
+use enclone_core::{
+    barcode_fate::BarcodeFate,
+    defs::{CloneInfo, EncloneControl, ExactClonotype},
+};
 use enclone_print::define_mat::define_mat;
 use enclone_proto::types::DonorReferenceItem;
 use qd::Double;
@@ -21,13 +24,13 @@ pub fn weak_chains(
     exact_clonotypes: &[ExactClonotype],
     info: &[CloneInfo],
     raw_joins: &[Vec<usize>],
-    fate: &mut [HashMap<String, &str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {
     // Note mat calculation duplicated with print_clonotypes and also doublet detection.
 
-    let mut results = Vec::<(usize, Vec<(usize, String, &'static str)>, Vec<usize>)>::new();
+    let mut results = Vec::<(usize, Vec<(usize, String, BarcodeFate)>, Vec<usize>)>::new();
     for i in 0..orbits.len() {
         results.push((i, Vec::new(), Vec::new()));
     }
@@ -93,7 +96,7 @@ pub fn weak_chains(
                             res.1.push((
                                 ex.clones[i][0].dataset_index,
                                 ex.clones[i][0].barcode.clone(),
-                                "failed WEAK_CHAINS filter",
+                                BarcodeFate::WeakChains,
                             ));
                         }
                     }
@@ -105,7 +108,7 @@ pub fn weak_chains(
     let mut dels = Vec::<i32>::new();
     for i in 0..results.len() {
         for j in 0..results[i].1.len() {
-            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2);
+            fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
         }
         for x in results[i].2.iter() {
             to_delete[*x] = true;

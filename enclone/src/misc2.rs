@@ -6,6 +6,7 @@ use crate::innate::mark_innate;
 use crate::misc3::study_consensus;
 use amino::aa_seq;
 use debruijn::dna_string::DnaString;
+use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, ExactClonotype, Junction, TigData, TigData0, TigData1};
 use io_utils::{fwriteln, open_for_write_new};
 use rayon::prelude::*;
@@ -31,7 +32,7 @@ use vector_utils::{
 pub fn filter_gelbead_contamination(
     ctl: &EncloneControl,
     clones: &mut Vec<Vec<TigData0>>,
-    fate: &mut Vec<(usize, String, &'static str)>,
+    fate: &mut Vec<(usize, String, BarcodeFate)>,
 ) {
     const GB_UMI_MULT: usize = 10;
     const GB_MIN_FRAC: f64 = 0.2;
@@ -77,7 +78,7 @@ pub fn filter_gelbead_contamination(
             fate.push((
                 clone[0].dataset_index,
                 clone[0].barcode.clone(),
-                "failed WHITEF filter",
+                BarcodeFate::GelBeadContamination,
             ));
         }
     }
@@ -272,7 +273,7 @@ pub fn find_exact_subclonotypes(
     ctl: &EncloneControl,
     tig_bc: &[Vec<TigData>],
     refdata: &RefData,
-    fate: &mut [HashMap<String, &'static str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
 ) -> Vec<ExactClonotype> {
     let mut exact_clonotypes = Vec::<ExactClonotype>::new();
     let mut r = 0;
@@ -322,7 +323,11 @@ pub fn find_exact_subclonotypes(
     }
     ctl.perf_stats(&t, "finding exact subclonotypes one");
     let t = Instant::now();
-    let mut results = Vec::<(usize, Vec<ExactClonotype>, Vec<(usize, String, &str)>)>::new();
+    let mut results = Vec::<(
+        usize,
+        Vec<ExactClonotype>,
+        Vec<(usize, String, BarcodeFate)>,
+    )>::new();
     for i in 0..groups.len() {
         results.push((i, Vec::new(), Vec::new()));
     }
@@ -382,7 +387,7 @@ pub fn find_exact_subclonotypes(
                     res.2.push((
                         tig_bc[t][0].dataset_index,
                         tig_bc[t][0].barcode.clone(),
-                        "failed BC_DUP filter",
+                        BarcodeFate::DuplicatedBarcode,
                     ));
                 }
             }
@@ -429,7 +434,7 @@ pub fn find_exact_subclonotypes(
             exact_clonotypes.append(&mut results[i].1);
         }
         for j in 0..results[i].2.len() {
-            fate[results[i].2[j].0].insert(results[i].2[j].1.clone(), results[i].2[j].2);
+            fate[results[i].2[j].0].insert(results[i].2[j].1.clone(), results[i].2[j].2.clone());
         }
     }
     if ctl.gen_opt.utr_con || ctl.gen_opt.con_con {

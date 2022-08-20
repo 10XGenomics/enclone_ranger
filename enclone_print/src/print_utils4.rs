@@ -1,7 +1,10 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
 use amino::codon_to_aa;
-use enclone_core::defs::{ColInfo, EncloneControl, ExactClonotype, GexInfo};
+use enclone_core::{
+    barcode_fate::BarcodeFate,
+    defs::{ColInfo, EncloneControl, ExactClonotype, GexInfo},
+};
 use enclone_proto::types::DonorReferenceItem;
 use equiv::EquivRel;
 use itertools::Itertools;
@@ -500,7 +503,7 @@ pub fn compute_bu(
     gex_info: &GexInfo,
     rsi: &ColInfo,
     sr: &mut Vec<(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)>,
-    fate: &[HashMap<String, &str>],
+    fate: &[HashMap<String, BarcodeFate>],
     nd_fields: &[String],
     alt_bcs: &[String],
     cred: &[Vec<String>],
@@ -582,7 +585,7 @@ pub fn compute_bu(
                 } else if var == "filter" {
                     let mut f = String::new();
                     if fate[li].contains_key(bc) {
-                        f = fate[li][bc].between(" ", " ").to_string();
+                        f = fate[li][bc].label().to_string();
                     }
                     row.push(f);
                 } else if var == "n_other" {

@@ -500,6 +500,7 @@ dependencies = [
  "qd",
  "rayon",
  "regex",
+ "serde",
  "stats_utils",
  "string_utils",
  "superslice",

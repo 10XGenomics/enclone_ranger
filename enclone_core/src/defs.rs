@@ -133,6 +133,7 @@ pub struct GeneralOpt {
     pub exact: Option<usize>,
     pub binary: String,
     pub proto: String,
+    pub fate_file: String,
     // Optional path to a json file containing metadata
     pub proto_metadata: Option<String>,
     pub h5: bool,
