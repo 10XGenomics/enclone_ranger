@@ -2,6 +2,7 @@
 
 // This file provides the single function build_info.
 
+use enclone_core::barcode_fate::BarcodeFate;
 use vdj_ann::refx;
 
 use self::refx::RefData;
@@ -21,7 +22,7 @@ pub fn build_info(
     refdata: &RefData,
     ctl: &EncloneControl,
     exact_clonotypes: &mut [ExactClonotype],
-    fate: &mut [HashMap<String, &str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
 ) -> Vec<CloneInfo> {
     // Build info about clonotypes.  We create a data structure info.
     // An entry in info is a clonotype having appropriate properties.
@@ -34,7 +35,7 @@ pub fn build_info(
         usize,
         Vec<CloneInfo>,
         ExactClonotype,
-        Vec<(usize, String, &'static str)>,
+        Vec<(usize, String, BarcodeFate)>,
     )>::new();
     for (i, ct) in exact_clonotypes.iter().enumerate() {
         results.push((i, Vec::new(), ct.clone(), Vec::new()));
@@ -324,7 +325,7 @@ pub fn build_info(
                 res.3.push((
                     ex.clones[j][0].dataset_index,
                     ex.clones[j][0].barcode.clone(),
-                    "failed IMPROPER filter",
+                    BarcodeFate::Improper,
                 ));
             }
         }
@@ -362,7 +363,7 @@ pub fn build_info(
         info.append(&mut results[i].1);
         exact_clonotypes[i] = results[i].2.clone();
         for j in 0..results[i].3.len() {
-            fate[results[i].3[j].0].insert(results[i].3[j].1.clone(), results[i].3[j].2);
+            fate[results[i].3[j].0].insert(results[i].3[j].1.clone(), results[i].3[j].2.clone());
         }
     }
 

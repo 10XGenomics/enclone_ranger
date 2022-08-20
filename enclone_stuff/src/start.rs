@@ -19,6 +19,7 @@ use enclone::misc1::{cross_filter, lookup_heavy_chain_reuse};
 use enclone::misc2::{check_for_barcode_reuse, find_exact_subclonotypes, search_for_shm_indels};
 use enclone::misc3::sort_tig_bc;
 use enclone_args::read_json::parse_json_annotations_files;
+use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, CloneInfo, TigData};
 use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup};
 use enclone_core::hcomp::heavy_complexity;
@@ -123,7 +124,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     let mut vdj_cells = Vec::<Vec<String>>::new();
     let mut gex_cells = Vec::<Vec<String>>::new();
     let mut gex_cells_specified = Vec::<bool>::new();
-    let mut fate = vec![HashMap::<String, &str>::new(); ctl.origin_info.n()];
+    let mut fate = vec![HashMap::<String, BarcodeFate>::new(); ctl.origin_info.n()];
     parse_json_annotations_files(
         ctl,
         &mut tig_bc,
@@ -190,7 +191,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             let bc = &tigi[0].barcode;
             let li = tigi[0].dataset_index;
             if !bin_member(&vdj_cells[li], bc) {
-                fate[li].insert(bc.clone(), "fails CELL filter");
+                fate[li].insert(bc.clone(), BarcodeFate::NotAsmCell);
             }
         }
     }
@@ -257,7 +258,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                             *d = true;
                             for clone in &ex.clones {
                                 fate[clone[0].dataset_index]
-                                    .insert(clone[0].barcode.clone(), "failed FOURSIE_KILL filter");
+                                    .insert(clone[0].barcode.clone(), BarcodeFate::FoursieKill);
                             }
                         }
                     }
@@ -510,12 +511,12 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                     if ctl.gen_opt.cellranger {
                         if gex_cells_specified[li] && !bin_member(&gex_cells[li], bc) {
                             *d = true;
-                            fate[li].insert(bc.clone(), "failed GEX filter");
+                            fate[li].insert(bc.clone(), BarcodeFate::NotGexCell);
                         }
                     } else if !ctl.origin_info.gex_path[li].is_empty() {
                         let gbc = &gex_info.gex_cell_barcodes[li];
                         if !bin_member(gbc, bc) {
-                            fate[li].insert(bc.clone(), "failed GEX filter");
+                            fate[li].insert(bc.clone(), BarcodeFate::NotGexCell);
                             if !ctl.clono_filt_opt_def.ngex {
                                 *d = true;
                             }

@@ -2,6 +2,7 @@
 
 // This file provides the single function graph_filter.
 
+use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, TigData};
 use graph_simple::GraphSimple;
 use io_utils::fwriteln;
@@ -33,7 +34,7 @@ pub fn graph_filter(
     ctl: &EncloneControl,
     tig_bc: &mut Vec<Vec<TigData>>,
     graph: bool,
-    fate: &mut [HashMap<String, &str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
 ) {
     let mut ndels = 0;
     let mut seqs = Vec::<(&[u8], bool, &str, usize)>::new();
@@ -374,7 +375,7 @@ pub fn graph_filter(
     for i in 0..tig_bc.len() {
         if to_delete[i] {
             fate[tig_bc[i][0].dataset_index]
-                .insert(tig_bc[i][0].barcode.clone(), "failed GRAPH_FILTER filter");
+                .insert(tig_bc[i][0].barcode.clone(), BarcodeFate::GraphFilter);
         }
     }
     if !ctl.gen_opt.ngraph_filter {

@@ -4,7 +4,10 @@
 //
 // THIS FILTER DOESN'T PROPERLY TRACK FATE.
 
-use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
+use enclone_core::{
+    barcode_fate::BarcodeFate,
+    defs::{CloneInfo, EncloneControl, ExactClonotype},
+};
 use enclone_print::define_mat::define_mat;
 use enclone_proto::types::DonorReferenceItem;
 use itertools::Itertools;
@@ -26,7 +29,7 @@ pub fn delete_doublets(
     raw_joins: &[Vec<usize>],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
-    fate: &mut [HashMap<String, &str>],
+    fate: &mut [HashMap<String, BarcodeFate>],
 ) {
     if ctl.clono_filt_opt_def.doublet {
         let t = Instant::now();
@@ -249,7 +252,7 @@ pub fn delete_doublets(
                     for k in 0..ex.ncells() {
                         let li = ex.clones[k][0].dataset_index;
                         let bc = &ex.clones[k][0].barcode;
-                        fate[li].insert(bc.clone(), "failed DOUBLET filter");
+                        fate[li].insert(bc.clone(), BarcodeFate::Doublet);
                     }
                 }
             }
