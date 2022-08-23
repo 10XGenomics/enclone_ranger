@@ -786,7 +786,7 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 [[package]]
 name = "hdf5"
 version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d222ace98662bf18efe4edba9a7ab289389a5097"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d39d449f3314a6f53249de97f8a014ccfcf23203"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -803,7 +803,7 @@ dependencies = [
 [[package]]
 name = "hdf5-derive"
 version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d222ace98662bf18efe4edba9a7ab289389a5097"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d39d449f3314a6f53249de97f8a014ccfcf23203"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -813,7 +813,7 @@ dependencies = [
 [[package]]
 name = "hdf5-sys"
 version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d222ace98662bf18efe4edba9a7ab289389a5097"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d39d449f3314a6f53249de97f8a014ccfcf23203"
 dependencies = [
  "attohttpc",
  "bzip2",
@@ -831,7 +831,7 @@ dependencies = [
 [[package]]
 name = "hdf5-types"
 version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d222ace98662bf18efe4edba9a7ab289389a5097"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d39d449f3314a6f53249de97f8a014ccfcf23203"
 dependencies = [
  "ascii",
  "cfg-if",
