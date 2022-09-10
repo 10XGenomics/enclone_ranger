@@ -760,7 +760,7 @@ pub fn get_extra_parseables<'a>(ctl: &'a EncloneControl, pcols_sort: &'a [String
             trim += 1;
         }
         if trim > 0 {
-            let v = &x[..chars[chars.len() - trim - 1].0];
+            let v = &x[..chars[chars.len() - trim].0];
             if !bin_member(&exclusions, &v) {
                 extra_parseables.push(v);
             }
