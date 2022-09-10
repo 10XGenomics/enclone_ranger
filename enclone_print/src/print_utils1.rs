@@ -583,47 +583,27 @@ pub fn start_gen(
         );
         let mut mixes = 0;
         if ctl.origin_info.donor_list.len() > 1 && ctl.clono_filt_opt_def.donor {
-            for j1 in 0..exacts.len() {
-                let ex1 = &exact_clonotypes[exacts[j1]];
-                for j2 in j1..exacts.len() {
-                    let ex2 = &exact_clonotypes[exacts[j2]];
-                    for k1 in 0..ex1.clones.len() {
-                        let x1 = &ex1.clones[k1][0];
-                        for k2 in 0..ex2.clones.len() {
-                            if (j1, k1) < (j2, k2) {
-                                let x2 = &ex2.clones[k2][0];
-                                if x1.donor_index.is_some()
-                                    && x2.donor_index.is_some()
-                                    && x1.donor_index.unwrap() != x2.donor_index.unwrap()
-                                {
-                                    mixes += 1;
+            for (j1, &ej1) in exacts.iter().enumerate() {
+                let ex1 = &exact_clonotypes[ej1];
+                for (j2, &ej2) in exacts.iter().enumerate().skip(j1) {
+                    let ex2 = &exact_clonotypes[ej2];
+                    for (k1, ck1) in ex1.clones.iter().enumerate() {
+                        let x1 = &ck1[0];
+                        if let Some(donor1) = x1.donor_index {
+                            for (k2, ck2) in ex2.clones.iter().enumerate() {
+                                if (j1, k1) < (j2, k2) {
+                                    let x2 = &ck2[0];
+                                    if let Some(donor2) = x2.donor_index {
+                                        if donor1 != donor2 {
+                                            mixes += 1;
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-            // for (j1, &ej1) in exacts.iter().enumerate() {
-            //     let ex1 = &exact_clonotypes[ej1];
-            //     for (j2, &ej2) in exacts.iter().enumerate().skip(j1) {
-            //         let ex2 = &exact_clonotypes[ej2];
-            //         for (k1, ck1) in ex1.clones.iter().enumerate() {
-            //             let x1 = &ck1[0];
-            //             if let Some(donor1) = x1.donor_index {
-            //                 for (k2, ck2) in ex2.clones.iter().enumerate().skip(k1) {
-            //                     if (j1, k1) < (j2, k2) {
-            //                         let x2 = &ck2[0];
-            //                         if let Some(donor2) = x2.donor_index {
-            //                             if donor1 != donor2 {
-            //                                 mixes += 1;
-            //                             }
-            //                         }
-            //                     }
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
         }
         fwriteln!(&mut mlog, "total mixed cell pairs = {}", mixes);
         let donor_names: Vec<&str> = donors
