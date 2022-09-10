@@ -937,9 +937,9 @@ pub fn proc_lvar_auto(
             }
         }
         let mut entropies = Vec::<f64>::new();
-        for l in 0..ex.clones.len() {
-            let li = ex.clones[l][0].dataset_index;
-            let bc = ex.clones[l][0].barcode.clone();
+        for (l, clone) in ex.clones.iter().enumerate() {
+            let li = clone[0].dataset_index;
+            let bc = clone[0].barcode.clone();
             if !gex_info.gex_barcodes.is_empty() {
                 let mut entropy = 0.0;
                 let p = bin_position(&gex_info.gex_barcodes[li], &bc);
