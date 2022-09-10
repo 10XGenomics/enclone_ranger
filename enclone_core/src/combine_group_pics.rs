@@ -23,8 +23,8 @@ pub fn combine_group_pics(
         let mut rows = Vec::<Vec<String>>::new();
         for pic in group_pics {
             let r: Vec<_> = pic.split('\n').collect();
-            for j in 0..r.len() - 1 {
-                let s = r[j].split('\t').map(str::to_owned).collect();
+            for rj in r.iter().take(r.len() - 1) {
+                let s = rj.split('\t').map(str::to_owned).collect();
                 rows.push(s);
             }
         }
