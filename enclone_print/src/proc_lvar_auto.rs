@@ -937,18 +937,18 @@ pub fn proc_lvar_auto(
             }
         }
         let mut entropies = Vec::<f64>::new();
-        for (clone, &tc) in ex.clones.iter().zip(total_counts.iter()) {
-            let li = clone[0].dataset_index;
-            let bc = clone[0].barcode.as_str();
+        for l in 0..ex.clones.len() {
+            let li = ex.clones[l][0].dataset_index;
+            let bc = ex.clones[l][0].barcode.clone();
             if !gex_info.gex_barcodes.is_empty() {
                 let mut entropy = 0.0;
-                let p = bin_position(&gex_info.gex_barcodes[li], &bc.to_string());
+                let p = bin_position(&gex_info.gex_barcodes[li], &bc);
                 if p >= 0 {
                     if gex_info.gex_matrices[li].initialized() {
                         let row = gex_info.gex_matrices[li].row(p as usize);
                         for (f, n) in row {
                             if gex_info.is_gex[li][f] {
-                                let q = n as f64 / tc as f64;
+                                let q = n as f64 / total_counts[l] as f64;
                                 entropy -= q * q.log2();
                             }
                         }
@@ -977,7 +977,7 @@ pub fn proc_lvar_auto(
                         for j in 0..d.len() {
                             if gex_info.is_gex[li][ind[j] as usize] {
                                 let n = d[j] as usize;
-                                let q = n as f64 / tc as f64;
+                                let q = n as f64 / total_counts[l] as f64;
                                 entropy -= q * q.log2();
                             }
                         }
