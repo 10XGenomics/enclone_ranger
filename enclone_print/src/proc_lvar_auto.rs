@@ -939,10 +939,10 @@ pub fn proc_lvar_auto(
         let mut entropies = Vec::<f64>::new();
         for (l, clone) in ex.clones.iter().enumerate() {
             let li = clone[0].dataset_index;
-            let bc = clone[0].barcode.clone();
+            let bc = clone[0].barcode.as_str();
             if !gex_info.gex_barcodes.is_empty() {
                 let mut entropy = 0.0;
-                let p = bin_position(&gex_info.gex_barcodes[li], &bc);
+                let p = bin_position(&gex_info.gex_barcodes[li], bc);
                 if p >= 0 {
                     if gex_info.gex_matrices[li].initialized() {
                         let row = gex_info.gex_matrices[li].row(p as usize);
