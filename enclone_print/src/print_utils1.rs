@@ -590,7 +590,7 @@ pub fn start_gen(
                     for (k1, ck1) in ex1.clones.iter().enumerate() {
                         let x1 = &ck1[0];
                         if let Some(donor1) = x1.donor_index {
-                            for (k2, ck2) in ex2.clones.iter().enumerate().skip(k1) {
+                            for (k2, ck2) in ex2.clones.iter().enumerate() {
                                 if (j1, k1) < (j2, k2) {
                                     let x2 = &ck2[0];
                                     if let Some(donor2) = x2.donor_index {

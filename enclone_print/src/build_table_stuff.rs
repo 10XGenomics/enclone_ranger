@@ -328,17 +328,18 @@ pub fn build_table_stuff(
                 if ctl.gen_opt.nospaces {
                     let chars = s.chars().collect::<Vec<_>>();
                     s.clear();
-                    for (i, &ch) in chars.iter().enumerate() {
-                        if (i == 0 || (i > 0 && chars[i - 1] != '┅')) && ch == '┅' {
-                            s += "[01m[38;5;198m=";
-                        } else if ch == '┅' {
+                    for (i, &char_i) in chars.iter().enumerate() {
+                        if (i == 0 || (i > 0 && chars[i - 1] != '┅')) && char_i == '┅' {
+                            s += "[01m[38;5;198m";
+                            s.push('═');
+                        } else if char_i == '┅' {
                             s.push('═');
                             if i == chars.len() - 1 || (i < chars.len() - 1 && chars[i + 1] != '┅')
                             {
                                 s += "[0m";
                             }
                         } else {
-                            s.push(ch);
+                            s.push(char_i);
                         }
                     }
                     s = s.replace("FWR1", "[01m[38;5;198mFWR1[0m");

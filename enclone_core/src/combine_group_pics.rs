@@ -22,8 +22,9 @@ pub fn combine_group_pics(
     if noprint && parseable_stdouth && !group_pics.is_empty() {
         let mut rows = Vec::<Vec<String>>::new();
         for pic in group_pics {
-            let r = pic.split('\n');
-            for rj in r.skip(1) {
+            let mut r = pic.split('\n');
+            r.next_back(); // Skip the last element
+            for rj in r {
                 let s = rj.split('\t').map(str::to_owned).collect();
                 rows.push(s);
             }

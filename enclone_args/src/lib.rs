@@ -32,8 +32,8 @@ pub fn parse_csv_pure(x: &str) -> Vec<&str> {
             }
             j += 1;
         }
-        let (start, stop) = (i, j);
-        y.push(&x[w[start].0..w[stop].0]);
+        let (start, stop) = (w[i].0, w.get(j).map_or(x.len(), |(ind, _)| *ind));
+        y.push(&x[start..stop]);
         i = j + 1;
     }
     if !w.is_empty() && w.last().unwrap().1 == ',' {
