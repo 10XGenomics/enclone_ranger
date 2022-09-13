@@ -505,7 +505,7 @@ pub fn load_gex(
                 let mut lib_field = 0;
                 let mut name_field = 0;
                 let mut value_field = 0;
-                for field in &fields {
+                for (i, field) in fields.iter().enumerate() {
                     if field == "Library Type" {
                         lib_field = i;
                     } else if field == "Metric Name" {
