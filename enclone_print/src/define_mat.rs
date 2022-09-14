@@ -53,6 +53,26 @@ fn joiner(
     e
 }
 
+pub fn setup_define_mat(
+    orbit: &Vec<i32>,
+    info: &[CloneInfo],
+) -> (Vec<(Vec<usize>, usize, i32)>, Vec<usize>) {
+    let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
+    for id in orbit.iter() {
+        let x: &CloneInfo = &info[*id as usize];
+        od.push((x.origin.clone(), x.clonotype_id, *id));
+    }
+    od.sort();
+    let mut exacts = Vec::<usize>::new();
+    let mut j = 0;
+    while j < od.len() {
+        let k = next_diff12_3(&od, j as i32) as usize;
+        exacts.push(od[j].1);
+        j = k;
+    }
+    (od, exacts)
+}
+
 // This generates a cols x nexacts matrices for a given clonotype, where cols is defined by the
 // algorithm, and is the number of columns (chains) in the clonotype table.
 
