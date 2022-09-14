@@ -54,7 +54,7 @@ fn joiner(
 }
 
 pub fn setup_define_mat(
-    orbit: &Vec<i32>,
+    orbit: &[i32],
     info: &[CloneInfo],
 ) -> (Vec<(Vec<usize>, usize, i32)>, Vec<usize>) {
     let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
