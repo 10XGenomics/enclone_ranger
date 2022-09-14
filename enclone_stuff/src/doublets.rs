@@ -16,7 +16,7 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 use std::time::Instant;
 use vdj_ann::refx::RefData;
-use vector_utils::{bin_member, erase_if, next_diff, next_diff12_3, next_diff1_2, sort_sync2};
+use vector_utils::{bin_member, erase_if, next_diff, next_diff1_2, sort_sync2};
 
 pub fn delete_doublets(
     orbits: &mut Vec<Vec<i32>>,
@@ -47,7 +47,7 @@ pub fn delete_doublets(
         results.par_iter_mut().for_each(|res| {
             let i = res.0;
             let o = orbits[i].clone();
-            let (od, exacts) = setup_define_mat(&o, info);
+            let (od, mut exacts) = setup_define_mat(&o, info);
             let mat = define_mat(
                 is_bcr,
                 to_bc,

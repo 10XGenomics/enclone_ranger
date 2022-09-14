@@ -16,7 +16,7 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::time::Instant;
 use vdj_ann::refx::RefData;
-use vector_utils::{erase_if, next_diff12_3, next_diff1_2, unique_sort};
+use vector_utils::{erase_if, next_diff1_2, unique_sort};
 
 pub fn some_filters(
     orbits: &mut Vec<Vec<i32>>,

@@ -13,7 +13,7 @@ use qd::Double;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use vdj_ann::refx::RefData;
-use vector_utils::{erase_if, next_diff12_3};
+use vector_utils::erase_if;
 
 pub fn weak_chains(
     orbits: &mut Vec<Vec<i32>>,
