@@ -542,27 +542,9 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     filter_by_fcell(ctl, &mut orbits, info, &mut exact_clonotypes, gex_info)?;
     ctl.perf_stats(&tumi, "umi filtering and such");
 
-    // Run some filters.
-
-    some_filters(
-        &mut orbits,
-        is_bcr,
-        &to_bc,
-        &sr,
-        ctl,
-        &exact_clonotypes,
-        info,
-        &raw_joins,
-        &eq,
-        &disintegrated,
-        &mut fate,
-        refdata,
-        &drefs,
-    );
-
     // Break up clonotypes containing a large number of chains. These are
     // very likely to be false merges
-    let orbits: Vec<Vec<i32>> = orbits
+    let mut orbits: Vec<Vec<i32>> = orbits
         .into_iter()
         .flat_map(|orbit| {
             let (od, exacts) = setup_define_mat(&orbit, info);
@@ -630,6 +612,24 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             }
         })
         .collect();
+
+    // Run some filters.
+
+    some_filters(
+        &mut orbits,
+        is_bcr,
+        &to_bc,
+        &sr,
+        ctl,
+        &exact_clonotypes,
+        info,
+        &raw_joins,
+        &eq,
+        &disintegrated,
+        &mut fate,
+        refdata,
+        &drefs,
+    );
 
     // Pre evaluate (PRE_EVAL).
 
