@@ -34,7 +34,7 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
         "PROTO",
         "REF",
     ];
-    const ALLOWED_ARGS: [&str; 11] = [
+    const ALLOWED_ARGS: [&str; 16] = [
         "BCR",
         "META",
         "NOPRETTY",
@@ -46,6 +46,11 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
         "NUMI",
         "NUMI_RATIO",
         "NGRAPH_FILTER",
+        "NWEAK_CHAINS",
+        "NFOURSIE_KILL",
+        "NDOUBLET",
+        "NSIG",
+        "SPLIT_MAX_CHAINS",
     ];
     let mut found = [false; REQUIRED_ARGS.len()];
     for arg in args.iter().skip(1) {

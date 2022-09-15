@@ -369,10 +369,8 @@ pub fn find_exact_subclonotypes(
         // the case where a barcode was accidentally reused.
 
         let mut to_delete = vec![false; s - r];
-        let mut bc = tig_bc[r..s]
-            .iter()
-            .enumerate()
-            .map(|(t, tig)| (tig[0].barcode.as_str(), t))
+        let mut bc = (r..s)
+            .map(|t| (tig_bc[t][0].barcode.as_str(), t))
             .collect::<Vec<_>>();
         bc.sort_unstable();
         let mut i = 0;
