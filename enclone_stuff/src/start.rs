@@ -29,7 +29,6 @@ use equiv::EquivRel;
 use io_utils::{fwriteln, open_for_read};
 use itertools::Itertools;
 use qd::dd;
-use std::collections::HashSet;
 use std::{
     collections::HashMap,
     env,
