@@ -29,6 +29,7 @@ use equiv::EquivRel;
 use io_utils::{fwriteln, open_for_read};
 use itertools::Itertools;
 use qd::dd;
+use std::collections::HashSet;
 use std::{
     collections::HashMap,
     env,
@@ -566,7 +567,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         .into_iter()
         .flat_map(|orbit| {
             let (od, exacts) = setup_define_mat(&orbit, info);
-            let num_chains = define_mat(
+            let mat = define_mat(
                 is_bcr,
                 &to_bc,
                 &sr,
@@ -578,16 +579,55 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                 &raw_joins,
                 refdata,
                 &drefs,
-            )
-            .len();
+            );
+            let num_chains = mat.len();
             if num_chains < ctl.join_alg_opt.split_max_chains {
                 vec![orbit]
             } else {
-                od.into_iter()
-                    .group_by(|o| o.1)
+                let exacts_of_chains = mat
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(chain_num, chain_in_exact)| {
+                        exacts
+                            .iter()
+                            .zip_eq(chain_in_exact.iter())
+                            .filter_map(move |(e, chain)| chain.map(|_| (e, chain_num)))
+                    })
+                    .into_group_map()
                     .into_iter()
-                    .map(|(_, vals)| vals.map(|v| v.2).collect())
-                    .collect()
+                    .map(|(k, v)| (v, *k))
+                    .into_group_map();
+
+                let mut group_of_exacts = HashMap::new();
+                let mut group_num = 0;
+                for (chains, chain_exacts) in exacts_of_chains {
+                    if chains.len() == 1 {
+                        for e in chain_exacts {
+                            group_of_exacts.insert(e, group_num);
+                            group_num += 1;
+                        }
+                    } else {
+                        for e in chain_exacts {
+                            group_of_exacts.insert(e, group_num);
+                        }
+                        group_num += 1;
+                    }
+                }
+
+                let mut groups = vec![vec![]; group_num];
+
+                for (_, exact_clonotype_id, val) in &od {
+                    groups[group_of_exacts[exact_clonotype_id]].push(*val);
+                }
+
+                // To split every subclonotype
+                // od
+                //     .into_iter()
+                //     .group_by(|o| o.1)
+                //     .into_iter()
+                //     .map(|(_, vals)| vals.map(|v| v.2).collect())
+                //     .collect();
+                groups
             }
         })
         .collect();
