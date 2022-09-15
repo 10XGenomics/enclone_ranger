@@ -1,13 +1,13 @@
 // Copyright (c) 2021 10x Genomics, Inc. All rights reserved.
 
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
-use enclone_print::define_mat::define_mat;
+use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_proto::types::DonorReferenceItem;
 use equiv::EquivRel;
 use qd::Double;
 use std::collections::HashMap;
 use vdj_ann::refx::RefData;
-use vector_utils::{bin_position, next_diff12_3, unique_sort, VecUtils};
+use vector_utils::{bin_position, unique_sort, VecUtils};
 
 // Check for disjoint orbits.
 
@@ -25,19 +25,7 @@ pub fn split_orbits(
 ) {
     let mut orbits2 = Vec::<Vec<i32>>::new();
     for o in orbits.iter() {
-        let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
-        for id in o.iter() {
-            let x: &CloneInfo = &info[*id as usize];
-            od.push((x.origin.clone(), x.clonotype_id, *id));
-        }
-        od.sort();
-        let mut exacts = Vec::<usize>::new();
-        let mut j = 0;
-        while j < od.len() {
-            let k = next_diff12_3(&od, j as i32) as usize;
-            exacts.push(od[j].1);
-            j = k;
-        }
+        let (od, exacts) = setup_define_mat(o, info);
         let mat = define_mat(
             is_bcr,
             to_bc,

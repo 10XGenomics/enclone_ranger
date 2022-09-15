@@ -8,7 +8,7 @@ use enclone_core::{
     barcode_fate::BarcodeFate,
     defs::{CloneInfo, EncloneControl, ExactClonotype},
 };
-use enclone_print::define_mat::define_mat;
+use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_proto::types::DonorReferenceItem;
 use itertools::Itertools;
 use qd::Double;
@@ -16,7 +16,7 @@ use rayon::prelude::*;
 use std::collections::HashMap;
 use std::time::Instant;
 use vdj_ann::refx::RefData;
-use vector_utils::{bin_member, erase_if, next_diff, next_diff12_3, next_diff1_2, sort_sync2};
+use vector_utils::{bin_member, erase_if, next_diff, next_diff1_2, sort_sync2};
 
 pub fn delete_doublets(
     orbits: &mut Vec<Vec<i32>>,
@@ -47,19 +47,7 @@ pub fn delete_doublets(
         results.par_iter_mut().for_each(|res| {
             let i = res.0;
             let o = orbits[i].clone();
-            let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
-            for id in o.iter() {
-                let x: &CloneInfo = &info[*id as usize];
-                od.push((x.origin.clone(), x.clonotype_id, *id));
-            }
-            od.sort();
-            let mut exacts = Vec::<usize>::new();
-            let mut j = 0;
-            while j < od.len() {
-                let k = next_diff12_3(&od, j as i32) as usize;
-                exacts.push(od[j].1);
-                j = k;
-            }
+            let (od, mut exacts) = setup_define_mat(&o, info);
             let mat = define_mat(
                 is_bcr,
                 to_bc,

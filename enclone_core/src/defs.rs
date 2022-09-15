@@ -357,6 +357,8 @@ pub struct JoinAlgOpt {
     pub comp_filt: usize,
     pub comp_filt_bound: usize,
     pub super_comp_filt: usize,
+    /// Break up clonotypes than have `split_max_chains` chains or more
+    pub split_max_chains: usize,
 }
 
 // Clonotype filtering options.

@@ -23,6 +23,7 @@ use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, CloneInfo, TigData};
 use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup};
 use enclone_core::hcomp::heavy_complexity;
+use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_print::loupe::make_donor_refs;
 use equiv::EquivRel;
 use io_utils::{fwriteln, open_for_read};
@@ -540,6 +541,77 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     filter_by_fcell(ctl, &mut orbits, info, &mut exact_clonotypes, gex_info)?;
     ctl.perf_stats(&tumi, "umi filtering and such");
+
+    // Break up clonotypes containing a large number of chains. These are
+    // very likely to be false merges
+    let mut orbits: Vec<Vec<i32>> = orbits
+        .into_iter()
+        .flat_map(|orbit| {
+            let (od, exacts) = setup_define_mat(&orbit, info);
+            let mat = define_mat(
+                is_bcr,
+                &to_bc,
+                &sr,
+                ctl,
+                &exact_clonotypes,
+                &exacts,
+                &od,
+                info,
+                &raw_joins,
+                refdata,
+                &drefs,
+            );
+            let num_chains = mat.len();
+            if num_chains < ctl.join_alg_opt.split_max_chains {
+                vec![orbit]
+            } else {
+                let exacts_of_chains = mat
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(chain_num, chain_in_exact)| {
+                        exacts
+                            .iter()
+                            .zip_eq(chain_in_exact.iter())
+                            .filter_map(move |(e, chain)| chain.map(|_| (e, chain_num)))
+                    })
+                    .into_group_map()
+                    .into_iter()
+                    .map(|(k, v)| (v, *k))
+                    .into_group_map();
+
+                let mut group_of_exacts = HashMap::new();
+                let mut group_num = 0;
+                for (chains, chain_exacts) in exacts_of_chains {
+                    if chains.len() == 1 {
+                        for e in chain_exacts {
+                            group_of_exacts.insert(e, group_num);
+                            group_num += 1;
+                        }
+                    } else {
+                        for e in chain_exacts {
+                            group_of_exacts.insert(e, group_num);
+                        }
+                        group_num += 1;
+                    }
+                }
+
+                let mut groups = vec![vec![]; group_num];
+
+                for (_, exact_clonotype_id, val) in &od {
+                    groups[group_of_exacts[exact_clonotype_id]].push(*val);
+                }
+
+                // To split every subclonotype
+                // od
+                //     .into_iter()
+                //     .group_by(|o| o.1)
+                //     .into_iter()
+                //     .map(|(_, vals)| vals.map(|v| v.2).collect())
+                //     .collect();
+                groups
+            }
+        })
+        .collect();
 
     // Run some filters.
 

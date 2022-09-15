@@ -162,6 +162,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
     ctl.join_alg_opt.auto_share = 15;
     ctl.join_alg_opt.comp_filt = 8;
     ctl.join_alg_opt.comp_filt_bound = 80;
+    ctl.join_alg_opt.split_max_chains = usize::MAX;
 
     ctl.join_print_opt.pfreq = 1_000_000_000;
     ctl.join_print_opt.quiet = true;
@@ -560,6 +561,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
         ("MIN_UMIS", &mut ctl.clono_filt_opt.min_umi),
         ("PFREQ", &mut ctl.join_print_opt.pfreq),
         ("SUPER_COMP_FILT", &mut ctl.join_alg_opt.super_comp_filt),
+        ("SPLIT_MAX_CHAINS", &mut ctl.join_alg_opt.split_max_chains),
     ];
 
     // Define arguments that set something to an i32.
