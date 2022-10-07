@@ -152,8 +152,8 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
                 "Here are the number of entries in your PRE directories:\n".to_string();
             for x in ctl.gen_opt.pre.iter() {
                 let mut count = "(does not exist)".to_string();
-                if path_exists(&*x) {
-                    count = dir_list(&*x).len().to_string();
+                if path_exists(x) {
+                    count = dir_list(x).len().to_string();
                 }
                 writeln!(pre_msg, "{}: {}", x, count).unwrap();
             }

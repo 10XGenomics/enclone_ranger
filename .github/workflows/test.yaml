@@ -7,8 +7,8 @@ on:
       - main
 
 env:
-  CARGO_DENY_VERSION: "0.12.1"
-  RUST_VERSION: "1.62"
+  CARGO_DENY_VERSION: "0.12.2"
+  RUST_VERSION: "1.64"
   CARGO_INCREMENTAL: 0
 
 permissions:
