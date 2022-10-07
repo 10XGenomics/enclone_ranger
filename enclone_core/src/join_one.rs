@@ -107,7 +107,7 @@ pub fn join_one<'a>(
             return false;
         }
     }
-    
+
     // Test for JOIN_BASIC and JOIN_BASIC_H.
 
     if ctl.join_alg_opt.basic.is_some() || ctl.join_alg_opt.basic_h.is_some() {
