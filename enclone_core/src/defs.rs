@@ -53,7 +53,7 @@ pub const MAX_CDR3_DIFFS_TO_JOIN: usize = 5;
 
 // Clonotyping algorithm heuristics.
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Eq)]
 pub struct ClonotypeHeuristics {
     pub max_diffs: usize,
     pub max_degradation: usize,
@@ -63,7 +63,7 @@ pub struct ClonotypeHeuristics {
 
 // Origin info data structure.
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Eq)]
 pub struct OriginInfo {
     // parallel vectors
     pub descrips: Vec<String>,     // map dataset index to dataset long name
@@ -296,7 +296,7 @@ pub struct PlotOpt {
 
 // Allele-finding algorithmic options.
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Eq)]
 pub struct AlleleAlgOpt {
     pub min_mult: usize,
     pub min_alt: usize,
@@ -304,7 +304,7 @@ pub struct AlleleAlgOpt {
 
 // Allele-finding print options.
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Eq)]
 pub struct AllelePrintOpt {
     pub con: bool,       // print alternate consensus sequences
     pub con_trace: bool, // tracing for con
@@ -321,7 +321,7 @@ pub struct AlleleData {
 
 // Join printing options.
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Eq)]
 pub struct JoinPrintOpt {
     pub seq: bool,     // print sequences of contigs, before truncation to V..J
     pub ann: bool,     // print annotations of contigs
@@ -431,7 +431,7 @@ pub struct ClonoFiltOpt {
 
 // Clonotype printing options.
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Eq)]
 pub struct ClonoPrintOpt {
     pub bu: bool,                                      // print barcodes and UMI counts
     pub seqc: bool, // print V..J sequence for each chain if constant across clonotype
@@ -493,7 +493,7 @@ pub struct ClonoGroupOpt {
 
 // Parseable output options.
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Eq)]
 pub struct ParseableOpt {
     pub pout: String,             // name of parseable output file
     pub pchains: String,          // number of chains to show in parseable output
@@ -507,7 +507,7 @@ pub struct ParseableOpt {
 
 // Computational performance options.
 
-#[derive(Default, PartialEq)]
+#[derive(Default, PartialEq, Eq)]
 pub struct PerfOpt {
     pub comp: bool,         // print computational performance stats
     pub comp2: bool,        // print more detailed computational performance stats

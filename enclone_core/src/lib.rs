@@ -41,7 +41,7 @@ use tilde_expand::tilde_expand;
 pub fn tilde_expand_me(_s: &mut String) {
     #[cfg(not(target_os = "windows"))]
     {
-        *_s = stringme(&tilde_expand(&*_s.as_bytes()));
+        *_s = stringme(&tilde_expand(_s.as_bytes()));
     }
 }
 

@@ -84,7 +84,7 @@ pub fn join_one<'a>(
     let (clono1, clono2) = (info1.clonotype_id, info2.clonotype_id);
     let chains1 = exact_clonotypes[clono1].share.len();
     let chains2 = exact_clonotypes[clono2].share.len();
-    if !(2..=3).contains(&chains1) || chains2 < 2 || chains2 > 3 {
+    if !(2..=3).contains(&chains1) || !(2..=3).contains(&chains2) {
         return false;
     }
     // NEED FOR THIS SEEMS LIKE A BUG:

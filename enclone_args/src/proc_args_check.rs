@@ -804,7 +804,7 @@ pub fn check_lvars(ctl: &EncloneControl, gex_info: &GexInfo) -> Result<(), Strin
                 "\nFields ending with _cell cannot be used in LVARS or LVARSP.\n".to_string(),
             );
         }
-        if !check_one_lvar(&*x, ctl, gex_info, &mut nd_used, &ends, true)? {
+        if !check_one_lvar(x, ctl, gex_info, &mut nd_used, &ends, true)? {
             to_check.push(x.clone());
         }
     }
