@@ -107,6 +107,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "attohttpc"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12489f6c5525b06c7e5d689f0efeeae5b9efc38824478e854da9f4f33f040cf5"
+dependencies = [
+ "flate2",
+ "http",
+ "log",
+ "rustls",
+ "url",
+ "webpki",
+ "webpki-roots",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -455,7 +470,7 @@ dependencies = [
 name = "enclone_args"
 version = "0.5.219"
 dependencies = [
- "attohttpc",
+ "attohttpc 0.23.1",
  "debruijn",
  "enclone_core",
  "enclone_vars",
@@ -481,7 +496,7 @@ dependencies = [
  "align_tools",
  "amino",
  "ansi_escape",
- "attohttpc",
+ "attohttpc 0.23.1",
  "bio_edit",
  "debruijn",
  "enclone_proto",
@@ -797,7 +812,7 @@ name = "hdf5-sys"
 version = "0.8.0"
 source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#d39d449f3314a6f53249de97f8a014ccfcf23203"
 dependencies = [
- "attohttpc",
+ "attohttpc 0.22.0",
  "bzip2",
  "libc",
  "libloading",
