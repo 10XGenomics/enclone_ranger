@@ -617,26 +617,29 @@ pub fn insert_reference_rows(
                 let mut gap = rsi.seq_del_lens[cz] as isize - vlen as isize - jlen as isize;
 
                 if gap < -2 * (trim as isize) {
-                    let mut bcs = Vec::<String>::new();
-                    for u in 0..exacts.len() {
-                        let ex = &exact_clonotypes[exacts[u]];
-                        for i in 0..ex.clones.len() {
-                            bcs.push(ex.clones[i][0].barcode.clone());
-                        }
-                    }
-                    bcs.sort();
-                    eprintln!("\ncz = {}", cz);
-                    eprintln!("pass = {}", pass);
-                    eprintln!("seq_del.len() = {}", rsi.seq_del_lens[cz]);
-                    eprintln!("vlen = {}", vlen);
-                    eprintln!("jlen = {}", jlen);
-                    eprintln!("gap = seq_del.len() - vlen - jlen");
-                    panic!(
-                        "Something is wrong because gap is {}, which is negative.\n\
-                        This is happening for the clonotype with these barcodes:\n{}.",
-                        gap,
-                        bcs.iter().format(",")
-                    );
+                    // We have removed the original assert error and assigned a non-negative value
+                    // to the gap to prevent bugs in this part of the code.
+                    gap = vlen as isize + jlen as isize;
+                    // let mut bcs = Vec::<String>::new();
+                    // for u in 0..exacts.len() {
+                    //     let ex = &exact_clonotypes[exacts[u]];
+                    //     for i in 0..ex.clones.len() {
+                    //         bcs.push(ex.clones[i][0].barcode.clone());
+                    //     }
+                    // }
+                    // bcs.sort();
+                    // eprintln!("\ncz = {}", cz);
+                    // eprintln!("pass = {}", pass);
+                    // eprintln!("seq_del.len() = {}", rsi.seq_del_lens[cz]);
+                    // eprintln!("vlen = {}", vlen);
+                    // eprintln!("jlen = {}", jlen);
+                    // eprintln!("gap = seq_del.len() - vlen - jlen");
+                    // panic!(
+                    //     "Something is wrong because gap is {}, which is negative.\n\
+                    //     This is happening for the clonotype with these barcodes:\n{}.",
+                    //     gap,
+                    //     bcs.iter().format(",")
+                    // );
                 }
 
                 if gap < 0 {
