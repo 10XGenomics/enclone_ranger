@@ -28,7 +28,7 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
     let mut tag = vec![HashMap::<String, String>::new(); n];
     let mut barcode_color = vec![HashMap::<String, String>::new(); n];
     let mut alt_bc_fields = vec![Vec::<(String, HashMap<String, String>)>::new(); n];
-    let f = open_userfile_for_read(&bc);
+    let f = open_userfile_for_read(bc);
     let mut first = true;
     let mut fieldnames = Vec::<String>::new();
     let mut dataset_pos = 0;
@@ -258,7 +258,7 @@ pub fn proc_args_post(
         &mut ctl.parseable_opt.pout,
     ];
     for f in files.iter_mut() {
-        tilde_expand_me(*f);
+        tilde_expand_me(f);
     }
 
     // Test VAR_DEF arguments for circularity.

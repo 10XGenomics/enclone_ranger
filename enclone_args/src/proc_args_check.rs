@@ -432,7 +432,7 @@ pub fn check_pcols(
         }
         let mut ok = false;
         // Note that the following test is probably redundant with some of the testing below.
-        if check_one_lvar(&*x, ctl, gex_info, &mut nd_used, &ends, false)? {
+        if check_one_lvar(&x, ctl, gex_info, &mut nd_used, &ends, false)? {
             ok = true;
         }
         for i in 0..ctl.gen_opt.info_fields.len() {

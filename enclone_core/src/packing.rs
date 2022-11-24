@@ -235,7 +235,7 @@ pub fn save_vec_bool(x: &Vec<bool>) -> Vec<u8> {
     let mut bytes = Vec::<u8>::with_capacity(4 + x.len());
     bytes.extend(u32_bytes(x.len()));
     for &xi in x {
-        bytes.push(if xi { 1 } else { 0 });
+        bytes.push(u8::from(xi));
     }
     bytes
 }

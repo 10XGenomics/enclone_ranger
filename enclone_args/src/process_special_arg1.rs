@@ -95,26 +95,26 @@ pub fn process_special_arg1(
         let mut narrative = arg.after("STATE_NARRATIVE=").to_string();
         if narrative.starts_with('@') {
             let filename = narrative.after("@");
-            if !path_exists(&filename) {
+            if !path_exists(filename) {
                 return Err(
                     "\nThe file referenced by your STATE_NARRATIVE argument could not be found.\n"
                         .to_string(),
                 );
             }
-            narrative = read_to_string(&filename).unwrap();
+            narrative = read_to_string(filename).unwrap();
             ctl.gen_opt.state_narrative = narrative;
         }
     } else if arg.starts_with("SESSION_NARRATIVE=") {
         let mut narrative = arg.after("SESSION_NARRATIVE=").to_string();
         if narrative.starts_with('@') {
             let filename = narrative.after("@");
-            if !path_exists(&filename) {
+            if !path_exists(filename) {
                 return Err(
                     "\nThe file referenced by your SESSION_NARRATIVE argument could not be found.\n"
                     .to_string()
                 );
             }
-            narrative = read_to_string(&filename).unwrap();
+            narrative = read_to_string(filename).unwrap();
             ctl.gen_opt.session_narrative = narrative;
         }
     } else if arg.starts_with("JOIN_BASIC=") {

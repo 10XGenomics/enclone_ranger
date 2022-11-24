@@ -179,7 +179,7 @@ pub fn fetch_url(url: &str) -> Result<String, String> {
 // f originated.
 
 pub fn require_readable_file(f: &str, arg: &str) -> Result<(), String> {
-    let x = std::fs::File::open(&f);
+    let x = std::fs::File::open(f);
     if x.is_err() {
         return Err(format!(
             "\nThe file {} could not be opened because {}.\nThis came from \

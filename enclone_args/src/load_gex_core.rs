@@ -189,7 +189,7 @@ pub fn load_gex(
             let pso1 = format!("{}/per_sample_outs", outs);
             let pso2 = format!("{}/../per_sample_outs", outs);
             for pso in [pso1, pso2].iter() {
-                if path_exists(&pso) {
+                if path_exists(pso) {
                     let samples = dir_list(pso);
                     if samples.solo() {
                         let a = format!("{}/{}/count/analysis", pso, samples[0]);
@@ -421,15 +421,15 @@ pub fn load_gex(
                             } else {
                                 feature = fields[feature_pos["feature_id"]].clone();
                             }
-                            if feature_type.starts_with(&"Antibody") {
+                            if feature_type.starts_with("Antibody") {
                                 feature += "_ab";
-                            } else if feature_type.starts_with(&"CRISPR") {
+                            } else if feature_type.starts_with("CRISPR") {
                                 feature += "_cr";
-                            } else if feature_type.starts_with(&"CUSTOM") {
+                            } else if feature_type.starts_with("CUSTOM") {
                                 feature += "_cu";
-                            } else if feature_type.starts_with(&"Gene") {
+                            } else if feature_type.starts_with("Gene") {
                                 feature += "_g";
-                            } else if feature_type.starts_with(&"Antigen") {
+                            } else if feature_type.starts_with("Antigen") {
                                 feature += "_ag";
                             }
                             for j in 0..fields.len() {

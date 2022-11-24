@@ -132,7 +132,7 @@ fn parse_value_return_lines(code: &mut String, level: &str, exact: &mut String, 
 
 fn run_rustfmt(f: &str) {
     let new = Command::new("rustfmt")
-        .arg(&f)
+        .arg(f)
         .output()
         .unwrap_or_else(|_| panic!("{}", "failed to execute rustfmt".to_string()));
     if new.status.code() != Some(0) {

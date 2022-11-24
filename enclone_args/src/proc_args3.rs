@@ -882,7 +882,7 @@ pub fn proc_meta(v: &[String], ctl: &mut EncloneControl) -> Result<(), String> {
                 "\nCan't find the file {f} referenced by your META argument.\n"
             ));
         }
-        let fx = File::open(&f);
+        let fx = File::open(f);
         if fx.is_err() {
             return Err(format!(
                 "\nProblem with META: unable to read from the file\n\
