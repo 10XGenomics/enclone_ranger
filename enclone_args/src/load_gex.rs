@@ -106,7 +106,7 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
             {
                 let f = &h5_paths[i];
 
-                let h = hdf5::File::open(&f).unwrap();
+                let h = hdf5::File::open(f).unwrap();
 
                 h5_data.push(Some(h.dataset("matrix/data").unwrap()));
                 h5_indices.push(Some(h.dataset("matrix/indices").unwrap()));
@@ -125,15 +125,15 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
         for (j, f) in gex_features.iter().enumerate() {
             let ff = f.splitn(4, '\t').take(3).collect::<Vec<&str>>();
             for z in 0..2 {
-                if ff[2].starts_with(&"Antibody") {
+                if ff[2].starts_with("Antibody") {
                     x.insert(format!("{}_ab", ff[z]), j);
-                } else if ff[2].starts_with(&"CRISPR") {
+                } else if ff[2].starts_with("CRISPR") {
                     x.insert(format!("{}_cr", ff[z]), j);
-                } else if ff[2].starts_with(&"CUSTOM") {
+                } else if ff[2].starts_with("CUSTOM") {
                     x.insert(format!("{}_cu", ff[z]), j);
-                } else if ff[2].starts_with(&"Gene") {
+                } else if ff[2].starts_with("Gene") {
                     x.insert(format!("{}_g", ff[z]), j);
-                } else if ff[2].starts_with(&"Antigen") {
+                } else if ff[2].starts_with("Antigen") {
                     x.insert(format!("{}_ag", ff[z]), j);
                 }
             }

@@ -24,7 +24,7 @@ fn main() {
     if get_config(&config_file, &mut config) {
         let bin = &config["enclone_linux_bin"];
         if !path_exists(bin) {
-            std::fs::create_dir_all(&bin).unwrap();
+            std::fs::create_dir_all(bin).unwrap();
         }
         let current = format!("{}/enclone", bin);
         let last = format!("{}/enclone_last", bin);

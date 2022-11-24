@@ -34,7 +34,7 @@ fn test_traceback1() {
         .unwrap_or_else(|_| panic!("{}", "very strange, failed to execute test_traceback1"));
     let morsel = "traceback1.rs:17";
     let err = std::str::from_utf8(&cmd.stderr).unwrap();
-    if !err.contains(&morsel) {
+    if !err.contains(morsel) {
         let mut head = String::new();
         let lines = err.split('\n').collect::<Vec<&str>>();
         const MAX_LINES: usize = 60;

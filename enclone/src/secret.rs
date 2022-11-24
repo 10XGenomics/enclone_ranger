@@ -103,7 +103,7 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
             let o = Command::new("samtools")
                 .arg("view")
                 .arg(&bam)
-                .arg(&ch3i.1)
+                .arg(ch3i.1)
                 .output()
                 .expect("failed to execute samtools");
 
