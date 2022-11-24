@@ -4,6 +4,10 @@
 //! This crate defines the data structure that would represent the clonotypes
 //! computed by enclone.
 //!
+
+// TODO: re-enable this check once prost fixes it.
+#![allow(clippy::derive_partial_eq_without_eq)]
+
 use vdj_ann::annotate::Region as AnnRegion;
 
 include!(concat!(env!("OUT_DIR"), "/enclone.types.rs"));

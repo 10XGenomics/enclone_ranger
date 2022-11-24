@@ -14,7 +14,7 @@ pub fn slurp_h5(
 ) -> Result<(), String> {
     // Read barcodes from the h5 file.
 
-    let h = hdf5::File::open(&h5_path).unwrap();
+    let h = hdf5::File::open(h5_path).unwrap();
     let barcode_loc = h.dataset("matrix/barcodes").unwrap();
 
     let barcodes0: Result<Vec<FixedAscii<18>>, hdf5::Error> = barcode_loc.as_reader().read_raw();

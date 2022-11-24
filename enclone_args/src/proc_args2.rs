@@ -17,7 +17,7 @@ pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
     if evil_eye {
         println!("creating file {} to test writability", val);
     }
-    let f = File::create(&val);
+    let f = File::create(val);
     if f.is_err() {
         let mut msgx = format!(
             "\nYou've specified an output file\n{}\nthat cannot be written.\n",
@@ -37,7 +37,7 @@ pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
     if evil_eye {
         println!("removing file {}", val);
     }
-    remove_file(&val).unwrap_or_else(|_| panic!("could not remove file {}", val));
+    remove_file(val).unwrap_or_else(|_| panic!("could not remove file {}", val));
     if evil_eye {
         println!("removal of file {} complete", val);
     }

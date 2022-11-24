@@ -76,7 +76,7 @@ pub fn parse_variables(input: &str) -> Vec<Variable> {
                     std::process::exit(1);
                 }
             } else {
-                if !line.starts_with(&INDENT) {
+                if !line.starts_with(INDENT) {
                     eprintln!(
                         "\nIllegal field or indentation rule violation at line {}:\n{}\n",
                         i + 1,
