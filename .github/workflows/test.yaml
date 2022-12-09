@@ -26,7 +26,6 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_VERSION }}
-          default: true
 
       # check out master
 
@@ -55,16 +54,20 @@ jobs:
         with:
           toolchain: ${{ env.RUST_VERSION }}
           components: rustfmt, clippy
-          default: true
 
-      # check out master
+      # check out
 
-      - name: Checkout enclone master
-        uses: actions/checkout@master
+      - name: Compute required fetch depth
+        id: fetch_depth
+        run: >
+          echo
+          "depth=$(("${{github.event.pull_request.commits}}" + 2))"
+          >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v3
         with:
-          fetch-depth: 100
+          fetch-depth: ${{ steps.fetch_depth.outputs.depth }}
 
-      # set up caching (duplicated verbatim below)
+      # set up caching
 
       - uses: Swatinem/rust-cache@v2
 
@@ -93,7 +96,6 @@ jobs:
       - name: Run clippy
         uses: 10XGenomics/clippy-check@main
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           # Github limits the number of annotations it will display on a PR for
           # a given action, so we're going to disable (for now!) some of the
           # noisier lints so that more important ones are more likely to be
