@@ -21,7 +21,6 @@ include = ["src/*.rs", "LICENSE.txt", "src/mammalian_fixed_len.table"]
 # in the root of the enclone repo.
 
 [dependencies]
-align_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 ansi_escape = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 attohttpc = { version = ">=0.19, <0.25", default-features = false, features = ["compress", "tls-rustls"] }
@@ -34,7 +33,6 @@ itertools = "0.10"
 lazy_static = "1"
 mirror_sparse_matrix = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 perf_stats = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 qd = { git = "https://github.com/Barandis/qd" }
 rayon = "1"
 regex = { version = "1", default-features = false, features = ["std", "perf"] }
