@@ -22,16 +22,12 @@ publish = false
 [dependencies]
 enclone_core = { path = "../enclone_core" }
 enclone_print = { path = "../enclone_print" }
-enclone_proto = { path = "../enclone_proto" }
 enclone_stuff = { path = "../enclone_stuff" }
 enclone = { path = "../enclone" }
 enclone_args = { path = "../enclone_args" }
-io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-itertools = "0.10"
 rayon = "1"
 string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 
 [target.'cfg(not(windows))'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"
