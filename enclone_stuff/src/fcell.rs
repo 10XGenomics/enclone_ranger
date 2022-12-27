@@ -54,13 +54,13 @@ pub fn filter_by_fcell(
                             ctl.origin_info.gex_path[li]
                         );
                         for (i, li) in list.into_iter().enumerate() {
-                            eprintln!("{}.  {}", i + 1, li);
+                            eprintln!("{}.  {li}", i + 1);
                         }
                         let h5_path =
                             format!("{}/raw_feature_bc_matrix.h5", ctl.origin_info.gex_path[li]);
-                        eprintln!("H5 path = {}.", h5_path);
+                        eprintln!("H5 path = {h5_path}.");
                         if !path_exists(&h5_path) {
-                            let mut msg = format!("H5 path {} does not exist.\n", h5_path);
+                            let mut msg = format!("H5 path {h5_path} does not exist.\n");
                             msg += "Retrying a few times to see if it appears.\n";
                             for _ in 0..5 {
                                 msg += "Sleeping for 0.1 seconds.";
@@ -179,7 +179,7 @@ pub fn filter_by_fcell(
                                             ctl, gex_info, fid, &d_all, &ind_all, li, l,
                                             p as usize, var,
                                         );
-                                        val = format!("{:.2}", raw_count);
+                                        val = format!("{raw_count:.2}");
                                     }
                                 }
                             }

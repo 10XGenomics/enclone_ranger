@@ -43,9 +43,9 @@ pub fn parse_csv_pure(x: &str) -> Vec<&str> {
 }
 
 pub fn fnx(outs: &str, name: &str) -> String {
-    let mut file = format!("{}/../{}", outs, name);
+    let mut file = format!("{outs}/../{name}");
     if !path_exists(&file) {
-        file = format!("{}/{}", outs, name);
+        file = format!("{outs}/{name}");
     }
     file
 }

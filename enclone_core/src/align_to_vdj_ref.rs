@@ -132,10 +132,10 @@ pub fn cigar(
     use bio_edit::alignment::AlignmentOperation;
     let clip_str = "S";
     let add_op = |op: AlignmentOperation, k, cigar: &mut String| match op {
-        AlignmentOperation::Match => write!(cigar, "{}=", k).unwrap(),
-        AlignmentOperation::Subst => write!(cigar, "{}X", k).unwrap(),
-        AlignmentOperation::Del => write!(cigar, "{}D", k).unwrap(),
-        AlignmentOperation::Ins => write!(cigar, "{}I", k).unwrap(),
+        AlignmentOperation::Match => write!(cigar, "{k}=").unwrap(),
+        AlignmentOperation::Subst => write!(cigar, "{k}X").unwrap(),
+        AlignmentOperation::Del => write!(cigar, "{k}D").unwrap(),
+        AlignmentOperation::Ins => write!(cigar, "{k}I").unwrap(),
         _ => {}
     };
 
@@ -146,7 +146,7 @@ pub fn cigar(
 
     let mut last = ops[0];
     if xstart > 0 {
-        write!(cigar, "{}{}", xstart, clip_str).unwrap();
+        write!(cigar, "{xstart}{clip_str}").unwrap();
     }
     let mut k = 1;
     for &op in ops[1..].iter() {
@@ -160,7 +160,7 @@ pub fn cigar(
     }
     add_op(last, k, &mut cigar);
     if xlen > xend {
-        write!(cigar, "{}{}", xlen - xend, clip_str).unwrap()
+        write!(cigar, "{}{clip_str}", xlen - xend).unwrap()
     }
     cigar
 }

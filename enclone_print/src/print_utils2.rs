@@ -373,7 +373,7 @@ pub fn row_fill(
                         let val = val.as_number();
                         out_vals.push(match val {
                             Err(_) => String::new(),
-                            Ok(val) => format!("{:.1}", val),
+                            Ok(val) => format!("{val:.1}"),
                         });
                     }
                     let mut median = String::new();
@@ -544,7 +544,7 @@ pub fn row_fill(
             // Also largely duplicated below.
 
             let mut needed = false;
-            let varc = format!("{}{}", var, col + 1);
+            let varc = format!("{var}{}", col + 1);
             if jj < rsi.cvars[col].len() && cvars.contains(&var.to_string())
                 || pass == 2
                     && !ctl.parseable_opt.pout.is_empty()
@@ -632,7 +632,7 @@ pub fn row_fill(
             {
                 continue;
             }
-            let varc = format!("{}{}", var, col + 1);
+            let varc = format!("{var}{}", col + 1);
             if jj < rsi.cvars[col].len() && cvars.contains(&var.to_string())
                 || pass == 2
                     && !ctl.parseable_opt.pout.is_empty()

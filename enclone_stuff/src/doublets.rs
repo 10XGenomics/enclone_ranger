@@ -194,7 +194,7 @@ pub fn delete_doublets(
         for (v1, v2, v0) in trips {
             let verbose = false;
             if verbose {
-                println!("\n{}, {}, {}", v0, v1, v2);
+                println!("\n{v0}, {v1}, {v2}");
                 println!("DELETING");
                 for (u, m) in pures[v0].iter().enumerate() {
                     let ex = &exact_clonotypes[*m];

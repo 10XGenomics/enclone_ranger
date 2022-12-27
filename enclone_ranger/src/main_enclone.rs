@@ -67,7 +67,7 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
         }
         ok = ok || ALLOWED_ARGS.contains(&arg);
         if !ok {
-            panic!("Illegal argument {} passed to main_enclone_ranger.", arg);
+            panic!("Illegal argument {arg} passed to main_enclone_ranger.");
         }
     }
     for (found, arg) in found.into_iter().zip(REQUIRED_ARGS.into_iter()) {

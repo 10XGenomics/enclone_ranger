@@ -88,7 +88,7 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
             );
             for (f, id) in gex_features.iter().zip(ctl.origin_info.dataset_id.iter()) {
                 let p = bin_position(&allf, f);
-                writeln!(msg, "{} ==> {}", id, p).unwrap();
+                writeln!(msg, "{id} ==> {p}").unwrap();
             }
             msg += "\n";
             return Err(msg);

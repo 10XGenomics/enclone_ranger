@@ -445,7 +445,7 @@ pub fn find_exact_subclonotypes(
             exact_clonotypes.len(),
             tig_bc.len()
         );
-        println!("max exact subclonotype size = {}", max_exact);
+        println!("max exact subclonotype size = {max_exact}");
     }
 
     // Edit if NWEAK_ONESIES not specified.
@@ -496,7 +496,7 @@ pub fn find_exact_subclonotypes(
     }
     if let Some(exact) = ctl.gen_opt.exact {
         let ex = &exact_clonotypes[exact];
-        println!("\nEXACT CLONOTYPE {}", exact);
+        println!("\nEXACT CLONOTYPE {exact}");
         for i in 0..ex.share.len() {
             let vid = ex.share[i].v_ref_id;
             let jid = ex.share[i].j_ref_id;

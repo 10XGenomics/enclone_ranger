@@ -26,7 +26,7 @@ pub fn replace_at_test(x: &mut String) {
     *x = x.replace("@test2", TEST2);
     *x = x.replace("@test3", TEST3);
     *x = x.replace("@test4", TEST4);
-    *x = x.replace("@test", &format!("{};{};{};{}", TEST1, TEST2, TEST3, TEST4));
+    *x = x.replace("@test", &format!("{TEST1};{TEST2};{TEST3};{TEST4}"));
     *x = x.replace("@training", "1-3,5-9,11-12,14-16,18-43");
 }
 

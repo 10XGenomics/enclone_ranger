@@ -50,13 +50,13 @@ pub fn process_special_arg1(
     } else if arg.starts_with("ALIGN_2ND") {
         let n = arg.after("ALIGN_2ND");
         if n.parse::<usize>().is_err() || n.force_usize() == 0 {
-            return Err(format!("\nArgument {} is not properly specified.\n", arg));
+            return Err(format!("\nArgument {arg} is not properly specified.\n"));
         }
         ctl.gen_opt.chains_to_align2.push(n.force_usize());
     } else if arg.starts_with("ALIGN") {
         let n = arg.after("ALIGN");
         if n.parse::<usize>().is_err() || n.force_usize() == 0 {
-            return Err(format!("\nArgument {} is not properly specified.\n", arg));
+            return Err(format!("\nArgument {arg} is not properly specified.\n"));
         }
         ctl.gen_opt.chains_to_align.push(n.force_usize());
     } else if arg.starts_with("GROUP_DONOR=") {
@@ -66,7 +66,7 @@ pub fn process_special_arg1(
     } else if arg.starts_with("JALIGN_2ND") {
         let n = arg.after("JALIGN_2ND");
         if n.parse::<usize>().is_err() || n.force_usize() == 0 {
-            return Err(format!("\nArgument {} is not properly specified.\n", arg));
+            return Err(format!("\nArgument {arg} is not properly specified.\n"));
         }
         ctl.gen_opt.chains_to_jun_align2.push(n.force_usize());
     } else if arg.starts_with("ALL_BC=") || arg.starts_with("ALL_BCH=") {
@@ -288,7 +288,7 @@ pub fn process_special_arg1(
                     }
                 }
             } else {
-                return Err(format!("\nUnrecognized specification {}=....\n", part_name));
+                return Err(format!("\nUnrecognized specification {part_name}=....\n"));
             }
         }
         if out_count == 0 {
@@ -323,7 +323,7 @@ pub fn process_special_arg1(
     } else if arg.starts_with("VAR_DEF=") {
         let val = arg.after("VAR_DEF=");
         if !val.contains(':') {
-            return Err(format!("\nCould not find : in {}.\n", arg));
+            return Err(format!("\nCould not find : in {arg}.\n"));
         }
         let name = val.before(":");
         let expr = val.after(":");
@@ -354,7 +354,7 @@ pub fn process_special_arg1(
     } else if arg.starts_with("MIN_DONORS=") {
         let n = arg.after("MIN_DONORS=");
         if n.parse::<usize>().is_err() || n.force_usize() == 0 {
-            return Err(format!("\nArgument {} is not properly specified.\n", arg));
+            return Err(format!("\nArgument {arg} is not properly specified.\n"));
         }
         let n = n.force_usize();
         ctl.clono_filt_opt.min_donors = n;
@@ -364,7 +364,7 @@ pub fn process_special_arg1(
     } else if arg.starts_with("JALIGN") {
         let n = arg.after("JALIGN");
         if n.parse::<usize>().is_err() || n.force_usize() == 0 {
-            return Err(format!("\nArgument {} is not properly specified.\n", arg));
+            return Err(format!("\nArgument {arg} is not properly specified.\n"));
         }
         ctl.gen_opt.chains_to_jun_align.push(n.force_usize());
     } else if arg.starts_with("FB_SHOW=") {
@@ -426,11 +426,11 @@ pub fn process_special_arg1(
                     } else {
                         "does not exist"
                     };
-                    writeln!(emsg, "Note that the path {} {}.", dir, msg).unwrap();
+                    writeln!(emsg, "Note that the path {dir} {msg}.").unwrap();
                 }
                 return Err(emsg);
             }
-            remove_file(&val).unwrap_or_else(|_| panic!("could not remove file {}", val));
+            remove_file(&val).unwrap_or_else(|_| panic!("could not remove file {val}"));
         }
         ctl.plot_opt.sim_mat_plot_vars.clear();
         ctl.plot_opt
@@ -517,11 +517,11 @@ pub fn process_special_arg1(
                     } else {
                         "does not exist"
                     };
-                    writeln!(emsg, "Note that the path {} {}.", dir, msg).unwrap();
+                    writeln!(emsg, "Note that the path {dir} {msg}.").unwrap();
                 }
                 return Err(emsg);
             }
-            remove_file(&val).unwrap_or_else(|_| panic!("could not remove file {}", val));
+            remove_file(&val).unwrap_or_else(|_| panic!("could not remove file {val}"));
         }
     } else if is_usize_arg(arg, "REQUIRED_FPS")? {
         ctl.gen_opt.required_fps = Some(arg.after("REQUIRED_FPS=").force_usize());

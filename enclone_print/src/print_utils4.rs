@@ -28,7 +28,7 @@ pub fn get_gex_matrix_entry(
 ) -> f64 {
     let mut raw_count = 0 as f64;
     if gex_info.gex_matrices[li].initialized() {
-        raw_count = gex_info.gex_matrices[li].value(p as usize, fid) as f64;
+        raw_count = gex_info.gex_matrices[li].value(p, fid) as f64;
     } else {
         for j in 0..d_all[l].len() {
             if ind_all[l][j] == fid as u32 {
@@ -297,7 +297,7 @@ pub fn compute_some_stats(
                             }
                         }
                         let pc = 100.0 * creds as f64 / top as f64;
-                        cred.push(format!("{:.1}", pc));
+                        cred.push(format!("{pc:.1}"));
                     } else {
                         cred.push("".to_string());
                     }
@@ -526,7 +526,7 @@ pub fn compute_bu(
             let bc = &bcl.0;
             let li = bcl.1;
             let di = ex.clones[bcl.2][0].dataset_index;
-            row.push(format!("$  {}", bc));
+            row.push(format!("$  {bc}"));
             let ex = &exact_clonotypes[exacts[u]];
             for (k, var) in lvars.iter().enumerate() {
                 let p = bin_position1_2(these_stats, var);
@@ -581,7 +581,7 @@ pub fn compute_bu(
                     {
                         n = 1;
                     }
-                    row.push(format!("{}", n));
+                    row.push(format!("{n}"));
                 } else if var == "filter" {
                     let mut f = String::new();
                     if fate[li].contains_key(bc) {
@@ -596,19 +596,19 @@ pub fn compute_bu(
                     if !found {
                         n = 1;
                     }
-                    row.push(format!("{}", n));
+                    row.push(format!("{n}"));
                 } else if var == "sec" {
                     let mut n = 0;
                     if ctl.origin_info.secmem[li].contains_key(bc) {
                         n = ctl.origin_info.secmem[li][bc].0;
                     }
-                    row.push(format!("{}", n));
+                    row.push(format!("{n}"));
                 } else if var == "mem" {
                     let mut n = 0;
                     if ctl.origin_info.secmem[li].contains_key(bc) {
                         n = ctl.origin_info.secmem[li][bc].1;
                     }
-                    row.push(format!("{}", n));
+                    row.push(format!("{n}"));
                 } else if bin_member(alt_bcs, var) {
                     let mut val = String::new();
                     let alt = &ctl.origin_info.alt_bc_fields[li];
@@ -629,7 +629,7 @@ pub fn compute_bu(
                     if gex_info.cluster[li].contains_key(bc) {
                         cid = gex_info.cluster[li][bc];
                     }
-                    row.push(format!("{}", cid));
+                    row.push(format!("{cid}"));
                 } else if var.starts_with("pe") && have_gex {
                     row.push(pe[k][cell_count + bcl.2].to_string());
                 } else if var.starts_with("npe") && have_gex {
@@ -650,7 +650,7 @@ pub fn compute_bu(
                     if bin_member(&gex_info.gex_cell_barcodes[li], bc) {
                         n_gex = 1;
                     }
-                    row.push(format!("{}", n_gex));
+                    row.push(format!("{n_gex}"));
                 } else if var == "mark" {
                     let mut mark = String::new();
                     if ex.clones[bcl.2][0].marked {
@@ -701,7 +701,7 @@ pub fn compute_bu(
                             }
                         }
                     }
-                    row.push(format!("{:.2}", entropy));
+                    row.push(format!("{entropy:.2}"));
                 } else if have_gex {
                     // this calc isn't needed except in _% case below
                     // TODO: ELIMINATE UNNEEDED CALC
@@ -803,16 +803,16 @@ pub fn compute_bu(
                             *cxp = v.to_string();
                         } else if cvar == "u" {
                             let numi = ex.clones[bcl.2][m].umi_count;
-                            *cxp = format!("{}", numi);
+                            *cxp = format!("{numi}");
                         } else if cvar == "r" {
                             let r = ex.clones[bcl.2][m].read_count;
-                            *cxp = format!("{}", r);
+                            *cxp = format!("{r}");
                         } else if cvar == "nval" {
                             let mut n = 0;
                             if ex.clones[bcl.2][m].validated_umis.is_some() {
                                 n = ex.clones[bcl.2][m].validated_umis.as_ref().unwrap().len();
                             }
-                            *cxp = format!("{}", n);
+                            *cxp = format!("{n}");
                         } else if cvar == "nnval" {
                             let mut n = 0;
                             if ex.clones[bcl.2][m].non_validated_umis.is_some() {
@@ -822,13 +822,13 @@ pub fn compute_bu(
                                     .unwrap()
                                     .len();
                             }
-                            *cxp = format!("{}", n);
+                            *cxp = format!("{n}");
                         } else if cvar == "nival" {
                             let mut n = 0;
                             if ex.clones[bcl.2][m].invalidated_umis.is_some() {
                                 n = ex.clones[bcl.2][m].invalidated_umis.as_ref().unwrap().len();
                             }
-                            *cxp = format!("{}", n);
+                            *cxp = format!("{n}");
                         } else if cvar == "valumis" {
                             let mut n = Vec::<String>::new();
                             if ex.clones[bcl.2][m].validated_umis.is_some() {
@@ -844,7 +844,7 @@ pub fn compute_bu(
                                     .unwrap()
                                     .iter()
                                     .map(|ni| {
-                                        format!("{}{}", ex.clones[bcl.2][m].barcode.before("-"), ni)
+                                        format!("{}{ni}", ex.clones[bcl.2][m].barcode.before("-"))
                                     })
                                     .collect();
                             }
@@ -864,7 +864,7 @@ pub fn compute_bu(
                                     .unwrap()
                                     .iter()
                                     .map(|ni| {
-                                        format!("{}{}", ex.clones[bcl.2][m].barcode.before("-"), ni)
+                                        format!("{}{ni}", ex.clones[bcl.2][m].barcode.before("-"))
                                     })
                                     .collect();
                             }
@@ -884,7 +884,7 @@ pub fn compute_bu(
                                     .unwrap()
                                     .iter()
                                     .map(|ni| {
-                                        format!("{}{}", ex.clones[bcl.2][m].barcode.before("-"), ni)
+                                        format!("{}{ni}", ex.clones[bcl.2][m].barcode.before("-"))
                                     })
                                     .collect::<Vec<_>>();
                             }

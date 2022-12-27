@@ -156,10 +156,7 @@ pub fn define_mat(
     for (i1, (raw_i1, &j1)) in raw_joinsx.iter().zip(infos.iter()).enumerate() {
         for &i2 in raw_i1.iter() {
             let j2 = infos[i2];
-            let (u1, u2) = (
-                info[j1].clonotype_index as usize,
-                info[j2].clonotype_index as usize,
-            );
+            let (u1, u2) = (info[j1].clonotype_index, info[j2].clonotype_index);
             let (ex1, ex2) = (&exact_clonotypes[u1], &exact_clonotypes[u2]);
             let (v1, v2) = (to_exacts[&u1], to_exacts[&u2]);
             if ex1.share.len() > 2 || ex2.share.len() > 2 {
@@ -373,12 +370,7 @@ pub fn define_mat(
             } else if c.starts_with("TRA") {
                 c = c.replacen("TRA", "TRY", 1);
             }
-            chainsp.push((
-                format!("{}:{}", c, share_m.cdr3_aa),
-                share_m.seq.len(),
-                u,
-                m,
-            ));
+            chainsp.push((format!("{c}:{}", share_m.cdr3_aa), share_m.seq.len(), u, m));
         }
     }
     chainsp.sort();

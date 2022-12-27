@@ -88,7 +88,7 @@ pub fn comp_edit(
                 Subst => {
                     if pos >= start && pos < stop {
                         count += 1;
-                        edits.push(format!("S{}", rpos));
+                        edits.push(format!("S{rpos}"));
                     }
                     pos += 1;
                     rpos += 1;
@@ -96,7 +96,7 @@ pub fn comp_edit(
                 Del => {
                     if pos >= start && pos < stop {
                         count += 1;
-                        edits.push(format!("D{}:{}", rpos, n - m));
+                        edits.push(format!("D{rpos}:{}", n - m));
                     }
                     pos += n - m;
                     m = n - 1;
@@ -104,7 +104,7 @@ pub fn comp_edit(
                 Ins => {
                     if pos >= start && pos < stop {
                         count += 1;
-                        edits.push(format!("I{}:{}", rpos, n - m));
+                        edits.push(format!("I{rpos}:{}", n - m));
                     }
                     rpos += (n - m) as isize;
                     m = n - 1;
@@ -462,7 +462,7 @@ pub fn define_column_info(
                     vpids_a[cx].unwrap() + 1
                 );
             }
-            let mut chain_descrip = format!("{}|{}", vdescrip, refdata.name[vid]);
+            let mut chain_descrip = format!("{vdescrip}|{}", refdata.name[vid]);
             if let Some(did) = dids[cx] {
                 write!(
                     chain_descrip,

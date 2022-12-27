@@ -91,9 +91,9 @@ pub fn build_table_stuff(
             if rsi.chain_descrip[j].contains(&"IGH".to_string())
                 || rsi.chain_descrip[j].contains(&"TRB".to_string())
             {
-                row.push(bold(&format!("◆ {}", next)));
+                row.push(bold(&format!("◆ {next}")));
             } else {
-                row.push(format!("◆ {}", next));
+                row.push(format!("◆ {next}"));
             }
             for _ in 1..rsi.cvars[j].len() {
                 row.push("\\ext".to_string());
@@ -118,9 +118,9 @@ pub fn build_table_stuff(
                 } else if rsi.chain_descrip[j].contains(&"IGH".to_string())
                     || rsi.chain_descrip[j].contains(&"TRB".to_string())
                 {
-                    row.push(bold(&format!("◆ {}", last)));
+                    row.push(bold(&format!("◆ {last}")));
                 } else {
-                    row.push(format!("◆ {}", last));
+                    row.push(format!("◆ {last}"));
                 }
                 for _ in 1..rsi.cvars[j].len() {
                     row.push("\\ext".to_string());

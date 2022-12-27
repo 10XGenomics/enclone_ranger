@@ -561,8 +561,8 @@ impl EncloneControl {
             if self.perf_opt.comp {
                 let peak = peak_mem_usage_gb();
                 let ipeak = (100.0 * peak).round();
-                let peak_mem = format!("peak mem = {:.2} GB", peak);
-                usedx = format!("{:.2}", used);
+                let peak_mem = format!("peak mem = {peak:.2} GB");
+                usedx = format!("{used:.2}");
                 let mut ipeak_changed = false;
                 unsafe {
                     if ipeak != LAST_IPEAK {
@@ -571,7 +571,7 @@ impl EncloneControl {
                     }
                 }
                 if usedx != "0.00" || ipeak_changed {
-                    println!("used {} seconds {}, {}", usedx, msg, peak_mem);
+                    println!("used {usedx} seconds {msg}, {peak_mem}");
                 }
             }
         }
@@ -581,9 +581,9 @@ impl EncloneControl {
         // section can be nontrivial.
 
         let used2 = elapsed(&t2);
-        let used2x = format!("{:.2}", used2);
+        let used2x = format!("{used2:.2}");
         if self.perf_opt.comp && used2x != "0.00" {
-            println!("used {} seconds computing perf stats for {}", used2x, msg);
+            println!("used {used2x} seconds computing perf stats for {msg}");
         }
 
         // Update total time used.
@@ -599,12 +599,12 @@ impl EncloneControl {
             unsafe {
                 delta = elapsed(&self.start_time.unwrap()) - WALLCLOCK;
             }
-            let deltas = format!("{:.2}", delta);
+            let deltas = format!("{delta:.2}");
             if deltas != "0.00" {
                 if usedx == "0.00" {
-                    println!("used 0.00 seconds {}", msg);
+                    println!("used 0.00 seconds {msg}");
                 }
-                println!("used {} seconds unaccounted for", deltas);
+                println!("used {deltas} seconds unaccounted for");
             }
         }
     }

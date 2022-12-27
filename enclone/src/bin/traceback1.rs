@@ -39,7 +39,7 @@ fn test_traceback1() {
         let lines = err.split('\n').collect::<Vec<&str>>();
         const MAX_LINES: usize = 60;
         for &line in lines.iter().take(MAX_LINES) {
-            writeln!(head, "{}", line).unwrap();
+            writeln!(head, "{line}").unwrap();
         }
         eprint!(
             "\n▓▓▓ test_traceback1 failed because did not find {} as expected;\n\n\
