@@ -24,7 +24,7 @@ use string_utils::TextUtils;
 const DOUBLE: &str = "";
 
 pub fn flatten_vec_string(v: &[&str]) -> String {
-    format!("{}{}{}", DOUBLE, v.iter().format(DOUBLE), DOUBLE)
+    format!("{DOUBLE}{}{DOUBLE}", v.iter().format(DOUBLE))
 }
 
 pub fn unflatten_string(s: &str) -> Vec<&str> {
@@ -118,8 +118,8 @@ impl Display for FeatureBarcodeAlluvialTableSet {
         for s in &self.s {
             write!(
                 f,
-                "{}{}{}{}{}{}",
-                s.id, DOUBLE, s.display_text, DOUBLE, s.spreadsheet_text, DOUBLE
+                "{}{DOUBLE}{}{DOUBLE}{}{DOUBLE}",
+                s.id, s.display_text, s.spreadsheet_text
             )?;
         }
         Ok(())
@@ -167,8 +167,8 @@ impl Display for FeatureBarcodeAlluvialReadsTableSet {
         for s in &self.s {
             write!(
                 f,
-                "{}{}{}{}{}{}",
-                s.id, DOUBLE, s.display_text, DOUBLE, s.spreadsheet_text, DOUBLE
+                "{}{DOUBLE}{}{DOUBLE}{}{DOUBLE}",
+                s.id, s.display_text, s.spreadsheet_text
             )?;
         }
         Ok(())
@@ -203,7 +203,7 @@ mod test {
         assert_eq!(simple.len(), 1);
         assert_eq!(simple[0], &simple_case[2..simple_case.len() - 2]);
         // multi-byte characters.
-        let complex_case = format!("ƒƒƒ2{}345{}67ƒƒƒ", DOUBLE, DOUBLE);
+        let complex_case = format!("ƒƒƒ2{DOUBLE}345{DOUBLE}67ƒƒƒ");
         let result = unflatten_string(complex_case.as_str());
         assert_eq!(result.len(), 3);
         assert_eq!(result[0], "ƒ2");
@@ -213,7 +213,7 @@ mod test {
 
     #[test]
     fn test_flatten_vec_string() {
-        let expected = format!("{}ƒ123ƒ{}ƒƒ{}", DOUBLE, DOUBLE, DOUBLE);
+        let expected = format!("{DOUBLE}ƒ123ƒ{DOUBLE}ƒƒ{DOUBLE}");
         let split = unflatten_string(expected.as_str());
         assert_eq!(expected, flatten_vec_string(&split));
     }

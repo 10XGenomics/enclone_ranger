@@ -112,9 +112,9 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
             }
             if !fields[barcode_pos].contains('-') {
                 return Err(format!(
-                    "\nThe barcode \"{}\" appears in the file\n{}.\n\
+                    "\nThe barcode \"{}\" appears in the file\n{bc}.\n\
                      That doesn't make sense because a barcode\nshould include a hyphen.\n",
-                    fields[barcode_pos], bc,
+                    fields[barcode_pos],
                 ));
             }
 
@@ -188,7 +188,7 @@ pub fn proc_args_post(
         for &field in &fields {
             if field != "vj_seq1" && field != "vj_seq2" {
                 ctl.gen_opt.info_fields.push(field.to_string());
-                ctl.gen_opt.info_fields.push(format!("log10({})", field));
+                ctl.gen_opt.info_fields.push(format!("log10({field})"));
             }
         }
         let mut tags = Vec::<String>::new();
@@ -223,7 +223,7 @@ pub fn proc_args_post(
                     other.push(log10_val);
                 }
             }
-            let tag = format!("{}_{}", vj1, vj2);
+            let tag = format!("{vj1}_{vj2}");
             if ctl.gen_opt.info_resolve && ctl.gen_opt.info_data.contains_key(&tag) {
                 continue;
             }
@@ -571,8 +571,8 @@ pub fn proc_args_post(
     if !ctl.gen_opt.bcr {
         for arg in &args[1..] {
             for x in bcr_only.iter() {
-                if arg == x || arg.starts_with(&format!("{}=", x)) {
-                    return Err(format!("\nThe option {} does not make sense for TCR.\n", x));
+                if arg == x || arg.starts_with(&format!("{x}=")) {
+                    return Err(format!("\nThe option {x} does not make sense for TCR.\n"));
                 }
             }
         }
@@ -584,9 +584,9 @@ pub fn proc_args_post(
         let (mut cells_cr, mut rpc_cr) = (None, None);
         if ctl.gen_opt.internal_run {
             let p = &ctl.origin_info.dataset_path[i];
-            let mut f = format!("{}/metrics_summary_csv.csv", p);
+            let mut f = format!("{p}/metrics_summary_csv.csv");
             if !path_exists(&f) {
-                f = format!("{}/metrics_summary.csv", p);
+                f = format!("{p}/metrics_summary.csv");
             }
             if path_exists(&f) {
                 let f = open_userfile_for_read(&f);

@@ -39,9 +39,9 @@ pub fn finish_join(
         }
     }
     if !ctl.silent {
-        println!("{} joins", joins);
+        println!("{joins} joins");
         if ctl.origin_info.donors > 1 {
-            println!("{} errors", errors);
+            println!("{errors} errors");
         }
     }
 
@@ -88,7 +88,7 @@ pub fn finish_join(
             denom += r.3;
         }
         let bad_rate = percent_ratio(bads, denom);
-        println!("whitelist contamination rate = {:.2}%", bad_rate);
+        println!("whitelist contamination rate = {bad_rate:.2}%");
     }
     ctl.perf_stats(&timer3, "in tail of join");
     eq

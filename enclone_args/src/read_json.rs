@@ -60,7 +60,7 @@ fn json_error(
             msgx += ".";
         }
         if ctl.gen_opt.internal_run {
-            writeln!(msgx, "\n\npossibly relevant internal data: {}", msg).unwrap();
+            writeln!(msgx, "\n\npossibly relevant internal data: {msg}").unwrap();
         }
         if ctl.gen_opt.internal_run {
             msgx += "\n\nATTENTION INTERNAL 10X USERS!\n\
@@ -475,12 +475,12 @@ fn parse_vector_entry_from_json(
         }
         annv.push((0_i32, len1, t, 0, 0));
         if ins > 0 && ins % 3 == 0 && del == 0 && len2 > 0 {
-            let start = (len1 + ins) as i32;
+            let start = len1 + ins;
             annv.push((start, len2, t, len1, 0));
         } else if del > 0 && del % 3 == 0 && ins == 0 && len2 > 0 {
             annv.push((len1, len2, t, len1 + del, 0));
         }
-        let rt = &refdata.refs[v_ref_id as usize];
+        let rt = &refdata.refs[v_ref_id];
         if annv.len() == 2 && annv[0].1 as usize > rt.len() {
             let msg = format!("annv[0].1 = {}, rt.len() = {}", annv[0].1, rt.len());
             json_error(None, ctl, exiting, &msg)?;
@@ -534,7 +534,7 @@ fn parse_vector_entry_from_json(
     // Keep going.
 
     if tig_start < 0 || tig_stop < 0 {
-        let msg = format!("tig_start = {}, tig_stop = {}", tig_start, tig_stop);
+        let msg = format!("tig_start = {tig_start}, tig_stop = {tig_stop}");
         json_error(Some(json), ctl, exiting, &msg)?;
     }
     let (tig_start, tig_stop) = (tig_start as usize, tig_stop as usize);
@@ -694,7 +694,7 @@ pub fn read_json(
     let mut tigs = Vec::<TigData>::new();
     let mut jsonx = json.clone();
     if !path_exists(json) {
-        jsonx = format!("{}.lz4", json);
+        jsonx = format!("{json}.lz4");
     }
     if jsonx.contains('/') {
         let p = jsonx.rev_before("/");
@@ -723,7 +723,7 @@ pub fn read_json(
     loop {
         let x = read_vector_entry_from_json(&mut f);
         if x.is_err() {
-            eprintln!("\nProblem reading {}.\n", jsonx);
+            eprintln!("\nProblem reading {jsonx}.\n");
             return Err(x.err().unwrap());
         }
         match x.unwrap() {
@@ -895,10 +895,10 @@ pub fn parse_json_annotations_files(
     };
     results.par_iter_mut().for_each(|res| {
         let li = res.0;
-        let json = format!("{}/{}", ctl.origin_info.dataset_path[li], ann);
-        let json_lz4 = format!("{}/{}.lz4", ctl.origin_info.dataset_path[li], ann);
+        let json = format!("{}/{ann}", ctl.origin_info.dataset_path[li]);
+        let json_lz4 = format!("{}/{ann}.lz4", ctl.origin_info.dataset_path[li]);
         if !path_exists(&json) && !path_exists(&json_lz4) {
-            res.8 = format!("\ncan't find {} or {}\n", json, json_lz4);
+            res.8 = format!("\ncan't find {json} or {json_lz4}\n");
             return;
         }
         let resx = read_json(

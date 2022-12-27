@@ -96,7 +96,7 @@ pub fn expand_integer_ranges(x: &str) -> String {
                             if n > n1 {
                                 tokens2.push(',');
                             }
-                            write!(tokens2, "{}", n).unwrap();
+                            write!(tokens2, "{n}").unwrap();
                         }
                         continue;
                     }
@@ -169,7 +169,7 @@ pub fn fetch_url(url: &str) -> Result<String, String> {
                 url
             ));
         }
-        return Err(format!("Failed to access URL {}: {}.", url, msg));
+        return Err(format!("Failed to access URL {url}: {msg}."));
     }
     Ok(response.text().unwrap())
 }

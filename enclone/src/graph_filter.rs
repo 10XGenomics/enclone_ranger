@@ -384,6 +384,6 @@ pub fn graph_filter(
     if graph {
         fwriteln!(log, "");
         print!("{}", strme(&log));
-        println!("total graph filter deletions = {}", ndels);
+        println!("total graph filter deletions = {ndels}");
     }
 }

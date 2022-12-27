@@ -24,7 +24,7 @@ fn main() {
             }
         }
         if !rejected && !line.is_empty() {
-            println!("{}", line);
+            println!("{line}");
         }
     }
 }

@@ -22,7 +22,7 @@ pub fn subset_all_contig_annotations_json(filename: &str, barcodes: &[String]) -
         if s == "]" {
             if keep {
                 for line in &lines {
-                    writeln!(x, "{}", line).unwrap();
+                    writeln!(x, "{line}").unwrap();
                 }
             }
             break;
@@ -35,7 +35,7 @@ pub fn subset_all_contig_annotations_json(filename: &str, barcodes: &[String]) -
         } else if s.starts_with("    }") {
             if keep {
                 for line in &lines {
-                    writeln!(&mut x, "{}", line).unwrap();
+                    writeln!(&mut x, "{line}").unwrap();
                 }
             }
             lines.clear();

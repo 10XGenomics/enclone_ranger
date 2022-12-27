@@ -80,7 +80,7 @@ pub fn merge_onesies(
                     let mut donors = vec![Vec::<Option<usize>>::new(); 2];
                     let orbs = [&orb1, &orb2];
                     for (pass, orb) in orbs.iter().enumerate() {
-                        for id in orbits[**orb as usize].iter() {
+                        for id in orbits[**orb].iter() {
                             let ex = &exact_clonotypes[info[*id as usize].clonotype_id];
                             for i in 0..ex.clones.len() {
                                 donors[pass].push(ex.clones[i][0].donor_index);

@@ -168,7 +168,7 @@ pub fn build_info(
                     aax.push(aa);
                     emit_end_escape(&mut aax);
                 }
-                vsnx = format!("ins = {} at {}", strme(&aax), ins_aa_pos);
+                vsnx = format!("ins = {} at {ins_aa_pos}", strme(&aax));
 
                 // Finish up ann.
 
@@ -187,7 +187,7 @@ pub fn build_info(
             // single indel between the contig and the reference sequence, edit the
             // reference V segment accordingly.
 
-            let rt = &refdata.refs[vid as usize];
+            let rt = &refdata.refs[vid];
             if x.annv.len() == 2 {
                 let mut r = rt.slice(0, x.annv[0].1 as usize).to_owned();
                 // deletion
@@ -246,7 +246,7 @@ pub fn build_info(
                         vsnx += "; ";
                     }
                     if delta > 0 {
-                        write!(vsnx, "gap from J stop to C start = {}", delta).unwrap();
+                        write!(vsnx, "gap from J stop to C start = {delta}").unwrap();
                     } else if delta != -1 || ctl.gen_opt.jc1 {
                         write!(vsnx, "J and C segs overlap by {}", -delta).unwrap();
                     }

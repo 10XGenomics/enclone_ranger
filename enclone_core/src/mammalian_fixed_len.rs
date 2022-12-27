@@ -26,7 +26,7 @@ pub fn mammalian_fixed_len() -> Vec<(&'static str, &'static str, usize, Vec<Vec<
                             .map(|wj| {
                                 (
                                     wj.before(":").force_usize() as u32,
-                                    wj.after(":").as_bytes()[0] as u8,
+                                    wj.after(":").as_bytes()[0],
                                 )
                             })
                             .collect()

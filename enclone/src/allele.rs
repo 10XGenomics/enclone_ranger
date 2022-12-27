@@ -370,14 +370,14 @@ pub fn find_alleles(
                     donor_id + 1,
                     ctl.origin_info.donor_list[donor_id]
                 );
-                println!("{} = |{}| = {}", id, refdata.id[id], refdata.name[id]);
+                println!("{id} = |{}| = {}", refdata.id[id], refdata.name[id]);
                 println!("ps = {}", ps.iter().format(","));
                 for x in keep.iter() {
                     let mut bases = String::new();
                     for z in x.0.iter() {
                         bases.push(*z as char);
                     }
-                    print!("{} [{}] {:.1}", bases, x.1, x.2);
+                    print!("{bases} [{}] {:.1}", x.1, x.2);
                     if x.3 {
                         print!(" (ref)");
                     }

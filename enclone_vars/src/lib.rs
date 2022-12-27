@@ -16,15 +16,15 @@ pub fn sort_vars(input: &str) -> String {
     let mut this_group = String::new();
     for line in input.lines() {
         if !in_vars && line != div {
-            writeln!(preamble, "{}", line).unwrap();
+            writeln!(preamble, "{line}").unwrap();
         } else if !in_vars && line == div {
             in_vars = true;
-            this_group = format!("{}\n", div);
+            this_group = format!("{div}\n");
         } else if line == div {
             groups.push(this_group);
-            this_group = format!("{}\n", div);
+            this_group = format!("{div}\n");
         } else {
-            writeln!(this_group, "{}", line).unwrap();
+            writeln!(this_group, "{line}").unwrap();
         }
     }
     let mut vars = groups
@@ -37,7 +37,7 @@ pub fn sort_vars(input: &str) -> String {
     for group in groups {
         out += group.as_str();
     }
-    writeln!(out, "{}", div).unwrap();
+    writeln!(out, "{div}").unwrap();
     out
 }
 

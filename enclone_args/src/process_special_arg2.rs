@@ -685,7 +685,7 @@ pub fn process_special_arg2(
     {
         xcrs.push(arg.to_string());
     } else if arg != "--help" {
-        return Err(format!("\nUnrecognized argument {}.\n", arg));
+        return Err(format!("\nUnrecognized argument {arg}.\n"));
     }
     Ok(())
 }

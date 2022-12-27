@@ -487,7 +487,7 @@ pub fn insert_consensus_row(
                             } else {
                                 for m in classes.iter() {
                                     if meet_size(&aas, m.1) == aas.len() {
-                                        xdots.push(m.0 as char);
+                                        xdots.push(m.0);
                                         break;
                                     }
                                 }

@@ -176,7 +176,7 @@ pub fn finish_table(
             } else if !lvar.ends_with("_%") {
                 row.push(format!("{}", total.round() as usize));
             } else {
-                row.push(format!("{:.2}", total));
+                row.push(format!("{total:.2}"));
             }
         }
         // This is necessary but should not be:
@@ -210,9 +210,9 @@ pub fn finish_table(
             if !found {
                 row.push(String::new());
             } else if !lvar.ends_with("_%") {
-                row.push(format!("{:.1}", mean));
+                row.push(format!("{mean:.1}"));
             } else {
-                row.push(format!("{:.2}", mean));
+                row.push(format!("{mean:.2}"));
             }
         }
         // This is necessary but should not be:

@@ -97,9 +97,9 @@ pub fn test_vdj_gex_inconsistent(
                     res.1 = format!(
                         "\nThe VDJ dataset with path\n{}\nand the GEX dataset with path\n\
                         {}\nshow insufficient sharing of barcodes.  \
-                        Of the {} VDJ cells that were tested,\n\
-                        only {} were GEX cells.\n",
-                        ctl.origin_info.dataset_path[li], ctl.origin_info.gex_path[li], total, good
+                        Of the {total} VDJ cells that were tested,\n\
+                        only {good} were GEX cells.\n",
+                        ctl.origin_info.dataset_path[li], ctl.origin_info.gex_path[li]
                     );
                 }
             }
