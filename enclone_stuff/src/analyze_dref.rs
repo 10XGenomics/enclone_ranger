@@ -50,7 +50,7 @@ pub fn analyze_donor_ref(
             if refdata.is_v(i) {
                 refs.push((
                     refdata.name[i].clone(),
-                    format!("uref{}", i),
+                    format!("uref{i}"),
                     refdata.refs[i].to_ascii_vec(),
                 ));
             }
@@ -65,7 +65,7 @@ pub fn analyze_donor_ref(
             let alt_seq = &ar.2;
             refs.push((
                 name.clone(),
-                format!("dref{}_{}", i, donor),
+                format!("dref{i}_{donor}"),
                 alt_seq.to_ascii_vec(),
             ));
         }
@@ -286,7 +286,7 @@ pub fn analyze_donor_ref(
 
                 // Print.
 
-                println!("\nworking on {}, have {} seqs", gene, alleles.len());
+                println!("\nworking on {gene}, have {} seqs", alleles.len());
                 println!(
                     "alleles differ at {} positions = {}",
                     dp.len(),
@@ -294,7 +294,7 @@ pub fn analyze_donor_ref(
                 );
                 if !log.is_empty() {
                     log.truncate(log.len() - 1);
-                    println!("\n{}", log);
+                    println!("\n{log}");
                     println!("* = a universal reference\n");
                 }
                 for m1 in 0..alleles.len() {
@@ -334,7 +334,7 @@ pub fn analyze_donor_ref(
                         }
                         best = min(best, diffs);
                     }
-                    println!("{} is distance {} from a reference", a1.1, best);
+                    println!("{} is distance {best} from a reference", a1.1);
                 }
             }
             i = j;

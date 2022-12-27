@@ -148,7 +148,7 @@ pub fn proc_lvar2(
     if computed {
         let mut f = Vec::<String>::new();
         for x in fcounts_sub.iter() {
-            f.push(format!("{}", x));
+            f.push(format!("{x}"));
         }
         if !y0.ends_with("_%") {
             stats.push((x.to_string(), f));
@@ -159,7 +159,7 @@ pub fn proc_lvar2(
                 if gex_mean > 0.0 {
                     x = 100.0 * fc / gex_mean;
                 }
-                f.push(format!("{}", x));
+                f.push(format!("{x}"));
             }
             stats.push((x.to_string(), f));
         }
@@ -200,7 +200,7 @@ pub fn proc_lvar2(
             if !counts_sub_sorted.is_empty() {
                 median = rounded_median(&counts_sub_sorted);
             }
-            lvar![i, x, format!("{}", median)];
+            lvar![i, x, format!("{median}")];
         }
     } else if i < lvars.len() {
         lvar_stats1![i, x, "".to_string()];

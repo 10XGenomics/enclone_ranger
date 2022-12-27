@@ -117,13 +117,13 @@ pub fn set_speakers(ctl: &EncloneControl, parseable_fields: &mut Vec<String>, ma
     speaker!("barcodes");
     for x in ctl.origin_info.dataset_list.iter() {
         if !x.is_empty() {
-            speaker!(&format!("{}_barcodes", x));
+            speaker!(&format!("{x}_barcodes"));
         }
     }
     if ctl.parseable_opt.pbarcode {
         speaker!("barcode");
         for x in ctl.origin_info.dataset_list.iter() {
-            speaker!(&format!("{}_barcode", x));
+            speaker!(&format!("{x}_barcode"));
         }
     }
 }

@@ -42,23 +42,23 @@ pub fn get_known_features(gex_info: &GexInfo) -> Result<Vec<String>, String> {
             for z in 0..2 {
                 if ff[2].starts_with("Antibody") {
                     for s in suffixes.iter() {
-                        res.1.push(format!("{}_ab{}", ff[z], s));
+                        res.1.push(format!("{}_ab{s}", ff[z]));
                     }
                 } else if ff[2].starts_with("CRISPR") {
                     for s in suffixes.iter() {
-                        res.1.push(format!("{}_cr{}", ff[z], s));
+                        res.1.push(format!("{}_cr{s}", ff[z]));
                     }
                 } else if ff[2].starts_with("CUSTOM") {
                     for s in suffixes.iter() {
-                        res.1.push(format!("{}_cu{}", ff[z], s));
+                        res.1.push(format!("{}_cu{s}", ff[z]));
                     }
                 } else if ff[2].starts_with("Antigen") {
                     for s in suffixes.iter() {
-                        res.1.push(format!("{}_ag{}", ff[z], s));
+                        res.1.push(format!("{}_ag{s}", ff[z]));
                     }
                 } else {
                     for s in suffixes_g.iter() {
-                        res.1.push(format!("{}_g{}", ff[z], s));
+                        res.1.push(format!("{}_g{s}", ff[z]));
                     }
                 }
             }
@@ -87,7 +87,7 @@ pub fn involves_gex_fb(x: &str) -> bool {
     let mut ends = Vec::<String>::new();
     for z in ends0.iter() {
         for y in suffixes.iter() {
-            ends.push(format!("{}{}", z, y));
+            ends.push(format!("{z}{y}"));
         }
     }
     let x = {
@@ -129,7 +129,7 @@ pub fn is_pattern(x: &str, parseable: bool) -> bool {
     let mut pat = false;
     for y in ends0
         .into_iter()
-        .flat_map(|z| suffixes.iter().map(move |&y| format!("{}{}", z, y)))
+        .flat_map(|z| suffixes.iter().map(move |&y| format!("{z}{y}")))
     {
         if x.ends_with(&y) {
             let p = x.rev_before(&y);
@@ -174,7 +174,7 @@ fn check_gene_fb(
     let suffixes_g = ["", "_min", "_max", "_μ", "_Σ", "_%"];
     let g_ends = g_ends0
         .iter()
-        .flat_map(|&x| suffixes_g.iter().map(move |&y| format!("{}{}", x, y)))
+        .flat_map(|&x| suffixes_g.iter().map(move |&y| format!("{x}{y}")))
         .collect::<Vec<_>>();
     for x in to_check {
         let x = if x.contains(':') {
@@ -231,7 +231,7 @@ fn check_gene_fb(
         if !gex_info.have_fb {
             for y in fb_ends0
                 .into_iter()
-                .flat_map(|x| suffixes.iter().map(move |&y| format!("{}{}", x, y)))
+                .flat_map(|x| suffixes.iter().map(move |&y| format!("{x}{y}")))
             {
                 if x.ends_with(&y) {
                     if category == "parseable" {
@@ -457,7 +457,7 @@ pub fn check_pcols(
             }
         }
         for y in ctl.origin_info.dataset_list.iter() {
-            if *x == format!("{}_barcodes", y) {
+            if *x == format!("{y}_barcodes") {
                 ok = true;
             }
         }
@@ -466,7 +466,7 @@ pub fn check_pcols(
                 ok = true;
             }
             for y in ctl.origin_info.dataset_list.iter() {
-                if *x == format!("{}_barcode", y) {
+                if *x == format!("{y}_barcode") {
                     ok = true;
                 }
             }
@@ -783,7 +783,7 @@ pub fn build_ends() -> Vec<String> {
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
     for x in ends0.iter() {
         for y in suffixes.iter() {
-            ends.push(format!("{}{}", x, y));
+            ends.push(format!("{x}{y}"));
         }
     }
     ends
@@ -824,7 +824,7 @@ pub fn check_lvars(ctl: &EncloneControl, gex_info: &GexInfo) -> Result<(), Strin
 pub fn check_gvars(ctl: &EncloneControl) -> Result<(), String> {
     for x in ctl.gen_opt.gvars.iter() {
         if !GVARS_ALLOWED.contains(&x.as_str()) {
-            return Err(format!("\nUnknown global variable {}.\n", x));
+            return Err(format!("\nUnknown global variable {x}.\n"));
         }
     }
     Ok(())

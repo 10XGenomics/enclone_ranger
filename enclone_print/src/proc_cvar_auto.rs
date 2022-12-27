@@ -48,7 +48,7 @@ pub fn proc_cvar_auto(
         vname = var.after(":");
     }
     let cvars = &ctl.clono_print_opt.cvars;
-    let mut abbrc = format!("{}{}", var, col + 1);
+    let mut abbrc = format!("{var}{}", col + 1);
     if var.contains(':') {
         abbrc = var.before(":").to_string();
     }
@@ -98,7 +98,7 @@ pub fn proc_cvar_auto(
             allele = ex.share[mid].v_ref_id_donor_alt_id.unwrap() + 1;
         }
 
-        (format!("{}", allele), Vec::new(), "clono".to_string())
+        (format!("{allele}"), Vec::new(), "clono".to_string())
     } else if vname == "allele_d" {
         let mut refs = Vec::<Vec<u8>>::new();
         let alt_refs = &allele_data.alt_refs;
@@ -162,7 +162,7 @@ pub fn proc_cvar_auto(
                 if tb != rb {
                     ndiffs += 1;
                     if ndiffs <= 5 {
-                        write!(cdiff, "{}{}", i, tb as char).unwrap();
+                        write!(cdiff, "{i}{}", tb as char).unwrap();
                     }
                 }
             }
@@ -170,10 +170,10 @@ pub fn proc_cvar_auto(
                 cdiff += "...";
             }
             if extra > 0 {
-                write!(cdiff, "+{}", extra).unwrap();
+                write!(cdiff, "+{extra}").unwrap();
             }
         } else if clen > 0 {
-            cdiff = format!("+{}", clen);
+            cdiff = format!("+{clen}");
         }
 
         (cdiff, Vec::new(), "exact".to_string())
@@ -479,7 +479,7 @@ pub fn proc_cvar_auto(
     } else if vname == "comp" {
         let (comp, _edit) = comp_edit(ex, mid, col, refdata, dref, rsi);
 
-        (format!("{}", comp), Vec::new(), "exact".to_string())
+        (format!("{comp}"), Vec::new(), "exact".to_string())
     } else if vname == "const" {
         let mut constx = vec![if let Some(cid) = ex.share[mid].c_ref_id {
             refdata.name[cid].clone()
@@ -570,7 +570,7 @@ pub fn proc_cvar_auto(
             if scores.len() > 1 {
                 delta = scores[0] - scores[1];
             }
-            score = format!("{:.1}", delta)
+            score = format!("{delta:.1}")
         }
 
         (score, Vec::new(), "exact".to_string())
@@ -641,7 +641,7 @@ pub fn proc_cvar_auto(
             if scores.len() > 1 {
                 score = scores[1];
             }
-            scorex = format!("{:.1}", score)
+            scorex = format!("{score:.1}")
         }
 
         (scorex, Vec::new(), "exact".to_string())
@@ -672,7 +672,7 @@ pub fn proc_cvar_auto(
             if scores.len() > 1 {
                 delta = scores[0] - scores[1];
             }
-            del = format!("{:.1}", delta)
+            del = format!("{delta:.1}")
         }
 
         (del, Vec::new(), "exact".to_string())
@@ -699,7 +699,7 @@ pub fn proc_cvar_auto(
             }
         }
 
-        (format!("{}", diffs), Vec::new(), "exact".to_string())
+        (format!("{diffs}"), Vec::new(), "exact".to_string())
     } else if vname == "d_frame" {
         let mut d_frame = String::new();
         if ex.share[mid].d_start.is_some() {
@@ -753,7 +753,7 @@ pub fn proc_cvar_auto(
             }
         }
 
-        (format!("{}", diffs), Vec::new(), "exact".to_string())
+        (format!("{diffs}"), Vec::new(), "exact".to_string())
     } else if vname == "d_Δ" {
         let mut del = String::new();
         if ex.share[mid].left {
@@ -781,7 +781,7 @@ pub fn proc_cvar_auto(
             if scores.len() > 1 {
                 delta = scores[0] - scores[1];
             }
-            del = format!("{:.1}", delta)
+            del = format!("{delta:.1}")
         }
 
         (del, Vec::new(), "exact".to_string())
@@ -1007,7 +1007,7 @@ pub fn proc_cvar_auto(
                     .as_ref()
                     .unwrap()
                     .iter()
-                    .map(|bc| format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc))
+                    .map(|bc| format!("{}{bc}", ex.clones[k][mid].barcode.before("-")))
                     .format(",")
                     .to_string();
             }
@@ -1058,7 +1058,7 @@ pub fn proc_cvar_auto(
                     ndiff += 1;
                 }
             }
-            format!("{}", ndiff)
+            format!("{ndiff}")
         } else {
             "_".to_string()
         };
@@ -1071,7 +1071,7 @@ pub fn proc_cvar_auto(
             if ex.clones[k][mid].invalidated_umis.is_some() {
                 n = ex.clones[k][mid].invalidated_umis.as_ref().unwrap().len();
             }
-            valsx.push(format!("{}", n));
+            valsx.push(format!("{n}"));
         }
 
         (String::new(), valsx, "cell".to_string())
@@ -1082,7 +1082,7 @@ pub fn proc_cvar_auto(
             if ex.clones[k][mid].non_validated_umis.is_some() {
                 n = ex.clones[k][mid].non_validated_umis.as_ref().unwrap().len();
             }
-            valsx.push(format!("{}", n));
+            valsx.push(format!("{n}"));
         }
 
         (String::new(), valsx, "cell".to_string())
@@ -1099,7 +1099,7 @@ pub fn proc_cvar_auto(
             if ex.clones[k][mid].validated_umis.is_some() {
                 n = ex.clones[k][mid].validated_umis.as_ref().unwrap().len();
             }
-            valsx.push(format!("{}", n));
+            valsx.push(format!("{n}"));
         }
 
         (String::new(), valsx, "cell".to_string())
@@ -1111,7 +1111,7 @@ pub fn proc_cvar_auto(
                 .as_ref()
                 .map(|umi| {
                     umi.iter()
-                        .map(|bc| format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc))
+                        .map(|bc| format!("{}{bc}", ex.clones[k][mid].barcode.before("-")))
                         .format(",")
                         .to_string()
                 })
@@ -1199,7 +1199,7 @@ pub fn proc_cvar_auto(
         let rtot: usize = nreads.iter().sum();
         let r_mean = (rtot as f64 / nreads.len() as f64).round() as usize;
 
-        (format!("{}", r_mean), Vec::new(), "exact".to_string())
+        (format!("{r_mean}"), Vec::new(), "exact".to_string())
     } else if vname == "r_min" {
         let mut nreads = Vec::<usize>::new();
         for j in 0..ex.clones.len() {
@@ -1218,7 +1218,7 @@ pub fn proc_cvar_auto(
         }
         let rtot: usize = nreads.iter().sum();
 
-        (format!("{}", rtot), Vec::new(), "exact".to_string())
+        (format!("{rtot}"), Vec::new(), "exact".to_string())
     } else if vname == "r_μ" {
         let mut nreads = Vec::<usize>::new();
         for j in 0..ex.clones.len() {
@@ -1227,7 +1227,7 @@ pub fn proc_cvar_auto(
         let rtot: usize = nreads.iter().sum();
         let r_mean = (rtot as f64 / nreads.len() as f64).round() as usize;
 
-        (format!("{}", r_mean), Vec::new(), "exact".to_string())
+        (format!("{r_mean}"), Vec::new(), "exact".to_string())
     } else if vname == "u" {
         let mut numis = Vec::<usize>::new();
         for j in 0..ex.clones.len() {
@@ -1240,7 +1240,7 @@ pub fn proc_cvar_auto(
             vals.push(format!("{}", ex.clones[k][mid].umi_count));
         }
 
-        (format!("{}", median_numis), vals, "cell-exact".to_string())
+        (format!("{median_numis}"), vals, "cell-exact".to_string())
     } else if vname == "u_cell" {
         let mut numis = Vec::<usize>::new();
         for j in 0..ex.clones.len() {
@@ -1253,7 +1253,7 @@ pub fn proc_cvar_auto(
             vals.push(format!("{}", ex.clones[k][mid].umi_count));
         }
 
-        let _exact = format!("{}", median_numis);
+        let _exact = format!("{median_numis}");
         (String::new(), vals, "cell-exact".to_string())
     } else if vname == "u_max" {
         let mut numis = Vec::<usize>::new();
@@ -1276,7 +1276,7 @@ pub fn proc_cvar_auto(
         let utot: usize = numis.iter().sum();
         let u_mean = (utot as f64 / numis.len() as f64).round() as usize;
 
-        (format!("{}", u_mean), Vec::new(), "exact".to_string())
+        (format!("{u_mean}"), Vec::new(), "exact".to_string())
     } else if vname == "u_min" {
         let mut numis = Vec::<usize>::new();
         for j in 0..ex.clones.len() {
@@ -1296,7 +1296,7 @@ pub fn proc_cvar_auto(
         }
         let utot: usize = numis.iter().sum();
 
-        (format!("{}", utot), Vec::new(), "exact".to_string())
+        (format!("{utot}"), Vec::new(), "exact".to_string())
     } else if vname == "u_μ" {
         let mut numis = Vec::<usize>::new();
         for j in 0..ex.clones.len() {
@@ -1306,7 +1306,7 @@ pub fn proc_cvar_auto(
         let utot: usize = numis.iter().sum();
         let u_mean = (utot as f64 / numis.len() as f64).round() as usize;
 
-        (format!("{}", u_mean), Vec::new(), "exact".to_string())
+        (format!("{u_mean}"), Vec::new(), "exact".to_string())
     } else if vname == "udiff" {
         let ulen = ex.share[mid].v_start;
         let uid = ex.share[mid].u_ref_id;
@@ -1333,7 +1333,7 @@ pub fn proc_cvar_auto(
                 if tb != rb {
                     ndiffs += 1;
                     if ndiffs <= 5 {
-                        write!(udiff, "{}{}", rpos, tb as char).unwrap();
+                        write!(udiff, "{rpos}{}", tb as char).unwrap();
                     }
                 }
             }
@@ -1341,10 +1341,10 @@ pub fn proc_cvar_auto(
                 udiff += "...";
             }
             if extra > 0 {
-                write!(udiff, "+{}", extra).unwrap();
+                write!(udiff, "+{extra}").unwrap();
             }
         } else if ulen > 0 {
-            udiff = format!("+{}", ulen);
+            udiff = format!("+{ulen}");
         }
 
         (udiff, Vec::new(), "exact".to_string())
@@ -1419,7 +1419,7 @@ pub fn proc_cvar_auto(
                 .as_ref()
                 .map(|umi| {
                     umi.iter()
-                        .map(|bc| format!("{}{}", ex.clones[k][mid].barcode.before("-"), bc))
+                        .map(|bc| format!("{}{bc}", ex.clones[k][mid].barcode.before("-")))
                         .format(",")
                         .to_string()
                 })
@@ -1484,7 +1484,7 @@ pub fn proc_cvar_auto(
         }
         let junk_rate = percent_ratio(junk, ex.clones.len());
 
-        (format!("{:.1}", junk_rate), Vec::new(), "exact".to_string())
+        (format!("{junk_rate:.1}"), Vec::new(), "exact".to_string())
     } else {
         (
             "$UNDEFINED".to_string(),
@@ -1496,7 +1496,7 @@ pub fn proc_cvar_auto(
         Ok(false)
     } else {
         let (exact, cell, _level) = &val;
-        let mut varc = format!("{}{}", var, col + 1);
+        let mut varc = format!("{var}{}", col + 1);
         if !exact.is_empty() {
             if j < rsi.cvars[col].len() && cvars.contains(&var.to_string()) {
                 cx[col][j] = exact.clone();

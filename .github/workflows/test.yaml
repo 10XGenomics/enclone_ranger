@@ -8,7 +8,7 @@ on:
 
 env:
   DENY_VERSION: "0.13.5"
-  RUST_VERSION: "1.65"
+  RUST_VERSION: "1.66"
   CARGO_INCREMENTAL: 0
 
 permissions:
@@ -121,6 +121,7 @@ jobs:
             -D clippy::unused_io_amount
             -D clippy::wildcard_imports
             -D clippy::unnecessary_unwrap
+            -D clippy::uninlined_format_args
             -W clippy::disallowed_names
             -W clippy::enum_variant_names
             -W clippy::large-enum-variant

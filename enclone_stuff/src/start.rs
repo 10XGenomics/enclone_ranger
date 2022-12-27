@@ -856,7 +856,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             add_commas(mixes)
         );
         let rate = (mixes as f64) * 1_000_000_000.0 / (cross as f64);
-        println!("rate of cross donor mixing = {:.2} x 10^-9", rate);
+        println!("rate of cross donor mixing = {rate:.2} x 10^-9");
         let bogus = (intra as f64) * (mixes as f64) / (cross as f64);
         println!(
             "estimated number of false intradonor merges = {}",

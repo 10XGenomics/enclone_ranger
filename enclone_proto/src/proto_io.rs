@@ -259,7 +259,7 @@ impl<R: Read> Iterator for ClonotypeIter<R> {
         if self.index < self.num_clonotypes {
             let cl = match self.proto_reader.read_and_decode() {
                 Ok(c) => c,
-                Err(e) => panic!("Failed to decode clonotype due to {}", e),
+                Err(e) => panic!("Failed to decode clonotype due to {e}"),
             };
             self.index += 1;
             Some(cl)

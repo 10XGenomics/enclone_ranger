@@ -55,14 +55,14 @@ pub fn make_donor_refs(
                     matches += 1;
                 } else {
                     if matches > 0 {
-                        write!(cigar, "{}=", matches).unwrap();
+                        write!(cigar, "{matches}=").unwrap();
                     }
                     cigar.push_str("1X");
                     matches = 0;
                 }
             }
             if matches > 0 {
-                write!(cigar, "{}=", matches).unwrap();
+                write!(cigar, "{matches}=").unwrap();
             }
             drefs.push(DonorReferenceItem {
                 universal_idx: ref_id as u32,
@@ -450,9 +450,9 @@ pub fn loupe_out(
         let metadata = match &ctl.gen_opt.proto_metadata {
             Some(fname) => serde_json::from_reader(
                 std::fs::File::open(fname)
-                    .unwrap_or_else(|_| panic!("Error while reading {}", fname)),
+                    .unwrap_or_else(|_| panic!("Error while reading {fname}")),
             )
-            .unwrap_or_else(|_| panic!("Unable to deserialize Metadata from {}", fname)),
+            .unwrap_or_else(|_| panic!("Unable to deserialize Metadata from {fname}")),
             None => Metadata::default(),
         };
         let enclone_outputs = EncloneOutputs {

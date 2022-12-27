@@ -15,7 +15,7 @@ use vector_utils::next_diff;
 
 pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
     if evil_eye {
-        println!("creating file {} to test writability", val);
+        println!("creating file {val} to test writability");
     }
     let f = File::create(val);
     if f.is_err() {
@@ -30,16 +30,16 @@ pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
             } else {
                 "does not exist"
             };
-            writeln!(msgx, "Note that the path {} {}.", dir, msg).unwrap();
+            writeln!(msgx, "Note that the path {dir} {msg}.").unwrap();
         }
         return Err(msgx);
     }
     if evil_eye {
-        println!("removing file {}", val);
+        println!("removing file {val}");
     }
-    remove_file(val).unwrap_or_else(|_| panic!("could not remove file {}", val));
+    remove_file(val).unwrap_or_else(|_| panic!("could not remove file {val}"));
     if evil_eye {
-        println!("removal of file {} complete", val);
+        println!("removal of file {val} complete");
     }
     Ok(())
 }
@@ -50,9 +50,9 @@ pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
 // where the argument has been set by an environment variable.
 
 pub fn is_simple_arg(arg: &str, x: &str) -> Result<bool, String> {
-    if arg == x || arg == format!("{}=", x) {
+    if arg == x || arg == format!("{x}=") {
         return Ok(true);
-    } else if arg.starts_with(&format!("{}=", x)) {
+    } else if arg.starts_with(&format!("{x}=")) {
         return Err(format!(
             "\nYour command line includes \"{}\", which is not a valid argument.\n\
              Perhaps you meant \"{}\".\n",
@@ -71,8 +71,8 @@ pub fn is_usize_arg(arg: &str, x: &str) -> Result<bool, String> {
              Perhaps you meant \"{}=n\", where n >= 0 is an integer.\n",
             arg, x
         ));
-    } else if arg.starts_with(&format!("{}=", x)) {
-        let val = arg.after(&format!("{}=", x)).parse::<usize>();
+    } else if arg.starts_with(&format!("{x}=")) {
+        let val = arg.after(&format!("{x}=")).parse::<usize>();
         if val.is_ok() {
             return Ok(true);
         } else {
@@ -95,8 +95,8 @@ pub fn is_i32_arg(arg: &str, x: &str) -> Result<bool, String> {
              Perhaps you meant \"{}=n\", where n >= 0 is an integer.\n",
             arg, x
         ));
-    } else if arg.starts_with(&format!("{}=", x)) {
-        let val = arg.after(&format!("{}=", x)).parse::<i32>();
+    } else if arg.starts_with(&format!("{x}=")) {
+        let val = arg.after(&format!("{x}=")).parse::<i32>();
         if val.is_ok() {
             return Ok(true);
         } else {
@@ -117,8 +117,8 @@ pub fn is_f64_arg(arg: &str, x: &str) -> Result<bool, String> {
              Perhaps you meant \"{}=n\", where n is a floating point number.\n",
             arg, x
         ));
-    } else if arg.starts_with(&format!("{}=", x)) {
-        let val = arg.after(&format!("{}=", x)).parse::<f64>();
+    } else if arg.starts_with(&format!("{x}=")) {
+        let val = arg.after(&format!("{x}=")).parse::<f64>();
         if val.is_ok() {
             return Ok(true);
         } else {
@@ -139,7 +139,7 @@ pub fn is_string_arg(arg: &str, x: &str) -> Result<bool, String> {
              Perhaps you meant \"{}=s\" for some string s.\n",
             arg, x
         ));
-    } else if arg.starts_with(&format!("{}=", x)) {
+    } else if arg.starts_with(&format!("{x}=")) {
         return Ok(true);
     }
     Ok(false)
@@ -184,7 +184,7 @@ pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), S
             if i > 0 {
                 print!(" ");
             }
-            print!("{}", x);
+            print!("{x}");
         }
         println!();
         println!(
@@ -226,12 +226,12 @@ pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), S
             if dir.ends_with("/outs") {
                 dir = dir.rev_before("/outs").to_string();
             }
-            let mut invo = format!("{}/_invocation", dir);
+            let mut invo = format!("{dir}/_invocation");
             if !path_exists(&invo) {
-                invo = format!("{}/../../_invocation", dir);
+                invo = format!("{dir}/../../_invocation");
             }
             if !path_exists(&invo) {
-                invo = format!("{}/../../../_invocation", dir);
+                invo = format!("{dir}/../../../_invocation");
             }
             if path_exists(&invo) {
                 let f = open_userfile_for_read(&invo);

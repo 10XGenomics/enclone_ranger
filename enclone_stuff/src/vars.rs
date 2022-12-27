@@ -24,7 +24,7 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
     let mut endsz = Vec::<String>::new();
     for (ix, x) in ends0.iter().enumerate() {
         for y in suffixes.iter() {
-            ends.push(format!("{}{}", x, y));
+            ends.push(format!("{x}{y}"));
             endsz.push(ends1[ix].to_string());
         }
     }
@@ -49,7 +49,7 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
                 if p.contains(':') {
                     p = p.after(":");
                 }
-                let pp = format!("{}{}", p, endsz[iy]);
+                let pp = format!("{p}{}", endsz[iy]);
                 if !p.is_empty() && Regex::new(p).is_ok() {
                     let mut ok = true;
                     let mut px = false;
@@ -67,7 +67,7 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
                         }
                     }
                     if ok && px {
-                        let reg = Regex::new(&format!("^{}$", p));
+                        let reg = Regex::new(&format!("^{p}$"));
                         for li in 0..ctl.origin_info.n() {
                             let mut js = Vec::<usize>::new();
                             for j in 0..gex_info.gex_features[li].len() {

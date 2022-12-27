@@ -160,7 +160,7 @@ pub fn load_gex(
                 "multi/count/raw_feature_bc_matrix.h5",
             ];
             for x in h5p.iter() {
-                let p = format!("{}/{}", outs, x);
+                let p = format!("{outs}/{x}");
                 if path_exists(&p) {
                     pathlist.push(p.clone());
                     h5_path = p;
@@ -177,24 +177,24 @@ pub fn load_gex(
                 return;
             }
             r.12 = h5_path.clone();
-            let types_file = format!("{}/analysis_csv/celltypes/celltypes.csv", outs);
+            let types_file = format!("{outs}/analysis_csv/celltypes/celltypes.csv");
 
             // Define possible places for the analysis directory.
 
             let mut analysis = Vec::<String>::new();
             analysis.push(outs.to_string());
-            analysis.push(format!("{}/analysis_csv", outs));
-            analysis.push(format!("{}/analysis", outs));
-            analysis.push(format!("{}/count/analysis", outs));
-            let pso1 = format!("{}/per_sample_outs", outs);
-            let pso2 = format!("{}/../per_sample_outs", outs);
+            analysis.push(format!("{outs}/analysis_csv"));
+            analysis.push(format!("{outs}/analysis"));
+            analysis.push(format!("{outs}/count/analysis"));
+            let pso1 = format!("{outs}/per_sample_outs");
+            let pso2 = format!("{outs}/../per_sample_outs");
             for pso in [pso1, pso2].iter() {
                 if path_exists(pso) {
                     let samples = dir_list(pso);
                     if samples.solo() {
-                        let a = format!("{}/{}/count/analysis", pso, samples[0]);
+                        let a = format!("{pso}/{}/count/analysis", samples[0]);
                         analysis.push(a);
-                        let a = format!("{}/{}/count/analysis_csv", pso, samples[0]);
+                        let a = format!("{pso}/{}/count/analysis_csv", samples[0]);
                         analysis.push(a);
                     }
                 }
@@ -210,7 +210,7 @@ pub fn load_gex(
 
             // Proceed.
 
-            let bin_file = format!("{}/feature_barcode_matrix.bin", outs);
+            let bin_file = format!("{outs}/feature_barcode_matrix.bin");
             for f in [pca_file.clone(), cluster_file.clone()].iter() {
                 if !path_exists(f) {
                     r.11 = format!(
@@ -237,15 +237,15 @@ pub fn load_gex(
 
             let mut csv = String::new();
             let mut csvs = Vec::<String>::new();
-            csvs.push(format!("{}/metrics_summary.csv", outs));
-            csvs.push(format!("{}/metrics_summary_csv.csv", outs));
-            let pso = format!("{}/per_sample_outs", outs);
+            csvs.push(format!("{outs}/metrics_summary.csv"));
+            csvs.push(format!("{outs}/metrics_summary_csv.csv"));
+            let pso = format!("{outs}/per_sample_outs");
             if path_exists(&pso) {
                 let samples = dir_list(&pso);
                 if samples.solo() {
-                    let a = format!("{}/{}/metrics_summary.csv", pso, samples[0]);
+                    let a = format!("{pso}/{}/metrics_summary.csv", samples[0]);
                     csvs.push(a);
-                    let a = format!("{}/{}/metrics_summary_csv.csv", pso, samples[0]);
+                    let a = format!("{pso}/{}/metrics_summary_csv.csv", samples[0]);
                     csvs.push(a);
                 }
             }
@@ -494,7 +494,7 @@ pub fn load_gex(
                 }
             }
             if lines.is_empty() {
-                r.11 = format!("\nThe file\n{}\nis empty.\n", csv);
+                r.11 = format!("\nThe file\n{csv}\nis empty.\n");
                 return;
             }
             let fields = parse_csv(&lines[0]);
@@ -794,7 +794,7 @@ pub fn load_gex(
                         let earth = &ctl.gen_opt.config["earth"];
                         if !bin_file.starts_with(earth) {
                             let bin_file_alt =
-                                format!("{}/current{}", earth, bin_file.after("current"));
+                                format!("{earth}/current{}", bin_file.after("current"));
                             write_to_file(&r.3, &bin_file_alt);
                         }
                     }
@@ -860,7 +860,7 @@ pub fn load_gex(
                 if result.17.contains_key(&metric_name) {
                     value = format!("{:.3}", result.17[&metric_name]);
                 }
-                writeln!(result.18, "{},{}", metric_display_name, value).unwrap();
+                writeln!(result.18, "{metric_display_name},{value}").unwrap();
             }
         }
     }

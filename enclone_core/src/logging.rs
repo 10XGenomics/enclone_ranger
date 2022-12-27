@@ -16,6 +16,6 @@ pub fn logme(s: &str) {
             .append(true)
             .open(&SERVER_LOGFILE.lock().unwrap()[0])
             .unwrap();
-        writeln!(file, "{}", s).unwrap();
+        writeln!(file, "{s}").unwrap();
     }
 }

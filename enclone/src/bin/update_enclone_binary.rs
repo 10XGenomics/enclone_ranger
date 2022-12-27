@@ -26,8 +26,8 @@ fn main() {
         if !path_exists(bin) {
             std::fs::create_dir_all(bin).unwrap();
         }
-        let current = format!("{}/enclone", bin);
-        let last = format!("{}/enclone_last", bin);
+        let current = format!("{bin}/enclone");
+        let last = format!("{bin}/enclone_last");
         if path_exists(&last) {
             std::fs::remove_file(&last).unwrap();
         }

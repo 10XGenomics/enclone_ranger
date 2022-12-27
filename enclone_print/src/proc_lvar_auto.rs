@@ -124,7 +124,7 @@ pub fn proc_lvar_auto(
             n += exact_clonotypes[*u].ncells();
         }
 
-        (format!("{}", n), Vec::new(), "clono")
+        (format!("{n}"), Vec::new(), "clono")
     } else if vname == "clust" {
         let mut clust = Vec::<usize>::new();
         for j in 0..ex.clones.len() {
@@ -138,7 +138,7 @@ pub fn proc_lvar_auto(
         }
         let mut clustf = Vec::<String>::new();
         for x in clust.iter() {
-            clustf.push(format!("{}", x));
+            clustf.push(format!("{x}"));
         }
         clust.sort_unstable();
 
@@ -156,8 +156,8 @@ pub fn proc_lvar_auto(
         }
 
         (
-            format!("{}", n),
-            vec![format!("{}", n); ex.ncells()],
+            format!("{n}"),
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_")
@@ -172,10 +172,10 @@ pub fn proc_lvar_auto(
             n += reg.find_iter(strme(&aa)).count();
         }
 
-        let _exact = format!("{}", n);
+        let _exact = format!("{n}");
         (
             String::new(),
-            vec![format!("{}", n); ex.ncells()],
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_cdr_")
@@ -209,8 +209,8 @@ pub fn proc_lvar_auto(
         }
 
         (
-            format!("{}", n),
-            vec![format!("{}", n); ex.ncells()],
+            format!("{n}"),
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_cdr_")
@@ -243,10 +243,10 @@ pub fn proc_lvar_auto(
             n += reg.find_iter(strme(&aa)).count();
         }
 
-        let _exact = format!("{}", n);
+        let _exact = format!("{n}");
         (
             String::new(),
-            vec![format!("{}", n); ex.ncells()],
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_cdr")
@@ -293,8 +293,8 @@ pub fn proc_lvar_auto(
         }
 
         (
-            format!("{}", n),
-            vec![format!("{}", n); ex.ncells()],
+            format!("{n}"),
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_cdr")
@@ -343,10 +343,10 @@ pub fn proc_lvar_auto(
             }
         }
 
-        let _exact = format!("{}", n);
+        let _exact = format!("{n}");
         (
             String::new(),
-            vec![format!("{}", n); ex.ncells()],
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_fwr_")
@@ -387,8 +387,8 @@ pub fn proc_lvar_auto(
         }
 
         (
-            format!("{}", n),
-            vec![format!("{}", n); ex.ncells()],
+            format!("{n}"),
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_fwr_")
@@ -428,10 +428,10 @@ pub fn proc_lvar_auto(
             n += reg.find_iter(strme(&aa)).count();
         }
 
-        let _exact = format!("{}", n);
+        let _exact = format!("{n}");
         (
             String::new(),
-            vec![format!("{}", n); ex.ncells()],
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_fwr")
@@ -488,8 +488,8 @@ pub fn proc_lvar_auto(
         }
 
         (
-            format!("{}", n),
-            vec![format!("{}", n); ex.ncells()],
+            format!("{n}"),
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname.starts_with("count_fwr")
@@ -548,10 +548,10 @@ pub fn proc_lvar_auto(
             }
         }
 
-        let _exact = format!("{}", n);
+        let _exact = format!("{n}");
         (
             String::new(),
-            vec![format!("{}", n); ex.ncells()],
+            vec![format!("{n}"); ex.ncells()],
             "cell-exact",
         )
     } else if vname == "cred" {
@@ -588,7 +588,7 @@ pub fn proc_lvar_auto(
         credsx.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let r = credsx_unsorted
             .into_iter()
-            .map(|c| format!("{:.1}", c))
+            .map(|c| format!("{c:.1}"))
             .collect();
 
         (format!("{:.1}", median_f64(&credsx)), r, "cell-exact")
@@ -626,7 +626,7 @@ pub fn proc_lvar_auto(
         credsx.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let r = credsx_unsorted
             .into_iter()
-            .map(|c| format!("{:.1}", c))
+            .map(|c| format!("{c:.1}"))
             .collect();
 
         let _exact = format!("{:.1}", median_f64(&credsx));
@@ -713,7 +713,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", diffs), Vec::new(), "exact")
+        (format!("{diffs}"), Vec::new(), "exact")
     } else if vname == "dref_aa" {
         let mut diffs = 0;
         for m in 0..cols {
@@ -748,7 +748,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", diffs), Vec::new(), "exact")
+        (format!("{diffs}"), Vec::new(), "exact")
     } else if vname == "dref_max" {
         let mut mx = 0;
         for m in 0..cols {
@@ -777,7 +777,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", mx), Vec::new(), "exact")
+        (format!("{mx}"), Vec::new(), "exact")
     } else if vname == "entropy" {
         let mut total_counts = Vec::<usize>::new();
         for l in 0..ex.clones.len() {
@@ -884,10 +884,10 @@ pub fn proc_lvar_auto(
         }
         let mut e = Vec::<String>::new();
         for x in entropies_unsorted.iter() {
-            e.push(format!("{:.2}", x));
+            e.push(format!("{x:.2}"));
         }
 
-        (format!("{:.2}", entropy), e, "cell-exact")
+        (format!("{entropy:.2}"), e, "cell-exact")
     } else if vname == "entropy_cell" {
         let mut total_counts = Vec::<usize>::new();
         for l in 0..ex.clones.len() {
@@ -994,10 +994,10 @@ pub fn proc_lvar_auto(
         }
         let mut e = Vec::<String>::new();
         for x in entropies_unsorted.iter() {
-            e.push(format!("{:.2}", x));
+            e.push(format!("{x:.2}"));
         }
 
-        let _exact = format!("{:.2}", entropy);
+        let _exact = format!("{entropy:.2}");
         (String::new(), e, "cell-exact")
     } else if vname == "far" {
         let mut dist = -1_isize;
@@ -1018,7 +1018,7 @@ pub fn proc_lvar_auto(
         let d = if dist == -1_isize {
             String::new()
         } else {
-            format!("{}", dist)
+            format!("{dist}")
         };
 
         (d, Vec::new(), "exact")
@@ -1061,7 +1061,7 @@ pub fn proc_lvar_auto(
                     counts_sorted.push(0);
                 } else {
                     let x = gex_info.fb_top_matrices[0].value(p as usize, n);
-                    counts.push(format!("{}", x));
+                    counts.push(format!("{x}"));
                     counts_sorted.push(x);
                 }
             }
@@ -1069,7 +1069,7 @@ pub fn proc_lvar_auto(
             median = rounded_median(&counts_sorted);
         }
 
-        (format!("{}", median), counts, "cell-exact")
+        (format!("{median}"), counts, "cell-exact")
     } else if vname.starts_with("fb")
         && vname.ends_with("_n_cell")
         && vname.between2("fb", "_n_cell").parse::<i64>().is_ok()
@@ -1094,7 +1094,7 @@ pub fn proc_lvar_auto(
                     counts_sorted.push(0);
                 } else {
                     let x = gex_info.fb_top_matrices[0].value(p as usize, n);
-                    counts.push(format!("{}", x));
+                    counts.push(format!("{x}"));
                     counts_sorted.push(x);
                 }
             }
@@ -1102,7 +1102,7 @@ pub fn proc_lvar_auto(
             median = rounded_median(&counts_sorted);
         }
 
-        let _exact = format!("{}", median);
+        let _exact = format!("{median}");
         (String::new(), counts, "cell-exact")
     } else if vname == "filter" {
         let mut fates = Vec::<String>::new();
@@ -1126,7 +1126,7 @@ pub fn proc_lvar_auto(
         counts.sort_unstable();
         let gex_median = rounded_median(&counts);
 
-        (format!("{}", gex_median), f, "cell-exact")
+        (format!("{gex_median}"), f, "cell-exact")
     } else if vname == "gex_cell" {
         let mut f = Vec::<String>::new();
         for x in gex_fcounts_unsorted.iter() {
@@ -1136,7 +1136,7 @@ pub fn proc_lvar_auto(
         counts.sort_unstable();
         let gex_median = rounded_median(&counts);
 
-        let _exact = format!("{}", gex_median);
+        let _exact = format!("{gex_median}");
         (String::new(), f, "cell-exact")
     } else if vname == "gex_max" {
         (
@@ -1290,7 +1290,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", n), Vec::new(), "exact")
+        (format!("{n}"), Vec::new(), "exact")
     } else if vname == "mem" {
         let mut n = 0;
         let mut y = Vec::<String>::new();
@@ -1303,11 +1303,11 @@ pub fn proc_lvar_auto(
                     count = ctl.origin_info.secmem[li][&bc.clone()].1;
                     n += count;
                 }
-                y.push(format!("{}", count));
+                y.push(format!("{count}"));
             }
         }
 
-        (format!("{}", n), y, "cell-exact")
+        (format!("{n}"), y, "cell-exact")
     } else if vname == "mem_cell" {
         let mut n = 0;
         let mut y = Vec::<String>::new();
@@ -1320,11 +1320,11 @@ pub fn proc_lvar_auto(
                     count = ctl.origin_info.secmem[li][&bc.clone()].1;
                     n += count;
                 }
-                y.push(format!("{}", count));
+                y.push(format!("{count}"));
             }
         }
 
-        let _exact = format!("{}", n);
+        let _exact = format!("{n}");
         (String::new(), y, "cell-exact")
     } else if vname == "n" {
         let counts = vec!["1.0".to_string(); mults[u]];
@@ -1368,7 +1368,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", count), counts, "cell-exact")
+        (format!("{count}"), counts, "cell-exact")
     } else if vname.starts_with("n_")
         && vname.after("n_").ends_with("_cell")
         && (bin_member(
@@ -1402,7 +1402,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        let _exact = format!("{}", count);
+        let _exact = format!("{count}");
         (String::new(), counts, "cell-exact")
     } else if vname == "n_b" {
         let mut n_b = 0;
@@ -1420,7 +1420,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", n_b), ns, "cell-exact")
+        (format!("{n_b}"), ns, "cell-exact")
     } else if vname == "n_b_cell" {
         let mut n_b = 0;
         let mut ns = Vec::<String>::new();
@@ -1437,7 +1437,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        let _exact = format!("{}", n_b);
+        let _exact = format!("{n_b}");
         (String::new(), ns, "cell-exact")
     } else if vname == "n_gex" {
         let mut n = Vec::<String>::new();
@@ -1447,7 +1447,7 @@ pub fn proc_lvar_auto(
             n_gex += *x;
         }
 
-        (format!("{}", n_gex), n, "cell-exact")
+        (format!("{n_gex}"), n, "cell-exact")
     } else if vname == "n_gex_cell" {
         let mut n = Vec::<String>::new();
         let mut n_gex = 0;
@@ -1456,7 +1456,7 @@ pub fn proc_lvar_auto(
             n_gex += *x;
         }
 
-        let _exact = format!("{}", n_gex);
+        let _exact = format!("{n_gex}");
         (String::new(), n, "cell-exact")
     } else if vname == "n_other" {
         let mut n = 0;
@@ -1473,7 +1473,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        (format!("{}", n), ns, "cell-exact")
+        (format!("{n}"), ns, "cell-exact")
     } else if vname == "n_other_cell" {
         let mut n = 0;
         let mut ns = Vec::<String>::new();
@@ -1489,7 +1489,7 @@ pub fn proc_lvar_auto(
             }
         }
 
-        let _exact = format!("{}", n);
+        let _exact = format!("{n}");
         (String::new(), ns, "cell-exact")
     } else if vname == "nbc" {
         let mut nbc = Vec::<String>::new();
@@ -1508,7 +1508,7 @@ pub fn proc_lvar_auto(
                     n += 3;
                 }
             }
-            nbc.push(format!("{:010}", n));
+            nbc.push(format!("{n:010}"));
         }
 
         (String::new(), nbc, "cell")
@@ -1539,7 +1539,7 @@ pub fn proc_lvar_auto(
         let near = if dist == 1_000_000 {
             String::new()
         } else {
-            format!("{}", dist)
+            format!("{dist}")
         };
 
         (near, Vec::new(), "exact")
@@ -1594,11 +1594,11 @@ pub fn proc_lvar_auto(
                     count = ctl.origin_info.secmem[li][&bc.clone()].0;
                     n += count;
                 }
-                y.push(format!("{}", count));
+                y.push(format!("{count}"));
             }
         }
 
-        (format!("{}", n), y, "cell-exact")
+        (format!("{n}"), y, "cell-exact")
     } else if vname == "sec_cell" {
         let mut n = 0;
         let mut y = Vec::<String>::new();
@@ -1611,11 +1611,11 @@ pub fn proc_lvar_auto(
                     count = ctl.origin_info.secmem[li][&bc.clone()].0;
                     n += count;
                 }
-                y.push(format!("{}", count));
+                y.push(format!("{count}"));
             }
         }
 
-        let _exact = format!("{}", n);
+        let _exact = format!("{n}");
         (String::new(), y, "cell-exact")
     } else if vname == "type" {
         let mut cell_types = Vec::<String>::new();
@@ -1642,8 +1642,8 @@ pub fn proc_lvar_auto(
         let (exact, cell, level) = val;
         if level == "cell" && !var.ends_with("_cell") {
             if verbose {
-                eprint!("lvar {} ==> {}; ", var, String::new());
-                eprintln!("i = {}, lvars.len() = {}", i, lvars.len());
+                eprint!("lvar {var} ==> {}; ", String::new());
+                eprintln!("i = {i}, lvars.len() = {}", lvars.len());
             }
             if i < lvars.len() {
                 row.push(String::new())
@@ -1657,8 +1657,8 @@ pub fn proc_lvar_auto(
             }
         } else if (!exact.is_empty() && !var.ends_with("_cell")) || cell.is_empty() {
             if verbose {
-                eprint!("lvar {} ==> {}; ", var, exact);
-                eprintln!("i = {}, lvars.len() = {}", i, lvars.len());
+                eprint!("lvar {var} ==> {exact}; ");
+                eprintln!("i = {i}, lvars.len() = {}", lvars.len());
             }
             if i < lvars.len() {
                 row.push(exact.clone())

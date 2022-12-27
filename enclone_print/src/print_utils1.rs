@@ -317,7 +317,7 @@ pub fn make_table(
     }
     print_tabular_vbox(&mut log, rows, 2, justify, ctl.debug_table_printing, false);
     if ctl.debug_table_printing {
-        println!("{}", log);
+        println!("{log}");
     }
     let mut cs = vec![Vec::<char>::new(); rows.len() + 2];
     let mut row = 0;
@@ -369,7 +369,7 @@ pub fn make_table(
         if c == '$' {
             if ctl.pretty {
                 if !ctl.nogray {
-                    write!(*logz, "[38;5;{}m[48;5;{}m ", TEXTCOLOR, BACKGROUND).unwrap();
+                    write!(*logz, "[38;5;{TEXTCOLOR}m[48;5;{BACKGROUND}m ").unwrap();
                     barcode = true;
                 } else {
                     logz.push(' ');
@@ -385,8 +385,8 @@ pub fn make_table(
         // In a barcode line, hop around │ symbols, which should not be colorized.
         } else if barcode && c == '│' && x[j + 1] != '\n' {
             // *logz += "[0m│";
-            write!(*logz, "[0m[48;5;{}m│", BACKGROUND).unwrap();
-            write!(*logz, "[38;5;{}m[48;5;{}m", TEXTCOLOR, BACKGROUND).unwrap();
+            write!(*logz, "[0m[48;5;{BACKGROUND}m│").unwrap();
+            write!(*logz, "[38;5;{TEXTCOLOR}m[48;5;{BACKGROUND}m").unwrap();
         } else if barcode && c == '│' && x[j + 1] == '\n' {
             *logz += "[0m│";
             // *logz += &format!("[0m[48;5;{}m│[0m", BACKGROUND);
@@ -426,7 +426,7 @@ pub fn make_table(
 
 pub fn print_digit(p: usize, i: usize, digits: usize, ds: &mut String) {
     if digits == 1 {
-        write!(*ds, "{}", p).unwrap();
+        write!(*ds, "{p}").unwrap();
     } else if digits == 2 {
         if i == 0 {
             if p >= 10 {
@@ -518,7 +518,7 @@ pub fn start_gen(
                 }
                 speak!(
                     u,
-                    &format!("{}_barcodes", d),
+                    &format!("{d}_barcodes"),
                     format!("{}", bc.iter().format(","))
                 );
             }
@@ -543,7 +543,7 @@ pub fn start_gen(
                     }
                     speak!(
                         u,
-                        &format!("{}_barcode", d),
+                        &format!("{d}_barcode"),
                         format!("{}", bc.iter().format(POUT_SEP))
                     );
                 }
@@ -862,7 +862,7 @@ pub fn get_gex_matrix_entry(
 ) -> f64 {
     let mut raw_count = 0 as f64;
     if gex_info.gex_matrices[li].initialized() {
-        raw_count = gex_info.gex_matrices[li].value(p as usize, fid) as f64;
+        raw_count = gex_info.gex_matrices[li].value(p, fid) as f64;
     } else {
         for (&da, &ia) in d_all[l].iter().zip(ind_all[l].iter()) {
             if ia == fid as u32 {

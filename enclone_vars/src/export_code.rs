@@ -115,7 +115,7 @@ fn parse_value_return_lines(code: &mut String, level: &str, exact: &mut String, 
         }
         let mut code2 = String::new();
         for &line in &lines[..lines.len() - sub] {
-            writeln!(code2, "{}", line).unwrap();
+            writeln!(code2, "{line}").unwrap();
         }
         *code = code2;
     }
@@ -137,7 +137,7 @@ fn run_rustfmt(f: &str) {
         .unwrap_or_else(|_| panic!("{}", "failed to execute rustfmt".to_string()));
     if new.status.code() != Some(0) {
         eprintln!("\nrustfmt failed\n");
-        eprintln!("You can observe the problem by typing rustfmt {}.\n", f);
+        eprintln!("You can observe the problem by typing rustfmt {f}.\n");
         std::process::exit(1);
     }
 }
@@ -152,9 +152,9 @@ fn run_rustfmt(f: &str) {
 
 fn quote_str_or_char(s: &str) -> String {
     if s.len() == 1 {
-        format!("'{}'", s)
+        format!("'{s}'")
     } else {
-        format!("\"{}\"", s)
+        format!("\"{s}\"")
     }
 }
 
@@ -314,8 +314,8 @@ fn emit_code_to_test_for_var<W: Write>(var: &str, f: &mut BufWriter<W>, class: &
             let low = var.after("{").before("..");
             let high = var.after("{").between("..", "}");
             let mut conditions = Vec::<String>::new();
-            conditions.push(format!(r###"vname.starts_with("{}")"###, begin));
-            conditions.push(format!(r###"vname.ends_with("{}")"###, stop));
+            conditions.push(format!(r###"vname.starts_with("{begin}")"###));
+            conditions.push(format!(r###"vname.ends_with("{stop}")"###));
             conditions.push(format!(
                 r###"vname.between2("{}", "{}").contains('{}')"###,
                 begin, stop, start,
@@ -369,7 +369,7 @@ fn emit_code_to_test_for_var<W: Write>(var: &str, f: &mut BufWriter<W>, class: &
         let low2 = var.rev_after("{").before("..");
         let high2 = var.rev_after("{").between("..", "}");
         let mut conditions = Vec::<String>::new();
-        conditions.push(format!(r###"vname.starts_with("{}")"###, begin));
+        conditions.push(format!(r###"vname.starts_with("{begin}")"###));
         conditions.push(format!(
             r###"vname.after("{}").contains({})"###,
             begin,
@@ -437,7 +437,7 @@ fn emit_code_to_test_for_var<W: Write>(var: &str, f: &mut BufWriter<W>, class: &
         let low3 = var.rev_after("{").before("..");
         let high3 = var.rev_after("{").between("..", "}");
         let mut conditions = Vec::<String>::new();
-        conditions.push(format!(r###"vname.starts_with("{}")"###, begin));
+        conditions.push(format!(r###"vname.starts_with("{begin}")"###));
         conditions.push(format!(
             r###"vname.after("{}").contains({})"###,
             begin,
@@ -678,8 +678,8 @@ pub fn export_code(level: usize) -> Vec<(String, String)> {
     let mut temp_out = "enclone_exec/testx/outputs/proc_cvar_auto.rs".to_string();
     let mut vars_loc = "enclone_vars/src/vars".to_string();
     if level == 1 {
-        temp_out = format!("../{}", temp_out);
-        vars_loc = format!("../{}", vars_loc);
+        temp_out = format!("../{temp_out}");
+        vars_loc = format!("../{vars_loc}");
     }
     {
         let mut f = open_for_write_new![&temp_out];
@@ -850,8 +850,8 @@ pub fn export_code(level: usize) -> Vec<(String, String)> {
     let mut temp_out = "enclone_exec/testx/outputs/proc_lvar_auto.rs".to_string();
     let mut vars_loc = "enclone_vars/src/vars".to_string();
     if level == 1 {
-        temp_out = format!("../{}", temp_out);
-        vars_loc = format!("../{}", vars_loc);
+        temp_out = format!("../{temp_out}");
+        vars_loc = format!("../{vars_loc}");
     }
     {
         let mut f = open_for_write_new![&temp_out];

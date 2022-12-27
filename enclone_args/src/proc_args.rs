@@ -243,7 +243,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
                     }
                     let (start, stop) = (start.force_usize(), stop.force_usize());
                     for j in start..=stop {
-                        y.push(format!("{}", j));
+                        y.push(format!("{j}"));
                     }
                 } else {
                     y.push(x[j].to_string());
@@ -279,7 +279,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
                 let mut found = false;
                 let mut bcr_seen = false;
                 for s in F.lines() {
-                    if s == format!("DONOR={}", n) {
+                    if s == format!("DONOR={n}") {
                         found = true;
                     } else if found && s.starts_with("DONOR=") {
                         break;
@@ -704,7 +704,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
     'args_loop: for i in 1..args.len() {
         let mut arg = args[i].to_string();
         if evil_eye {
-            println!("processing arg = {}", arg);
+            println!("processing arg = {arg}");
         }
 
         // Replace deprecated option.
@@ -798,11 +798,11 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
         for j in 0..set_string_writeable.len() {
             let var = &set_string_writeable[j].0;
             if is_string_arg(&arg, var)? {
-                *(set_string_writeable[j].1) = arg.after(&format!("{}=", var)).to_string();
+                *(set_string_writeable[j].1) = arg.after(&format!("{var}=")).to_string();
                 tilde_expand_me(&mut *set_string_writeable[j].1);
                 let val = &(set_string_writeable[j].1);
                 if evil_eye {
-                    println!("creating file {} to test writability", val);
+                    println!("creating file {val} to test writability");
                 }
                 test_writeable(val, evil_eye)?;
                 continue 'args_loop;
@@ -814,8 +814,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
         for j in 0..set_string_writeable_or_stdout.len() {
             let var = &set_string_writeable_or_stdout[j].0;
             if is_string_arg(&arg, var)? {
-                *(set_string_writeable_or_stdout[j].1) =
-                    arg.after(&format!("{}=", var)).to_string();
+                *(set_string_writeable_or_stdout[j].1) = arg.after(&format!("{var}=")).to_string();
                 tilde_expand_me(&mut *set_string_writeable_or_stdout[j].1);
                 let val = &(set_string_writeable_or_stdout[j].1);
                 if *val != "stdout" {
@@ -830,14 +829,14 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
         for j in 0..set_string_readable.len() {
             let var = &set_string_readable[j].0;
             if is_string_arg(&arg, var)? {
-                let mut val = arg.after(&format!("{}=", var)).to_string();
+                let mut val = arg.after(&format!("{var}=")).to_string();
                 if val.is_empty() {
-                    return Err(format!("\nFilename input in {} cannot be empty.\n", val));
+                    return Err(format!("\nFilename input in {val} cannot be empty.\n"));
                 }
                 tilde_expand_me(&mut val);
                 *(set_string_readable[j].1) = Some(val.clone());
                 if evil_eye {
-                    println!("testing ability to open file {}", val);
+                    println!("testing ability to open file {val}");
                 }
                 require_readable_file(&val, &arg)?;
                 if evil_eye {
@@ -852,14 +851,14 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
         for j in 0..set_string_readable_plain.len() {
             let var = &set_string_readable_plain[j].0;
             if is_string_arg(&arg, var)? {
-                let mut val = arg.after(&format!("{}=", var)).to_string();
+                let mut val = arg.after(&format!("{var}=")).to_string();
                 if val.is_empty() {
-                    return Err(format!("\nFilename input in {} cannot be empty.\n", val));
+                    return Err(format!("\nFilename input in {val} cannot be empty.\n"));
                 }
                 tilde_expand_me(&mut val);
                 *(set_string_readable_plain[j].1) = val.clone();
                 if evil_eye {
-                    println!("testing ability to open file {}", val);
+                    println!("testing ability to open file {val}");
                 }
                 require_readable_file(&val, &arg)?;
                 if evil_eye {
@@ -874,9 +873,9 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
         for j in 0..set_string_readable_csv.len() {
             let var = &set_string_readable_csv[j].0;
             if is_string_arg(&arg, var)? {
-                let mut val = arg.after(&format!("{}=", var)).to_string();
+                let mut val = arg.after(&format!("{var}=")).to_string();
                 if val.is_empty() {
-                    return Err(format!("\nFilename input in {} cannot be empty.\n", val));
+                    return Err(format!("\nFilename input in {val} cannot be empty.\n"));
                 }
                 tilde_expand_me(&mut val);
                 if !val.ends_with(".csv") {

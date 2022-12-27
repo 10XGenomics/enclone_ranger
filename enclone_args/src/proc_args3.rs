@@ -42,7 +42,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
     for token in tokens {
         if let Some(setid) = token.strip_prefix('S') {
             if ctl.gen_opt.internal_run {
-                let url = format!("{}/{}", ctl.gen_opt.config["sets"], setid);
+                let url = format!("{}/{setid}", ctl.gen_opt.config["sets"]);
                 let m = fetch_url(&url)?;
                 if m.contains("\"analysis_ids\":[") {
                     let ids = m.between("\"analysis_ids\":[", "]");
@@ -54,7 +54,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                     // Remove wiped analysis IDs.
 
                     for id in ids {
-                        let url = format!("{}/{}", ctl.gen_opt.config["ones"], id);
+                        let url = format!("{}/{id}", ctl.gen_opt.config["ones"]);
                         let m = fetch_url(&url)?;
                         if m.contains("502 Bad Gateway") {
                             return Err(format!(
@@ -75,7 +75,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                         tilde_expand_me(&mut sets);
                         if !path_exists(&sets) {
                             std::fs::create_dir(&sets).unwrap();
-                            let mut setid = format!("~/enclone/sets/{}", setid);
+                            let mut setid = format!("~/enclone/sets/{setid}");
                             tilde_expand_me(&mut setid);
                             if !path_exists(&setid) {
                                 let mut f = open_for_write_new![&setid];
@@ -101,7 +101,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                     ));
                 }
             } else if setid.parse::<usize>().is_ok() {
-                let mut set_file = format!("~/enclone/sets/{}", setid);
+                let mut set_file = format!("~/enclone/sets/{setid}");
                 tilde_expand_me(&mut set_file);
                 if path_exists(&set_file) {
                     let mut f = open_for_read![&set_file];
@@ -132,7 +132,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
 
 pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<String, String> {
     for x in ctl.gen_opt.pre.iter() {
-        let pp = format!("{}/{}", x, p);
+        let pp = format!("{x}/{p}");
         if path_exists(&pp) {
             return Ok(pp);
         }
@@ -155,7 +155,7 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
                 if path_exists(x) {
                     count = dir_list(x).len().to_string();
                 }
-                writeln!(pre_msg, "{}: {}", x, count).unwrap();
+                writeln!(pre_msg, "{x}: {count}").unwrap();
             }
             return Err(format!(
                 "\nIn directory {}, unable to find the\npath {},\n\
@@ -175,7 +175,7 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
 fn get_path(p: &str, ctl: &EncloneControl, ok: &mut bool) -> String {
     *ok = false;
     for x in ctl.gen_opt.pre.iter() {
-        let mut pp = format!("{}/{}", x, p);
+        let mut pp = format!("{x}/{p}");
         if pp.starts_with('~') {
             tilde_expand_me(&mut pp);
         }
@@ -199,7 +199,7 @@ fn get_path_or_internal_id(
     spinlock: &Arc<AtomicUsize>,
 ) -> Result<String, String> {
     if ctl.gen_opt.evil_eye {
-        println!("getting path for {}", p);
+        println!("getting path for {p}");
     }
     let mut ok = false;
     let mut pp = get_path(p, ctl, &mut ok);
@@ -225,13 +225,13 @@ fn get_path_or_internal_id(
                     } else {
                         msg += "Here are the configuration variables that are defined:\n\n";
                         for (key, value) in ctl.gen_opt.config.iter() {
-                            write!(msg, "{} = {}", key, value).unwrap();
+                            write!(msg, "{key} = {value}").unwrap();
                         }
                         msg += "\n";
                     }
                     return Err(msg);
                 }
-                let url = format!("{}/{}", ctl.gen_opt.config["ones"], q);
+                let url = format!("{}/{q}", ctl.gen_opt.config["ones"]);
                 // We force single threading around the https access because we observed
                 // intermittently very slow access without it.
                 while spinlock.load(Ordering::SeqCst) != 0 {}
@@ -249,9 +249,9 @@ fn get_path_or_internal_id(
                 if m.contains("\"path\":\"") {
                     let path = m.between("\"path\":\"", "\"");
                     if !p.contains('/') {
-                        pp = format!("{}/outs", path);
+                        pp = format!("{path}/outs");
                     } else {
-                        pp = format!("{}/{}", path, p.after("/"));
+                        pp = format!("{path}/{}", p.after("/"));
                     }
                     if !path_exists(&pp) {
                         thread::sleep(time::Duration::from_millis(100));
@@ -297,8 +297,8 @@ fn get_path_or_internal_id(
             }
         }
     }
-    if !pp.ends_with("/outs") && path_exists(&format!("{}/outs", pp)) {
-        pp = format!("{}/outs", pp);
+    if !pp.ends_with("/outs") && path_exists(format!("{pp}/outs")) {
+        pp = format!("{pp}/outs");
     }
     if ctl.gen_opt.evil_eye {
         println!("path found");
@@ -403,10 +403,10 @@ fn parse_bc(mut bc: String, ctl: &mut EncloneControl, call_type: &str) -> Result
                         origin = "BC";
                     }
                     return Err(format!(
-                        "\nThe barcode \"{}\" appears in the file\n{}\ndefined \
-                         by {}.  That doesn't make sense because a barcode\n\
+                        "\nThe barcode \"{}\" appears in the file\n{bc}\ndefined \
+                         by {origin}.  That doesn't make sense because a barcode\n\
                          should include a hyphen.\n",
-                        fields[barcode_pos], bc, origin
+                        fields[barcode_pos]
                     ));
                 }
                 if let Some(origin_pos) = origin_pos {
@@ -663,17 +663,17 @@ pub fn proc_xcr(
             Err(resx) => res.3 = resx,
             Ok(resx) => {
                 *p = resx;
-                if ctl.gen_opt.bcr && path_exists(&format!("{}/vdj_b", p)) {
-                    *p = format!("{}/vdj_b", p);
+                if ctl.gen_opt.bcr && path_exists(format!("{p}/vdj_b")) {
+                    *p = format!("{p}/vdj_b");
                 }
-                if ctl.gen_opt.bcr && path_exists(&format!("{}/multi/vdj_b", p)) {
-                    *p = format!("{}/multi/vdj_b", p);
+                if ctl.gen_opt.bcr && path_exists(format!("{p}/multi/vdj_b")) {
+                    *p = format!("{p}/multi/vdj_b");
                 }
-                if ctl.gen_opt.tcr && path_exists(&format!("{}/vdj_t", p)) {
-                    *p = format!("{}/vdj_t", p);
+                if ctl.gen_opt.tcr && path_exists(format!("{p}/vdj_t")) {
+                    *p = format!("{p}/vdj_t");
                 }
-                if ctl.gen_opt.tcr && path_exists(&format!("{}/multi/vdj_t", p)) {
-                    *p = format!("{}/multi/vdj_t", p);
+                if ctl.gen_opt.tcr && path_exists(format!("{p}/multi/vdj_t")) {
+                    *p = format!("{p}/multi/vdj_t");
                 }
                 if have_gex {
                     let resx = get_path_or_internal_id(pg, ctl, "GEX", &spinlock);
@@ -681,11 +681,11 @@ pub fn proc_xcr(
                         Err(resx) => res.3 = resx,
                         Ok(resx) => {
                             *pg = resx;
-                            if path_exists(&format!("{}/count", pg)) {
-                                *pg = format!("{}/count", pg);
+                            if path_exists(format!("{pg}/count")) {
+                                *pg = format!("{pg}/count");
                             }
-                            if path_exists(&format!("{}/count_pd", pg)) {
-                                *pg = format!("{}/count_pd", pg);
+                            if path_exists(format!("{pg}/count_pd")) {
+                                *pg = format!("{pg}/count_pd");
                             }
                         }
                     }
@@ -824,31 +824,31 @@ pub fn proc_meta_core(lines: &[String], mut ctl: &mut EncloneControl) -> Result<
             let current_ref = false;
             let spinlock: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
             path = get_path_or_internal_id(&path, ctl, "META", &spinlock)?;
-            if ctl.gen_opt.bcr && path_exists(&format!("{}/vdj_b", path)) {
-                path = format!("{}/vdj_b", path);
+            if ctl.gen_opt.bcr && path_exists(format!("{path}/vdj_b")) {
+                path = format!("{path}/vdj_b");
             }
-            if ctl.gen_opt.bcr && path_exists(&format!("{}/multi/vdj_b", path)) {
-                path = format!("{}/multi/vdj_b", path);
+            if ctl.gen_opt.bcr && path_exists(format!("{path}/multi/vdj_b")) {
+                path = format!("{path}/multi/vdj_b");
             }
-            if ctl.gen_opt.tcr && path_exists(&format!("{}/vdj_t", path)) {
-                path = format!("{}/vdj_t", path);
+            if ctl.gen_opt.tcr && path_exists(format!("{path}/vdj_t")) {
+                path = format!("{path}/vdj_t");
             }
-            if ctl.gen_opt.tcr && path_exists(&format!("{}/multi/vdj_t", path)) {
-                path = format!("{}/multi/vdj_t", path);
+            if ctl.gen_opt.tcr && path_exists(format!("{path}/multi/vdj_t")) {
+                path = format!("{path}/multi/vdj_t");
             }
-            if ctl.gen_opt.tcrgd && path_exists(&format!("{}/vdj_t_gd", path)) {
-                path = format!("{}/vdj_t_gd", path);
+            if ctl.gen_opt.tcrgd && path_exists(format!("{path}/vdj_t_gd")) {
+                path = format!("{path}/vdj_t_gd");
             }
-            if ctl.gen_opt.tcrgd && path_exists(&format!("{}/multi/vdj_t_gd", path)) {
-                path = format!("{}/multi/vdj_t_gd", path);
+            if ctl.gen_opt.tcrgd && path_exists(format!("{path}/multi/vdj_t_gd")) {
+                path = format!("{path}/multi/vdj_t_gd");
             }
             if !gpath.is_empty() {
                 gpath = get_path_or_internal_id(&gpath, ctl, "META", &spinlock)?;
-                if path_exists(&format!("{}/count", gpath)) {
-                    gpath = format!("{}/count", gpath);
+                if path_exists(format!("{gpath}/count")) {
+                    gpath = format!("{gpath}/count");
                 }
-                if path_exists(&format!("{}/count_pd", gpath)) {
-                    gpath = format!("{}/count_pd", gpath);
+                if path_exists(format!("{gpath}/count_pd")) {
+                    gpath = format!("{gpath}/count_pd");
                 }
             }
             if current_ref {
