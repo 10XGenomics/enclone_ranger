@@ -26,7 +26,7 @@ thiserror = "1"
 vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 
 [build-dependencies]
-prost-build = ">=0.9,<0.12"
+prost-build = ">=0.9, <0.12"
 
 [package.metadata.cargo-machete]
 # Required for derive macro.
