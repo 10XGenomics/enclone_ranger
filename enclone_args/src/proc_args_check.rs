@@ -138,9 +138,9 @@ pub fn is_pattern(x: &str, parseable: bool) -> bool {
                 let mut special = false;
                 let p = p.as_bytes();
                 for &pi in p {
-                    if !((b'A'..=b'Z').contains(&pi)
-                        || (b'a'..=b'z').contains(&pi)
-                        || (b'0'..=b'9').contains(&pi)
+                    if !(pi.is_ascii_uppercase()
+                        || pi.is_ascii_lowercase()
+                        || pi.is_ascii_digit()
                         || b".-_[]()|*".contains(&pi))
                     {
                         ok = false;
