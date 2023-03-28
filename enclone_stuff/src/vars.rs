@@ -54,9 +54,9 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
                     let mut ok = true;
                     let mut px = false;
                     for &b in p.as_bytes() {
-                        if !((b'A'..=b'Z').contains(&b)
-                            || (b'a'..=b'z').contains(&b)
-                            || (b'0'..=b'9').contains(&b)
+                        if !(b.is_ascii_uppercase()
+                            || b.is_ascii_lowercase()
+                            || b.is_ascii_digit()
                             || b".-_[]()|*".contains(&b))
                         {
                             ok = false;
@@ -112,9 +112,8 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
                         }
                         if !matches {
                             return Err(format!(
-                                "\nLead variable {} contains a pattern that matches \
-                                no features.\n",
-                                x
+                                "\nLead variable {x} contains a pattern that matches \
+                                no features.\n"
                             ));
                         }
                         break;

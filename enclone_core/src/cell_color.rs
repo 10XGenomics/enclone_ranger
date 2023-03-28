@@ -61,8 +61,9 @@ pub struct ColorBySample {
 #[derive(Clone)]
 pub struct ColorByBarcodeSpecification {}
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub enum CellColor {
+    #[default]
     Unspecified,
     ByIsotype(ColorByIsotype),
     ByVariableValue(ColorByVariableValue),
@@ -70,10 +71,4 @@ pub enum CellColor {
     BySample(ColorBySample),
     ByBarcodeSpecification(ColorByBarcodeSpecification),
     ByDataset(ColorByDataset),
-}
-
-impl Default for CellColor {
-    fn default() -> Self {
-        CellColor::Unspecified
-    }
 }

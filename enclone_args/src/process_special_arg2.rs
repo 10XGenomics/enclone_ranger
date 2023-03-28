@@ -239,10 +239,7 @@ pub fn process_special_arg2(
                 }
                 ctl.clono_group_opt.cdr3_aa_heavy_pc = Some(val.force_f64());
             } else {
-                return Err(format!(
-                    "\nUnrecognized condition {} in GROUP argument.\n",
-                    x
-                ));
+                return Err(format!("\nUnrecognized condition {x} in GROUP argument.\n"));
             }
         }
     } else if arg.starts_with("DIFF_STYLE=") {
@@ -506,9 +503,8 @@ pub fn process_special_arg2(
             }
             if !ok {
                 return Err(format!(
-                    "\nUnrecognized variable {} for AMINO.  Please type \
-                     \"enclone help amino\".\n",
-                    x
+                    "\nUnrecognized variable {x} for AMINO.  Please type \
+                     \"enclone help amino\".\n"
                 ));
             }
         }

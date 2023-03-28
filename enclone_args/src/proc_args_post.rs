@@ -45,16 +45,10 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
             let fields = s.split(delimiter).collect::<Vec<&str>>();
             to_alt = vec![-1_isize; fields.len()];
             if !fields.contains(&"dataset") {
-                return Err(format!(
-                    "\nThe file\n{}\nis missing the dataset field.\n",
-                    bc,
-                ));
+                return Err(format!("\nThe file\n{bc}\nis missing the dataset field.\n",));
             }
             if !fields.contains(&"barcode") {
-                return Err(format!(
-                    "\nThe file\n{}\nis missing the barcode field.\n",
-                    bc,
-                ));
+                return Err(format!("\nThe file\n{bc}\nis missing the barcode field.\n",));
             }
             for x in fields.iter() {
                 fieldnames.push(x.to_string());
@@ -97,9 +91,8 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
             let dataset = fields[dataset_pos].to_string();
             if !to_origin_pos.contains_key(&dataset) {
                 return Err(format!(
-                    "\nIn the file\n{},\nthe value\n{}\nis found for dataset, however that is \
+                    "\nIn the file\n{bc},\nthe value\n{dataset}\nis found for dataset, however that is \
                      not an abbreviated dataset name.\n",
-                    bc, dataset,
                 ));
             }
             let li = to_origin_pos[&dataset];
