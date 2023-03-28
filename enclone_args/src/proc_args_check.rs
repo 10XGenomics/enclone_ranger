@@ -33,9 +33,8 @@ pub fn get_known_features(gex_info: &GexInfo) -> Result<Vec<String>, String> {
             let ff = f.split('\t').collect::<Vec<&str>>();
             if ff.len() != 3 {
                 res.2 = format!(
-                    "\nUnexpected structure of features file, at this line\n{}\n\
-                    Giving up.\n",
-                    f
+                    "\nUnexpected structure of features file, at this line\n{f}\n\
+                    Giving up.\n"
                 );
                 return;
             }
@@ -138,9 +137,9 @@ pub fn is_pattern(x: &str, parseable: bool) -> bool {
                 let mut special = false;
                 let p = p.as_bytes();
                 for &pi in p {
-                    if !((b'A'..=b'Z').contains(&pi)
-                        || (b'a'..=b'z').contains(&pi)
-                        || (b'0'..=b'9').contains(&pi)
+                    if !(pi.is_ascii_uppercase()
+                        || pi.is_ascii_lowercase()
+                        || pi.is_ascii_digit()
                         || b".-_[]()|*".contains(&pi))
                     {
                         ok = false;
@@ -185,15 +184,13 @@ fn check_gene_fb(
         if !gex_info.have_gex && !gex_info.have_fb && (x == "n_gex" || x == "n_gex_cell") {
             if category == "parseable" {
                 return Err(format!(
-                    "\nParseable field {} does not make sense because neither gene expression \
-                     nor feature barcode data\nwere provided as input.\n",
-                    x
+                    "\nParseable field {x} does not make sense because neither gene expression \
+                     nor feature barcode data\nwere provided as input.\n"
                 ));
             } else {
                 return Err(format!(
-                    "\nLead variable {} does not make sense because neither gene expression \
-                     not feature barcode data\nwere provided as input.\n",
-                    x
+                    "\nLead variable {x} does not make sense because neither gene expression \
+                     not feature barcode data\nwere provided as input.\n"
                 ));
             }
         }
@@ -215,15 +212,13 @@ fn check_gene_fb(
             {
                 if category == "parseable" {
                     return Err(format!(
-                        "\nParseable field {} does not make sense because gene expression \
-                         data\nwere not provided as input.\n",
-                        x
+                        "\nParseable field {x} does not make sense because gene expression \
+                         data\nwere not provided as input.\n"
                     ));
                 } else {
                     return Err(format!(
-                        "\nLead variable {} does not make sense because gene expression \
-                         data\nwere not provided as input.\n",
-                        x
+                        "\nLead variable {x} does not make sense because gene expression \
+                         data\nwere not provided as input.\n"
                     ));
                 }
             }
@@ -236,15 +231,13 @@ fn check_gene_fb(
                 if x.ends_with(&y) {
                     if category == "parseable" {
                         return Err(format!(
-                            "\nParseable field {} does not make sense because feature \
-                             barcode data\nwere not provided as input.\n",
-                            x
+                            "\nParseable field {x} does not make sense because feature \
+                             barcode data\nwere not provided as input.\n"
                         ));
                     } else {
                         return Err(format!(
-                            "\nLead variable {} does not make sense because feature barcode \
-                             data\nwere not provided as input.\n",
-                            x
+                            "\nLead variable {x} does not make sense because feature barcode \
+                             data\nwere not provided as input.\n"
                         ));
                     }
                 }
@@ -301,9 +294,8 @@ fn check_gene_fb(
                            \"enclone help glossary\".\n";
                 if !is_dataset_name && !is_origin_name && !is_donor_name && !is_tag_name {
                     return Err(format!(
-                        "\nYou've used the {} variable {}, and yet {} \
-                         does not name a dataset, nor an origin,\nnor a donor, nor a tag.\n{}",
-                        category, x, name, msg
+                        "\nYou've used the {category} variable {x}, and yet {name} \
+                         does not name a dataset, nor an origin,\nnor a donor, nor a tag.\n{msg}"
                     ));
                 }
                 let mut types = 0;
@@ -321,38 +313,33 @@ fn check_gene_fb(
                 }
                 if is_dataset_name && is_origin_name && is_donor_name {
                     return Err(format!(
-                        "\nYou've used the {} variable {}, and yet {} \
-                         names a dataset, an origin, and a donor.  That's ambiguous.\n{}",
-                        category, x, name, msg
+                        "\nYou've used the {category} variable {x}, and yet {name} \
+                         names a dataset, an origin, and a donor.  That's ambiguous.\n{msg}"
                     ));
                 }
                 if is_dataset_name && is_origin_name {
                     return Err(format!(
-                        "\nYou've used the {} variable {}, and yet {} \
-                         names a dataset and an origin.  That's ambiguous.\n{}",
-                        category, x, name, msg
+                        "\nYou've used the {category} variable {x}, and yet {name} \
+                         names a dataset and an origin.  That's ambiguous.\n{msg}"
                     ));
                 }
                 if is_dataset_name && is_donor_name {
                     return Err(format!(
-                        "\nYou've used the {} variable {}, and yet {} \
-                         names a dataset and a donor.  That's ambiguous.\n{}",
-                        category, x, name, msg
+                        "\nYou've used the {category} variable {x}, and yet {name} \
+                         names a dataset and a donor.  That's ambiguous.\n{msg}"
                     ));
                 }
                 if is_origin_name && is_donor_name {
                     return Err(format!(
-                        "\nYou've used the {} variable {}, and yet {} \
-                         names an origin and a donor.  That's ambiguous.\n{}",
-                        category, x, name, msg
+                        "\nYou've used the {category} variable {x}, and yet {name} \
+                         names an origin and a donor.  That's ambiguous.\n{msg}"
                     ));
                 }
                 if types != 1 {
                     return Err(format!(
-                        "\nYou've used the {} variable {}, and yet {} \
+                        "\nYou've used the {category} variable {x}, and yet {name} \
                          names a tag and also a dataset, origin or donor.\n\
-                         That's ambiguous.\n{}",
-                        category, x, name, msg
+                         That's ambiguous.\n{msg}"
                     ));
                 }
             }
@@ -376,9 +363,8 @@ fn check_gene_fb(
                         ));
                     }
                     return Err(format!(
-                        "\nThe variable {} for LVARS is unrecognized.  Please type \
-                         \"enclone help lvars\".\n",
-                        x
+                        "\nThe variable {x} for LVARS is unrecognized.  Please type \
+                         \"enclone help lvars\".\n"
                     ));
                 } else {
                     if !alts.is_empty() {
@@ -392,10 +378,9 @@ fn check_gene_fb(
                         ));
                     }
                     return Err(format!(
-                        "\nUnrecognized parseable variable {}.  Please type \
+                        "\nUnrecognized parseable variable {x}.  Please type \
                          \"enclone help parseable\".\nIf the variable is a chain variable (cvar), \
-                        please make sure it is suffixed with the chain index.\n",
-                        x
+                        please make sure it is suffixed with the chain index.\n"
                     ));
                 }
             }
@@ -475,16 +460,14 @@ pub fn check_pcols(
 
         if !gex_info.have_gex && !gex_info.have_fb && x.starts_with("n_gex") {
             return Err(format!(
-                "\nCan't use parseable variable {} without having gene \
-                 expression or feature barcode data.\n",
-                x
+                "\nCan't use parseable variable {x} without having gene \
+                 expression or feature barcode data.\n"
             ));
         }
         if !gex_info.have_gex && (x.starts_with("gex") || x == "clust") || x == "type" {
             return Err(format!(
-                "\nCan't use parseable variable {} without having gene \
-                 expression data.\n",
-                x
+                "\nCan't use parseable variable {x} without having gene \
+                 expression data.\n"
             ));
         }
         if LVARS_ALLOWED.contains(&x.as_str()) || gpvar || is_pattern(&x, true) {
@@ -561,9 +544,8 @@ pub fn check_cvars(ctl: &EncloneControl) -> Result<(), String> {
                 && x.after("q").rev_before("_").parse::<usize>().is_ok();
         if !ok {
             return Err(format!(
-                "\nUnrecognized variable {} for CVARS or CVARSP.  \
-                 Please type \"enclone help cvars\".\n",
-                x
+                "\nUnrecognized variable {x} for CVARS or CVARSP.  \
+                 Please type \"enclone help cvars\".\n"
             ));
         }
     }
@@ -601,9 +583,8 @@ pub fn check_one_lvar(
         }
         if !ctl.gen_opt.internal_run && !x.is_empty() {
             return Err(format!(
-                "\nUnrecognized variable {} for LVARS or PCOLS.  Please type \
-                 \"enclone help lvars\".\n",
-                x
+                "\nUnrecognized variable {x} for LVARS or PCOLS.  Please type \
+                 \"enclone help lvars\".\n"
             ));
         }
         if !specified {
@@ -704,9 +685,8 @@ pub fn check_one_lvar(
         let reg = Regex::new(y);
         if reg.is_err() || y.contains('_') {
             return Err(format!(
-                "\nThe string after {} in your lead or parseable variable {} is not a valid \
-                regular expression for amino acids.\n",
-                class, x
+                "\nThe string after {class} in your lead or parseable variable {x} is not a valid \
+                regular expression for amino acids.\n"
             ));
         }
         return Ok(true);
@@ -734,16 +714,14 @@ pub fn check_one_lvar(
 
     if !gex_info.have_gex && !gex_info.have_fb && x.starts_with("n_gex") {
         return Err(format!(
-            "\nCan't use LVARS or LVARSP or PCOLS variable {} without having gene \
-             expression or feature barcode data.\n",
-            x
+            "\nCan't use LVARS or LVARSP or PCOLS variable {x} without having gene \
+             expression or feature barcode data.\n"
         ));
     }
     if !gex_info.have_gex && (x.starts_with("gex") || x == "clust" || x == "type") {
         return Err(format!(
-            "\nCan't use LVARS or LVARSP or PCOLS variable {} without having gene \
-             expression data.\n",
-            x
+            "\nCan't use LVARS or LVARSP or PCOLS variable {x} without having gene \
+             expression data.\n"
         ));
     }
     let gpvar = x.starts_with('g') && x.after("g").parse::<usize>().is_ok();
@@ -762,9 +740,8 @@ pub fn check_one_lvar(
         }
         if is_lvar && !x.starts_with("n_") && !x.is_empty() {
             return Err(format!(
-                "\nUnrecognized variable {} for LVARS.  Please type \
-                 \"enclone help lvars\".\n",
-                x
+                "\nUnrecognized variable {x} for LVARS.  Please type \
+                 \"enclone help lvars\".\n"
             ));
         } else {
             return Ok(false);

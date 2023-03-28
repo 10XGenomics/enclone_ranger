@@ -37,10 +37,7 @@ fn get_uppers(var: &str) -> Vec<(String, usize)> {
         uppers
     };
     if uppers.len() > 1 {
-        eprintln!(
-            "\nIllegal variable {}, has more than one uppercase string in it.\n",
-            var
-        );
+        eprintln!("\nIllegal variable {var}, has more than one uppercase string in it.\n");
         std::process::exit(1);
     }
     uppers
@@ -284,19 +281,16 @@ fn emit_code_to_test_for_var<W: Write>(var: &str, f: &mut BufWriter<W>, class: &
                 quote_str_or_char(end)
             ));
             conditions.push(format!(
-                r###"vname.between2("{}", "{}").parse::<i64>().is_ok()"###,
-                begin, end,
+                r###"vname.between2("{begin}", "{end}").parse::<i64>().is_ok()"###,
             ));
             if !low.is_empty() {
                 conditions.push(format!(
-                    r###"vname.between2("{}", "{}").force_i64() >= {}"###,
-                    begin, end, low,
+                    r###"vname.between2("{begin}", "{end}").force_i64() >= {low}"###,
                 ));
             }
             if !high.is_empty() {
                 conditions.push(format!(
-                    r###"vname.between2("{}", "{}").force_i64() <= {}"###,
-                    begin, end, high,
+                    r###"vname.between2("{begin}", "{end}").force_i64() <= {high}"###,
                 ));
             }
             fwriteln!(f, "}} else if {} {{ ", conditions.iter().format(" && "));
@@ -317,32 +311,26 @@ fn emit_code_to_test_for_var<W: Write>(var: &str, f: &mut BufWriter<W>, class: &
             conditions.push(format!(r###"vname.starts_with("{begin}")"###));
             conditions.push(format!(r###"vname.ends_with("{stop}")"###));
             conditions.push(format!(
-                r###"vname.between2("{}", "{}").contains('{}')"###,
-                begin, stop, start,
+                r###"vname.between2("{begin}", "{stop}").contains('{start}')"###,
             ));
             conditions.push(format!(
-                r###"vname.between("{}", "{}").parse::<i64>().is_ok()"###,
-                begin, start,
+                r###"vname.between("{begin}", "{start}").parse::<i64>().is_ok()"###,
             ));
             if !low.is_empty() {
                 conditions.push(format!(
-                    r###"vname.between("{}", "{}").force_i64() >= {}"###,
-                    begin, start, low,
+                    r###"vname.between("{begin}", "{start}").force_i64() >= {low}"###,
                 ));
             }
             if !high.is_empty() {
                 conditions.push(format!(
-                    r###"vname.between("{}", "{}").force_i64() <= {}"###,
-                    begin, start, high,
+                    r###"vname.between("{begin}", "{start}").force_i64() <= {high}"###,
                 ));
             }
             conditions.push(format!(
-                r###"!vname.after("{}").between2("{}", "{}").contains('_')"###,
-                begin, start, stop,
+                r###"!vname.after("{begin}").between2("{start}", "{stop}").contains('_')"###,
             ));
             conditions.push(format!(
-                r###"Regex::new(vname.between2("{}", "{}")).is_ok()"###,
-                start, stop,
+                r###"Regex::new(vname.between2("{start}", "{stop}")).is_ok()"###,
             ));
             fwriteln!(f, "}} else if {} {{ ", conditions.iter().format(" && "));
             fwriteln!(
@@ -376,39 +364,32 @@ fn emit_code_to_test_for_var<W: Write>(var: &str, f: &mut BufWriter<W>, class: &
             quote_str_or_char(middle),
         ));
         conditions.push(format!(
-            r###"vname.after("{}").after("{}").ends_with("{}")"###,
-            begin, middle, end,
+            r###"vname.after("{begin}").after("{middle}").ends_with("{end}")"###,
         ));
         conditions.push(format!(
-            r###"vname.between2("{}", "{}").parse::<i64>().is_ok()"###,
-            begin, middle,
+            r###"vname.between2("{begin}", "{middle}").parse::<i64>().is_ok()"###,
         ));
         if !low1.is_empty() {
             conditions.push(format!(
-                r###"vname.between2("{}", "{}").force_i64() >= {}"###,
-                begin, middle, low1,
+                r###"vname.between2("{begin}", "{middle}").force_i64() >= {low1}"###,
             ));
         }
         if !high1.is_empty() {
             conditions.push(format!(
-                r###"vname.between2("{}", "{}").force_i64() <= {}"###,
-                begin, middle, high1,
+                r###"vname.between2("{begin}", "{middle}").force_i64() <= {high1}"###,
             ));
         }
         conditions.push(format!(
-            r###"vname.after("{}").between2("{}", "{}").parse::<i64>().is_ok()"###,
-            begin, middle, end,
+            r###"vname.after("{begin}").between2("{middle}", "{end}").parse::<i64>().is_ok()"###,
         ));
         if !low2.is_empty() {
             conditions.push(format!(
-                r###"vname.after("{}").between2("{}", "{}").force_i64() >= {}"###,
-                begin, middle, end, low2,
+                r###"vname.after("{begin}").between2("{middle}", "{end}").force_i64() >= {low2}"###,
             ));
         }
         if !high2.is_empty() {
             conditions.push(format!(
-                r###"vname.after("{}").between2("{}", "{}").force_i64() <= {}"###,
-                begin, middle, end, high2,
+                r###"vname.after("{begin}").between2("{middle}", "{end}").force_i64() <= {high2}"###,
             ));
         }
         fwriteln!(f, "}} else if {} {{ ", conditions.iter().format(" && "));
@@ -457,47 +438,39 @@ fn emit_code_to_test_for_var<W: Write>(var: &str, f: &mut BufWriter<W>, class: &
             quote_str_or_char(end),
         ));
         conditions.push(format!(
-            r###"vname.between("{}", "{}").parse::<i64>().is_ok()"###,
-            begin, mid1,
+            r###"vname.between("{begin}", "{mid1}").parse::<i64>().is_ok()"###,
         ));
         if !low1.is_empty() {
             conditions.push(format!(
-                r###"vname.between("{}", "{}").force_i64() >= {}"###,
-                begin, mid1, low1,
+                r###"vname.between("{begin}", "{mid1}").force_i64() >= {low1}"###,
             ));
         }
         if !high1.is_empty() {
             conditions.push(format!(
-                r###"vname.between("{}", "{}").force_i64() <= {}"###,
-                begin, mid1, high1,
+                r###"vname.between("{begin}", "{mid1}").force_i64() <= {high1}"###,
             ));
         }
         if !low2.is_empty() {
             conditions.push(format!(
-                r###"vname.after("{}").between("{}", "{}").force_i64() >= {}"###,
-                begin, mid1, mid2, low2,
+                r###"vname.after("{begin}").between("{mid1}", "{mid2}").force_i64() >= {low2}"###,
             ));
         }
         if !high2.is_empty() {
             conditions.push(format!(
-                r###"vname.after("{}").between("{}", "{}").force_i64() <= {}"###,
-                begin, mid1, mid2, high2,
+                r###"vname.after("{begin}").between("{mid1}", "{mid2}").force_i64() <= {high2}"###,
             ));
         }
         conditions.push(format!(
-            r###"vname.after("{}").after("{}").between("{}", "{}").parse::<i64>().is_ok()"###,
-            begin, mid1, mid2, end,
+            r###"vname.after("{begin}").after("{mid1}").between("{mid2}", "{end}").parse::<i64>().is_ok()"###,
         ));
         if !low3.is_empty() {
             conditions.push(format!(
-                r###"vname.after("{}").after("{}").between("{}", "{}").force_i64() >= {}"###,
-                begin, mid1, mid2, end, low3,
+                r###"vname.after("{begin}").after("{mid1}").between("{mid2}", "{end}").force_i64() >= {low3}"###,
             ));
         }
         if !high3.is_empty() {
             conditions.push(format!(
-                r###"vname.after("{}").after("{}").between("{}", "{}").force_i64() <= {}"###,
-                begin, mid1, mid2, end, high3,
+                r###"vname.after("{begin}").after("{mid1}").between("{mid2}", "{end}").force_i64() <= {high3}"###,
             ));
         }
         fwriteln!(f, "}} else if {} {{ ", conditions.iter().format(" && "));

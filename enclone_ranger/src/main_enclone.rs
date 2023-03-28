@@ -72,10 +72,7 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
     }
     for (found, arg) in found.into_iter().zip(REQUIRED_ARGS.into_iter()) {
         if !found {
-            panic!(
-                "Required argument {} not passed to main_enclone_ranger",
-                arg
-            );
+            panic!("Required argument {arg} not passed to main_enclone_ranger");
         }
     }
     let setup = main_enclone_setup_ranger(args)?;

@@ -331,11 +331,10 @@ pub fn process_special_arg1(
         let compiled = build_operator_tree(&eval);
         if compiled.is_err() {
             return Err(format!(
-                "\nUnable to represent \"{}\" as a valid expression.  You might \
+                "\nUnable to represent \"{expr}\" as a valid expression.  You might \
                 check the following:\n\
                 • arithmetic operators + - * / must have a blank on both sides\n\
                 • parentheses must be balanced\n",
-                expr,
             ));
         }
         let compiled = compiled.unwrap();
@@ -343,9 +342,8 @@ pub fn process_special_arg1(
         if res.is_err() {
             let err = res.as_ref().err().unwrap();
             return Err(format!(
-                "\n{}\nYou might check the following:\n\
+                "\n{err}\nYou might check the following:\n\
                 • arithmetic operators + - * / must have a blank on both sides\n",
-                err,
             ));
         }
         ctl.gen_opt
@@ -415,10 +413,8 @@ pub fn process_special_arg1(
         if val != "stdout" && val != "stdouth" && val != "gui" {
             let f = File::create(&val);
             if f.is_err() {
-                let mut emsg = format!(
-                    "\nYou've specified an output file\n{}\nthat cannot be written.\n",
-                    val
-                );
+                let mut emsg =
+                    format!("\nYou've specified an output file\n{val}\nthat cannot be written.\n");
                 if val.contains('/') {
                     let dir = val.rev_before("/");
                     let msg = if path_exists(dir) {
@@ -506,10 +502,8 @@ pub fn process_special_arg1(
         if val != "stdout" && val != "stdouth" && val != "gui" {
             let f = File::create(&val);
             if f.is_err() {
-                let mut emsg = format!(
-                    "\nYou've specified an output file\n{}\nthat cannot be written.\n",
-                    val
-                );
+                let mut emsg =
+                    format!("\nYou've specified an output file\n{val}\nthat cannot be written.\n");
                 if val.contains('/') {
                     let dir = val.rev_before("/");
                     let msg = if path_exists(dir) {

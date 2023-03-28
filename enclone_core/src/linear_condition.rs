@@ -48,8 +48,7 @@ impl LinearCondition {
         } else {
             return Err(format!(
                 "\nImproperly formatted condition, no inequality symbol, \
-                 please type \"enclone help display\": {}.\n",
-                x
+                 please type \"enclone help display\": {x}.\n"
             ));
         }
         let mut rhs = rhs.replace('E', "e");
@@ -58,11 +57,10 @@ impl LinearCondition {
         }
         if rhs.parse::<f64>().is_err() {
             return Err(format!(
-                "\nImproperly formatted condition, right-hand side invalid: {}.\n\
+                "\nImproperly formatted condition, right-hand side invalid: {x}.\n\
                 The right-hand side needs to be a constant.  Please type \
                 \"enclone help filter\"\n\
-                for more information.\n",
-                x
+                for more information.\n"
             ));
         }
         let rhs = rhs.force_f64();
@@ -103,9 +101,8 @@ impl LinearCondition {
                 }
                 if coeffi.parse::<f64>().is_err() {
                     return Err(format!(
-                        "\nImproperly formatted condition, coefficient {} is invalid: {}.\n\
-                        Please type \"enclone help filter\" for more information.\n",
-                        coeffi, x
+                        "\nImproperly formatted condition, coefficient {coeffi} is invalid: {x}.\n\
+                        Please type \"enclone help filter\" for more information.\n"
                     ));
                 }
                 coeff.push(coeffi.force_f64());
