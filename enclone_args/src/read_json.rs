@@ -701,20 +701,18 @@ pub fn read_json(
         if !path_exists(p) {
             return Err(format!(
                 "\nThere should be a directory\n\
-                 \"{}\"\n\
+                 \"{p}\"\n\
                  but it does not exist.  Please check how you have specified the\n\
-                 input files to enclone, including the PRE argument.\n",
-                p
+                 input files to enclone, including the PRE argument.\n"
             ));
         }
     }
     if !path_exists(&jsonx) {
         return Err(format!(
             "\nThe path\n\
-             \"{}\"\n\
+             \"{jsonx}\"\n\
              does not exist.  Please check how you have specified the\n\
-             input files to enclone, including the PRE argument.\n",
-            jsonx
+             input files to enclone, including the PRE argument.\n"
         ));
     }
     let mut f = BufReader::new(open_maybe_compressed(&jsonx));

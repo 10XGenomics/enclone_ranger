@@ -112,9 +112,8 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
                         }
                         if !matches {
                             return Err(format!(
-                                "\nLead variable {} contains a pattern that matches \
-                                no features.\n",
-                                x
+                                "\nLead variable {x} contains a pattern that matches \
+                                no features.\n"
                             ));
                         }
                         break;

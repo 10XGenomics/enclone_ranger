@@ -19,10 +19,8 @@ pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
     }
     let f = File::create(val);
     if f.is_err() {
-        let mut msgx = format!(
-            "\nYou've specified an output file\n{}\nthat cannot be written.\n",
-            val
-        );
+        let mut msgx =
+            format!("\nYou've specified an output file\n{val}\nthat cannot be written.\n");
         if val.contains('/') {
             let dir = val.rev_before("/");
             let msg = if path_exists(dir) {
@@ -54,9 +52,8 @@ pub fn is_simple_arg(arg: &str, x: &str) -> Result<bool, String> {
         return Ok(true);
     } else if arg.starts_with(&format!("{x}=")) {
         return Err(format!(
-            "\nYour command line includes \"{}\", which is not a valid argument.\n\
-             Perhaps you meant \"{}\".\n",
-            arg, x
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+             Perhaps you meant \"{x}\".\n"
         ));
     }
     Ok(false)
@@ -67,9 +64,8 @@ pub fn is_simple_arg(arg: &str, x: &str) -> Result<bool, String> {
 pub fn is_usize_arg(arg: &str, x: &str) -> Result<bool, String> {
     if arg == x {
         return Err(format!(
-            "\nYour command line includes \"{}\", which is not a valid argument.\n\
-             Perhaps you meant \"{}=n\", where n >= 0 is an integer.\n",
-            arg, x
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+             Perhaps you meant \"{x}=n\", where n >= 0 is an integer.\n"
         ));
     } else if arg.starts_with(&format!("{x}=")) {
         let val = arg.after(&format!("{x}=")).parse::<usize>();
@@ -77,9 +73,8 @@ pub fn is_usize_arg(arg: &str, x: &str) -> Result<bool, String> {
             return Ok(true);
         } else {
             return Err(format!(
-                "\nYour command line includes \"{}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{}=n\", where n >= 0 is an integer.\n",
-                arg, x
+                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n >= 0 is an integer.\n"
             ));
         }
     }
@@ -91,9 +86,8 @@ pub fn is_usize_arg(arg: &str, x: &str) -> Result<bool, String> {
 pub fn is_i32_arg(arg: &str, x: &str) -> Result<bool, String> {
     if arg == x {
         return Err(format!(
-            "\nYour command line includes \"{}\", which is not a valid argument.\n\
-             Perhaps you meant \"{}=n\", where n >= 0 is an integer.\n",
-            arg, x
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+             Perhaps you meant \"{x}=n\", where n >= 0 is an integer.\n"
         ));
     } else if arg.starts_with(&format!("{x}=")) {
         let val = arg.after(&format!("{x}=")).parse::<i32>();
@@ -101,9 +95,8 @@ pub fn is_i32_arg(arg: &str, x: &str) -> Result<bool, String> {
             return Ok(true);
         } else {
             return Err(format!(
-                "\nYour command line includes \"{}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{}=n\", where n is an integer.\n",
-                arg, x
+                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n is an integer.\n"
             ));
         }
     }
@@ -113,9 +106,8 @@ pub fn is_i32_arg(arg: &str, x: &str) -> Result<bool, String> {
 pub fn is_f64_arg(arg: &str, x: &str) -> Result<bool, String> {
     if arg == x {
         return Err(format!(
-            "\nYour command line includes \"{}\", which is not a valid argument.\n\
-             Perhaps you meant \"{}=n\", where n is a floating point number.\n",
-            arg, x
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+             Perhaps you meant \"{x}=n\", where n is a floating point number.\n"
         ));
     } else if arg.starts_with(&format!("{x}=")) {
         let val = arg.after(&format!("{x}=")).parse::<f64>();
@@ -123,9 +115,8 @@ pub fn is_f64_arg(arg: &str, x: &str) -> Result<bool, String> {
             return Ok(true);
         } else {
             return Err(format!(
-                "\nYour command line includes \"{}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{}=n\", where n is a floating point number.\n",
-                arg, x
+                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n is a floating point number.\n"
             ));
         }
     }
@@ -135,9 +126,8 @@ pub fn is_f64_arg(arg: &str, x: &str) -> Result<bool, String> {
 pub fn is_string_arg(arg: &str, x: &str) -> Result<bool, String> {
     if arg == x {
         return Err(format!(
-            "\nYour command line includes \"{}\", which is not a valid argument.\n\
-             Perhaps you meant \"{}=s\" for some string s.\n",
-            arg, x
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+             Perhaps you meant \"{x}=s\" for some string s.\n"
         ));
     } else if arg.starts_with(&format!("{x}=")) {
         return Ok(true);

@@ -880,8 +880,7 @@ pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), St
                 tilde_expand_me(&mut val);
                 if !val.ends_with(".csv") {
                     return Err(format!(
-                        "\nFilename input in {} needs to end with .csv.\n",
-                        val
+                        "\nFilename input in {val} needs to end with .csv.\n"
                     ));
                 }
                 *(set_string_readable_csv[j].1) = Some(val.clone());

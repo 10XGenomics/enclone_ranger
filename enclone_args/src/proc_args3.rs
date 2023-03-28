@@ -59,9 +59,8 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                         if m.contains("502 Bad Gateway") {
                             return Err(format!(
                                 "\nWell, this is sad.  The URL \
-                                {} returned a 502 Bad Gateway \
-                                message.  Please try again later or ask someone for help.\n",
-                                url
+                                {url} returned a 502 Bad Gateway \
+                                message.  Please try again later or ask someone for help.\n"
                             ));
                         }
                         if !m.contains("\"wiped\"") {
@@ -96,8 +95,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                     continue;
                 } else {
                     return Err(format!(
-                        "\nIt looks like you've provided an incorrect analysis set ID {}.\n",
-                        setid
+                        "\nIt looks like you've provided an incorrect analysis set ID {setid}.\n"
                     ));
                 }
             } else if setid.parse::<usize>().is_ok() {
@@ -241,9 +239,8 @@ fn get_path_or_internal_id(
                 if m.contains("502 Bad Gateway") {
                     return Err(format!(
                         "\nWell this is sad.  The URL \
-                        {} yielded a 502 Bad Gateway \
-                        message.  Please try again later or ask someone for help.\n",
-                        url
+                        {url} yielded a 502 Bad Gateway \
+                        message.  Please try again later or ask someone for help.\n"
                     ));
                 }
                 if m.contains("\"path\":\"") {
@@ -260,39 +257,35 @@ fn get_path_or_internal_id(
                                 "\nYou are experiencing unstable filesystem access: \
                                 100 milliseconds ago, \
                                 the path\n\
-                                {}\nwas not visible, but now it is.  You might consider posting \
+                                {pp}\nwas not visible, but now it is.  You might consider posting \
                                 this problem on an appropriate \
                                 the slack channel.\nOr retry again.  enclone is \
                                 giving up because \
                                 if filesystem access blinks in and out of existence,\n\
-                                other more cryptic events are likely to occur.\n",
-                                pp
+                                other more cryptic events are likely to occur.\n"
                             ));
                         } else {
                             return Err(format!(
                                 "\nIt looks like you've provided an analysis ID for \
-                                which the pipeline outs folder\n{}\nhas not yet been generated.\n\
-                                This path did not exist:\n{}\n\n\
-                                Here is the stdout:\n{}\n",
-                                p, pp, m
+                                which the pipeline outs folder\n{p}\nhas not yet been generated.\n\
+                                This path did not exist:\n{pp}\n\n\
+                                Here is the stdout:\n{m}\n"
                             ));
                         }
                     }
                 } else {
                     return Err(format!(
                         "\nIt looks like you've provided either an incorrect \
-                        analysis ID {} or else one for which\n\
+                        analysis ID {p} or else one for which\n\
                         the pipeline outs folder has not yet been generated.\n\
-                        This URL\n{}\ndid not provide a path.\n",
-                        p, url
+                        This URL\n{url}\ndid not provide a path.\n"
                     ));
                 }
             } else {
                 return Err(format!(
-                    "\nAfter searching high and low, your path\n{}\nfor {} \
+                    "\nAfter searching high and low, your path\n{p}\nfor {source} \
                     cannot be found.\nPlease check its value and also the value \
-                    for PRE if you provided that.\n",
-                    p, source
+                    for PRE if you provided that.\n"
                 ));
             }
         }
@@ -345,8 +338,7 @@ fn parse_bc(mut bc: String, ctl: &mut EncloneControl, call_type: &str) -> Result
                         origin = "from the BC argument";
                     }
                     return Err(format!(
-                        "\nThe file\n{}\n{}\nis missing the barcode field.\n",
-                        bc, origin,
+                        "\nThe file\n{bc}\n{origin}\nis missing the barcode field.\n",
                     ));
                 }
                 for x in fields.iter() {
@@ -472,9 +464,8 @@ pub fn proc_xcr(
     };
     if val.is_empty() {
         return Err(format!(
-            "\nYou can't write {} with no value on the right hand side.\n\
-            Perhaps you need to remove some white space from your command line.\n",
-            f
+            "\nYou can't write {f} with no value on the right hand side.\n\
+            Perhaps you need to remove some white space from your command line.\n"
         ));
     }
     let val = expand_integer_ranges(val);
@@ -512,9 +503,8 @@ pub fn proc_xcr(
     }
     if !bc.is_empty() && donor_groups_bc.len() != donor_groups.len() {
         return Err(format!(
-            "\nThe {} and BC arguments do not exactly mirror each \
-             other's structure.\n",
-            xcr
+            "\nThe {xcr} and BC arguments do not exactly mirror each \
+             other's structure.\n"
         ));
     }
     ctl.perf_stats(&t, "in proc_xcr 1");
@@ -550,9 +540,8 @@ pub fn proc_xcr(
             origin_groups_bc = donor_groups_bc[id].split(':').collect::<Vec<&str>>();
             if origin_groups_bc.len() != origin_groups.len() {
                 return Err(format!(
-                    "\nThe {} and BC arguments do not exactly mirror each \
-                     other's structure.\n",
-                    xcr
+                    "\nThe {xcr} and BC arguments do not exactly mirror each \
+                     other's structure.\n"
                 ));
             }
         }
@@ -591,9 +580,8 @@ pub fn proc_xcr(
                 datasets_bc = origin_groups_bc[is].split(',').collect::<Vec<&str>>();
                 if datasets_bc.len() != datasets.len() {
                     return Err(format!(
-                        "\nThe {} and BC arguments do not exactly mirror each \
-                         other's structure.\n",
-                        xcr
+                        "\nThe {xcr} and BC arguments do not exactly mirror each \
+                         other's structure.\n"
                     ));
                 }
             }
@@ -735,8 +723,7 @@ pub fn proc_meta_core(lines: &[String], mut ctl: &mut EncloneControl) -> Result<
                 if !allowed_fields.contains(x) {
                     return Err(format!(
                         "\nThe CSV file that you specified using the META or METAX argument \
-                         has an illegal field name ({}) in its first line.\n",
-                        x
+                         has an illegal field name ({x}) in its first line.\n"
                     ));
                 }
             }
@@ -886,9 +873,8 @@ pub fn proc_meta(v: &[String], ctl: &mut EncloneControl) -> Result<(), String> {
         if fx.is_err() {
             return Err(format!(
                 "\nProblem with META: unable to read from the file\n\
-                 \"{}\".\nPlease check that that path makes sense and that you have read \
-                 permission for it.\n",
-                f
+                 \"{f}\".\nPlease check that that path makes sense and that you have read \
+                 permission for it.\n"
             ));
         }
         let f = BufReader::new(fx.unwrap());

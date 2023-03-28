@@ -143,9 +143,8 @@ pub fn load_gex(
                 outs = root.before("/outs").to_string();
                 if !path_exists(&outs) {
                     r.11 = format!(
-                        "\nThe directory\n{}\ndoes not exist.  Something must be amiss with \
-                        the arguments to PRE and/or GEX and/or META.\n",
-                        outs
+                        "\nThe directory\n{outs}\ndoes not exist.  Something must be amiss with \
+                        the arguments to PRE and/or GEX and/or META.\n"
                     );
                     return;
                 }
@@ -169,10 +168,9 @@ pub fn load_gex(
             }
             if h5_path.is_empty() {
                 r.11 = format!(
-                    "\nThe file raw_feature_bc_matrix.h5 is not in the directory\n{}\n\
+                    "\nThe file raw_feature_bc_matrix.h5 is not in the directory\n{outs}\n\
                     and neither is the older-named version raw_gene_bc_matrices_h5.h5.  Perhaps \
-                    something\nis amiss with the arguments to PRE and/or GEX and/or META.\n",
-                    outs
+                    something\nis amiss with the arguments to PRE and/or GEX and/or META.\n"
                 );
                 return;
             }
@@ -214,7 +212,7 @@ pub fn load_gex(
             for f in [pca_file.clone(), cluster_file.clone()].iter() {
                 if !path_exists(f) {
                     r.11 = format!(
-                        "\nThe file\n{}\ndoes not exist.  \
+                        "\nThe file\n{f}\ndoes not exist.  \
                         Perhaps one of your directories is missing some stuff.\n\n\
                         One possibility is that you ran \"cellranger count\" using only \
                         feature barcode (antibody) data,\nand you had less then ten antibodies.  \
@@ -224,8 +222,7 @@ pub fn load_gex(
                         Another possibility is that this is a multi run, and the path you \
                         provided\nis to a subdirectory of the outs folder.  In that case it may \
                         work to provide the path to outs\nor (equivalently) the parent \
-                        directory.\n",
-                        f
+                        directory.\n"
                     );
                     return;
                 } else {
@@ -260,8 +257,7 @@ pub fn load_gex(
                 r.11 = format!(
                     "\nSomething wrong with GEX or META argument:\ncan't find the file \
                         metrics_summary.csv or metrics_summary_csv.csv in the directory\n\
-                        {}",
-                    outs
+                        {outs}"
                 );
                 return;
             }
@@ -305,14 +301,13 @@ pub fn load_gex(
                 let f = File::create(&bin_file);
                 if f.is_err() {
                     r.11 = format!(
-                        "\nenclone is trying to create the path\n{}\n\
+                        "\nenclone is trying to create the path\n{bin_file}\n\
                         but that path cannot be created.  This path is for the binary GEX \
                         matrix file that enclone can read\n\
                         faster than the hdf5 file.  Your options are:\n\
                         1. Make that location writable (or fix the path, if it's wrong).\n\
                         2. Find a new location where you can write.\n\
-                        3. Don't specify NH5 (if you specified it).\n",
-                        bin_file
+                        3. Don't specify NH5 (if you specified it).\n"
                     );
                     return;
                 }
@@ -342,8 +337,7 @@ pub fn load_gex(
             {
                 r.11 = format!(
                     "\nIf you use MARK_STATS or MARK_STATS2 or MARKED_B, celltypes.csv has to \
-                    exist, and this file\n{}\ndoes not exist.\n",
-                    types_file
+                    exist, and this file\n{types_file}\ndoes not exist.\n"
                 );
                 return;
             }
@@ -536,9 +530,8 @@ pub fn load_gex(
                         rpcx = rpcx.replace('\"', "");
                         if rpcx.parse::<usize>().is_err() {
                             r.11 = format!(
-                                "\nSomething appears to be wrong with the file\n{}:\n\
-                                the Gene Expression Mean Reads per Cell value isn't an integer.\n",
-                                csv
+                                "\nSomething appears to be wrong with the file\n{csv}:\n\
+                                the Gene Expression Mean Reads per Cell value isn't an integer.\n"
                             );
                             return;
                         }
@@ -553,9 +546,8 @@ pub fn load_gex(
                         fbrpcx = fbrpcx.replace('\"', "");
                         if fbrpcx.parse::<usize>().is_err() {
                             r.11 = format!(
-                                "\nSomething appears to be wrong with the file\n{}:\n\
-                                the Antibody/Antigen Capture Mean Reads per Cell value isn't an integer.\n",
-                                csv
+                                "\nSomething appears to be wrong with the file\n{csv}:\n\
+                                the Antibody/Antigen Capture Mean Reads per Cell value isn't an integer.\n"
                             );
                             return;
                         }
@@ -565,11 +557,10 @@ pub fn load_gex(
                 if rpc.is_none() && fbrpc.is_none() {
                     r.11 = format!(
                         "\nGene expression or feature barcode data was expected, however the \
-                        CSV file\n{}\n\
+                        CSV file\n{csv}\n\
                         does not have values for Gene Expression Mean Reads per Cell or
                         Antibody/Antigen Capture Mean Reads per Cell.\n\
                         This is puzzling.\n",
-                        csv,
                     );
                     return;
                 }
@@ -589,9 +580,8 @@ pub fn load_gex(
                     } else if line_no == 1 {
                         if rpc_field.is_some() && rpc_field.unwrap() >= fields.len() {
                             r.11 = format!(
-                                "\nSomething appears to be wrong with the file\n{}:\n\
-                                the second line doesn't have enough fields.\n",
-                                csv
+                                "\nSomething appears to be wrong with the file\n{csv}:\n\
+                                the second line doesn't have enough fields.\n"
                             );
                             return;
                         } else if rpc_field.is_some() {
@@ -600,9 +590,8 @@ pub fn load_gex(
                             rpcx = rpcx.replace('\"', "");
                             if rpcx.parse::<usize>().is_err() {
                                 r.11 = format!(
-                                    "\nSomething appears to be wrong with the file\n{}:\n\
-                                    the Mean Reads per Cell field isn't an integer.\n",
-                                    csv
+                                    "\nSomething appears to be wrong with the file\n{csv}:\n\
+                                    the Mean Reads per Cell field isn't an integer.\n"
                                 );
                                 return;
                             }
@@ -610,9 +599,8 @@ pub fn load_gex(
                         }
                         if fbrpc_field.is_some() && fbrpc_field.unwrap() >= fields.len() {
                             r.11 = format!(
-                                "\nSomething appears to be wrong with the file\n{}:\n\
-                                the second line doesn't have enough fields.\n",
-                                csv
+                                "\nSomething appears to be wrong with the file\n{csv}:\n\
+                                the second line doesn't have enough fields.\n"
                             );
                             return;
                         } else if fbrpc_field.is_some() {
@@ -621,9 +609,8 @@ pub fn load_gex(
                             fbrpcx = fbrpcx.replace('\"', "");
                             if fbrpcx.parse::<usize>().is_err() {
                                 r.11 = format!(
-                                    "\nSomething appears to be wrong with the file\n{}:\n\
-                                    the Antibody/Antigen: Mean Reads per Cell field isn't an integer.\n",
-                                    csv
+                                    "\nSomething appears to be wrong with the file\n{csv}:\n\
+                                    the Antibody/Antigen: Mean Reads per Cell field isn't an integer.\n"
                                 );
                                 return;
                             }
@@ -634,13 +621,12 @@ pub fn load_gex(
                 if rpc.is_none() && fbrpc.is_none() {
                     r.11 = format!(
                         "\nGene expression or feature barcode data was expected, however the \
-                        CSV file\n{}\n\
+                        CSV file\n{csv}\n\
                         does not have a field \"Mean Reads per Cell\" or \
                         \"Antibody: Mean Reads per Cell\".\n\
                         This is puzzling, and might be because a file within the Cell Ranger outs \
                         directory has been moved\n\
                         from its original location.\n",
-                        csv,
                     );
                     return;
                 }
