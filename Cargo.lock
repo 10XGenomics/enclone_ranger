@@ -667,7 +667,7 @@ dependencies = [
  "cfg-if",
  "libc",
  "redox_syscall",
- "windows-sys",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -746,8 +746,8 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hdf5"
-version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#610993b21f868b60085c52d262b1ae8b8f8b3d8c"
+version = "0.8.1"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda#c24ff1c8fccae6ddb070cde3c423dc176e565335"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -763,9 +763,10 @@ dependencies = [
 
 [[package]]
 name = "hdf5-derive"
-version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#610993b21f868b60085c52d262b1ae8b8f8b3d8c"
+version = "0.8.1"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda#c24ff1c8fccae6ddb070cde3c423dc176e565335"
 dependencies = [
+ "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
@@ -773,8 +774,8 @@ dependencies = [
 
 [[package]]
 name = "hdf5-sys"
-version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#610993b21f868b60085c52d262b1ae8b8f8b3d8c"
+version = "0.8.1"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda#c24ff1c8fccae6ddb070cde3c423dc176e565335"
 dependencies = [
  "attohttpc",
  "bzip2",
@@ -791,8 +792,8 @@ dependencies = [
 
 [[package]]
 name = "hdf5-types"
-version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#610993b21f868b60085c52d262b1ae8b8f8b3d8c"
+version = "0.8.1"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda#c24ff1c8fccae6ddb070cde3c423dc176e565335"
 dependencies = [
  "ascii",
  "cfg-if",
@@ -876,7 +877,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7d6c6f8c91b4b9ed43484ad1a938e393caf35960fce7f82a040497207bd8e9e"
 dependencies = [
  "libc",
- "windows-sys",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -1201,15 +1202,15 @@ dependencies = [
 
 [[package]]
 name = "parking_lot_core"
-version = "0.9.6"
+version = "0.9.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba1ef8814b5c993410bb3adfad7a5ed269563e4a2f90c41f5d85be7fb47133bf"
+checksum = "9069cbb9f99e3a5083476ccb29ceb1de18b9118cafa53e90c9551235de2b9521"
 dependencies = [
  "cfg-if",
  "libc",
  "redox_syscall",
  "smallvec",
- "windows-sys",
+ "windows-sys 0.45.0",
 ]
 
 [[package]]
@@ -1300,6 +1301,29 @@ dependencies = [
  "nix",
  "string_utils",
  "vector_utils",
+]
+
+[[package]]
+name = "proc-macro-error"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
+dependencies = [
+ "proc-macro-error-attr",
+ "proc-macro2",
+ "quote",
+ "version_check",
+]
+
+[[package]]
+name = "proc-macro-error-attr"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "version_check",
 ]
 
 [[package]]
@@ -1512,7 +1536,7 @@ dependencies = [
  "io-lifetimes",
  "libc",
  "linux-raw-sys",
- "windows-sys",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -1718,7 +1742,7 @@ dependencies = [
  "fastrand",
  "redox_syscall",
  "rustix",
- "windows-sys",
+ "windows-sys 0.42.0",
 ]
 
 [[package]]
@@ -2013,6 +2037,30 @@ name = "windows-sys"
 version = "0.42.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a3e1820f08b8513f676f7ab6c1f99ff312fb97b553d30ff4dd86f9f15728aa7"
+dependencies = [
+ "windows_aarch64_gnullvm",
+ "windows_aarch64_msvc",
+ "windows_i686_gnu",
+ "windows_i686_msvc",
+ "windows_x86_64_gnu",
+ "windows_x86_64_gnullvm",
+ "windows_x86_64_msvc",
+]
+
+[[package]]
+name = "windows-sys"
+version = "0.45.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "75283be5efb2831d37ea142365f009c02ec203cd29a3ebecbc093d52315b66d0"
+dependencies = [
+ "windows-targets",
+]
+
+[[package]]
+name = "windows-targets"
+version = "0.42.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8e5180c00cd44c9b1c88adb3693291f1cd93605ded80c250a75d472756b4d071"
 dependencies = [
  "windows_aarch64_gnullvm",
  "windows_aarch64_msvc",

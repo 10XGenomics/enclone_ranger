@@ -50,11 +50,11 @@ tilde-expand = "0.1"
 
 [target.'cfg(not(windows))'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"
-branch = "conda_nov2021"
+branch = "conda"
 features = ["conda"]
 default-features = false
 
 [target.'cfg(windows)'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"
-branch = "conda_nov2021"
+branch = "conda"
 default-features = false
