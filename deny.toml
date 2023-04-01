@@ -113,6 +113,12 @@ wildcards = "allow"
 highlight = "all"
 # List of crates that are allowed. Use with care!
 
+[[bans.skip]]
+# parking_lot_core 0.9.7 currently depends on this
+# but it will be removed in the next version
+name = "windows-sys"
+version = "0.45"
+
 # This section is considered when running `cargo deny check sources`.
 # More documentation about the 'sources' section can be found here:
 # https://embarkstudios.github.io/cargo-deny/checks/sources/cfg.html
