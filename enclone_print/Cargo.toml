@@ -49,11 +49,11 @@ vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-too
 
 [target.'cfg(not(windows))'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"
-branch = "conda"
+branch = "conda_nov2021"
 features = ["conda"]
 default-features = false
 
 [target.'cfg(windows)'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"
-branch = "conda"
+branch = "conda_nov2021"
 default-features = false

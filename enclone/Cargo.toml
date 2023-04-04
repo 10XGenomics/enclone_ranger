@@ -48,11 +48,11 @@ pager = "0.16"
 
 [target.'cfg(not(windows))'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"
-branch = "conda"
+branch = "conda_nov2021"
 features = ["conda"]
 default-features = false
 
 [target.'cfg(windows)'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"
-branch = "conda"
+branch = "conda_nov2021"
 default-features = false
