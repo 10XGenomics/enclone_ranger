@@ -746,8 +746,8 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hdf5"
-version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#610993b21f868b60085c52d262b1ae8b8f8b3d8c"
+version = "0.8.1"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#32f74275b4269d646458b7b3f5d695f6c08be9fd"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -763,9 +763,10 @@ dependencies = [
 
 [[package]]
 name = "hdf5-derive"
-version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#610993b21f868b60085c52d262b1ae8b8f8b3d8c"
+version = "0.8.1"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#32f74275b4269d646458b7b3f5d695f6c08be9fd"
 dependencies = [
+ "proc-macro-error",
  "proc-macro2",
  "quote",
  "syn",
@@ -773,8 +774,8 @@ dependencies = [
 
 [[package]]
 name = "hdf5-sys"
-version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#610993b21f868b60085c52d262b1ae8b8f8b3d8c"
+version = "0.8.1"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#32f74275b4269d646458b7b3f5d695f6c08be9fd"
 dependencies = [
  "attohttpc",
  "bzip2",
@@ -791,8 +792,8 @@ dependencies = [
 
 [[package]]
 name = "hdf5-types"
-version = "0.8.0"
-source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#610993b21f868b60085c52d262b1ae8b8f8b3d8c"
+version = "0.8.1"
+source = "git+https://github.com/10XGenomics/hdf5-rust.git?branch=conda_nov2021#32f74275b4269d646458b7b3f5d695f6c08be9fd"
 dependencies = [
  "ascii",
  "cfg-if",
@@ -1300,6 +1301,29 @@ dependencies = [
  "nix",
  "string_utils",
  "vector_utils",
+]
+
+[[package]]
+name = "proc-macro-error"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
+dependencies = [
+ "proc-macro-error-attr",
+ "proc-macro2",
+ "quote",
+ "version_check",
+]
+
+[[package]]
+name = "proc-macro-error-attr"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "version_check",
 ]
 
 [[package]]
