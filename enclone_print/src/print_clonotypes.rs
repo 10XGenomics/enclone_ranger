@@ -26,15 +26,33 @@ use enclone_core::set_speakers::set_speakers;
 use enclone_proto::types::{Clonotype, DonorReferenceItem};
 use equiv::EquivRel;
 use hdf5::Reader;
+use itertools::izip;
 use qd::Double;
 use rayon::prelude::*;
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::BufWriter;
+use std::iter::zip;
+use std::mem::take;
 use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
+
+// Transpose a matrix, which is represented as a vector of vectors. The argument x is consumed and cleared.
+fn transpose_matrix<T: Default>(mut x: Vec<Vec<T>>) -> Vec<Vec<T>> {
+    assert!(!x.is_empty());
+    let rows = x.len();
+    let cols = x[0].len();
+    for row in &x {
+        assert_eq!(row.len(), cols);
+    }
+    let transposed = (0..cols)
+        .map(|col| (0..rows).map(|row| take(&mut x[row][col])).collect())
+        .collect();
+    x.clear();
+    transposed
+}
 
 // Print clonotypes.  A key challenge here is to define the columns that represent shared
 // chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
@@ -447,28 +465,29 @@ pub fn print_clonotypes(
                 );
 
                 // Define field types corresponding to the amino acid positions to show.
-
                 let field_types = compute_field_types(ctl, &rsi, &show_aa);
 
-                // Build varmat.
-
-                let mut varmat = vec![vec![vec![b'-']; cols]; nexacts];
-                for (col, (mat, (seqss, vars))) in mat
-                    .iter()
-                    .zip(rsi.seqss.iter().zip(vars.iter()))
+                // Build varmat matrix of size (nexacts, cols).
+                let varmat_transposed: Vec<Vec<Vec<u8>>> = izip!(mat, &rsi.seqss, &vars)
                     .take(cols)
-                    .enumerate()
-                {
-                    for (u, (m, seq)) in varmat.iter_mut().zip(mat.iter().zip(seqss.iter())) {
-                        if m.is_some() {
-                            let mut v = Vec::<u8>::new();
-                            for &p in vars {
-                                v.push(seq[p]);
-                            }
-                            u[col] = v;
-                        }
-                    }
-                }
+                    .map(|(mat_slice, seqss_slice, var_slice)| {
+                        zip(mat_slice, seqss_slice)
+                            .map(|(m, seq)| {
+                                if m.is_some() {
+                                    var_slice
+                                        .iter()
+                                        .map(|&p| *seq.get(p).unwrap_or(&b'?'))
+                                        .collect()
+                                } else {
+                                    vec![b'-']
+                                }
+                            })
+                            .collect()
+                    })
+                    .collect();
+                let varmat = transpose_matrix(varmat_transposed);
+                assert!(varmat.len() == nexacts);
+                assert!(varmat[0].len() == cols);
 
                 // Find the fields associated to nd<k> if used.
 
