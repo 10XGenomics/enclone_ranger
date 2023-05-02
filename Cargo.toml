@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "build_enclone_proto",
     "enclone",
     "enclone_args",
     "enclone_core",
