@@ -26,6 +26,7 @@ use enclone_core::set_speakers::set_speakers;
 use enclone_proto::types::{Clonotype, DonorReferenceItem};
 use equiv::EquivRel;
 use hdf5::Reader;
+use itertools::izip;
 use qd::Double;
 use rayon::prelude::*;
 use std::cmp::max;
@@ -447,25 +448,21 @@ pub fn print_clonotypes(
                 );
 
                 // Define field types corresponding to the amino acid positions to show.
-
                 let field_types = compute_field_types(ctl, &rsi, &show_aa);
 
-                // Build varmat.
-
+                // Build varmat matrix of size (nexacts, cols).
                 let mut varmat = vec![vec![vec![b'-']; cols]; nexacts];
-                for (col, (mat, (seqss, vars))) in mat
-                    .iter()
-                    .zip(rsi.seqss.iter().zip(vars.iter()))
-                    .take(cols)
-                    .enumerate()
+                for (col, (mat_slice, seqss_slice, vars_slice)) in
+                    izip!(mat, &rsi.seqss, &vars).take(cols).enumerate()
                 {
-                    for (u, (m, seq)) in varmat.iter_mut().zip(mat.iter().zip(seqss.iter())) {
-                        if m.is_some() {
-                            let mut v = Vec::<u8>::new();
-                            for &p in vars {
-                                v.push(seq[p]);
-                            }
-                            u[col] = v;
+                    for (varmat_u, m, seq) in izip!(&mut varmat, mat_slice, seqss_slice) {
+                        varmat_u[col] = if m.is_some() {
+                            vars_slice
+                                .iter()
+                                .map(|&p| *seq.get(p).unwrap_or(&b'?'))
+                                .collect()
+                        } else {
+                            vec![b'-']
                         }
                     }
                 }
