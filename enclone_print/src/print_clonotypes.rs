@@ -33,26 +33,9 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::BufWriter;
-use std::iter::zip;
-use std::mem::take;
 use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
-
-// Transpose a matrix, which is represented as a vector of vectors. The argument x is consumed and cleared.
-fn transpose_matrix<T: Default>(mut x: Vec<Vec<T>>) -> Vec<Vec<T>> {
-    assert!(!x.is_empty());
-    let rows = x.len();
-    let cols = x[0].len();
-    for row in &x {
-        assert_eq!(row.len(), cols);
-    }
-    let transposed = (0..cols)
-        .map(|col| (0..rows).map(|row| take(&mut x[row][col])).collect())
-        .collect();
-    x.clear();
-    transposed
-}
 
 // Print clonotypes.  A key challenge here is to define the columns that represent shared
 // chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
@@ -468,26 +451,21 @@ pub fn print_clonotypes(
                 let field_types = compute_field_types(ctl, &rsi, &show_aa);
 
                 // Build varmat matrix of size (nexacts, cols).
-                let varmat_transposed: Vec<Vec<Vec<u8>>> = izip!(mat, &rsi.seqss, &vars)
-                    .take(cols)
-                    .map(|(mat_slice, seqss_slice, var_slice)| {
-                        zip(mat_slice, seqss_slice)
-                            .map(|(m, seq)| {
-                                if m.is_some() {
-                                    var_slice
-                                        .iter()
-                                        .map(|&p| *seq.get(p).unwrap_or(&b'?'))
-                                        .collect()
-                                } else {
-                                    vec![b'-']
-                                }
-                            })
-                            .collect()
-                    })
-                    .collect();
-                let varmat = transpose_matrix(varmat_transposed);
-                assert!(varmat.len() == nexacts);
-                assert!(varmat[0].len() == cols);
+                let mut varmat = vec![vec![vec![b'-']; cols]; nexacts];
+                for (col, (mat_slice, seqss_slice, vars_slice)) in
+                    izip!(mat, &rsi.seqss, &vars).take(cols).enumerate()
+                {
+                    for (varmat_u, m, seq) in izip!(&mut varmat, mat_slice, seqss_slice) {
+                        varmat_u[col] = if m.is_some() {
+                            vars_slice
+                                .iter()
+                                .map(|&p| *seq.get(p).unwrap_or(&b'?'))
+                                .collect()
+                        } else {
+                            vec![b'-']
+                        }
+                    }
+                }
 
                 // Find the fields associated to nd<k> if used.
 
