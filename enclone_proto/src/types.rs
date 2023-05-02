@@ -5,12 +5,9 @@
 //! computed by enclone.
 //!
 
-// TODO: re-enable this check once prost fixes it.
-#![allow(clippy::derive_partial_eq_without_eq)]
-
 use vdj_ann::annotate::Region as AnnRegion;
 
-include!(concat!(env!("OUT_DIR"), "/enclone.types.rs"));
+include!("./enclone.types.rs");
 
 impl From<&bio_edit::alignment::Alignment> for Alignment {
     fn from(al: &bio_edit::alignment::Alignment) -> Self {

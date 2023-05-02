@@ -1,5 +1,5 @@
 [package]
-name = "enclone_proto"
+name = "build_enclone_proto"
 version = "0.5.219"
 authors = ["""David Jaffe <david.jaffe@10xgenomics.com>,
               Keri Dockter <keri.dockter@10xgenomics.com>,
@@ -13,18 +13,10 @@ authors = ["""David Jaffe <david.jaffe@10xgenomics.com>,
 edition = "2021"
 license-file = "LICENSE.txt"
 publish = false
-
-# Please do not edit crate versions within this file.  Instead edit the file master.toml
-# in the root of the enclone repo.
+exclude = ["enclone.types.rs"]
 
 [dependencies]
-bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-byteorder = "1"
-prost = { version = ">=0.9,<0.12", default_features = false, features = ["std", "prost-derive"] }
-serde = "1"
-thiserror = "1"
-vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+prost-build = ">=0.9,<0.12"
 
-[package.metadata.cargo-machete]
-# Required for derive macro.
-ignored = ["serde"]
+[dev-dependencies]
+tempfile = "3.4"
