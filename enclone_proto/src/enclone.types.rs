@@ -1,6 +1,8 @@
 /// Evidence that a given cell is iNKT or MAIT.   Each ExactSubclonotype has one
 /// instantiation of this structure for iNKT and one for MAIT.
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct InvariantTCellAnnotation {
     #[prost(bool, required, tag = "1")]
     pub alpha_chain_gene_match: bool,
@@ -12,7 +14,9 @@ pub struct InvariantTCellAnnotation {
     pub beta_chain_junction_match: bool,
 }
 /// Representation of an alignment
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Alignment {
     /// Start of the alignment in the reference
     #[prost(uint32, required, tag = "1")]
@@ -22,7 +26,9 @@ pub struct Alignment {
     pub cigar: ::prost::alloc::string::String,
 }
 /// Defines a chain within an exact subclonotype.
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExactSubClonotypeChain {
     /// Nucleotide sequence of the chain. This will only contain ACGT alphabets
     #[prost(bytes = "vec", required, tag = "1")]
@@ -115,7 +121,9 @@ pub struct ExactSubClonotypeChain {
 /// are present in the clonotype. This structure stores the exact subclonotype
 /// chain along with the `index` of the corresponding chain in the parent
 /// clonotype.
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExactSubClonotypeChainInfo {
     /// The index of this chain in the parent clonotype
     #[prost(uint32, required, tag = "1")]
@@ -129,7 +137,9 @@ pub struct ExactSubClonotypeChainInfo {
 /// productive chains, the same sequence from the start of the V-REGION to the
 /// end of the J-REGION as well as the same C-REGION annotation for each chain.
 /// TODO: Maybe mutations outside V-J?
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ExactSubClonotype {
     /// The chains in an exact subclonotype along with the index of the chain in
     /// the parent clonotype
@@ -151,7 +161,9 @@ pub struct ExactSubClonotype {
     pub mait_evidence: InvariantTCellAnnotation,
 }
 /// Define a clonotype chain
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct ClonotypeChain {
     /// The nucleotide sequence of this clonotype chain consensus
     /// What we actually compute here is not the consensus across the clonotype
@@ -187,17 +199,17 @@ pub struct ClonotypeChain {
     /// the donor reference item will be equal to the `v_idx`
     #[prost(uint32, optional, tag = "7")]
     pub donor_v_idx: ::core::option::Option<u32>,
-    //// Index of the Joining region in the donor reference. The region in the
-    //// donor reference is guaranteed to be `Region::J` and the `universal_idx` in
-    //// the donor reference item will be equal to the `j_idx`
+    /// / Index of the Joining region in the donor reference. The region in the
+    /// / donor reference is guaranteed to be `Region::J` and the `universal_idx` in
+    /// / the donor reference item will be equal to the `j_idx`
     #[prost(uint32, optional, tag = "8")]
     pub donor_j_idx: ::core::option::Option<u32>,
     /// Concatenated universal reference =
-    ///     `nt_sequence` of universal_reference\[u_idx\] if u_idx is not None +
-    ///     `nt_sequence` of universal_reference\[v_idx\] +
-    ///     `nt_sequence` of universal_reference\[d_idx\] if d_idx is not None +
-    ///     `nt_sequence` of universal_reference\[j_idx\] +
-    ///     `nt_sequence` of universal_reference\[c_idx\] if c_idx is not None.
+    ///      `nt_sequence` of universal_reference\[u_idx\] if u_idx is not None +
+    ///      `nt_sequence` of universal_reference\[v_idx\] +
+    ///      `nt_sequence` of universal_reference\[d_idx\] if d_idx is not None +
+    ///      `nt_sequence` of universal_reference\[j_idx\] +
+    ///      `nt_sequence` of universal_reference\[c_idx\] if c_idx is not None.
     #[prost(bytes = "vec", required, tag = "9")]
     pub universal_reference: ::prost::alloc::vec::Vec<u8>,
     /// Alignment of the `nt_sequence` to the nucleotide sequence of the
@@ -206,11 +218,11 @@ pub struct ClonotypeChain {
     pub universal_reference_aln: Alignment,
     /// The concatenated donor reference is the same as the concatenated universal
     /// reference, however with substitutions:
-    ///     `nt_sequence` of donor_reference\[donor_v_idx\] if donor_v_idx is not
-    ///     None
+    ///      `nt_sequence` of donor_reference\[donor_v_idx\] if donor_v_idx is not
+    ///      None
     /// and
-    ///     `nt_sequence` of donor_reference\[donor_j_idx\] if donor_j_idx is not
-    ///     None.
+    ///      `nt_sequence` of donor_reference\[donor_j_idx\] if donor_j_idx is not
+    ///      None.
     #[prost(bytes = "vec", required, tag = "11")]
     pub donor_reference: ::prost::alloc::vec::Vec<u8>,
     /// Alignment of the `nt_sequence` to the nucleotide sequence of the
@@ -282,7 +294,9 @@ pub struct ClonotypeChain {
 /// Definition of a clonotype.
 ///
 /// A clonotype is composed of a list of exact subclonotypes
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Clonotype {
     /// The list of chains associated with this clonotype. The ordering of the
     /// chains is important as this order is preserved in the list of chains
@@ -308,7 +322,9 @@ pub struct Clonotype {
 /// struct. In the current version of enclone, the donor reference is only
 /// inferred for the V-REGIONs. But we could extend it to J-REGIONs in the
 /// future.
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UniversalReferenceItem {
     /// A unique identifier for this reference sequence that traces back to the
     /// reference fasta. Need not be ordered or continuous
@@ -328,7 +344,9 @@ pub struct UniversalReferenceItem {
 /// List of all universal reference sequences and metadata packaged in a
 /// convenient struct. Currently just a list of items. Could add metadata like
 /// species etc.
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct UniversalReference {
     /// UV(D)JC regions associated with a clonotype chain or an exact subclonotype
     /// chain are stored as indices into this vector
@@ -339,7 +357,9 @@ pub struct UniversalReference {
 /// struct. In the current version of enclone, the donor reference is only
 /// inferred for the V-REGIONs. But we could extend it to J-REGIONs in the
 /// future.
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DonorReferenceItem {
     /// Index of the parent sequence in the universal reference
     #[prost(uint32, required, tag = "1")]
@@ -368,7 +388,9 @@ pub struct DonorReferenceItem {
 /// List of all donor reference sequences and metadata packaged in a convenient
 /// struct. Currently just a list of items. Could add metadata like all donor
 /// names etc.
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct DonorReference {
     /// All the entries in this reference
     /// The donor V-REGION associated with a clonotype chain is stored as an index
@@ -376,7 +398,9 @@ pub struct DonorReference {
     #[prost(message, repeated, tag = "1")]
     pub items: ::prost::alloc::vec::Vec<DonorReferenceItem>,
 }
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GemWellInfo {
     #[prost(string, required, tag = "1")]
     pub donor: ::prost::alloc::string::String,
@@ -391,7 +415,9 @@ pub struct GemWellInfo {
     pub additional_data:
         ::std::collections::HashMap<::prost::alloc::string::String, ::prost::alloc::string::String>,
 }
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Metadata {
     /// The additional metadata columns specified by the user
     #[prost(string, repeated, tag = "1")]
@@ -410,7 +436,9 @@ pub struct Metadata {
 ///
 /// This message itself is not written in the proto file, but the order of
 /// messages follow the order of fields in this message
-#[derive(::serde::Serialize, ::serde::Deserialize, Clone, PartialEq, ::prost::Message)]
+#[derive(::serde::Serialize, ::serde::Deserialize)]
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct EncloneOutputs {
     #[prost(string, required, tag = "1")]
     pub version: ::prost::alloc::string::String,
@@ -459,4 +487,30 @@ pub enum Region {
     J = 3,
     /// Constant region
     C = 4,
+}
+impl Region {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Region::U => "U",
+            Region::V => "V",
+            Region::D => "D",
+            Region::J => "J",
+            Region::C => "C",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "U" => Some(Self::U),
+            "V" => Some(Self::V),
+            "D" => Some(Self::D),
+            "J" => Some(Self::J),
+            "C" => Some(Self::C),
+            _ => None,
+        }
+    }
 }
