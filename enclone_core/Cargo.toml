@@ -21,29 +21,32 @@ include = ["src/*.rs", "LICENSE.txt", "src/mammalian_fixed_len.table"]
 # in the root of the enclone repo.
 
 [dependencies]
-align_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-ansi_escape = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-attohttpc = { version = ">=0.19,<0.23", default-features = false, features = ["compress", "tls-rustls"] }
-bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+align_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+ansi_escape = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+attohttpc = { version = ">=0.19,<0.23", default-features = false, features = [
+    "compress",
+    "tls-rustls",
+] }
+bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 debruijn = "0.3"
 enclone_proto = { path = "../enclone_proto" }
 evalexpr = ">=7, <9"
-io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 itertools = "0.10"
 lazy_static = "1"
-mirror_sparse_matrix = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-perf_stats = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+mirror_sparse_matrix = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+perf_stats = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 qd = { git = "https://github.com/Barandis/qd" }
 rayon = "1"
 regex = { version = "1", default-features = false, features = ["std", "perf"] }
-stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 superslice = "1"
-tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 zstd = ">=0.10, <0.12"
 serde = "1.0"
 

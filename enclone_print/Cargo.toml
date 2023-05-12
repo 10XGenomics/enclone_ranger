@@ -22,36 +22,36 @@ publish = false
 # To keep compile time down, this file should *not* access the enclone crate.
 
 [dependencies]
-amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-ansi_escape = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+ansi_escape = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 bytes = "1"
 debruijn = "0.3"
 enclone_args = { path = "../enclone_args" }
 enclone_core = { path = "../enclone_core" }
 enclone_proto = { path = "../enclone_proto" }
 enclone_vars = { path = "../enclone_vars" }
-equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 evalexpr = ">=7, <9"
-expr_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+expr_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 itertools = "0.10"
-mirror_sparse_matrix = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+mirror_sparse_matrix = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 ndarray = "0.15"
 permutation = "0.4"
-pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 qd = { git = "https://github.com/Barandis/qd" }
 rayon = "1"
 regex = { version = "1", default-features = false, features = ["std", "perf"] }
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
-stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 triple_accel = "0.4"
-vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 
 [target.'cfg(not(windows))'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"

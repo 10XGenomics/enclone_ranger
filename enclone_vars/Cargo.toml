@@ -21,8 +21,8 @@ exclude = ["src/bin/var_test.rs", "src/vars"]
 # in the root of the enclone repo.
 
 [dependencies]
-io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
 itertools = "0.10"
-pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
+vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", rev = "78cb81f92ccff298f9fdcf1fff5a54f5870f5a7b" }
