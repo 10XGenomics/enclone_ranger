@@ -451,7 +451,7 @@ dependencies = [
  "debruijn",
  "enclone_core",
  "enclone_vars",
- "evalexpr",
+ "evalexpr 10.0.0",
  "expr_tools",
  "hdf5",
  "io_utils",
@@ -476,7 +476,7 @@ dependencies = [
  "bio_edit",
  "debruijn",
  "enclone_proto",
- "evalexpr",
+ "evalexpr 10.0.0",
  "hdf5",
  "io_utils",
  "itertools",
@@ -567,7 +567,7 @@ dependencies = [
  "enclone_print",
  "enclone_proto",
  "equiv",
- "evalexpr",
+ "evalexpr 10.0.0",
  "hdf5",
  "io_utils",
  "itertools",
@@ -621,16 +621,22 @@ dependencies = [
 
 [[package]]
 name = "evalexpr"
-version = "9.0.0"
+version = "9.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0924058b5793a2ff91113f62c3de5e96df6d5ec0f10e213af090522fab820430"
+checksum = "2f71b6fc6c2d8582e6b1f74aa1a2e2a544968df8b293beb3529efa4c3ff11eda"
+
+[[package]]
+name = "evalexpr"
+version = "10.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c6cffb2e9992a43637801ac84ca58bdb5acb2a426ab88a1e3d343b96cfaa845c"
 
 [[package]]
 name = "expr_tools"
 version = "0.1.3"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=master#14dc52c13e250fcb103d859007ef05033143bf1c"
 dependencies = [
- "evalexpr",
+ "evalexpr 9.1.0",
  "statrs",
  "string_utils",
  "vector_utils",
