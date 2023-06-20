@@ -621,9 +621,9 @@ dependencies = [
 
 [[package]]
 name = "evalexpr"
-version = "9.0.0"
+version = "11.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0924058b5793a2ff91113f62c3de5e96df6d5ec0f10e213af090522fab820430"
+checksum = "ec3b4e80fd8edee77d6fc35d59862d5765dae7512a95f49fd7bf03847c85b26a"
 
 [[package]]
 name = "expr_tools"
