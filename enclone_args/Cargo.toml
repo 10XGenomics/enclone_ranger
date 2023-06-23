@@ -29,7 +29,7 @@ enclone_vars = { path = "../enclone_vars" }
 evalexpr = ">=7, <12"
 expr_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-itertools = "0.10"
+itertools.workspace = true
 mirror_sparse_matrix = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 rand = "0.8"
 rayon = "1"
