@@ -29,7 +29,7 @@ enclone_proto = { path = "../enclone_proto" }
 equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 graph_simple = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-itertools = "0.10"
+itertools.workspace = true
 perf_stats = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 petgraph = "0.6"
 pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }

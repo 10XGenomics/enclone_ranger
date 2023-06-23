@@ -60,3 +60,6 @@ split-debuginfo = "unpacked"
 # and then cargo b worked.  This seemed to speed up loading by 5-10%, but that did not seem
 # like enough to justify using zld.  It might be worth trying again later, as it is being
 # improved.
+
+[workspace.dependencies]
+itertools = ">=0.10"
