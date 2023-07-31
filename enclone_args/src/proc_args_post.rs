@@ -145,7 +145,7 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn proc_args_post(
-    mut ctl: &mut EncloneControl,
+    ctl: &mut EncloneControl,
     args: &[String],
     metas: &[String],
     metaxs: &[String],
