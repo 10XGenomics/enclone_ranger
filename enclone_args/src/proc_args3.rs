@@ -440,7 +440,7 @@ pub fn proc_xcr(
     gex: &str,
     bc: &str,
     have_gex: bool,
-    mut ctl: &mut EncloneControl,
+    ctl: &mut EncloneControl,
 ) -> Result<(), String> {
     ctl.origin_info = OriginInfo::default();
     if ((ctl.gen_opt.tcr || ctl.gen_opt.tcrgd) && f.starts_with("BCR="))
@@ -694,7 +694,7 @@ pub fn proc_xcr(
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn proc_meta_core(lines: &[String], mut ctl: &mut EncloneControl) -> Result<(), String> {
+pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), String> {
     let mut fields = Vec::<String>::new();
     let mut donors = Vec::<String>::new();
     for (count, s) in lines.iter().enumerate() {

@@ -16,7 +16,7 @@ use string_utils::{strme, TextUtils};
 
 // Process arguments.
 
-pub fn proc_args(mut ctl: &mut EncloneControl, args: &[String]) -> Result<(), String> {
+pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String> {
     //
     // Start.
 
