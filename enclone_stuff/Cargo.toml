@@ -20,14 +20,14 @@ publish = false
 # in the root of the enclone repo.
 
 [dependencies]
-amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 debruijn = "0.3"
 enclone_core = { path = "../enclone_core" }
 enclone_print = { path = "../enclone_print" }
 enclone_proto = { path = "../enclone_proto" }
 enclone = { path = "../enclone" }
 enclone_args = { path = "../enclone_args" }
-equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 evalexpr = ">=7, <12"
 io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 itertools.workspace = true
@@ -35,11 +35,11 @@ ndarray = "0.15"
 qd = { git = "https://github.com/Barandis/qd" }
 rayon = "1"
 regex = { version = "1", default-features = false, features = ["std", "perf"] }
-stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
+string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
+tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
-vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 
 [target.'cfg(not(windows))'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"

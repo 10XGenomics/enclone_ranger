@@ -18,7 +18,7 @@ publish = false
 # in the root of the enclone repo.
 
 [dependencies]
-bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 byteorder = "1"
 prost = { version = ">=0.9, <0.12", default_features = false, features = ["std", "prost-derive"] }
 serde = "1"

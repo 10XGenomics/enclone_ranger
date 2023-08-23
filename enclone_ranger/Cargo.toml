@@ -26,7 +26,7 @@ enclone_stuff = { path = "../enclone_stuff" }
 enclone = { path = "../enclone" }
 enclone_args = { path = "../enclone_args" }
 rayon = "1"
-string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 
 [target.'cfg(not(windows))'.dependencies.hdf5]
