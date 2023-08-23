@@ -271,7 +271,9 @@ fn parse_vector_entry_from_json(
                 true,
                 &mut log,
                 Some(ctl.gen_opt.gamma_delta),
-            ) {
+            )
+            .0
+            {
                 print!("{}", strme(&log));
                 println!("invalid");
                 return Ok(());
@@ -283,7 +285,9 @@ fn parse_vector_entry_from_json(
             false,
             &mut log,
             Some(ctl.gen_opt.gamma_delta),
-        ) {
+        )
+        .0
+        {
             return Ok(());
         }
         let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();

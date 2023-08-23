@@ -40,7 +40,7 @@ stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-tool
 string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 superslice = "1"
 tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
 zstd = ">=0.10, <0.13"
 serde = "1.0"
