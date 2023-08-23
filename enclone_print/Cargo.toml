@@ -32,7 +32,7 @@ enclone_proto = { path = "../enclone_proto" }
 enclone_vars = { path = "../enclone_vars" }
 equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 expr_tools = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
-io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 itertools.workspace = true
 ndarray = "0.15"
 permutation = "0.4"

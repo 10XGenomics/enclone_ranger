@@ -34,8 +34,8 @@ dependencies = [
  "bio_edit",
  "debruijn",
  "itertools",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
+ "vector_utils",
 ]
 
 [[package]]
@@ -44,7 +44,7 @@ version = "0.1.7"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
  "debruijn",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
 ]
 
 [[package]]
@@ -52,8 +52,8 @@ name = "ansi_escape"
 version = "0.1.3"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
+ "vector_utils",
 ]
 
 [[package]]
@@ -442,7 +442,7 @@ dependencies = [
  "equiv",
  "graph_simple",
  "hdf5",
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
+ "io_utils",
  "itertools",
  "pager",
  "perf_stats",
@@ -451,9 +451,9 @@ dependencies = [
  "qd",
  "rayon",
  "stats_utils",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
  "vdj_ann",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
@@ -466,16 +466,16 @@ dependencies = [
  "evalexpr",
  "expr_tools",
  "hdf5",
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
+ "io_utils",
  "itertools",
  "mirror_sparse_matrix",
  "rand",
  "rayon",
  "regex",
  "serde_json",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
  "vdj_ann",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
@@ -490,7 +490,7 @@ dependencies = [
  "enclone_proto",
  "evalexpr",
  "hdf5",
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
+ "io_utils",
  "itertools",
  "lazy_static",
  "mirror_sparse_matrix",
@@ -500,12 +500,12 @@ dependencies = [
  "regex",
  "serde",
  "stats_utils",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
  "superslice",
  "tables",
  "tilde-expand",
  "vdj_ann",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
  "zstd",
 ]
 
@@ -524,7 +524,7 @@ dependencies = [
  "equiv",
  "expr_tools",
  "hdf5",
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
+ "io_utils",
  "itertools",
  "ndarray",
  "permutation",
@@ -533,11 +533,11 @@ dependencies = [
  "regex",
  "serde_json",
  "stats_utils",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
  "tables",
  "triple_accel",
  "vdj_ann",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
@@ -563,7 +563,7 @@ dependencies = [
  "enclone_stuff",
  "hdf5",
  "rayon",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
  "vdj_ann",
 ]
 
@@ -581,28 +581,28 @@ dependencies = [
  "equiv",
  "evalexpr",
  "hdf5",
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
+ "io_utils",
  "itertools",
  "ndarray",
  "qd",
  "rayon",
  "regex",
  "stats_utils",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
  "tables",
  "vdj_ann",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
 name = "enclone_vars"
 version = "0.5.219"
 dependencies = [
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
+ "io_utils",
  "itertools",
  "pretty_trace",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
+ "vector_utils",
 ]
 
 [[package]]
@@ -650,8 +650,8 @@ source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/waste
 dependencies = [
  "evalexpr",
  "statrs",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
+ "vector_utils",
 ]
 
 [[package]]
@@ -661,8 +661,8 @@ source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/waste
 dependencies = [
  "debruijn",
  "flate2",
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "io_utils",
+ "string_utils",
 ]
 
 [[package]]
@@ -751,7 +751,7 @@ version = "0.1.5"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
  "petgraph",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
@@ -853,7 +853,7 @@ dependencies = [
  "graph_simple",
  "kmer_lookup",
  "petgraph",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
@@ -899,25 +899,13 @@ dependencies = [
 [[package]]
 name = "io_utils"
 version = "0.3.2"
-source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=master#7b9f2518f0614df1fa66afa8356c4f3e87b7e25e"
-dependencies = [
- "bincode",
- "flate2",
- "lz4",
- "serde",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
-]
-
-[[package]]
-name = "io_utils"
-version = "0.3.2"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
  "bincode",
  "flate2",
  "lz4",
  "serde",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
 ]
 
 [[package]]
@@ -960,7 +948,7 @@ source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/waste
 dependencies = [
  "debruijn",
  "rayon",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
@@ -1258,9 +1246,9 @@ name = "perf_stats"
 version = "0.1.8"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "io_utils",
  "libc",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
 ]
 
 [[package]]
@@ -1322,14 +1310,14 @@ dependencies = [
 [[package]]
 name = "pretty_trace"
 version = "0.5.24"
-source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=master#7b9f2518f0614df1fa66afa8356c4f3e87b7e25e"
+source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
  "backtrace",
  "lazy_static",
  "libc",
  "nix",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
+ "string_utils",
+ "vector_utils",
 ]
 
 [[package]]
@@ -1730,17 +1718,9 @@ source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/waste
 [[package]]
 name = "string_utils"
 version = "0.1.4"
-source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=master#7b9f2518f0614df1fa66afa8356c4f3e87b7e25e"
-dependencies = [
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=master)",
-]
-
-[[package]]
-name = "string_utils"
-version = "0.1.4"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
@@ -1778,9 +1758,9 @@ name = "tables"
 version = "0.1.5"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "io_utils",
  "itertools",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
 ]
 
 [[package]]
@@ -1920,15 +1900,15 @@ dependencies = [
  "debruijn",
  "fasta_tools",
  "hyperbase",
- "io_utils 0.3.2 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "io_utils",
  "itertools",
  "kmer_lookup",
  "serde",
  "serde_json",
  "stats_utils",
- "string_utils 0.1.4 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "string_utils",
  "vdj_types",
- "vector_utils 0.1.5 (git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig)",
+ "vector_utils",
 ]
 
 [[package]]
@@ -1942,16 +1922,7 @@ dependencies = [
 [[package]]
 name = "vector_utils"
 version = "0.1.5"
-source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=master#6b3ff3b61401a95a13fc97230ff6bdaadaaaceac"
-dependencies = [
- "permutation",
- "superslice",
-]
-
-[[package]]
-name = "vector_utils"
-version = "0.1.5"
-source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#16a96cf414d46815d43e96da561b2fa41631985b"
+source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=nmmsv/wasted-data-contig#3910582831983e521b1677b420aa18db6a4e525d"
 dependencies = [
  "permutation",
  "superslice",

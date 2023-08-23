@@ -29,7 +29,7 @@ enclone = { path = "../enclone" }
 enclone_args = { path = "../enclone_args" }
 equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 evalexpr = ">=7, <12"
-io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 itertools.workspace = true
 ndarray = "0.15"
 qd = { git = "https://github.com/Barandis/qd" }

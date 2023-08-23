@@ -28,11 +28,11 @@ enclone_core = { path = "../enclone_core" }
 enclone_proto = { path = "../enclone_proto" }
 equiv = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 graph_simple = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
-io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 itertools.workspace = true
 perf_stats = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 petgraph = "0.6"
-pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+pretty_trace = { version = "0.5", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
 qd = { git = "https://github.com/Barandis/qd" }
 rayon = "1"
 stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "nmmsv/wasted-data-contig" }
