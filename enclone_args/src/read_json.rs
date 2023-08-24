@@ -272,7 +272,7 @@ fn parse_vector_entry_from_json(
                 &mut log,
                 Some(ctl.gen_opt.gamma_delta),
             )
-            .0
+            .productive
             {
                 print!("{}", strme(&log));
                 println!("invalid");
@@ -286,7 +286,7 @@ fn parse_vector_entry_from_json(
             &mut log,
             Some(ctl.gen_opt.gamma_delta),
         )
-        .0
+        .productive
         {
             return Ok(());
         }
