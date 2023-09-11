@@ -68,7 +68,7 @@ jobs:
           echo
           "depth=$(("${{github.event.pull_request.commits}}" + 2))"
           >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: ${{ steps.fetch_depth.outputs.depth }}
 
