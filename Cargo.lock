@@ -33,7 +33,7 @@ source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=master#7b9f
 dependencies = [
  "bio_edit",
  "debruijn",
- "itertools",
+ "itertools 0.11.0",
  "string_utils",
  "vector_utils",
 ]
@@ -138,7 +138,7 @@ name = "binary_vec_io"
 version = "0.1.12"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=master#7b9f2518f0614df1fa66afa8356c4f3e87b7e25e"
 dependencies = [
- "itertools",
+ "itertools 0.11.0",
 ]
 
 [[package]]
@@ -375,7 +375,7 @@ checksum = "346d29ff45270b3642817082a513e55765ef5686b68e6cc0ed595897a64439d5"
 dependencies = [
  "bit-set",
  "boomphf",
- "itertools",
+ "itertools 0.11.0",
  "log",
  "num-traits",
  "serde",
@@ -437,7 +437,7 @@ dependencies = [
  "graph_simple",
  "hdf5",
  "io_utils",
- "itertools",
+ "itertools 0.11.0",
  "pager",
  "perf_stats",
  "petgraph",
@@ -461,7 +461,7 @@ dependencies = [
  "expr_tools",
  "hdf5",
  "io_utils",
- "itertools",
+ "itertools 0.11.0",
  "mirror_sparse_matrix",
  "rand",
  "rayon",
@@ -485,7 +485,7 @@ dependencies = [
  "evalexpr",
  "hdf5",
  "io_utils",
- "itertools",
+ "itertools 0.11.0",
  "lazy_static",
  "mirror_sparse_matrix",
  "perf_stats",
@@ -519,7 +519,7 @@ dependencies = [
  "expr_tools",
  "hdf5",
  "io_utils",
- "itertools",
+ "itertools 0.11.0",
  "ndarray",
  "permutation",
  "qd",
@@ -576,7 +576,7 @@ dependencies = [
  "evalexpr",
  "hdf5",
  "io_utils",
- "itertools",
+ "itertools 0.11.0",
  "ndarray",
  "qd",
  "rayon",
@@ -593,7 +593,7 @@ name = "enclone_vars"
 version = "0.5.219"
 dependencies = [
  "io_utils",
- "itertools",
+ "itertools 0.11.0",
  "pretty_trace",
  "string_utils",
  "vector_utils",
@@ -907,6 +907,15 @@ name = "itertools"
 version = "0.10.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
 dependencies = [
  "either",
 ]
@@ -1281,7 +1290,7 @@ checksum = "09963355b9f467184c04017ced4a2ba2d75cbcb4e7462690d388233253d4b1a9"
 dependencies = [
  "anstyle",
  "difflib",
- "itertools",
+ "itertools 0.10.5",
  "predicates-core",
 ]
 
@@ -1374,7 +1383,7 @@ checksum = "119533552c9a7ffacc21e099c24a0ac8bb19c2a2a3f363de84cd9b844feab270"
 dependencies = [
  "bytes",
  "heck",
- "itertools",
+ "itertools 0.10.5",
  "lazy_static",
  "log",
  "multimap",
@@ -1395,7 +1404,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5d2d8d10f3c6ded6da8b05b5fb3b8a5082514344d56c9f871412d29b4e075b4"
 dependencies = [
  "anyhow",
- "itertools",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn",
@@ -1753,7 +1762,7 @@ version = "0.1.5"
 source = "git+https://github.com/10XGenomics/rust-toolbox.git?branch=master#7b9f2518f0614df1fa66afa8356c4f3e87b7e25e"
 dependencies = [
  "io_utils",
- "itertools",
+ "itertools 0.11.0",
  "string_utils",
 ]
 
@@ -1894,7 +1903,7 @@ dependencies = [
  "fasta_tools",
  "hyperbase",
  "io_utils",
- "itertools",
+ "itertools 0.11.0",
  "kmer_lookup",
  "serde",
  "serde_json",
