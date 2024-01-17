@@ -796,16 +796,21 @@ pub fn join_one<'a>(
                 let cdr1_stop1 = x1.fr2_start.unwrap();
                 let cdr1_start2 = x2.cdr1_start.unwrap();
                 let cdr1_stop2 = x2.fr2_start.unwrap();
-                let len = cdr1_stop1 - cdr1_start1;
-                if cdr1_stop2 - cdr1_start2 == len {
-                    let mut diffs = 0;
-                    for p in 0..len {
-                        if x1.seq_del_amino[p + cdr1_start1] != x2.seq_del_amino[p + cdr1_start2] {
-                            diffs += 1;
+                // there are some problematic annotations for which this not upheld
+                if cdr1_start1 <= cdr1_stop1 && cdr1_start2 <= cdr1_stop2 {
+                    let len = cdr1_stop1 - cdr1_start1;
+                    if cdr1_stop2 - cdr1_start2 == len {
+                        let mut diffs = 0;
+                        for p in 0..len {
+                            if x1.seq_del_amino[p + cdr1_start1]
+                                != x2.seq_del_amino[p + cdr1_start2]
+                            {
+                                diffs += 1;
+                            }
                         }
+                        cdr1_len = len;
+                        cdr1_diffs = diffs;
                     }
-                    cdr1_len = len;
-                    cdr1_diffs = diffs;
                 }
             }
             if x1.cdr2_start.is_some()
@@ -818,7 +823,7 @@ pub fn join_one<'a>(
                 let cdr2_start2 = x2.cdr2_start.unwrap();
                 let cdr2_stop2 = x2.fr3_start.unwrap();
                 // this was violated once when using IMGT reference
-                if cdr2_start1 <= cdr2_stop1 {
+                if cdr2_start1 <= cdr2_stop1 && cdr2_start2 <= cdr2_stop2 {
                     let len = cdr2_stop1 - cdr2_start1;
                     if cdr2_stop2 - cdr2_start2 == len {
                         let mut diffs = 0;
