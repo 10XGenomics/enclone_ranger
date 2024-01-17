@@ -796,7 +796,7 @@ pub fn join_one<'a>(
                 let cdr1_stop1 = x1.fr2_start.unwrap();
                 let cdr1_start2 = x2.cdr1_start.unwrap();
                 let cdr1_stop2 = x2.fr2_start.unwrap();
-                // there are some problematic annotations for which this not upheld
+                // there are some problematic annotations for which this is not upheld
                 if cdr1_start1 <= cdr1_stop1 && cdr1_start2 <= cdr1_stop2 {
                     let len = cdr1_stop1 - cdr1_start1;
                     if cdr1_stop2 - cdr1_start2 == len {
