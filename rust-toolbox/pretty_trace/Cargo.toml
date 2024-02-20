@@ -23,7 +23,10 @@ tables = { path = "../tables", optional = true }
 vector_utils = { path = "../vector_utils" }
 
 [target.'cfg(not(windows))'.dependencies]
-pprof.workspace = true
+pprof = { version = ">=0.7, <0.14", features = ["prost-codec"], optional = true }
+
+[features]
+pprof = ["dep:pprof", "dep:io_utils", "dep:stats_utils", "dep:tables"]
 
 [dev-dependencies]
 rayon.workspace = true

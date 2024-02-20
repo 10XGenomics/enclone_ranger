@@ -12,8 +12,8 @@ repository = "https://github.com/10XGenomics/rust-toolbox"
 num-traits.workspace = true
 
 [dev-dependencies]
-num-bigint.workspace = true
-num-rational.workspace = true
-rand.workspace = true
+num-bigint = "^0.4"
+num-rational = "^0.4"
+rand = ">=0.7.3, <0.9"
 rayon.workspace = true
 vector_utils = { path = "../vector_utils" }
