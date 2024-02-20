@@ -11,18 +11,18 @@ repository = "https://github.com/10XGenomics/rust-toolbox"
 include = ["src/**/*"]
 
 [dependencies]
-align_tools = { version = "0.1", path = "../align_tools" }
-amino = { version = "0.1", path = "../amino" }
-bio_edit = { version = "0.1", path = "../bio_edit" }
-debruijn = "0.3"
-fasta_tools =  { version = "0.1", path = "../fasta_tools" }
-hyperbase = { version = "0.1", path = "../hyperbase" }
-io_utils = { version = "0.3", path = "../io_utils" }
-itertools = ">= 0.8, <= 0.11"
-kmer_lookup = { version = "0.1", path = "../kmer_lookup" }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-stats_utils = { version = "0.1", path = "../stats_utils" }
-string_utils = { version = "0.1", path = "../string_utils" }
-vector_utils = { version = "0.1", path = "../vector_utils" }
-vdj_types = { version = "0.2", path = "../vdj_types" }
+align_tools = { path = "../align_tools" }
+amino = { path = "../amino" }
+bio_edit = { path = "../bio_edit" }
+debruijn.workspace = true
+fasta_tools =  { path = "../fasta_tools" }
+hyperbase = { path = "../hyperbase" }
+io_utils = { path = "../io_utils" }
+itertools.workspace = true
+kmer_lookup = { path = "../kmer_lookup" }
+serde.workspace = true
+serde_json.workspace = true
+stats_utils = { path = "../stats_utils" }
+string_utils = { path = "../string_utils" }
+vector_utils = { path = "../vector_utils" }
+vdj_types = { path = "../vdj_types" }

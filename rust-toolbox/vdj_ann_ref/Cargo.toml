@@ -11,14 +11,14 @@ repository = "https://github.com/10XGenomics/rust-toolbox"
 publish = false
 
 [dependencies]
-debruijn = "0.3"
-exons = { version = "0.1", path = "../exons" }
-fasta_tools =  { version = "0.1", path = "../fasta_tools" }
-flate2 = "1"
-io_utils = { version = "0.3", path = "../io_utils" }
-perf_stats = { version = "0.1", path = "../perf_stats" }
-pretty_trace = { version = "0.5", path = "../pretty_trace" }
-sha2 = ">=0.9.3, <0.11"
-string_utils = { version = "0.1", path = "../string_utils" }
-vector_utils = { version = "0.1", path = "../vector_utils" }
-vdj_ann = { version = "0.4", path = "../vdj_ann" }
+debruijn.workspace = true
+exons = { path = "../exons" }
+fasta_tools =  { path = "../fasta_tools" }
+flate2.workspace = true
+io_utils = { path = "../io_utils" }
+perf_stats = { path = "../perf_stats" }
+pretty_trace = { path = "../pretty_trace" }
+sha2.workspace = true
+string_utils = { path = "../string_utils" }
+vector_utils = { path = "../vector_utils" }
+vdj_ann = { path = "../vdj_ann" }

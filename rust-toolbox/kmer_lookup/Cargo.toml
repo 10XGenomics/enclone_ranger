@@ -8,6 +8,6 @@ repository = "https://github.com/10XGenomics/rust-toolbox"
 edition = "2018"
 
 [dependencies]
-debruijn = "0.3"
-rayon = "1"
-vector_utils = { version = "0.1", path = "../vector_utils" }
+debruijn.workspace = true
+rayon.workspace = true
+vector_utils = { path = "../vector_utils" }

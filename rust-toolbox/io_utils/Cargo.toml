@@ -9,8 +9,8 @@ edition = "2018"
 include = ["src/lib.rs", "LICENSE", "README.md"]
 
 [dependencies]
-bincode = "1.1.3"
-flate2 = "1"
-lz4 = "1"
-serde = { version = "1", features = ["derive"] }
-string_utils = { version = "0.1", path = "../string_utils" }
+bincode.workspace = true
+flate2.workspace = true
+lz4.workspace = true
+serde.workspace = true
+string_utils = { path = "../string_utils" }

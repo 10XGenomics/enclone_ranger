@@ -8,6 +8,6 @@ edition = "2018"
 repository = "https://github.com/10XGenomics/rust-toolbox"
 
 [dependencies]
-io_utils = { version = "0.3", path = "../io_utils" }
-libc = "0.2"
-string_utils = { version = "0.1", path = "../string_utils" }
+io_utils = { path = "../io_utils" }
+libc.workspace = true
+string_utils = { path = "../string_utils" }

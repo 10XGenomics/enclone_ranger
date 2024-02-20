@@ -8,8 +8,8 @@ edition = "2018"
 repository = "https://github.com/10XGenomics/rust-toolbox"
 
 [dependencies]
-binary_vec_io = { version = "0.1", path = "../binary_vec_io" }
+binary_vec_io = { path = "../binary_vec_io" }
 
 [dev-dependencies]
-io_utils = { version = "0.3", path = "../io_utils" }
-pretty_trace = { version = "0.5", path = "../pretty_trace" }
+io_utils = { path = "../io_utils" }
+pretty_trace = { path = "../pretty_trace" }

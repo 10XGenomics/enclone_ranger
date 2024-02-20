@@ -8,5 +8,5 @@ repository = "https://github.com/10XGenomics/rust-toolbox"
 edition = "2018"
 
 [dependencies]
-debruijn = "0.3"
-string_utils = { version = "0.1", path = "../string_utils" }
+debruijn.workspace = true
+string_utils = { path = "../string_utils" }
