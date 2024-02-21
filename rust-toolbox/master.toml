@@ -1,0 +1,50 @@
+align_tools = { version = "0.1", path = "../align_tools" }
+amino = { version = "0.1", path = "../amino" }
+ansi_escape = { version = "0.1", path = "../ansi_escape" }
+binary_vec_io = { version = "0.1", path = "../binary_vec_io" }
+bio_edit = { version = "0.1", path = "../bio_edit" }
+bio-types = "0.12"
+bit-set = "0.5"
+debruijn = "0.3"
+dna = { version = "0.1", path = "../dna" }
+enum-iterator = ">=0.6, <0.8"
+equiv = { version = "0.1", path = "../equiv" }
+evalexpr = "7"
+exons = { version = "0.1", path = "../exons" }
+fasta_tools =  { version = "0.1", path = "../fasta_tools" }
+flate2 = "1"
+graph_simple = { version = "0.1", path = "../graph_simple" }
+hyperbase = { version = "0.1", path = "../hyperbase" }
+io_utils = { version = "0.3", path = "../io_utils" }
+itertools = ">= 0.8, <= 0.11"
+kmer_lookup = { version = "0.1", path = "../kmer_lookup" }
+lazy_static = "1"
+libc = "0.2"
+load_feature_bc = { version = "0.1", path = "../load_feature_bc" }
+lz4 = "1"
+mirror_sparse_matrix = { version = "0.1", path = "../mirror_sparse_matrix" }
+nix = ">=0.19.1, <0.24"
+num-bigint = "^0.4"
+num-rational = "^0.4"
+num-traits = "^0.2"
+perf_stats = { version = "0.1", path = "../perf_stats" }
+permutation = "0.4"
+petgraph = ">=0.5,<0.7"
+pprof = { version = "0.6", features = ["protobuf"] }
+pretty_trace = { version = "0.5", path = "../pretty_trace" }
+rand = ">=0.7.3, <0.9"
+rayon = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = ">=0.9.3, <0.11"
+statrs = "0.15"
+stats_utils = { version = "0.1", path = "../stats_utils" }
+stirling_numbers = { version = "0.1", path = "../stirling_numbers" }
+string_utils = { version = "0.1", path = "../string_utils" }
+strum = ">=0.18.0, <0.22"
+strum_macros = ">=0.18.0, <0.22"
+superslice = "1"
+tables = { version = "0.1", path = "../tables" }
+vdj_ann = { version = "0.4", path = "../vdj_ann" }
+vdj_types = { version = "0.2", path = "../vdj_types" }
+vector_utils = { version = "0.1", path = "../vector_utils" }
