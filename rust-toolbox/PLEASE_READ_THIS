@@ -1,0 +1,6 @@
+Please test with "cargo test -- --nocapture".
+
+Without the -- --nocapture, the test crashes weirdly.  See comments at the test
+in pretty_trace/src/lib.rs.
+
+The tests are only confirmed to work under linux.  They failed under OS X when tested.
