@@ -211,9 +211,9 @@ fn main() {
     let version = "4.0.0";
     let source2: String;
     if species == "human" {
-        source2 = format!("vdj_GRCh38_alts_ensembl-{}", version);
+        source2 = format!("vdj_GRCh38_alts_ensembl-{version}");
     } else if species == "mouse" {
-        source2 = format!("vdj_GRCm38_alts_ensembl-{}", version);
+        source2 = format!("vdj_GRCm38_alts_ensembl-{version}");
     } else {
         source2 = String::new();
     }
@@ -532,7 +532,6 @@ fn main() {
 
         left_trims.push(("IGLC2", 1));
     }
-    if species == "balbc" {}
 
     // Normalize exceptions.
 
@@ -555,47 +554,38 @@ fn main() {
             "balbc" => "mus_musculus_balbcj",
             _ => "",
         };
-        let releasep = format!("release-{}", release);
+        let releasep = format!("release-{release}");
         let csn = cap1(species_name);
         match (species, ftype) {
-            ("mouse", "gff3") => format!(
-                "{}/{}/{}/{}.GRCm38.{}.gff3",
-                releasep, ftype, species_name, csn, release
-            ),
-            ("mouse", "gtf") => format!(
-                "{}/{}/{}/{}.GRCm38.{}.gtf",
-                releasep, ftype, species_name, csn, release
-            ),
-            ("mouse", "fasta") => format!(
-                "{}/{}/{}/dna/{}.GRCm38.dna.toplevel.fa",
-                releasep, ftype, species_name, csn
-            ),
+            ("mouse", "gff3") => {
+                format!("{releasep}/{ftype}/{species_name}/{csn}.GRCm38.{release}.gff3")
+            }
+            ("mouse", "gtf") => {
+                format!("{releasep}/{ftype}/{species_name}/{csn}.GRCm38.{release}.gtf")
+            }
+            ("mouse", "fasta") => {
+                format!("{releasep}/{ftype}/{species_name}/dna/{csn}.GRCm38.dna.toplevel.fa")
+            }
 
-            ("balbc", "gff3") => format!(
-                "{}/{}/{}/{}.BALB_cJ_v1.{}.gff3",
-                releasep, ftype, species_name, csn, release
-            ),
-            ("balbc", "gtf") => format!(
-                "{}/{}/{}/{}.BALB_cJ_v1.{}.gtf",
-                releasep, ftype, species_name, csn, release
-            ),
-            ("balbc", "fasta") => format!(
-                "{}/{}/{}/dna/{}.BALB_cJ_v1.dna.toplevel.fa",
-                releasep, ftype, species_name, csn
-            ),
+            ("balbc", "gff3") => {
+                format!("{releasep}/{ftype}/{species_name}/{csn}.BALB_cJ_v1.{release}.gff3")
+            }
+            ("balbc", "gtf") => {
+                format!("{releasep}/{ftype}/{species_name}/{csn}.BALB_cJ_v1.{release}.gtf")
+            }
+            ("balbc", "fasta") => {
+                format!("{releasep}/{ftype}/{species_name}/dna/{csn}.BALB_cJ_v1.dna.toplevel.fa")
+            }
 
             ("human", "gff3") => format!(
-                "{}/{}/{}/{}.GRCh38.{}.chr_patch_hapl_scaff.gff3",
-                releasep, ftype, species_name, csn, release
+                "{releasep}/{ftype}/{species_name}/{csn}.GRCh38.{release}.chr_patch_hapl_scaff.gff3"
             ),
             ("human", "gtf") => format!(
-                "{}/{}/{}/{}.GRCh38.{}.chr_patch_hapl_scaff.gtf",
-                releasep, ftype, species_name, csn, release
+                "{releasep}/{ftype}/{species_name}/{csn}.GRCh38.{release}.chr_patch_hapl_scaff.gtf"
             ),
-            ("human", "fasta") => format!(
-                "{}/{}/{}/dna/{}.GRCh38.dna.toplevel.fa",
-                releasep, ftype, species_name, csn
-            ),
+            ("human", "fasta") => {
+                format!("{releasep}/{ftype}/{species_name}/dna/{csn}.GRCh38.dna.toplevel.fa")
+            }
             _ => String::new(),
         }
     }
@@ -609,16 +599,16 @@ fn main() {
 
     if download {
         fn fetch(species: &str, ftype: &str, release: i32) {
-            println!("fetching {}.{}", species, ftype);
+            println!("fetching {species}.{ftype}");
             let path = ensembl_path(species, ftype, release);
             let external = "ftp://ftp.ensembl.org/pub";
             let internal = "/mnt/opt/meowmix_git/ensembl";
             let dir = format!("{}/{}", internal, path.rev_before("/"));
             fs::create_dir_all(&dir).unwrap();
-            let full_path = format!("{}/{}", internal, path);
+            let full_path = format!("{internal}/{path}");
             Command::new("wget")
                 .current_dir(&dir)
-                .arg(format!("{}/{}.gz", external, path))
+                .arg(format!("{external}/{path}.gz"))
                 .status()
                 .expect("wget failed");
             if ftype != "fasta" {
@@ -660,7 +650,7 @@ fn main() {
 
     // Generate reference.json.  Note version number.
 
-    let mut json = open_for_write_new![&format!("{}/{}/reference.json", root, species)];
+    let mut json = open_for_write_new![&format!("{root}/{species}/reference.json")];
     fwriteln!(json, "{{");
     let mut sha256 = Sha256::new();
     copy(&mut File::open(&fasta).unwrap(), &mut sha256).unwrap();
@@ -795,7 +785,7 @@ fn main() {
         ]
         .iter()
         {
-            gene2 = gene2.replace(&format!("{} ", x), &x[0..1].to_uppercase());
+            gene2 = gene2.replace(&format!("{x} "), &x[0..1].to_uppercase());
         }
 
         // More fixing.
@@ -972,7 +962,7 @@ fn main() {
                 } else {
                     starts[i + 1] - stops[i]
                 };
-                print!(", intron = {}", intron);
+                print!(", intron = {intron}");
             }
         } else if exons[i].0.as_bytes()[3] == b'V' {
             print!(", 5'-UTR");
