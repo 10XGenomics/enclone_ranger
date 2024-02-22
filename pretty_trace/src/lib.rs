@@ -22,11 +22,6 @@
 //! addition, unlike rust native tracebacks, pretty traces are obtained without
 //! setting an environment variable.
 //!
-//! # Example of native versus pretty trace output
-// See discussion @ https://github.com/rust-lang/rust/issues/32104.
-// There is no really good way to include an image.
-//! ![native vs pretty trace output](https://raw.githubusercontent.com/10XGenomics/rust-toolbox/master/pretty_trace/images/long_vs_short_traceback.jpg)
-//!
 //! # Profiling
 //!
 //! Profiling is a fundamental tool for optimizing code.
@@ -51,18 +46,6 @@
 //! <code>stop_profiling</code>.  Note that to produce useful output, one needs to specify a list
 //! of blacklisted crates, such as <code>std</code>.  The entries from these crates are removed
 //! from the tracebacks.
-//!
-//! # Example of pretty trace profiling output
-//!
-//! ![profiling output](https://raw.githubusercontent.com/10XGenomics/rust-toolbox/master/pretty_trace/images/profile.png)
-//!
-//! Here pretty trace profiling reveals exactly what some code was doing at
-//! random instances; we show the first of the collated tracebacks.  More were
-//! attempted: of attempted tracebacks, 95.8% are reported.  Unreported tracebacks
-//! would be those lying entirely in blacklisted crates.
-//!
-//! Each line shows a function name, the crate it is in, the version of the crate (if known),
-//! the file name in the crate, and the line number.
 //!
 //! # A brief guide for using pretty trace
 //!
