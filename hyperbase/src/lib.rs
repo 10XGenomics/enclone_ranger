@@ -316,7 +316,7 @@ impl Hyper {
                 continue;
             }
             n += 1;
-            println!("\nCOMPONENT {}", n);
+            println!("\nCOMPONENT {n}");
             for i in 0..comp[j].len() {
                 let e = comp[j][i] as usize;
                 let v = self.h.g.to_left(e as u32);
@@ -597,8 +597,8 @@ impl Hyper {
         // This is complicated.
 
         let mut bound = Vec::<(u32, u32)>::new();
-        while !vertex_queue.is_empty() {
-            let v = vertex_queue.pop().unwrap();
+        while let Some(v) = vertex_queue.pop() {
+            
             if !vertex_kill[v.index()] {
                 continue;
             }
@@ -644,8 +644,8 @@ impl Hyper {
         let mut have: Vec<u32>;
         let mut havex: Vec<bool> = vec![false; (maxread + 1) as usize];
         self.ids.reserve(bound.len());
-        while !bound.is_empty() {
-            let bounds = bound.pop().unwrap();
+        while let Some(bounds) = bound.pop() {
+            
             let new_edge_no: usize = self.h.g.edge_count();
             let mut new_edge = self.h.g.edge_obj(bounds.0).clone();
             have = self.ids[bounds.0 as usize].clone();
@@ -786,8 +786,7 @@ impl Hyper {
             let (e1, e2) = (homomorphism_fails[0].0, homomorphism_fails[0].1);
             let (re1, re2) = (self.inv[e1], self.inv[e2]);
             println!(
-                "first has e1 = {}, e2 = {}, re1 = {}, re2 = {}",
-                e1, e2, re1, re2
+                "first has e1 = {e1}, e2 = {e2}, re1 = {re1}, re2 = {re2}"
             );
             panic!("bailing because of test_involution failure");
         }

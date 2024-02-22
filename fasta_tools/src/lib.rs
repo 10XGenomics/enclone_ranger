@@ -182,12 +182,11 @@ pub fn read_fasta_headers(f: impl AsRef<Path>, headers: &mut Vec<String>) {
 pub fn load_genbank_accession(accession: &str, bases: &mut DnaString) {
     let link = format!(
         "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/\
-         efetch.fcgi?db=nucleotide&amp;id={}&amp;rettype=fasta",
-        accession
+         efetch.fcgi?db=nucleotide&amp;id={accession}&amp;rettype=fasta"
     );
     let o = Command::new("csh")
         .arg("-c")
-        .arg(format!("curl \"{}\"", link))
+        .arg(format!("curl \"{link}\""))
         .output()
         .expect("failed to execute curl command");
     let fasta = String::from_utf8(o.stdout).expect("Response was not valid utf-8.");

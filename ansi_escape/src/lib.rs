@@ -67,7 +67,7 @@ pub fn best_color_order(i: usize) -> usize {
 
 pub fn ansi_256(n: usize) -> Vec<u8> {
     let mut x = b"[38;5;".to_vec();
-    x.append(&mut format!("{}", n).as_bytes().to_vec());
+    x.append(&mut format!("{n}").as_bytes().to_vec());
     x.push(b'm');
     x
 }
@@ -182,12 +182,12 @@ pub fn emit_end_escape(log: &mut Vec<u8>) {
 }
 
 pub fn bold(s: &str) -> String {
-    format!("[01m{}[0m", s)
+    format!("[01m{s}[0m")
 }
 
 pub fn emit_eight_bit_color_escape(log: &mut Vec<u8>, c: usize) {
     log.append(&mut b"[38;5;".to_vec());
-    log.append(&mut format!("{}", c).as_bytes().to_vec());
+    log.append(&mut format!("{c}").as_bytes().to_vec());
     log.push(b'm');
 }
 

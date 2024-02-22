@@ -176,29 +176,29 @@ fn main() {
         if gap <= 2 * MAX_EXTRA {
             let len = gap;
             let (xstart, xstop) = (start - len, start);
-            let header = format!("segment before {} exon {}", gene, exon);
+            let header = format!("segment before {gene} exon {exon}");
             let seq = refs[chrid].slice(xstart as usize, xstop as usize);
             print_fasta(&header, &seq);
             let seq_rc = seq.rc();
-            let header_rc = format!("rc of {}", header);
+            let header_rc = format!("rc of {header}");
             print_fasta(&header_rc, &seq_rc);
         }
         // Case 2.  Gap is really long, do both sides.
         else {
             let len = MAX_EXTRA;
             let (xstart, xstop) = (start - len, start);
-            let header = format!("segment before {} exon {}", gene, exon);
+            let header = format!("segment before {gene} exon {exon}");
             let seq = refs[chrid].slice(xstart as usize, xstop as usize);
             print_fasta(&header, &seq);
             let seq_rc = seq.rc();
-            let header_rc = format!("rc of {}", header);
+            let header_rc = format!("rc of {header}");
             print_fasta(&header_rc, &seq_rc);
             let (xstart, xstop) = (start - gap, start - gap + len);
             let header = format!("segment after {} exon {}", exons2[i - 1].4, exons2[i - 1].5);
             let seq = refs[chrid].slice(xstart as usize, xstop as usize);
             print_fasta(&header, &seq);
             let seq_rc = seq.rc();
-            let header_rc = format!("rc of {}", header);
+            let header_rc = format!("rc of {header}");
             print_fasta(&header_rc, &seq_rc);
         }
     }

@@ -300,15 +300,14 @@ fn html_head(
     format!(
         "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n\
               <!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \
-              \"https://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<!-- {} -->\n\
+              \"https://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n<!-- {source} -->\n\
               <html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n\
               <meta http-equiv=\"Content-Type\" content=\"application/xml+xhtml; \
               charset=UTF-8\"/>\n\
-              <title>{}</title>\n\
-              {}\n\
-              </head>\n<body>\n<pre style='font-family: {}; line-height: 110%'>\
-              <span style=\"font-size: {}px\">",
-        source, title, head_text, ff, font_size
+              <title>{title}</title>\n\
+              {head_text}\n\
+              </head>\n<body>\n<pre style='font-family: {ff}; line-height: 110%'>\
+              <span style=\"font-size: {font_size}px\">"
     )
 }
 
@@ -352,7 +351,7 @@ fn pack_ansi_escape(y: &[u8]) -> Vec<u8> {
         if i > 0 {
             x.push(b';');
         }
-        x.extend(format!("{}", yi).as_bytes());
+        x.extend(format!("{yi}").as_bytes());
     }
     x.push(b'm');
     x

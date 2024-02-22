@@ -209,7 +209,7 @@ pub fn fr2_start(aa: &[u8], chain_type: &str, verbose: bool) -> Option<usize> {
             }
         }
         if verbose {
-            println!("j = {}, score = {}", j, score);
+            println!("j = {j}, score = {score}");
         }
         score_pos.push((score, j));
     }
@@ -269,7 +269,7 @@ pub fn cdr2_start(aa: &[u8], chain_type: &str, verbose: bool) -> Option<usize> {
                 }
             }
             if verbose {
-                println!("j = {}, score = {}", j, score);
+                println!("j = {j}, score = {score}");
             }
             score_pos.push((score, j));
         }
@@ -431,7 +431,7 @@ pub fn fr3_start(aa: &[u8], chain_type: &str, verbose: bool) -> Option<usize> {
                 }
             }
             if verbose {
-                println!("j = {}, score = {}", j, score);
+                println!("j = {j}, score = {score}");
             }
             score_pos.push((score, j));
         }
@@ -482,7 +482,7 @@ pub fn fr3_start(aa: &[u8], chain_type: &str, verbose: bool) -> Option<usize> {
             // use string_utils::*;
             // println!("score of {} = {}", strme(&aa[j..j + pwm.len()]), score);
             if verbose {
-                println!("j = {}, score = {}", j, score);
+                println!("j = {j}, score = {score}");
             }
             score_pos.push((score, -(j as isize)));
         }
@@ -588,7 +588,7 @@ pub fn fr3_start(aa: &[u8], chain_type: &str, verbose: bool) -> Option<usize> {
             }
             // println!("score of {} = {}", strme(&aa[j..j + pwm.len()]), score);
             if verbose {
-                println!("j = {}, score = {}", j, score);
+                println!("j = {j}, score = {score}");
             }
             score_pos.push((score, j));
         }

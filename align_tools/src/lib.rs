@@ -76,7 +76,7 @@ pub fn summary(a: &Alignment) -> String {
         x.push(format!("ins({})", ins.iter().format(",")));
     }
     if sub > 0 {
-        x.push(format!("sub({})", sub));
+        x.push(format!("sub({sub})"));
     }
     format!("{}", x.iter().format(" + "))
 }
@@ -109,16 +109,16 @@ pub fn summary_less(a: &Alignment) -> String {
         "0".to_string()
     } else {
         let mut s = if sub > 0 {
-            format!("{}", sub)
+            format!("{sub}")
         } else {
             String::new()
         };
         s.reserve_exact(2 * (del.len() + ins.len()));
         for d in del {
-            write!(s, "D{}", d).unwrap();
+            write!(s, "D{d}").unwrap();
         }
         for i in ins {
-            write!(s, "I{}", i).unwrap();
+            write!(s, "I{i}").unwrap();
         }
         s
     }
@@ -183,7 +183,7 @@ pub fn summary_more(x: &DnaString, y: &DnaString, a: &Alignment) -> String {
     x.append(&mut del);
     x.append(&mut ins);
     if sub > 0 {
-        x.push(format!("{} substitutions", sub));
+        x.push(format!("{sub} substitutions"));
     }
     format!("{}", x.iter().format("\n"))
 }

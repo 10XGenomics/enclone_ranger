@@ -4,6 +4,6 @@
 
 fn main() {
     for i in 0..256 {
-        println!("[38;5;{}m█[0m {}", i, i);
+        println!("[38;5;{i}m█[0m {i}");
     }
 }

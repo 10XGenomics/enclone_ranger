@@ -2843,27 +2843,27 @@ impl AnnotationUnit {
         let len1 = ann[0].1 as usize;
         let right1 = b.len() - left1 - len1;
         if left1 > 0 {
-            write!(cig, "{}S", left1).unwrap();
+            write!(cig, "{left1}S").unwrap();
         }
-        write!(cig, "{}M", len1).unwrap();
+        write!(cig, "{len1}M").unwrap();
         if na == 1 && right1 > 0 {
-            write!(cig, "{}S", right1).unwrap();
+            write!(cig, "{right1}S").unwrap();
         }
         if na == 2 {
             let n1 = ann[1].0 - ann[0].0 - ann[0].1;
             let n2 = ann[1].3 - ann[0].3 - ann[0].1;
             if n1 == 0 {
-                write!(cig, "{}D", n2).unwrap();
+                write!(cig, "{n2}D").unwrap();
             }
             if n2 == 0 {
-                write!(cig, "{}I", n1).unwrap();
+                write!(cig, "{n1}I").unwrap();
             }
             let left2 = ann[1].0 as usize;
             let len2 = ann[1].1 as usize;
             let right2 = b.len() - left2 - len2;
-            write!(cig, "{}M", len2).unwrap();
+            write!(cig, "{len2}M").unwrap();
             if right2 > 0 {
-                write!(cig, "{}S", right2).unwrap();
+                write!(cig, "{right2}S").unwrap();
             }
         }
 
@@ -2911,7 +2911,7 @@ impl AnnotationUnit {
 
         // Build the rest.
 
-        let types = vec!["IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG"];
+        let types = ["IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG"];
         let mut chain_type = String::new();
         for i in 0..types.len() {
             if refdata.rheaders[t].contains(types[i]) {
@@ -3316,7 +3316,7 @@ mod tests {
     fn test_no_internal_soft_clipping() {
         use refx::RefData;
 
-        let refdata = RefData::from_fasta(&String::from(
+        let refdata = RefData::from_fasta(String::from(
             "test/inputs/test_no_internal_soft_clipping_ref.fa",
         ));
         // println!("Loaded reference with {} entries", refdata.id.len());
@@ -3368,7 +3368,7 @@ mod tests {
             }
             if !s_pos.is_empty() {
                 println!("Cigar : {:?}", ann.cigar);
-                println!("Soft clipping at : {:?}", s_pos);
+                println!("Soft clipping at : {s_pos:?}");
                 for p in &s_pos {
                     assert!(*p == 0 || *p == (char_pos - 1))
                 }

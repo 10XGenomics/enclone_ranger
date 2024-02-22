@@ -1406,9 +1406,9 @@ mod tests {
         // State what we're doing.
 
         let bar = "▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓";
-        println!("\n{}", bar);
+        println!("\n{bar}");
         println!("DELIBERATELY PROVOKING A PANIC USING A CTRL-C");
-        print!("{}", bar);
+        print!("{bar}");
         std::io::stdout().flush().unwrap();
 
         // Fork, and inside the fork, give separate execution paths for parent and child.
@@ -1428,9 +1428,9 @@ mod tests {
                     // Evaluate the traceback.  We check only whether the traceback
                     // points to the inner loop.
 
-                    println!("{}", bar);
+                    println!("{bar}");
                     println!("TESTING THE PANIC FOR CORRECTNESS");
-                    println!("{}", bar);
+                    println!("{bar}");
                     let s = strme(&buffer);
                     let have_main = s.split_terminator('\n').any(|line|
                         // Test relaxed here because on an AWS box, we did not see the ::looper part.

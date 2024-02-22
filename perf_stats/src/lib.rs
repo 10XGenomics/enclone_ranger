@@ -38,7 +38,7 @@ pub fn nthreads() -> i64 {
                 operating environment.\nContinuing nonetheless, by returning -1.";
     let f = std::fs::File::open(procfn);
     match f {
-        Err(_) => println!("{}{}", prob1, crap),
+        Err(_) => println!("{prob1}{crap}"),
         Ok(f) => {
             let f = std::io::BufReader::new(f);
             for line in f.lines() {
@@ -174,7 +174,7 @@ pub fn mem_usage_bytes() -> i64 {
                 operating environment.\nContinuing nonetheless, by returning -1.";
     let f = std::fs::File::open(procfn);
     match f {
-        Err(_) => println!("{}{}", prob1, crap),
+        Err(_) => println!("{prob1}{crap}"),
         Ok(f) => {
             let f = std::io::BufReader::new(f);
             if let Some(line) = f.lines().next() {
@@ -257,17 +257,17 @@ pub fn ps_me() {
             cmd = cmd.replace(' ', " ");
         }
         if cmd.len() <= RIGHT {
-            println!("{:6}  {:6} {:7.2}  {}", ppid, pid, rss, cmd);
+            println!("{ppid:6}  {pid:6} {rss:7.2}  {cmd}");
         } else {
             let mut start = 0;
             while start < cmd.len() {
                 let stop = min(start + RIGHT, cmd.len());
                 if start == 0 {
                     let c = &cmd[0..stop];
-                    println!("{:6}  {:6} {:7.2}  {}", ppid, pid, rss, c);
+                    println!("{ppid:6}  {pid:6} {rss:7.2}  {c}");
                 } else {
                     let c = &cmd[start..stop];
-                    println!("                        {}", c);
+                    println!("                        {c}");
                 }
                 start += RIGHT;
             }

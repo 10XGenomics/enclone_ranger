@@ -40,7 +40,7 @@ pub fn test_functions_in_node(n: &evalexpr::Node) -> Result<(), String> {
     let x = evalexpr_function_names();
     for i in n.iter_function_identifiers() {
         if !bin_member(&x, i) {
-            return Err(format!("Unknown function name {} in expression.", i));
+            return Err(format!("Unknown function name {i} in expression."));
         }
     }
     Ok(())

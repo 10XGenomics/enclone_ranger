@@ -256,7 +256,7 @@ pub fn print_tabular_vbox(
                     }
                 }
                 if debug_print {
-                    println!("row {} column {}, have = {}, need = {}", i, j, have, need);
+                    println!("row {i} column {j}, have = {have}, need = {need}");
                 }
                 if have > need {
                     if debug_print {
@@ -280,7 +280,7 @@ pub fn print_tabular_vbox(
                 let mut m = 0;
                 for u in 0..rrr.len() {
                     if j >= rrr[u].len() {
-                        eprintln!("\nProblem with line {}, not enough fields.\n", u);
+                        eprintln!("\nProblem with line {u}, not enough fields.\n");
                     }
                     if rrr[u][j] != *"\\ext" {
                         m = max(m, visible_width(&rrr[u][j]));
@@ -321,7 +321,7 @@ pub fn print_tabular_vbox(
     for i in 0..nrows {
         if debug_print {
             println!("now row {} = {}", i, rrr[i].iter().format(","));
-            println!("0 - pushing │ onto row {}", i);
+            println!("0 - pushing │ onto row {i}");
         }
         log.push(verty);
         for j in 0..min(ncols, rrr[i].len()) {
@@ -394,7 +394,7 @@ pub fn print_tabular_vbox(
             }
             if vert[j] && rrr[i][j + 1] != "\\ext" {
                 if debug_print {
-                    println!("1 - pushing {} onto row {}, j = {}", verty, i, j);
+                    println!("1 - pushing {verty} onto row {i}, j = {j}");
                 }
                 log.push(verty);
                 if rrr[i][j + 1] == *"\\hline" {
@@ -409,7 +409,7 @@ pub fn print_tabular_vbox(
             }
         }
         if debug_print {
-            println!("2 - pushing {} onto row {}", verty, i);
+            println!("2 - pushing {verty} onto row {i}");
         }
         log.push(verty);
         log.push('\n');
@@ -566,8 +566,8 @@ mod tests {
                       └────────┴─────────────────────────┘\n";
         if log != answer {
             println!("\ntest 1 failed");
-            println!("\nyour answer:\n{}", log);
-            println!("correct answer:\n{}", answer);
+            println!("\nyour answer:\n{log}");
+            println!("correct answer:\n{answer}");
         }
         if log != answer {
             panic!();
@@ -592,8 +592,8 @@ mod tests {
                       └─────────────────┘\n";
         if log != answer {
             println!("\ntest 2 failed");
-            println!("\nyour answer:\n{}", log);
-            println!("correct answer:\n{}", answer);
+            println!("\nyour answer:\n{log}");
+            println!("correct answer:\n{answer}");
         }
         if log != answer {
             panic!();

@@ -66,7 +66,7 @@ pub struct MirrorSparseMatrix {
 pub fn get_code_version_from_file(f: &str) -> u32 {
     assert_eq!(std::mem::size_of::<usize>(), 8); // for the usize at the beginning of the file
     let mut ff = std::fs::File::open(f).unwrap();
-    let mut x = vec![0_u32; 11];
+    let mut x = [0_u32; 11];
     binary_read_to_ref::<u32>(&mut ff, &mut x[0], 11).unwrap();
     x[10]
 }
@@ -609,10 +609,10 @@ mod tests {
             }
             let (mut row_labels, mut col_labels) = (Vec::<String>::new(), Vec::<String>::new());
             for i in 0..n {
-                row_labels.push(format!("row {}", i));
+                row_labels.push(format!("row {i}"));
             }
             for j in 0..k {
-                col_labels.push(format!("col {}", j));
+                col_labels.push(format!("col {j}"));
             }
             let y = MirrorSparseMatrix::build_from_vec(&x, &row_labels, &col_labels);
             let row_sum2 = y.sum_of_row(test_row);
