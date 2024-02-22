@@ -72,7 +72,7 @@
 //!
 //! <br> Now to access pretty trace, put this in your <code>Cargo.toml</code>
 //! <pre>
-//! pretty_trace = {git = "https://github.com/10XGenomics/rust-toolbox.git"}
+//! pretty_trace = { path = "../pretty_trace" }
 //! </pre>
 //! and this
 //! <pre>

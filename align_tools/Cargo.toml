@@ -8,8 +8,8 @@ repository = "https://github.com/10XGenomics/rust-toolbox"
 edition = "2018"
 
 [dependencies]
-bio_edit = { version = "0.1", path = "../bio_edit" }
+bio_edit = { path = "../bio_edit" }
 debruijn = "0.3"
 itertools = ">= 0.8, <= 0.11"
-string_utils = { version = "0.1", path = "../string_utils" }
-vector_utils = { version = "0.1", path = "../vector_utils" }
+string_utils = { path = "../string_utils" }
+vector_utils = { path = "../vector_utils" }

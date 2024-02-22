@@ -21,27 +21,27 @@ include = ["src/*.rs", "LICENSE.txt", "src/mammalian_fixed_len.table"]
 # in the root of the enclone repo.
 
 [dependencies]
-amino = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-ansi_escape = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+amino = { path = "../amino" }
+ansi_escape = { path = "../ansi_escape" }
 attohttpc = { version = ">=0.19, <0.27", default-features = false, features = ["compress", "tls-rustls"] }
-bio_edit = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+bio_edit = { path = "../bio_edit" }
 debruijn = "0.3"
 enclone_proto = { path = "../enclone_proto" }
 evalexpr = ">=7, <12"
-io_utils = { version = "0.3", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+io_utils = { path = "../io_utils" }
 itertools.workspace = true
 lazy_static = "1"
-mirror_sparse_matrix = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-perf_stats = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+mirror_sparse_matrix = { path = "../mirror_sparse_matrix" }
+perf_stats = { path = "../perf_stats" }
 qd = { git = "https://github.com/Barandis/qd" }
 rayon = "1"
 regex = { version = "1", default-features = false, features = ["std", "perf"] }
-stats_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-string_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+stats_utils = { path = "../stats_utils" }
+string_utils = { path = "../string_utils" }
 superslice = "1"
-tables = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-vdj_ann = { version = "0.4", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
-vector_utils = { version = "0.1", git = "https://github.com/10XGenomics/rust-toolbox.git", branch = "master" }
+tables = { path = "../tables" }
+vdj_ann = { path = "../vdj_ann" }
+vector_utils = { path = "../vector_utils" }
 zstd = ">=0.10, <0.14"
 serde = "1.0"
 
