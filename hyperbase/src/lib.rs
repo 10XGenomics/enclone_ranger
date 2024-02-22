@@ -598,7 +598,6 @@ impl Hyper {
 
         let mut bound = Vec::<(u32, u32)>::new();
         while let Some(v) = vertex_queue.pop() {
-            
             if !vertex_kill[v.index()] {
                 continue;
             }
@@ -645,7 +644,6 @@ impl Hyper {
         let mut havex: Vec<bool> = vec![false; (maxread + 1) as usize];
         self.ids.reserve(bound.len());
         while let Some(bounds) = bound.pop() {
-            
             let new_edge_no: usize = self.h.g.edge_count();
             let mut new_edge = self.h.g.edge_obj(bounds.0).clone();
             have = self.ids[bounds.0 as usize].clone();
@@ -785,9 +783,7 @@ impl Hyper {
             );
             let (e1, e2) = (homomorphism_fails[0].0, homomorphism_fails[0].1);
             let (re1, re2) = (self.inv[e1], self.inv[e2]);
-            println!(
-                "first has e1 = {e1}, e2 = {e2}, re1 = {re1}, re2 = {re2}"
-            );
+            println!("first has e1 = {e1}, e2 = {e2}, re1 = {re1}, re2 = {re2}");
             panic!("bailing because of test_involution failure");
         }
     }

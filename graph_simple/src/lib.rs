@@ -180,7 +180,6 @@ where
             tov.insert(s);
         }
         while let Some(x) = check.pop() {
-            
             let n = self.n_to(x as usize);
             for i in 0..n {
                 let y = self.v_to(x as usize, i);
@@ -212,7 +211,6 @@ where
             fromv.insert(s);
         }
         while let Some(x) = check.pop() {
-            
             let n = self.n_from(x as usize);
             for i in 0..n {
                 let y = self.v_from(x as usize, i);
@@ -256,7 +254,6 @@ where
             cnext.clear();
             cnext.push(v as u32);
             while let Some(w) = cnext.pop() {
-                
                 if used[w as usize] {
                     continue;
                 }

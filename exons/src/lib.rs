@@ -15,9 +15,7 @@ pub fn fetch_exons(species: &str, exons: &mut Vec<(String, i32, i32, bool, Strin
 
     let root = "/mnt/opt/meowmix_git/ensembl/release-94/gtf";
     let gtf = if species == "human" {
-        format!(
-            "{root}/homo_sapiens/Homo_sapiens.GRCh38.94.chr_patch_hapl_scaff.gtf"
-        )
+        format!("{root}/homo_sapiens/Homo_sapiens.GRCh38.94.chr_patch_hapl_scaff.gtf")
     } else {
         format!("{root}/mus_musculus/Mus_musculus.GRCm38.94.gtf")
     };
