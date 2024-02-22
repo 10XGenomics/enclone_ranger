@@ -21,10 +21,6 @@ pub fn human_ref_old() -> &'static str {
     include_str!["../vdj_refs_old/human/fasta/regions.fa"]
 }
 
-pub fn human_supp_ref() -> &'static str {
-    include_str!["../vdj_refs/human/fasta/supp_regions.fa"]
-}
-
 pub fn human_ref_2_0() -> &'static str {
     include_str!["../vdj_refs_2.0/human/fasta/regions.fa"]
 }
@@ -53,10 +49,6 @@ pub fn mouse_ref_old() -> &'static str {
     include_str!["../vdj_refs_old/mouse/fasta/regions.fa"]
 }
 
-pub fn mouse_supp_ref() -> &'static str {
-    include_str!["../vdj_refs/mouse/fasta/supp_regions.fa"]
-}
-
 pub fn mouse_ref_3_1() -> &'static str {
     include_str!["../vdj_refs_3.1/mouse/fasta/regions.fa"]
 }
@@ -83,6 +75,8 @@ pub fn make_vdj_ref_data(
     extended: bool,
     is_tcr: bool,
     is_bcr: bool,
+    human_supp_ref: &str,
+    mouse_supp_ref: &str,
 ) {
     // Necessary for lifetime management of results from read_to_string_safe
     let x: String;
@@ -107,8 +101,8 @@ pub fn make_vdj_ref_data(
     };
     let ext_refx = if extended && !imgt {
         match species {
-            "human" => human_supp_ref(),
-            "mouse" => mouse_supp_ref(),
+            "human" => human_supp_ref,
+            "mouse" => mouse_supp_ref,
             _ => unreachable!("Invalid species {}.", &species),
         }
     } else {
