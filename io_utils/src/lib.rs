@@ -229,7 +229,7 @@ pub fn get_metric_value(f: impl AsRef<Path>, metric: &str) -> String {
     let buf = open_for_read![&f];
     for line in buf.lines() {
         let s = line.unwrap();
-        let metric_string = format!("\"{}\": ", metric);
+        let metric_string = format!("\"{metric}\": ");
         if s.contains(&metric_string) {
             let mut t = s.after(&metric_string).to_string();
             if t.ends_with(' ') {

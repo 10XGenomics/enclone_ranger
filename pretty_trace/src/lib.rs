@@ -819,7 +819,7 @@ fn force_pretty_trace_fancy(
         let mut _verbose = false;
         for (key, _value) in env::vars() {
             if key == "RUST_FULL_TRACE" {
-                let bt: Vec<u8> = format!("{:?}", backtrace).into_bytes();
+                let bt: Vec<u8> = format!("{backtrace:?}").into_bytes();
                 let thread = thread::current();
                 let thread = thread.name().unwrap_or("unnamed");
                 let msg = match info.payload().downcast_ref::<&'static str>() {
@@ -836,7 +836,7 @@ fn force_pretty_trace_fancy(
                         location.file(),
                         location.line()
                     ),
-                    None => format!("thread '{}' panicked ", thread),
+                    None => format!("thread '{thread}' panicked "),
                 };
                 eprintln!(
                     "\nRUST PROGRAM PANIC\n\n(Full traceback.  \
@@ -853,7 +853,7 @@ fn force_pretty_trace_fancy(
 
         // Prettify the traceback.
 
-        let bt: Vec<u8> = format!("{:?}", backtrace).into_bytes();
+        let bt: Vec<u8> = format!("{backtrace:?}").into_bytes();
         let all_out = prettify_traceback(&bt, &Vec::<String>::new(), false);
 
         // Print thread panic message.  Bail before doing so if broken pipe
@@ -903,12 +903,12 @@ fn force_pretty_trace_fancy(
                 let prex = if all_out.contains(&pre) || x2_orig.contains("pretty_trace") {
                     "".to_string()
                 } else {
-                    format!("\n\n0: ◼ {}", pre)
+                    format!("\n\n0: ◼ {pre}")
                 };
                 let long_msg = if log_file_name.is_empty() {
                     "Rerun with env var RUST_FULL_TRACE set to see full traceback.".to_string()
                 } else {
-                    format!("Full traceback is at {}.", log_file_name)
+                    format!("Full traceback is at {log_file_name}.")
                 };
                 format!(
                     "RUST PROGRAM PANIC AFTER {} SECONDS\n\n(Shortened traceback.  \
@@ -920,7 +920,7 @@ fn force_pretty_trace_fancy(
                     prex
                 )
             }
-            None => format!("RUST PROGRAM PANIC\n\n{}", msg),
+            None => format!("RUST PROGRAM PANIC\n\n{msg}"),
         };
         if msg.contains("Broken pipe") {
             std::process::exit(101);
@@ -959,7 +959,7 @@ fn force_pretty_trace_fancy(
         };
         out += &all_out;
         out += &em;
-        eprint!("{}", out);
+        eprint!("{out}");
 
         // Dump traceback to file descriptor.
 
@@ -971,10 +971,7 @@ fn force_pretty_trace_fancy(
                     let mut err_file = File::from_raw_fd(fd);
                     let x = err_file.write(out.as_bytes());
                     if x.is_err() {
-                        eprintln!(
-                            "\nProblem in PrettyTrace writing to file descriptor {}.\n",
-                            fd
-                        );
+                        eprintln!("\nProblem in PrettyTrace writing to file descriptor {fd}.\n");
                         failed = true;
                     }
                 }
@@ -988,13 +985,12 @@ fn force_pretty_trace_fancy(
             if f.is_err() {
                 eprintln!(
                     "\nDuring panic, attempt to create full log file \
-                     named {} failed, giving up.\n",
-                    log_file_name
+                     named {log_file_name} failed, giving up.\n"
                 );
                 std::process::exit(101);
             }
             let mut log_file_writer = BufWriter::new(f.unwrap());
-            let bt: Vec<u8> = format!("{:?}", backtrace).into_bytes();
+            let bt: Vec<u8> = format!("{backtrace:?}").into_bytes();
             let thread = thread::current();
             let thread = thread.name().unwrap_or("unnamed");
             let msg = match info.payload().downcast_ref::<&'static str>() {
@@ -1012,7 +1008,7 @@ fn force_pretty_trace_fancy(
                     location.file(),
                     location.line()
                 ),
-                None => format!("thread '{}' panicked at '{}'", thread, msg),
+                None => format!("thread '{thread}' panicked at '{msg}'"),
             };
             log_file_writer
                 .write_fmt(format_args!(
@@ -1075,7 +1071,7 @@ fn prettify_traceback(bt: &[u8], whitelist: &[String], pack: bool) -> String {
             if x.contains(srcgit) && x.after(srcgit).contains('/') {
                 let y = x.between(srcgit, "/");
                 if y.len() > 10 {
-                    x2 = x2.replace(&format!("{}{}", srcgit, y), "/<stuff>");
+                    x2 = x2.replace(&format!("{srcgit}{y}"), "/<stuff>");
                 }
             }
             if x2.contains("/src/") && x2.before("/src/").contains('/') && x2.contains(' ') {

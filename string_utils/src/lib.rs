@@ -213,7 +213,7 @@ pub fn cap1(s: &str) -> String {
 // stolen from internet, add commas to number
 
 pub fn add_commas(n: usize) -> String {
-    let s = format!("{}", n);
+    let s = format!("{n}");
     let mut result = String::with_capacity(s.len() + ((s.len() - 1) / 3));
     let mut i = s.len();
     for c in s.chars() {
