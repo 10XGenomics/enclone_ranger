@@ -8,33 +8,6 @@ updates:
   open-pull-requests-limit: 10
   reviewers:
   - sreenathkrishnan
-  ignore:
-    # ignore crates from rust-toolbox repo other than vdj_ann.
-    # They all get updated together anyway.
-    - dependency-name: align_tools
-    - dependency-name: amino
-    - dependency-name: ansi_escape
-    - dependency-name: binary_vec_io
-    - dependency-name: dna
-    - dependency-name: equiv
-    - dependency-name: exons
-    - dependency-name: expr_tools
-    - dependency-name: fasta_tools
-    - dependency-name: graph_simple
-    - dependency-name: hyperbase
-    - dependency-name: io_utils
-    - dependency-name: kmer_lookup
-    - dependency-name: load_feature_bc
-    - dependency-name: mirror_sparse_matrix
-    - dependency-name: perf_stats
-    - dependency-name: pretty_trace
-    - dependency-name: stats_utils
-    - dependency-name: stirling_numbers
-    - dependency-name: string_utils
-    - dependency-name: tables
-    - dependency-name: vdj_ann_ref
-    - dependency-name: vdj_types
-    - dependency-name: vector_utils
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:

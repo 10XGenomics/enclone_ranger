@@ -1,7 +1,12 @@
 [workspace]
 
 members = [
+    "align_tools",
+    "amino",
+    "ansi_escape",
+    "binary_vec_io",
     "build_enclone_proto",
+    "dna",
     "enclone",
     "enclone_args",
     "enclone_core",
@@ -10,6 +15,26 @@ members = [
     "enclone_ranger",
     "enclone_stuff",
     "enclone_vars",
+    "equiv",
+    "exons",
+    "expr_tools",
+    "fasta_tools",
+    "graph_simple",
+    "hyperbase",
+    "io_utils",
+    "kmer_lookup",
+    "load_feature_bc",
+    "mirror_sparse_matrix",
+    "perf_stats",
+    "pretty_trace",
+    "stats_utils",
+    "stirling_numbers",
+    "string_utils",
+    "tables",
+    "vdj_ann",
+    "vdj_ann_ref",
+    "vdj_types",
+    "vector_utils",
 ]
 
 resolver = "2"
