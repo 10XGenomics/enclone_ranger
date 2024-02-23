@@ -1,0 +1,18 @@
+[package]
+name = "stirling_numbers"
+version = "0.1.7"
+authors = ["David Jaffe <david.jaffe@10xgenomics.com>"]
+license = "MIT"
+description = "A few functions relating to Stirling numbers of the second kind."
+edition = "2018"
+repository = "https://github.com/10XGenomics/enclone_ranger"
+
+[dependencies]
+num-traits = "^0.2"
+
+[dev-dependencies]
+num-bigint = "^0.4"
+num-rational = "^0.4"
+rand = ">=0.7.3, <0.9"
+rayon = "1"
+vector_utils = { path = "../vector_utils" }

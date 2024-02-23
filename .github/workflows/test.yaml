@@ -94,6 +94,10 @@ jobs:
           cp cargo-deny-${DENY_VERSION}-x86_64-unknown-linux-musl/cargo-deny ~/bin/
           rm -r cargo-deny-${DENY_VERSION}-x86_64-unknown-linux-musl*
           echo "$HOME/bin" >> $GITHUB_PATH
+      - name: Check that rustflags from config are still valid so Clippy runs the right lints
+        run: >
+          [ -z ${RUSTFLAGS+value} ] &&
+          [ -z ${CARGO_ENCODED_RUSTFLAGS+value} ]
       - name: Check Rust formatting
         run: cargo fmt -- --check
       - name: Deny duplicate dependencies (lib/rust)
@@ -101,39 +105,7 @@ jobs:
       - name: Run clippy
         uses: 10XGenomics/clippy-check@main
         with:
-          # Github limits the number of annotations it will display on a PR for
-          # a given action, so we're going to disable (for now!) some of the
-          # noisier lints so that more important ones are more likely to be
-          # visible.
-          # NOTE: keep this list in sync with lib/rust/.cargo/config, or else
-          #       which is ignored when running in this mode but not when
-          #       running locally.
-          # TODO: re-enable the allowed lints at the end of this list.
-          args: |
-            --all-targets --locked --
-            -D clippy::perf
-            -D clippy::style
-            -D clippy::suspicious
-            -A clippy::comparison_chain
-            -W future_incompatible
-            -W nonstandard_style
-            -W rust_2018_compatibility
-            -W rust_2021_compatibility
-            -W unused
-            -D clippy::enum_glob_use
-            -D clippy::needless_lifetimes
-            -D clippy::redundant_closure_for_method_calls
-            -D clippy::unused_io_amount
-            -D clippy::wildcard_imports
-            -D clippy::unnecessary_unwrap
-            -D clippy::uninlined_format_args
-            -W clippy::disallowed_names
-            -W clippy::enum_variant_names
-            -W clippy::large-enum-variant
-            -W clippy::missing_safety_doc
-            -A clippy::type_complexity
-            -A clippy::too_many_arguments
-            -W clippy::result_unit_err
+          args: --all-targets --locked --
       - name: build-enclone
         run: cargo build
       - name: unit tests
