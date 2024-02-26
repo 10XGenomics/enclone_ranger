@@ -15,7 +15,7 @@ backtrace = "0.3"
 io_utils = { path = "../io_utils", optional = true }
 lazy_static = "1"
 libc = "0.2"
-nix = { version = ">=0.19, <0.28", features = ["signal"] }
+nix = { version = ">=0.19, <0.29", features = ["signal"] }
 stats_utils = { path = "../stats_utils", optional = true }
 string_utils = { path = "../string_utils" }
 tables = { path = "../tables", optional = true }
