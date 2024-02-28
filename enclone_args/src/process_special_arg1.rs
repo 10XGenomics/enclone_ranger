@@ -39,10 +39,6 @@ pub fn process_special_arg1(
             return Err("\nCurrently the only allowed value for PG_DIST is MFL.\n".to_string());
         }
         ctl.gen_opt.peer_group_dist = dist.to_string();
-    } else if is_simple_arg(arg, "H5")? {
-        ctl.gen_opt.force_h5 = true;
-    } else if is_simple_arg(arg, "NH5")? {
-        ctl.gen_opt.force_h5 = false;
     } else if arg == "LEGEND" {
         ctl.plot_opt.use_legend = true;
     } else if arg == "MAX_HEAVIES=1" {

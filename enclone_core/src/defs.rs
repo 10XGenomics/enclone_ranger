@@ -172,7 +172,6 @@ pub struct GeneralOpt {
     pub accept_inconsistent: bool, // TEMPORARY!
     pub current_ref: bool,         // TEMPORARY!
     pub internal_run: bool,
-    pub force_h5: bool,
     pub full_counts: bool,
     pub html: bool,
     pub html_title: String,
