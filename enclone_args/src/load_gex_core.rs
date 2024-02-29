@@ -13,14 +13,7 @@ use io_utils::{dir_list, open_for_read, open_userfile_for_read, path_exists};
 use itertools::Itertools;
 use rayon::prelude::*;
 use serde_json::Value;
-use std::{
-    collections::HashMap,
-    convert::TryInto,
-    fmt::Write,
-    fs::read_to_string,
-    io::{BufRead, Read},
-    time::Instant,
-};
+use std::{collections::HashMap, fmt::Write, fs::read_to_string, io::BufRead, time::Instant};
 use string_utils::{parse_csv, TextUtils};
 use vector_utils::{unique_sort, VecUtils};
 
@@ -41,23 +34,13 @@ struct LoadResult {
     feature_metrics: HashMap<(String, String), String>,
     json_metrics: HashMap<String, f64>,
     metrics: String,
-    fb_total_umis: u64,
-    fb_brn: Vec<(String, u32, u32)>,
     feature_refs: String,
-    fb_brnr: Vec<(String, u32, u32)>,
-    fb_total_reads: u64,
-    fb_bdcs: Vec<(String, u32, u32, u32)>,
 }
 
 pub fn load_gex(
     ctl: &mut EncloneControl,
     gex_features: &mut Vec<Vec<String>>,
     gex_barcodes: &mut Vec<Vec<String>>,
-    fb_total_umis: &mut Vec<u64>,
-    fb_total_reads: &mut Vec<u64>,
-    fb_brn: &mut Vec<Vec<(String, u32, u32)>>,
-    fb_brnr: &mut Vec<Vec<(String, u32, u32)>>,
-    fb_bdcs: &mut Vec<Vec<(String, u32, u32, u32)>>,
     feature_refs: &mut Vec<String>,
     cluster: &mut Vec<HashMap<String, usize>>,
     cell_type: &mut Vec<HashMap<String, String>>,
@@ -548,80 +531,6 @@ pub fn load_gex(
             r.gex_mult = gene_mult;
             r.fb_mult = fb_mult;
 
-            // Read the total UMIs.
-
-            let top_file = fnx(&outs, "feature_barcode_matrix_top.total");
-            if path_exists(&top_file) {
-                pathlist.push(top_file.clone());
-                let mut f = open_for_read![&top_file];
-                let mut bytes = Vec::<u8>::new();
-                f.read_to_end(&mut bytes).unwrap();
-                r.fb_total_umis = u64::from_ne_bytes(bytes.try_into().unwrap());
-            }
-
-            // Read the total reads.
-
-            let top_file = fnx(&outs, "feature_barcode_matrix_top.total_reads");
-            if path_exists(&top_file) {
-                pathlist.push(top_file.clone());
-                let mut f = open_for_read![&top_file];
-                let mut bytes = Vec::<u8>::new();
-                f.read_to_end(&mut bytes).unwrap();
-                r.fb_total_reads = u64::from_ne_bytes(bytes.try_into().unwrap());
-            }
-
-            // Read the barcode-ref-nonref UMI count file.
-
-            let brn_file = fnx(&outs, "feature_barcode_matrix_top.brn");
-            if path_exists(&brn_file) {
-                pathlist.push(brn_file.clone());
-                let f = open_for_read![&brn_file];
-                for line in f.lines() {
-                    let s = line.unwrap();
-                    let fields = parse_csv(&s);
-                    r.fb_brn.push((
-                        fields[0].to_string(),
-                        fields[1].parse::<u32>().unwrap(),
-                        fields[2].parse::<u32>().unwrap(),
-                    ));
-                }
-            }
-
-            // Read the barcode-ref-nonref read count file.
-
-            let brnr_file = fnx(&outs, "feature_barcode_matrix_top.brnr");
-            if path_exists(&brnr_file) {
-                pathlist.push(brnr_file.clone());
-                let f = open_for_read![&brnr_file];
-                for line in f.lines() {
-                    let s = line.unwrap();
-                    let fields = parse_csv(&s);
-                    r.fb_brnr.push((
-                        fields[0].to_string(),
-                        fields[1].parse::<u32>().unwrap(),
-                        fields[2].parse::<u32>().unwrap(),
-                    ));
-                }
-            }
-
-            // Read the bdcs read count file.
-
-            let bdcs_file = fnx(&outs, "feature_barcode_matrix_top.bdcs");
-            if path_exists(&bdcs_file) {
-                pathlist.push(bdcs_file.clone());
-                let f = open_for_read![&bdcs_file];
-                for line in f.lines() {
-                    let s = line.unwrap();
-                    let fields = parse_csv(&s);
-                    r.fb_bdcs.push((
-                        fields[0].to_string(),
-                        fields[1].parse::<u32>().unwrap(),
-                        fields[2].parse::<u32>().unwrap(),
-                        fields[3].parse::<u32>().unwrap(),
-                    ));
-                }
-            }
-
             // Read the feature reference file.
 
             let fref_file = fnx(&outs, "feature_reference.csv");
@@ -717,12 +626,7 @@ pub fn load_gex(
         feature_metrics.push(r.feature_metrics);
         json_metrics.push(r.json_metrics);
         metrics.push(r.metrics);
-        fb_total_umis.push(r.fb_total_umis);
-        fb_brn.push(r.fb_brn);
         feature_refs.push(r.feature_refs);
-        fb_brnr.push(r.fb_brnr);
-        fb_total_reads.push(r.fb_total_reads);
-        fb_bdcs.push(r.fb_bdcs);
     }
 
     // Done.
