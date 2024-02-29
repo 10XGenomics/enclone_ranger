@@ -7,7 +7,6 @@ use crate::load_gex_core::load_gex;
 use enclone_core::defs::{EncloneControl, GexInfo};
 
 use hdf5::Dataset;
-use mirror_sparse_matrix::MirrorSparseMatrix;
 use rayon::prelude::*;
 use std::fmt::Write;
 use std::{collections::HashMap, time::Instant};
@@ -20,8 +19,6 @@ use vector_utils::{bin_position, unique_sort};
 pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     let mut gex_features = Vec::<Vec<String>>::new();
     let mut gex_barcodes = Vec::<Vec<String>>::new();
-    let mut fb_top_barcodes = Vec::<Vec<String>>::new();
-    let mut fb_top_reads_barcodes = Vec::<Vec<String>>::new();
     let mut fb_total_umis = Vec::<u64>::new();
     let mut fb_total_reads = Vec::<u64>::new();
     let mut fb_brn = Vec::<Vec<(String, u32, u32)>>::new();
@@ -45,7 +42,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
         ctl,
         &mut gex_features,
         &mut gex_barcodes,
-        &mut fb_top_reads_barcodes,
         &mut fb_total_umis,
         &mut fb_total_reads,
         &mut fb_brn,
@@ -156,8 +152,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     Ok(GexInfo {
         gex_features,
         gex_barcodes,
-        fb_top_barcodes,
-        fb_top_reads_barcodes,
         fb_total_umis,
         fb_total_reads,
         fb_brn,

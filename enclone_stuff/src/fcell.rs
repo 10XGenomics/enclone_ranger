@@ -172,8 +172,7 @@ pub fn filter_by_fcell(
                                     let p = bin_position(&gex_info.gex_barcodes[li], bc);
                                     if p >= 0 {
                                         let raw_count = get_gex_matrix_entry(
-                                            ctl, gex_info, fid, &d_all, &ind_all, li, l,
-                                            p as usize, var,
+                                            ctl, gex_info, fid, &d_all, &ind_all, li, l, var,
                                         );
                                         val = format!("{raw_count:.2}");
                                     }

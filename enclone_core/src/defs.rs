@@ -7,7 +7,6 @@ use evalexpr::Node;
 use hdf5::Dataset;
 
 use io_utils::{open_for_read, path_exists};
-use mirror_sparse_matrix::MirrorSparseMatrix;
 use perf_stats::elapsed;
 
 #[cfg(not(target_os = "windows"))]
@@ -829,8 +828,6 @@ pub struct CloneInfo {
 pub struct GexInfo {
     pub gex_features: Vec<Vec<String>>,
     pub gex_barcodes: Vec<Vec<String>>,
-    pub fb_top_barcodes: Vec<Vec<String>>,
-    pub fb_top_reads_barcodes: Vec<Vec<String>>,
     pub fb_total_umis: Vec<u64>,
     pub fb_total_reads: Vec<u64>,
     pub fb_brn: Vec<Vec<(String, u32, u32)>>,

@@ -23,7 +23,6 @@ pub fn get_gex_matrix_entry(
     ind_all: &[Vec<u32>],
     li: usize,
     l: usize,
-    p: usize,
     y: &str,
 ) -> f64 {
     let mut raw_count = 0 as f64;
@@ -731,14 +730,14 @@ pub fn compute_bu(
                                 computed = true;
                                 for fid in ux.iter() {
                                     let counti = get_gex_matrix_entry(
-                                        ctl, gex_info, *fid, d_all, ind_all, li, l, p as usize, y,
+                                        ctl, gex_info, *fid, d_all, ind_all, li, l, y,
                                     );
                                     count += counti;
                                 }
                             } else if let Some(&fid) = gex_info.feature_id[li].get(&y.to_string()) {
                                 computed = true;
                                 count = get_gex_matrix_entry(
-                                    ctl, gex_info, fid, d_all, ind_all, li, l, p as usize, y,
+                                    ctl, gex_info, fid, d_all, ind_all, li, l, y,
                                 );
                             }
                         }

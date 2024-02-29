@@ -24,7 +24,6 @@ members = [
     "io_utils",
     "kmer_lookup",
     "load_feature_bc",
-    "mirror_sparse_matrix",
     "perf_stats",
     "pretty_trace",
     "stats_utils",

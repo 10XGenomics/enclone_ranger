@@ -53,7 +53,6 @@ pub fn load_gex(
     ctl: &mut EncloneControl,
     gex_features: &mut Vec<Vec<String>>,
     gex_barcodes: &mut Vec<Vec<String>>,
-    fb_top_reads_barcodes: &mut Vec<Vec<String>>,
     fb_total_umis: &mut Vec<u64>,
     fb_total_reads: &mut Vec<u64>,
     fb_brn: &mut Vec<Vec<(String, u32, u32)>>,

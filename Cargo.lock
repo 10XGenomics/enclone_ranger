@@ -469,7 +469,6 @@ dependencies = [
  "hdf5",
  "io_utils",
  "itertools",
- "mirror_sparse_matrix",
  "rand",
  "rayon",
  "regex",
@@ -494,7 +493,6 @@ dependencies = [
  "io_utils",
  "itertools",
  "lazy_static",
- "mirror_sparse_matrix",
  "perf_stats",
  "qd",
  "rayon",
@@ -1085,15 +1083,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e7810e0be55b428ada41041c41f32c9f1a42817901b4ccf45fa3d4b6561e74c7"
 dependencies = [
  "adler",
-]
-
-[[package]]
-name = "mirror_sparse_matrix"
-version = "0.1.17"
-dependencies = [
- "binary_vec_io",
- "io_utils",
- "pretty_trace",
 ]
 
 [[package]]
