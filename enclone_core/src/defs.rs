@@ -135,7 +135,6 @@ pub struct GeneralOpt {
     pub fate_file: String,
     // Optional path to a json file containing metadata
     pub proto_metadata: Option<String>,
-    pub h5: bool,
     pub h5_pre: bool,
     pub accept_reuse: bool,
     pub descrip: bool,

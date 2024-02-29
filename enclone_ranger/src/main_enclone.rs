@@ -101,7 +101,6 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
     ctl.gen_opt.cpu_this_start = 0;
     ctl.gen_opt.nopager = true;
     ctl.pretty = true;
-    ctl.gen_opt.h5 = true;
     USING_PAGER.store(false, SeqCst);
     proc_args(&mut ctl, args)?;
 
