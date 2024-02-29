@@ -11,31 +11,48 @@ use enclone_core::defs::EncloneControl;
 use enclone_core::slurp::slurp_h5;
 use io_utils::{dir_list, open_for_read, open_userfile_for_read, path_exists};
 use itertools::Itertools;
-use mirror_sparse_matrix::{
-    get_code_version_from_file, read_from_file, write_to_file, MirrorSparseMatrix,
-};
 use rayon::prelude::*;
 use serde_json::Value;
 use std::{
     collections::HashMap,
     convert::TryInto,
     fmt::Write,
-    fs::{read_to_string, remove_file, File},
+    fs::read_to_string,
     io::{BufRead, Read},
     time::Instant,
 };
 use string_utils::{parse_csv, TextUtils};
 use vector_utils::{unique_sort, VecUtils};
 
+#[derive(Default)]
+struct LoadResult {
+    gex_features: Vec<String>,
+    gex_barcodes: Vec<String>,
+    gex_mult: Option<f64>,
+    fb_mult: Option<f64>,
+    gex_cell_barcodes: Vec<String>,
+    cluster: HashMap<String, usize>,
+    cell_type: HashMap<String, String>,
+    pca: HashMap<String, Vec<f64>>,
+    cell_type_specified: bool,
+    error: String,
+    h5_path: String,
+    f15: Vec<String>,
+    feature_metrics: HashMap<(String, String), String>,
+    json_metrics: HashMap<String, f64>,
+    metrics: String,
+    fb_total_umis: u64,
+    fb_brn: Vec<(String, u32, u32)>,
+    feature_refs: String,
+    fb_brnr: Vec<(String, u32, u32)>,
+    fb_total_reads: u64,
+    fb_bdcs: Vec<(String, u32, u32, u32)>,
+}
+
 pub fn load_gex(
     ctl: &mut EncloneControl,
     gex_features: &mut Vec<Vec<String>>,
     gex_barcodes: &mut Vec<Vec<String>>,
-    gex_matrices: &mut Vec<MirrorSparseMatrix>,
-    fb_top_barcodes: &mut Vec<Vec<String>>,
-    fb_top_matrices: &mut Vec<MirrorSparseMatrix>,
-    fb_top_reads_barcodes: &mut Vec<Vec<String>>,
-    fb_top_reads_matrices: &mut Vec<MirrorSparseMatrix>,
     fb_total_umis: &mut Vec<u64>,
     fb_total_reads: &mut Vec<u64>,
     fb_brn: &mut Vec<Vec<(String, u32, u32)>>,
@@ -57,67 +74,9 @@ pub fn load_gex(
     metrics: &mut Vec<String>,
 ) -> Result<(), String> {
     let t = Instant::now();
-    let mut results = Vec::<(
-        usize,
-        Vec<String>,
-        Vec<String>,
-        MirrorSparseMatrix,
-        Option<f64>,
-        Option<f64>,
-        Vec<String>,
-        HashMap<String, usize>,
-        HashMap<String, String>,
-        HashMap<String, Vec<f64>>,
-        bool,
-        String,
-        String,
-        MirrorSparseMatrix,
-        Vec<String>,
-        Vec<String>,
-        HashMap<(String, String), String>,
-        HashMap<String, f64>,
-        String,
-        u64,
-        Vec<(String, u32, u32)>,
-        String,
-        (Vec<f32>, Vec<Vec<u8>>),
-        Vec<(String, u32, u32)>,
-        MirrorSparseMatrix,
-        Vec<String>,
-        u64,
-        Vec<(String, u32, u32, u32)>,
-    )>::new();
+    let mut results = Vec::<(usize, LoadResult)>::new();
     for i in 0..ctl.origin_info.gex_path.len() {
-        results.push((
-            i,
-            Vec::<String>::new(),
-            Vec::<String>::new(),
-            MirrorSparseMatrix::new(),
-            None,
-            None,
-            Vec::<String>::new(),
-            HashMap::<String, usize>::new(),
-            HashMap::<String, String>::new(),
-            HashMap::<String, Vec<f64>>::new(),
-            false,
-            String::new(),
-            String::new(),
-            MirrorSparseMatrix::new(),
-            Vec::<String>::new(),
-            Vec::<String>::new(),
-            HashMap::<(String, String), String>::new(),
-            HashMap::<String, f64>::new(),
-            String::new(),
-            0,
-            Vec::new(),
-            String::new(),
-            (Vec::new(), Vec::new()),
-            Vec::new(),
-            MirrorSparseMatrix::new(),
-            Vec::<String>::new(),
-            0,
-            Vec::new(),
-        ));
+        results.push((i, LoadResult::default()));
     }
     let gex_outs = &ctl.origin_info.gex_path;
     // Here and in other places, where an error message can be printed in a parallel loop, it
@@ -128,9 +87,9 @@ pub fn load_gex(
     // 1. When running it over a large number of datasets, the observed load average is ~2, so
     //    somehow the parallelism is not working.
     // 2. We know where the time is spent in the loop, and this is marked below.
-    results.par_iter_mut().for_each(|r| {
-        let pathlist = &mut r.15;
-        let i = r.0;
+    results.par_iter_mut().for_each(|(i, r)| {
+        let pathlist = &mut r.f15;
+        let i = *i;
         if !gex_outs[i].is_empty() {
             // First define the path where the GEX files should live, and make sure that the path
             // exists.
@@ -142,7 +101,7 @@ pub fn load_gex(
             } else if root.ends_with("/outs") {
                 outs = root.before("/outs").to_string();
                 if !path_exists(&outs) {
-                    r.11 = format!(
+                    r.error = format!(
                         "\nThe directory\n{outs}\ndoes not exist.  Something must be amiss with \
                         the arguments to PRE and/or GEX and/or META.\n"
                     );
@@ -167,14 +126,14 @@ pub fn load_gex(
                 }
             }
             if h5_path.is_empty() {
-                r.11 = format!(
+                r.error = format!(
                     "\nThe file raw_feature_bc_matrix.h5 is not in the directory\n{outs}\n\
                     and neither is the older-named version raw_gene_bc_matrices_h5.h5.  Perhaps \
                     something\nis amiss with the arguments to PRE and/or GEX and/or META.\n"
                 );
                 return;
             }
-            r.12 = h5_path.clone();
+            r.h5_path = h5_path.clone();
             let types_file = format!("{outs}/analysis_csv/celltypes/celltypes.csv");
 
             // Define possible places for the analysis directory.
@@ -208,10 +167,9 @@ pub fn load_gex(
 
             // Proceed.
 
-            let bin_file = format!("{outs}/feature_barcode_matrix.bin");
             for f in [pca_file.clone(), cluster_file.clone()].iter() {
                 if !path_exists(f) {
-                    r.11 = format!(
+                    r.error = format!(
                         "\nThe file\n{f}\ndoes not exist.  \
                         Perhaps one of your directories is missing some stuff.\n\n\
                         One possibility is that you ran \"cellranger count\" using only \
@@ -254,64 +212,12 @@ pub fn load_gex(
                 }
             }
             if csv.is_empty() {
-                r.11 = format!(
+                r.error = format!(
                     "\nSomething wrong with GEX or META argument:\ncan't find the file \
                         metrics_summary.csv or metrics_summary_csv.csv in the directory\n\
                         {outs}"
                 );
                 return;
-            }
-
-            // Determine the state of affairs of the bin file.  We end with one of three outcomes:
-            //
-            // 1. We're not using the bin file at all.
-            // 2. We are reading the bin file.
-            // 3. We are writing the bin file.
-
-            let mut bin_file_state = 1;
-            if !ctl.gen_opt.force_h5 {
-                let bin_file_exists = path_exists(&bin_file);
-                if !bin_file_exists {
-                    if !ctl.gen_opt.h5 {
-                        bin_file_state = 3;
-                    }
-                } else {
-                    pathlist.push(bin_file.clone());
-                    // THE FOLLOWING LINE HAS BEEN OBSERVED TO FAIL SPORADICALLY.  THIS HAS
-                    // HAPPENED MULTIPLE TIMES.  THE FAIL WAS IN
-                    // binary_read_to_ref::<u32>(&mut ff, &mut x[0], 11).unwrap();
-                    // WHERE THE unwrap() FAILED ON
-                    // UnexpectedEof, error: "failed to fill whole buffer".
-                    //
-                    // 2/15/21: this should now be fixed.
-
-                    let v = get_code_version_from_file(&bin_file);
-                    if v == 1 {
-                        bin_file_state = 2;
-                    } else {
-                        bin_file_state = 3;
-                    }
-                }
-            }
-
-            // If we need to write feature_barcode_matrix.bin, make sure that's possible, before
-            // spending a lot of time reading other stuff.
-
-            if bin_file_state == 3 {
-                let f = File::create(&bin_file);
-                if f.is_err() {
-                    r.11 = format!(
-                        "\nenclone is trying to create the path\n{bin_file}\n\
-                        but that path cannot be created.  This path is for the binary GEX \
-                        matrix file that enclone can read\n\
-                        faster than the hdf5 file.  Your options are:\n\
-                        1. Make that location writable (or fix the path, if it's wrong).\n\
-                        2. Find a new location where you can write.\n\
-                        3. Don't specify NH5 (if you specified it).\n"
-                    );
-                    return;
-                }
-                remove_file(&bin_file).unwrap();
             }
 
             // Read cell types.
@@ -328,14 +234,14 @@ pub fn load_gex(
                     let s = line.unwrap();
                     let barcode = s.before(",");
                     let cell_type = s.after(",");
-                    r.8.insert(barcode.to_string(), cell_type.to_string());
-                    r.10 = true;
+                    r.cell_type.insert(barcode.to_string(), cell_type.to_string());
+                    r.cell_type_specified = true;
                 }
             } else if ctl.gen_opt.mark_stats
                 || ctl.gen_opt.mark_stats2
                 || ctl.clono_filt_opt_def.marked_b
             {
-                r.11 = format!(
+                r.error = format!(
                     "\nIf you use MARK_STATS or MARK_STATS2 or MARKED_B, celltypes.csv has to \
                     exist, and this file\n{types_file}\ndoes not exist.\n"
                 );
@@ -354,7 +260,7 @@ pub fn load_gex(
                 for (var, value) in z.iter() {
                     if value.as_f64().is_some() {
                         let value = value.as_f64().unwrap();
-                        r.17.insert(var.to_string(), value);
+                        r.json_metrics.insert(var.to_string(), value);
                     }
                 }
             }
@@ -388,7 +294,7 @@ pub fn load_gex(
                         ));
                     }
                 }
-                r.18 = format!("{}\n", lines.iter().format("\n"));
+                r.metrics = format!("{}\n", lines.iter().format("\n"));
             }
 
             // Read feature metrics file.  Note that we do not enforce the requirement of this
@@ -432,7 +338,7 @@ pub fn load_gex(
                                     || xfields[j] == "num_umis_cells"
                                     || xfields[j] == "num_reads_cells"
                                 {
-                                    r.16.insert(
+                                    r.feature_metrics.insert(
                                         (feature.clone(), xfields[j].clone()),
                                         fields[j].clone(),
                                     );
@@ -457,7 +363,7 @@ pub fn load_gex(
                 let y = s.after(",").split(',').map(str::force_f64).collect();
                 // This assert is turned off because in fact there are not always 10 components.
                 // assert_eq!(x.len(), 10);
-                r.9.insert(barcode.to_string(), y);
+                r.pca.insert(barcode.to_string(), y);
             }
 
             // Read graph clusters, and also get the cell barcodes from that.
@@ -471,8 +377,8 @@ pub fn load_gex(
                 }
                 let s = line.unwrap();
                 let (barcode, cluster) = (s.before(","), s.after(",").force_usize());
-                r.7.insert(barcode.to_string(), cluster);
-                r.6.push(barcode.to_string());
+                r.cluster.insert(barcode.to_string(), cluster);
+                r.gex_cell_barcodes.push(barcode.to_string());
             }
 
             // Get the multipliers gene and feature barcode counts.
@@ -488,7 +394,7 @@ pub fn load_gex(
                 }
             }
             if lines.is_empty() {
-                r.11 = format!("\nThe file\n{csv}\nis empty.\n");
+                r.error = format!("\nThe file\n{csv}\nis empty.\n");
                 return;
             }
             let fields = parse_csv(&lines[0]);
@@ -514,7 +420,7 @@ pub fn load_gex(
                         || fields.len() < name_field + 1
                         || fields.len() < value_field + 1
                     {
-                        r.11 = format!(
+                        r.error = format!(
                             "\nSomething appears to be wrong with the file\n{}:\n\
                             line {} doesn't have enough fields.\n",
                             csv,
@@ -529,7 +435,7 @@ pub fn load_gex(
                         rpcx = rpcx.replace(',', "");
                         rpcx = rpcx.replace('\"', "");
                         if rpcx.parse::<usize>().is_err() {
-                            r.11 = format!(
+                            r.error = format!(
                                 "\nSomething appears to be wrong with the file\n{csv}:\n\
                                 the Gene Expression Mean Reads per Cell value isn't an integer.\n"
                             );
@@ -545,7 +451,7 @@ pub fn load_gex(
                         fbrpcx = fbrpcx.replace(',', "");
                         fbrpcx = fbrpcx.replace('\"', "");
                         if fbrpcx.parse::<usize>().is_err() {
-                            r.11 = format!(
+                            r.error = format!(
                                 "\nSomething appears to be wrong with the file\n{csv}:\n\
                                 the Antibody/Antigen Capture Mean Reads per Cell value isn't an integer.\n"
                             );
@@ -555,7 +461,7 @@ pub fn load_gex(
                     }
                 }
                 if rpc.is_none() && fbrpc.is_none() {
-                    r.11 = format!(
+                    r.error = format!(
                         "\nGene expression or feature barcode data was expected, however the \
                         CSV file\n{csv}\n\
                         does not have values for Gene Expression Mean Reads per Cell or
@@ -579,7 +485,7 @@ pub fn load_gex(
                         }
                     } else if line_no == 1 {
                         if rpc_field.is_some() && rpc_field.unwrap() >= fields.len() {
-                            r.11 = format!(
+                            r.error = format!(
                                 "\nSomething appears to be wrong with the file\n{csv}:\n\
                                 the second line doesn't have enough fields.\n"
                             );
@@ -589,7 +495,7 @@ pub fn load_gex(
                             rpcx = rpcx.replace(',', "");
                             rpcx = rpcx.replace('\"', "");
                             if rpcx.parse::<usize>().is_err() {
-                                r.11 = format!(
+                                r.error = format!(
                                     "\nSomething appears to be wrong with the file\n{csv}:\n\
                                     the Mean Reads per Cell field isn't an integer.\n"
                                 );
@@ -598,7 +504,7 @@ pub fn load_gex(
                             rpc = Some(rpcx.force_usize() as isize);
                         }
                         if fbrpc_field.is_some() && fbrpc_field.unwrap() >= fields.len() {
-                            r.11 = format!(
+                            r.error = format!(
                                 "\nSomething appears to be wrong with the file\n{csv}:\n\
                                 the second line doesn't have enough fields.\n"
                             );
@@ -608,7 +514,7 @@ pub fn load_gex(
                             fbrpcx = fbrpcx.replace(',', "");
                             fbrpcx = fbrpcx.replace('\"', "");
                             if fbrpcx.parse::<usize>().is_err() {
-                                r.11 = format!(
+                                r.error = format!(
                                     "\nSomething appears to be wrong with the file\n{csv}:\n\
                                     the Antibody/Antigen: Mean Reads per Cell field isn't an integer.\n"
                                 );
@@ -619,7 +525,7 @@ pub fn load_gex(
                     }
                 }
                 if rpc.is_none() && fbrpc.is_none() {
-                    r.11 = format!(
+                    r.error = format!(
                         "\nGene expression or feature barcode data was expected, however the \
                         CSV file\n{csv}\n\
                         does not have a field \"Mean Reads per Cell\" or \
@@ -639,30 +545,8 @@ pub fn load_gex(
                 const FB_RPC_EXPECTED: f64 = 5_000.0;
                 fb_mult = Some(FB_RPC_EXPECTED / fbrpc as f64);
             }
-            r.4 = gene_mult;
-            r.5 = fb_mult;
-
-            // Read the top feature barcode matrix, by UMIs.
-
-            let top_file = fnx(&outs, "feature_barcode_matrix_top.bin");
-            if path_exists(&top_file) {
-                pathlist.push(top_file.clone());
-                read_from_file(&mut r.13, &top_file);
-                for i in 0..r.13.nrows() {
-                    r.14.push(r.13.row_label(i));
-                }
-            }
-
-            // Read the top feature barcode matrix, by reads.
-
-            let top_file = fnx(&outs, "feature_barcode_matrix_top_reads.bin");
-            if path_exists(&top_file) {
-                pathlist.push(top_file.clone());
-                read_from_file(&mut r.24, &top_file);
-                for i in 0..r.24.nrows() {
-                    r.25.push(r.24.row_label(i));
-                }
-            }
+            r.gex_mult = gene_mult;
+            r.fb_mult = fb_mult;
 
             // Read the total UMIs.
 
@@ -672,7 +556,7 @@ pub fn load_gex(
                 let mut f = open_for_read![&top_file];
                 let mut bytes = Vec::<u8>::new();
                 f.read_to_end(&mut bytes).unwrap();
-                r.19 = u64::from_ne_bytes(bytes.try_into().unwrap());
+                r.fb_total_umis = u64::from_ne_bytes(bytes.try_into().unwrap());
             }
 
             // Read the total reads.
@@ -683,7 +567,7 @@ pub fn load_gex(
                 let mut f = open_for_read![&top_file];
                 let mut bytes = Vec::<u8>::new();
                 f.read_to_end(&mut bytes).unwrap();
-                r.26 = u64::from_ne_bytes(bytes.try_into().unwrap());
+                r.fb_total_reads = u64::from_ne_bytes(bytes.try_into().unwrap());
             }
 
             // Read the barcode-ref-nonref UMI count file.
@@ -695,7 +579,7 @@ pub fn load_gex(
                 for line in f.lines() {
                     let s = line.unwrap();
                     let fields = parse_csv(&s);
-                    r.20.push((
+                    r.fb_brn.push((
                         fields[0].to_string(),
                         fields[1].parse::<u32>().unwrap(),
                         fields[2].parse::<u32>().unwrap(),
@@ -712,7 +596,7 @@ pub fn load_gex(
                 for line in f.lines() {
                     let s = line.unwrap();
                     let fields = parse_csv(&s);
-                    r.23.push((
+                    r.fb_brnr.push((
                         fields[0].to_string(),
                         fields[1].parse::<u32>().unwrap(),
                         fields[2].parse::<u32>().unwrap(),
@@ -729,7 +613,7 @@ pub fn load_gex(
                 for line in f.lines() {
                     let s = line.unwrap();
                     let fields = parse_csv(&s);
-                    r.27.push((
+                    r.fb_bdcs.push((
                         fields[0].to_string(),
                         fields[1].parse::<u32>().unwrap(),
                         fields[2].parse::<u32>().unwrap(),
@@ -743,77 +627,46 @@ pub fn load_gex(
             let fref_file = fnx(&outs, "feature_reference.csv");
             if path_exists(&fref_file) {
                 pathlist.push(fref_file.clone());
-                r.21 = read_to_string(&fref_file).unwrap();
+                r.feature_refs = read_to_string(&fref_file).unwrap();
             }
 
-            // Read the binary matrix file if appropriate.
-
-            if bin_file_state == 2 {
-                read_from_file(&mut r.3, &bin_file);
-                let (n, k) = (r.3.nrows(), r.3.ncols());
-                for i in 0..n {
-                    r.2.push(r.3.row_label(i));
-                }
-                for j in 0..k {
-                    r.1.push(r.3.col_label(j));
-                }
-
-            // Otherwise we have to get stuff from the h5 file.
-            } else {
-                let mut matrix = Vec::<Vec<(i32, i32)>>::new();
-                let s = slurp_h5(
-                    &h5_path,
-                    bin_file_state == 3,
-                    &mut r.2,
-                    &mut r.1,
-                    &mut matrix,
-                );
-                if let Err(err) = s {
-                    r.11 = err;
-                    return;
-                }
-                if bin_file_state == 3 {
-                    r.3 = MirrorSparseMatrix::build_from_vec(&matrix, &r.2, &r.1);
-                    write_to_file(&r.3, &bin_file);
-                    // Note that if the dataset archive was complete, we would not need to do this.
-                    if ctl.gen_opt.internal_run {
-                        let earth = &ctl.gen_opt.config["earth"];
-                        if !bin_file.starts_with(earth) {
-                            let bin_file_alt =
-                                format!("{earth}/current{}", bin_file.after("current"));
-                            write_to_file(&r.3, &bin_file_alt);
-                        }
-                    }
-                }
+            // Read the feature barcode matrix file.
+            if let Err(err) = slurp_h5(
+                &h5_path,
+                &mut r.gex_barcodes,
+                &mut r.gex_features,
+            ) {
+                r.error = err;
+                return;
             }
         }
-        unique_sort(&mut r.6);
+        unique_sort(&mut r.gex_cell_barcodes);
     });
-    for r in &results {
-        ctl.pathlist.extend(r.15.iter().cloned());
+    for (_, r) in &results {
+        ctl.pathlist.extend(r.f15.iter().cloned());
     }
     ctl.perf_stats(&t, "in load_gex main loop");
 
     // Test for error.
 
     let t = Instant::now();
-    for r in &results {
-        if !r.11.is_empty() {
-            return Err(r.11.clone());
+    for (_, r) in &results {
+        if !r.error.is_empty() {
+            return Err(r.error.clone());
         }
     }
 
     // Set have_gex and have_fb.
 
-    for r in &results {
-        if r.4.is_some() {
+    for (_, r) in &results {
+        if r.gex_mult.is_some() {
             *have_gex = true;
         }
-        if r.5.is_some() {
+        if r.fb_mult.is_some() {
             *have_fb = true;
         }
     }
-    h5_paths.extend(results.iter().map(|r| r.12.clone()));
+    h5_paths.extend(results.iter().map(|(_, r)| r.h5_path.clone()));
 
     // Add some metrics.
 
@@ -835,90 +688,41 @@ pub fn load_gex(
         let metric_name = x.0.to_string();
         let metric_display_name = x.1.to_string();
         let mut have = false;
-        for result in &results {
-            if result.17.contains_key(&metric_name) {
+        for (_, result) in &results {
+            if result.json_metrics.contains_key(&metric_name) {
                 have = true;
             }
         }
         if have {
-            for result in results.iter_mut() {
+            for (_, result) in results.iter_mut() {
                 let mut value = String::new();
-                if result.17.contains_key(&metric_name) {
-                    value = format!("{:.3}", result.17[&metric_name]);
+                if result.json_metrics.contains_key(&metric_name) {
+                    value = format!("{:.3}", result.json_metrics[&metric_name]);
                 }
-                writeln!(result.18, "{metric_display_name},{value}").unwrap();
+                writeln!(result.metrics, "{metric_display_name},{value}").unwrap();
             }
         }
     }
 
-    // Save results.  This avoids cloning, which saves a lot of time.
-
-    let n = results.len();
-    for (
-        _i,
-        (
-            _x0,
-            x1,
-            x2,
-            x3,
-            x4,
-            x5,
-            x6,
-            x7,
-            x8,
-            x9,
-            x10,
-            _x11,
-            _x12,
-            x13,
-            x14,
-            _x15,
-            x16,
-            x17,
-            x18,
-            x19,
-            x20,
-            x21,
-            _x22,
-            x23,
-            x24,
-            x25,
-            x26,
-            x27,
-        ),
-    ) in results.into_iter().take(n).enumerate()
-    {
-        gex_features.push(x1);
-        gex_barcodes.push(x2);
-        gex_matrices.push(x3);
-        fb_top_matrices.push(x13);
-        fb_top_barcodes.push(x14);
-        let mut gex_mult = 1.0;
-        if let Some(x4) = x4 {
-            gex_mult = x4;
-        }
-        gex_mults.push(gex_mult);
-        let mut fb_mult = 1.0;
-        if let Some(x5) = x5 {
-            fb_mult = x5;
-        }
-        fb_mults.push(fb_mult);
-        gex_cell_barcodes.push(x6);
-        cluster.push(x7);
-        cell_type.push(x8);
-        pca.push(x9);
-        cell_type_specified.push(x10);
-        feature_metrics.push(x16);
-        json_metrics.push(x17);
-        metrics.push(x18);
-        fb_total_umis.push(x19);
-        fb_brn.push(x20);
-        feature_refs.push(x21);
-        fb_brnr.push(x23);
-        fb_top_reads_matrices.push(x24);
-        fb_top_reads_barcodes.push(x25);
-        fb_total_reads.push(x26);
-        fb_bdcs.push(x27);
+    for (_, r) in results.into_iter() {
+        gex_features.push(r.gex_features);
+        gex_barcodes.push(r.gex_barcodes);
+        gex_mults.push(r.gex_mult.unwrap_or(1.0));
+        fb_mults.push(r.fb_mult.unwrap_or(1.0));
+        gex_cell_barcodes.push(r.gex_cell_barcodes);
+        cluster.push(r.cluster);
+        cell_type.push(r.cell_type);
+        pca.push(r.pca);
+        cell_type_specified.push(r.cell_type_specified);
+        feature_metrics.push(r.feature_metrics);
+        json_metrics.push(r.json_metrics);
+        metrics.push(r.metrics);
+        fb_total_umis.push(r.fb_total_umis);
+        fb_brn.push(r.fb_brn);
+        feature_refs.push(r.feature_refs);
+        fb_brnr.push(r.fb_brnr);
+        fb_total_reads.push(r.fb_total_reads);
+        fb_bdcs.push(r.fb_bdcs);
     }
 
     // Done.

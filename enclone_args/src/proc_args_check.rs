@@ -637,14 +637,7 @@ pub fn check_one_lvar(
                         .to_string(),
                 );
             }
-            if !gex_info.fb_top_matrices[0].initialized() {
-                return Err(
-                    "\nThe variables fb<n> and fb<n>_n can only be used if the file \
-                        feature_barcode_matrix_top.bin was generated.\n"
-                        .to_string(),
-                );
-            }
-            return Ok(true);
+            return Err("\nThe variables fb<n> and fb<n>_n can no longer be used.\n".to_string());
         }
     }
 

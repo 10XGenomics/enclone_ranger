@@ -7,10 +7,8 @@ use itertools::Itertools;
 
 pub fn slurp_h5(
     h5_path: &str,
-    take_matrix: bool,
     barcodes: &mut Vec<String>,
     features: &mut Vec<String>,
-    matrix: &mut Vec<Vec<(i32, i32)>>,
 ) -> Result<(), String> {
     // Read barcodes from the h5 file.
 
@@ -41,23 +39,6 @@ pub fn slurp_h5(
             "{}\t{}\t{}",
             feature_ids[i], feature_names[i], feature_types[i]
         ));
-    }
-
-    // If appropriate, construct the binary matrix file from the h5 file.
-
-    if take_matrix {
-        let data_loc = h.dataset("matrix/data").unwrap();
-        let data: Vec<u32> = data_loc.as_reader().read_raw().unwrap();
-        let ind_loc = h.dataset("matrix/indices").unwrap();
-        let ind: Vec<u32> = ind_loc.as_reader().read_raw().unwrap();
-        let ind_ptr_loc = h.dataset("matrix/indptr").unwrap();
-        let ind_ptr: Vec<u32> = ind_ptr_loc.as_reader().read_raw().unwrap();
-        matrix.resize(barcodes.len(), Vec::new());
-        for i in 0..matrix.len() {
-            for j in ind_ptr[i]..ind_ptr[i + 1] {
-                matrix[i].push((ind[j as usize] as i32, data[j as usize] as i32));
-            }
-        }
     }
     Ok(())
 }

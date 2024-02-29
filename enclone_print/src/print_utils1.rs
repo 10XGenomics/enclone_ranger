@@ -5,7 +5,7 @@ use ansi_escape::{
     emit_bold_escape, emit_eight_bit_color_escape, emit_end_escape, emit_red_escape,
 };
 use enclone_core::cell_color::CellColor;
-use enclone_core::defs::{ColInfo, EncloneControl, ExactClonotype, GexInfo, TigData1, POUT_SEP};
+use enclone_core::defs::{ColInfo, EncloneControl, ExactClonotype, TigData1, POUT_SEP};
 use enclone_core::print_tools::{color_by_property, emit_codon_color_escape};
 use enclone_vars::decode_arith;
 use expr_tools::vars_of_node;
@@ -847,39 +847,6 @@ pub fn cdr3_aa_con(
         }
     }
     c
-}
-
-pub fn get_gex_matrix_entry(
-    ctl: &EncloneControl,
-    gex_info: &GexInfo,
-    fid: usize,
-    d_all: &[Vec<u32>],
-    ind_all: &[Vec<u32>],
-    li: usize,
-    l: usize,
-    p: usize,
-    y: &str,
-) -> f64 {
-    let mut raw_count = 0 as f64;
-    if gex_info.gex_matrices[li].initialized() {
-        raw_count = gex_info.gex_matrices[li].value(p, fid) as f64;
-    } else {
-        for (&da, &ia) in d_all[l].iter().zip(ind_all[l].iter()) {
-            if ia == fid as u32 {
-                raw_count = da as f64;
-                break;
-            }
-        }
-    }
-    let mult = if y.ends_with("_g") {
-        gex_info.gex_mults[li]
-    } else {
-        gex_info.fb_mults[li]
-    };
-    if !ctl.gen_opt.full_counts {
-        raw_count *= mult;
-    }
-    raw_count
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓

@@ -7,7 +7,6 @@ use evalexpr::Node;
 use hdf5::Dataset;
 
 use io_utils::{open_for_read, path_exists};
-use mirror_sparse_matrix::MirrorSparseMatrix;
 use perf_stats::elapsed;
 
 #[cfg(not(target_os = "windows"))]
@@ -172,7 +171,6 @@ pub struct GeneralOpt {
     pub accept_inconsistent: bool, // TEMPORARY!
     pub current_ref: bool,         // TEMPORARY!
     pub internal_run: bool,
-    pub force_h5: bool,
     pub full_counts: bool,
     pub html: bool,
     pub html_title: String,
@@ -219,7 +217,6 @@ pub struct GeneralOpt {
     pub row_fill_verbose: bool,
     pub config_file: String,
     pub config: HashMap<String, String>,
-    pub top_genes: bool,
     pub toy_com: bool,
     pub chains_to_align: Vec<usize>,
     pub chains_to_align2: Vec<usize>,
@@ -245,10 +242,6 @@ pub struct GeneralOpt {
     pub var_def: Vec<(String, String, Node, String)>, // {(variable, value, compiled value, expr)}
     pub nospaces: bool,
     pub subsample: f64,
-    pub all_bc_filename: String,
-    pub all_bc_human: bool,
-    pub all_bc_fields: Vec<String>,
-    pub all_bc_fields_orig: Vec<String>,
     pub gamma_delta: bool,
     pub pre_eval: bool,
     pub pre_eval_show: bool,
@@ -830,11 +823,6 @@ pub struct CloneInfo {
 pub struct GexInfo {
     pub gex_features: Vec<Vec<String>>,
     pub gex_barcodes: Vec<Vec<String>>,
-    pub gex_matrices: Vec<MirrorSparseMatrix>,
-    pub fb_top_matrices: Vec<MirrorSparseMatrix>,
-    pub fb_top_barcodes: Vec<Vec<String>>,
-    pub fb_top_reads_matrices: Vec<MirrorSparseMatrix>,
-    pub fb_top_reads_barcodes: Vec<Vec<String>>,
     pub fb_total_umis: Vec<u64>,
     pub fb_total_reads: Vec<u64>,
     pub fb_brn: Vec<Vec<(String, u32, u32)>>,

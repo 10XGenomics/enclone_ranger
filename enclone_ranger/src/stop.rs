@@ -31,7 +31,7 @@ pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), S
     let mut d_readers = Vec::<Option<Reader>>::new();
     let mut ind_readers = Vec::<Option<Reader>>::new();
     for li in 0..ctl.origin_info.n() {
-        if !ctl.origin_info.gex_path[li].is_empty() && !gex_info.gex_matrices[li].initialized() {
+        if !ctl.origin_info.gex_path[li].is_empty() {
             let x = gex_info.h5_data[li].as_ref();
             d_readers.push(Some(x.unwrap().as_reader()));
             ind_readers.push(Some(gex_info.h5_indices[li].as_ref().unwrap().as_reader()));
@@ -46,10 +46,7 @@ pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), S
     }
     h5_data.par_iter_mut().for_each(|res| {
         let li = res.0;
-        if !ctl.origin_info.gex_path[li].is_empty()
-            && !gex_info.gex_matrices[li].initialized()
-            && ctl.gen_opt.h5_pre
-        {
+        if !ctl.origin_info.gex_path[li].is_empty() && ctl.gen_opt.h5_pre {
             res.1 = d_readers[li].as_ref().unwrap().read_raw().unwrap();
             res.2 = ind_readers[li].as_ref().unwrap().read_raw().unwrap();
         }

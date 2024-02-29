@@ -216,46 +216,37 @@ pub fn row_fill(
                 let p = bin_position(&gex_info.gex_barcodes[li], &bc);
                 if p >= 0 {
                     let mut raw_count = 0;
-                    if gex_info.gex_matrices[li].initialized() {
-                        let row = gex_info.gex_matrices[li].row(p as usize);
-                        for r in row {
-                            let f = r.0;
-                            let n = r.1;
-                            if gex_info.is_gex[li][f] {
-                                raw_count += n;
-                            }
-                        }
+
+                    let z1 = gex_info.h5_indptr[li][p as usize] as usize;
+                    let z2 = gex_info.h5_indptr[li][p as usize + 1] as usize; // is p+1 OK??
+                    let d: Vec<u32>;
+                    let ind: Vec<u32>;
+                    if ctl.gen_opt.h5_pre {
+                        d = h5_data[li].1[z1..z2].to_vec();
+                        ind = h5_data[li].2[z1..z2].to_vec();
                     } else {
-                        let z1 = gex_info.h5_indptr[li][p as usize] as usize;
-                        let z2 = gex_info.h5_indptr[li][p as usize + 1] as usize; // is p+1 OK??
-                        let d: Vec<u32>;
-                        let ind: Vec<u32>;
-                        if ctl.gen_opt.h5_pre {
-                            d = h5_data[li].1[z1..z2].to_vec();
-                            ind = h5_data[li].2[z1..z2].to_vec();
-                        } else {
-                            d = d_readers[li]
-                                .as_ref()
-                                .unwrap()
-                                .read_slice(s![z1..z2])
-                                .unwrap()
-                                .to_vec();
-                            ind = ind_readers[li]
-                                .as_ref()
-                                .unwrap()
-                                .read_slice(s![z1..z2])
-                                .unwrap()
-                                .to_vec();
-                        }
-                        for j in 0..d.len() {
-                            if gex_info.is_gex[li][ind[j] as usize] {
-                                let n = d[j] as usize;
-                                raw_count += n;
-                            }
-                        }
-                        d_all[l] = d;
-                        ind_all[l] = ind;
+                        d = d_readers[li]
+                            .as_ref()
+                            .unwrap()
+                            .read_slice(s![z1..z2])
+                            .unwrap()
+                            .to_vec();
+                        ind = ind_readers[li]
+                            .as_ref()
+                            .unwrap()
+                            .read_slice(s![z1..z2])
+                            .unwrap()
+                            .to_vec();
                     }
+                    for j in 0..d.len() {
+                        if gex_info.is_gex[li][ind[j] as usize] {
+                            let n = d[j] as usize;
+                            raw_count += n;
+                        }
+                    }
+                    d_all[l] = d;
+                    ind_all[l] = ind;
+
                     if !ctl.gen_opt.full_counts {
                         count = (raw_count as f64 * gex_info.gex_mults[li]).round() as usize;
                         fcount = raw_count as f64 * gex_info.gex_mults[li];

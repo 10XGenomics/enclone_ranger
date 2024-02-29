@@ -122,9 +122,8 @@ pub fn proc_lvar2(
                 computed = true;
                 let mut raw_count = 0.0;
                 for fid in ux.iter() {
-                    let raw_counti = get_gex_matrix_entry(
-                        ctl, gex_info, *fid, d_all, ind_all, li, l, p as usize, y,
-                    );
+                    let raw_counti =
+                        get_gex_matrix_entry(ctl, gex_info, *fid, d_all, ind_all, li, l, y);
                     raw_count += raw_counti;
                 }
                 counts_sub.push(raw_count.round() as usize);
@@ -135,8 +134,7 @@ pub fn proc_lvar2(
             let p = bin_position(&gex_info.gex_barcodes[li], &bc);
             if p >= 0 {
                 let fid = gex_info.feature_id[li][&y.to_string()];
-                let raw_count =
-                    get_gex_matrix_entry(ctl, gex_info, fid, d_all, ind_all, li, l, p as usize, y);
+                let raw_count = get_gex_matrix_entry(ctl, gex_info, fid, d_all, ind_all, li, l, y);
                 counts_sub.push(raw_count.round() as usize);
                 fcounts_sub.push(raw_count);
             }
