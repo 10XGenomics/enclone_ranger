@@ -906,7 +906,6 @@ pub fn print_clonotypes(
             }
         }
     });
-    let exacts = exacts;
     for r in &results {
         if !r.13.is_empty() {
             return Err(r.13.clone());
