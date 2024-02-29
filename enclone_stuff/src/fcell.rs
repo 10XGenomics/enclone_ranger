@@ -30,8 +30,7 @@ pub fn filter_by_fcell(
         let mut d_readers = Vec::<Option<Reader>>::new();
         let mut ind_readers = Vec::<Option<Reader>>::new();
         for li in 0..ctl.origin_info.n() {
-            if !ctl.origin_info.gex_path[li].is_empty() && !gex_info.gex_matrices[li].initialized()
-            {
+            if !ctl.origin_info.gex_path[li].is_empty() {
                 let x = gex_info.h5_data[li].as_ref();
                 if x.is_none() {
                     // THIS FAILS SPORADICALLY, OBSERVED MULTIPLE TIMES,
@@ -95,10 +94,7 @@ pub fn filter_by_fcell(
         }
         h5_data.par_iter_mut().for_each(|res| {
             let li = res.0;
-            if !ctl.origin_info.gex_path[li].is_empty()
-                && !gex_info.gex_matrices[li].initialized()
-                && ctl.gen_opt.h5_pre
-            {
+            if !ctl.origin_info.gex_path[li].is_empty() && ctl.gen_opt.h5_pre {
                 res.1 = d_readers[li].as_ref().unwrap().read_raw().unwrap();
                 res.2 = ind_readers[li].as_ref().unwrap().read_raw().unwrap();
             }
@@ -122,7 +118,7 @@ pub fn filter_by_fcell(
                     let bc = ex.clones[l][0].barcode.clone();
                     if !gex_info.gex_barcodes.is_empty() {
                         let p = bin_position(&gex_info.gex_barcodes[li], &bc);
-                        if p >= 0 && !gex_info.gex_matrices[li].initialized() {
+                        if p >= 0 {
                             let z1 = gex_info.h5_indptr[li][p as usize] as usize;
                             let z2 = gex_info.h5_indptr[li][p as usize + 1] as usize; // p+1 OK?
                             if ctl.gen_opt.h5_pre {
