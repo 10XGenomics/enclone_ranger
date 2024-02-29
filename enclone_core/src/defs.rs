@@ -242,10 +242,6 @@ pub struct GeneralOpt {
     pub var_def: Vec<(String, String, Node, String)>, // {(variable, value, compiled value, expr)}
     pub nospaces: bool,
     pub subsample: f64,
-    pub all_bc_filename: String,
-    pub all_bc_human: bool,
-    pub all_bc_fields: Vec<String>,
-    pub all_bc_fields_orig: Vec<String>,
     pub gamma_delta: bool,
     pub pre_eval: bool,
     pub pre_eval_show: bool,

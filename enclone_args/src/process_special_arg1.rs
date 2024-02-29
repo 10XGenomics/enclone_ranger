@@ -65,28 +65,6 @@ pub fn process_special_arg1(
             return Err(format!("\nArgument {arg} is not properly specified.\n"));
         }
         ctl.gen_opt.chains_to_jun_align2.push(n.force_usize());
-    } else if arg.starts_with("ALL_BC=") || arg.starts_with("ALL_BCH=") {
-        let parts;
-        if arg.starts_with("ALL_BC=") {
-            parts = arg.after("ALL_BC=").split(',').collect::<Vec<&str>>();
-        } else {
-            parts = arg.after("ALL_BCH=").split(',').collect::<Vec<&str>>();
-            ctl.gen_opt.all_bc_human = true;
-        }
-        if parts.is_empty() || parts[0].is_empty() {
-            return Err(
-                "\nFor ALL_BC/ALL_BCH, at a minimum, a filename must be provided.\n".to_string(),
-            );
-        }
-        if !ctl.gen_opt.all_bc_filename.is_empty() {
-            return Err("\nThe argument ALL_BC/ALL_BCH may only be used once.\n".to_string());
-        }
-        ctl.gen_opt.all_bc_filename = parts[0].to_string();
-        test_writeable(&ctl.gen_opt.all_bc_filename, ctl.gen_opt.evil_eye)?;
-        ctl.gen_opt
-            .all_bc_fields
-            .extend(parts.into_iter().skip(1).map(str::to_string));
-        ctl.gen_opt.all_bc_fields_orig = ctl.gen_opt.all_bc_fields.clone();
     } else if arg.starts_with("STATE_NARRATIVE=") {
         let mut narrative = arg.after("STATE_NARRATIVE=").to_string();
         if narrative.starts_with('@') {
