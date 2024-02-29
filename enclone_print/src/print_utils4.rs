@@ -27,16 +27,14 @@ pub fn get_gex_matrix_entry(
     y: &str,
 ) -> f64 {
     let mut raw_count = 0 as f64;
-    if gex_info.gex_matrices[li].initialized() {
-        raw_count = gex_info.gex_matrices[li].value(p, fid) as f64;
-    } else {
-        for j in 0..d_all[l].len() {
-            if ind_all[l][j] == fid as u32 {
-                raw_count = d_all[l][j] as f64;
-                break;
-            }
+
+    for j in 0..d_all[l].len() {
+        if ind_all[l][j] == fid as u32 {
+            raw_count = d_all[l][j] as f64;
+            break;
         }
     }
+
     let mult = if y.ends_with("_g") {
         gex_info.gex_mults[li]
     } else {
@@ -663,41 +661,24 @@ pub fn compute_bu(
                     let p = bin_position(&gex_info.gex_barcodes[li], bc);
                     if p >= 0 {
                         let mut raw_count = 0;
-                        if gex_info.gex_matrices[li].initialized() {
-                            let row = gex_info.gex_matrices[li].row(p as usize);
-                            for (f, n) in row {
-                                if gex_info.is_gex[li][f] {
-                                    raw_count += n;
-                                }
-                            }
-                        } else {
-                            let l = bcl.2;
-                            for j in 0..d_all[l].len() {
-                                if gex_info.is_gex[li][ind_all[l][j] as usize] {
-                                    raw_count += d_all[l][j] as usize;
-                                }
+
+                        let l = bcl.2;
+                        for j in 0..d_all[l].len() {
+                            if gex_info.is_gex[li][ind_all[l][j] as usize] {
+                                raw_count += d_all[l][j] as usize;
                             }
                         }
+
                         gex_count = raw_count;
                     }
                     let mut entropy = 0.0;
                     if p >= 0 {
-                        if gex_info.gex_matrices[li].initialized() {
-                            let row = gex_info.gex_matrices[li].row(p as usize);
-                            for (f, n) in row {
-                                if gex_info.is_gex[li][f] {
-                                    let q = n as f64 / gex_count as f64;
-                                    entropy -= q * q.log2();
-                                }
-                            }
-                        } else {
-                            let l = bcl.2;
-                            for j in 0..d_all[l].len() {
-                                if gex_info.is_gex[li][ind_all[l][j] as usize] {
-                                    let n = d_all[l][j] as usize;
-                                    let q = n as f64 / gex_count as f64;
-                                    entropy -= q * q.log2();
-                                }
+                        let l = bcl.2;
+                        for j in 0..d_all[l].len() {
+                            if gex_info.is_gex[li][ind_all[l][j] as usize] {
+                                let n = d_all[l][j] as usize;
+                                let q = n as f64 / gex_count as f64;
+                                entropy -= q * q.log2();
                             }
                         }
                     }
@@ -709,21 +690,13 @@ pub fn compute_bu(
                     let p = bin_position(&gex_info.gex_barcodes[li], bc);
                     if p >= 0 {
                         let mut raw_count = 0 as f64;
-                        if gex_info.gex_matrices[li].initialized() {
-                            let row = gex_info.gex_matrices[li].row(p as usize);
-                            for (f, n) in row {
-                                if gex_info.is_gex[li][f] {
-                                    raw_count += n as f64;
-                                }
-                            }
-                        } else {
-                            let l = bcl.2;
-                            for j in 0..d_all[l].len() {
-                                if gex_info.is_gex[li][ind_all[l][j] as usize] {
-                                    raw_count += d_all[l][j] as f64;
-                                }
+                        let l = bcl.2;
+                        for j in 0..d_all[l].len() {
+                            if gex_info.is_gex[li][ind_all[l][j] as usize] {
+                                raw_count += d_all[l][j] as f64;
                             }
                         }
+
                         if !ctl.gen_opt.full_counts {
                             gex_count = raw_count * gex_info.gex_mults[li];
                         } else {

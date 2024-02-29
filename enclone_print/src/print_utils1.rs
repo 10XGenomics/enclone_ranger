@@ -861,16 +861,13 @@ pub fn get_gex_matrix_entry(
     y: &str,
 ) -> f64 {
     let mut raw_count = 0 as f64;
-    if gex_info.gex_matrices[li].initialized() {
-        raw_count = gex_info.gex_matrices[li].value(p, fid) as f64;
-    } else {
-        for (&da, &ia) in d_all[l].iter().zip(ind_all[l].iter()) {
-            if ia == fid as u32 {
-                raw_count = da as f64;
-                break;
-            }
+    for (&da, &ia) in d_all[l].iter().zip(ind_all[l].iter()) {
+        if ia == fid as u32 {
+            raw_count = da as f64;
+            break;
         }
     }
+
     let mult = if y.ends_with("_g") {
         gex_info.gex_mults[li]
     } else {

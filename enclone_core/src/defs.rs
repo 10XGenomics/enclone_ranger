@@ -829,10 +829,7 @@ pub struct CloneInfo {
 pub struct GexInfo {
     pub gex_features: Vec<Vec<String>>,
     pub gex_barcodes: Vec<Vec<String>>,
-    pub gex_matrices: Vec<MirrorSparseMatrix>,
-    pub fb_top_matrices: Vec<MirrorSparseMatrix>,
     pub fb_top_barcodes: Vec<Vec<String>>,
-    pub fb_top_reads_matrices: Vec<MirrorSparseMatrix>,
     pub fb_top_reads_barcodes: Vec<Vec<String>>,
     pub fb_total_umis: Vec<u64>,
     pub fb_total_reads: Vec<u64>,
