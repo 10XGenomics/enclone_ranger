@@ -79,10 +79,7 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
 
     let gex_outs = &ctl.origin_info.gex_path;
     for i in 0..ctl.origin_info.dataset_path.len() {
-        // let bin_file = format!("{}/feature_barcode_matrix.bin", gex_outs[i]);
-        if !gex_outs[i].is_empty()
-        /* && !(path_exists(&bin_file) && !ctl.gen_opt.force_h5) */
-        {
+        if !gex_outs[i].is_empty() {
             let f = &h5_paths[i];
 
             let h = hdf5::File::open(f).unwrap();
