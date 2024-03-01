@@ -29,12 +29,10 @@ use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, OriginInfo, TigData};
 use io_utils::{open_maybe_compressed, path_exists, read_vector_entry_from_json};
-use itertools::Itertools;
 use rand::Rng;
 use rayon::prelude::*;
 use serde_json::Value;
 use std::fmt::Write;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::{collections::HashMap, io::BufReader};
 use string_utils::{stringme, strme, TextUtils};
 use vdj_ann::{annotate, refx, transcript};
@@ -42,54 +40,44 @@ use vector_utils::{bin_position, erase_if, unique_sort};
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-fn json_error(
-    json: Option<&str>,
-    ctl: &EncloneControl,
-    exiting: &AtomicBool,
-    msg: &str,
-) -> Result<(), String> {
-    // The following line prevents error messages from this function from being
-    // printed multiple times.
-    let mut msgx = String::new();
-    if !exiting.swap(true, Ordering::Relaxed) {
-        msgx = "\nThere is something wrong with the contig annotations in the cellranger output \
-             file"
+fn json_error(json: Option<&str>, internal_run: bool, msg: &str) -> String {
+    let mut msgx =
+        "There is something wrong with the contig annotations in the cellranger output file"
             .to_string();
-        if json.is_some() {
-            write!(msgx, "\n{}.", json.unwrap()).unwrap();
-        } else {
-            msgx += ".";
-        }
-        if ctl.gen_opt.internal_run {
-            writeln!(msgx, "\n\npossibly relevant internal data: {msg}").unwrap();
-        }
-        if ctl.gen_opt.internal_run {
-            msgx += "\n\nATTENTION INTERNAL 10X USERS!\n\
-                Quite possibly you are using data from a cellranger run carried out using a \
-                version\n\
-                between 3.1 and 4.0.  For certain of these versions, it is necessary to add the\n\
-                argument CURRENT_REF to your command line.  If that doesn't work, \
-                please see below.\n";
-        }
-        msgx += "\n\nHere is what you should do:\n\n\
-             1. If you used cellranger version ≥ 4.0, the problem is very likely\n\
-                that the directory outs/vdj_reference was not retained, so enclone\n\
-                didn't see it, and had to guess what the reference sequence was.\n\
-                Fix this and everything should be fine.\n\n\
-             2. If you used cellranger version 3.1, then you need to add a command-line\n\
-                argument REF=<vdj_reference_fasta_file_name>, or if you already did that,\n\
-                make sure it is the *same* as that which you gave cellranger.\n\n\
-             3. If you used cellranger version < 3.1 (the only other possibility), then\n\
-                you have options:\n\
-                • rerun cellranger using the current version\n\
-                • or provide an argument REF= as above and RE to force reannotation\n\
-                • or provide the argument BUILT_IN to use the current reference and force\n  \
-                  reannotation (and MOUSE if you used mouse); only works with human and mouse.\n\n\
-             Note that one way to get the error is to specify TCR when you meant BCR, or the\n\
-             other way.\n\n\
-             If you're stuck, please write to us at enclone@10xgenomics.com.\n";
+    if let Some(json) = json {
+        write!(msgx, "\n{}.", json).unwrap();
+    } else {
+        msgx += ".";
     }
-    Err(msgx)
+    if internal_run {
+        writeln!(msgx, "\n\npossibly relevant internal data: {msg}").unwrap();
+
+        msgx += "\n\nATTENTION INTERNAL 10X USERS!\n\
+            Quite possibly you are using data from a cellranger run carried out using a \
+            version\n\
+            between 3.1 and 4.0.  For certain of these versions, it is necessary to add the\n\
+            argument CURRENT_REF to your command line.  If that doesn't work, \
+            please see below.\n";
+    }
+    msgx += "\n\nHere is what you should do:\n\n\
+        1. If you used cellranger version ≥ 4.0, the problem is very likely\n\
+        that the directory outs/vdj_reference was not retained, so enclone\n\
+        didn't see it, and had to guess what the reference sequence was.\n\
+        Fix this and everything should be fine.\n\n\
+        2. If you used cellranger version 3.1, then you need to add a command-line\n\
+        argument REF=<vdj_reference_fasta_file_name>, or if you already did that,\n\
+        make sure it is the *same* as that which you gave cellranger.\n\n\
+        3. If you used cellranger version < 3.1 (the only other possibility), then\n\
+        you have options:\n\
+        • rerun cellranger using the current version\n\
+        • or provide an argument REF= as above and RE to force reannotation\n\
+        • or provide the argument BUILT_IN to use the current reference and force\n  \
+            reannotation (and MOUSE if you used mouse); only works with human and mouse.\n\n\
+        Note that one way to get the error is to specify TCR when you meant BCR, or the\n\
+        other way.\n\n\
+        If you're stuck, please write to us at enclone@10xgenomics.com.\n";
+
+    msgx
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -113,7 +101,6 @@ fn parse_vector_entry_from_json(
     to_ref_index: &HashMap<usize, usize>,
     reannotate: bool,
     ctl: &EncloneControl,
-    exiting: &AtomicBool,
 ) -> Result<JsonParseResult, String> {
     let mut res: JsonParseResult = Default::default();
     let v: Value = match serde_json::from_slice(x) {
@@ -374,10 +361,7 @@ fn parse_vector_entry_from_json(
                 .to_string()
                 .between("\"", "\"")
                 .to_string();
-            if refdata.name[feature_idx] != gene_name
-                && !accept_inconsistent
-                && !exiting.swap(true, Ordering::Relaxed)
-            {
+            if refdata.name[feature_idx] != gene_name && !accept_inconsistent {
                 return Err(format!(
                     "\nThere is an inconsistency between the reference \
                      file used to create the Cell Ranger output files in\n{}\nand the \
@@ -488,7 +472,7 @@ fn parse_vector_entry_from_json(
         let rt = &refdata.refs[v_ref_id];
         if annv.len() == 2 && annv[0].1 as usize > rt.len() {
             let msg = format!("annv[0].1 = {}, rt.len() = {}", annv[0].1, rt.len());
-            json_error(None, ctl, exiting, &msg)?;
+            return Err(json_error(None, ctl.gen_opt.internal_run, &msg));
         }
 
         // Check to see if the CDR3 sequence has changed.  This could happen if the cellranger
@@ -540,7 +524,7 @@ fn parse_vector_entry_from_json(
 
     if tig_start < 0 || tig_stop < 0 {
         let msg = format!("tig_start = {tig_start}, tig_stop = {tig_stop}");
-        json_error(Some(json), ctl, exiting, &msg)?;
+        return Err(json_error(Some(json), ctl.gen_opt.internal_run, &msg));
     }
     let (tig_start, tig_stop) = (tig_start as usize, tig_stop as usize);
     let quals0 = v["quals"].to_string();
@@ -740,7 +724,6 @@ fn read_json(
             }
         }
     }
-    let exiting = AtomicBool::new(false);
     let results: Vec<_> = xs
         .par_iter()
         .map(|entry| {
@@ -754,7 +737,6 @@ fn read_json(
                 to_ref_index,
                 reannotate,
                 ctl,
-                &exiting,
             )
         })
         .collect::<Result<Vec<_>, String>>()?;
@@ -845,11 +827,11 @@ fn read_json(
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub struct Annotations {
-    vdj_cells: Vec<Vec<String>>,
-    gex_cells: Vec<Vec<String>>,
-    gex_cells_specified: Vec<bool>,
-    tig_bc: Vec<Vec<TigData>>,
-    fate: Vec<HashMap<String, BarcodeFate>>,
+    pub vdj_cells: Vec<Vec<String>>,
+    pub gex_cells: Vec<Vec<String>>,
+    pub gex_cells_specified: Vec<bool>,
+    pub tig_bc: Vec<Vec<TigData>>,
+    pub fate: Vec<HashMap<String, BarcodeFate>>,
 }
 
 pub fn parse_json_annotations_files(

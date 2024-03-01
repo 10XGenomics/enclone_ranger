@@ -18,7 +18,7 @@ use enclone::join::join_exacts;
 use enclone::misc1::{cross_filter, lookup_heavy_chain_reuse};
 use enclone::misc2::{check_for_barcode_reuse, find_exact_subclonotypes, search_for_shm_indels};
 use enclone::misc3::sort_tig_bc;
-use enclone_args::read_json::parse_json_annotations_files;
+use enclone_args::read_json::{parse_json_annotations_files, Annotations};
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, CloneInfo, TigData};
 use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup};
@@ -121,21 +121,14 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Parse the json annotations file.
 
     let tparse = Instant::now();
-    let mut tig_bc = Vec::<Vec<TigData>>::new();
-    let mut vdj_cells = Vec::<Vec<String>>::new();
-    let mut gex_cells = Vec::<Vec<String>>::new();
-    let mut gex_cells_specified = Vec::<bool>::new();
-    let mut fate = vec![HashMap::<String, BarcodeFate>::new(); ctl.origin_info.n()];
-    parse_json_annotations_files(
-        ctl,
-        &mut tig_bc,
-        refdata,
-        to_ref_index,
-        &mut vdj_cells,
-        &mut gex_cells,
-        &mut gex_cells_specified,
-        &mut fate,
-    )?;
+
+    let Annotations {
+        mut tig_bc,
+        gex_cells,
+        gex_cells_specified,
+        vdj_cells,
+        mut fate,
+    } = parse_json_annotations_files(ctl, refdata, to_ref_index)?;
     ctl.perf_stats(&tparse, "loading from json");
 
     // Populate features.
