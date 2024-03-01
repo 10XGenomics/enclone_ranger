@@ -14,7 +14,6 @@ pub mod logging;
 pub mod mammalian_fixed_len;
 pub mod median;
 pub mod opt_d;
-pub mod packing;
 pub mod print_tools;
 pub mod set_speakers;
 pub mod slurp;
