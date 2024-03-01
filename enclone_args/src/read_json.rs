@@ -684,7 +684,6 @@ fn read_json(
     reannotate: bool,
     ctl: &EncloneControl,
 ) -> Result<ReadJsonResult, String> {
-    let mut tigs = Vec::<TigData>::new();
     let mut jsonx = json.clone();
     if !path_exists(json) {
         jsonx = format!("{json}.lz4");
