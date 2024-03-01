@@ -135,7 +135,6 @@ pub struct GeneralOpt {
     pub fate_file: String,
     // Optional path to a json file containing metadata
     pub proto_metadata: Option<String>,
-    pub h5: bool,
     pub h5_pre: bool,
     pub accept_reuse: bool,
     pub descrip: bool,
@@ -823,11 +822,6 @@ pub struct CloneInfo {
 pub struct GexInfo {
     pub gex_features: Vec<Vec<String>>,
     pub gex_barcodes: Vec<Vec<String>>,
-    pub fb_total_umis: Vec<u64>,
-    pub fb_total_reads: Vec<u64>,
-    pub fb_brn: Vec<Vec<(String, u32, u32)>>,
-    pub fb_brnr: Vec<Vec<(String, u32, u32)>>,
-    pub fb_bdcs: Vec<Vec<(String, u32, u32, u32)>>,
     pub feature_refs: Vec<String>,
     pub gex_cell_barcodes: Vec<Vec<String>>,
     pub cluster: Vec<HashMap<String, usize>>,

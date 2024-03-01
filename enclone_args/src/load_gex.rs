@@ -19,11 +19,6 @@ use vector_utils::{bin_position, unique_sort};
 pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     let mut gex_features = Vec::<Vec<String>>::new();
     let mut gex_barcodes = Vec::<Vec<String>>::new();
-    let mut fb_total_umis = Vec::<u64>::new();
-    let mut fb_total_reads = Vec::<u64>::new();
-    let mut fb_brn = Vec::<Vec<(String, u32, u32)>>::new();
-    let mut fb_brnr = Vec::<Vec<(String, u32, u32)>>::new();
-    let mut fb_bdcs = Vec::<Vec<(String, u32, u32, u32)>>::new();
     let mut feature_refs = Vec::<String>::new();
     let mut cluster = Vec::<HashMap<String, usize>>::new();
     let mut cell_type = Vec::<HashMap<String, String>>::new();
@@ -42,11 +37,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
         ctl,
         &mut gex_features,
         &mut gex_barcodes,
-        &mut fb_total_umis,
-        &mut fb_total_reads,
-        &mut fb_brn,
-        &mut fb_brnr,
-        &mut fb_bdcs,
         &mut feature_refs,
         &mut cluster,
         &mut cell_type,
@@ -86,29 +76,26 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     let mut h5_data = Vec::<Option<Dataset>>::new();
     let mut h5_indices = Vec::<Option<Dataset>>::new();
     let mut h5_indptr = Vec::<Vec<u32>>::new();
-    if ctl.gen_opt.h5 {
-        let gex_outs = &ctl.origin_info.gex_path;
-        for i in 0..ctl.origin_info.dataset_path.len() {
-            // let bin_file = format!("{}/feature_barcode_matrix.bin", gex_outs[i]);
-            if !gex_outs[i].is_empty()
-            /* && !(path_exists(&bin_file) && !ctl.gen_opt.force_h5) */
-            {
-                let f = &h5_paths[i];
 
-                let h = hdf5::File::open(f).unwrap();
+    let gex_outs = &ctl.origin_info.gex_path;
+    for i in 0..ctl.origin_info.dataset_path.len() {
+        if !gex_outs[i].is_empty() {
+            let f = &h5_paths[i];
 
-                h5_data.push(Some(h.dataset("matrix/data").unwrap()));
-                h5_indices.push(Some(h.dataset("matrix/indices").unwrap()));
-                let indptr = h.dataset("matrix/indptr").unwrap();
-                let x: Vec<u32> = indptr.as_reader().read().unwrap().to_vec();
-                h5_indptr.push(x);
-            } else {
-                h5_data.push(None);
-                h5_indices.push(None);
-                h5_indptr.push(Vec::<u32>::new());
-            }
+            let h = hdf5::File::open(f).unwrap();
+
+            h5_data.push(Some(h.dataset("matrix/data").unwrap()));
+            h5_indices.push(Some(h.dataset("matrix/indices").unwrap()));
+            let indptr = h.dataset("matrix/indptr").unwrap();
+            let x: Vec<u32> = indptr.as_reader().read().unwrap().to_vec();
+            h5_indptr.push(x);
+        } else {
+            h5_data.push(None);
+            h5_indices.push(None);
+            h5_indptr.push(Vec::<u32>::new());
         }
     }
+
     fn compute_feature_id(gex_features: &[String]) -> HashMap<String, usize> {
         let mut x = HashMap::<String, usize>::new();
         for (j, f) in gex_features.iter().enumerate() {
@@ -152,11 +139,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     Ok(GexInfo {
         gex_features,
         gex_barcodes,
-        fb_total_umis,
-        fb_total_reads,
-        fb_brn,
-        fb_brnr,
-        fb_bdcs,
         feature_refs,
         cluster,
         cell_type,
