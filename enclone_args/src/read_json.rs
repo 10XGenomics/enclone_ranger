@@ -29,6 +29,7 @@ use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, OriginInfo, TigData};
 use io_utils::{open_maybe_compressed, path_exists, read_vector_entry_from_json};
+use itertools::Itertools;
 use rand::Rng;
 use rayon::prelude::*;
 use serde_json::Value;
@@ -93,6 +94,15 @@ fn json_error(
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
+#[derive(Default)]
+struct JsonParseResult {
+    vdj_cell: Option<String>,
+    gex_cell: Option<String>,
+    gex_cells_specified: bool,
+    cr_version: String,
+    tig: Option<TigData>,
+}
+
 fn parse_vector_entry_from_json(
     x: &[u8],
     json: &str,
@@ -103,13 +113,9 @@ fn parse_vector_entry_from_json(
     to_ref_index: &HashMap<usize, usize>,
     reannotate: bool,
     ctl: &EncloneControl,
-    vdj_cells: &mut Vec<String>,
-    gex_cells: &mut Vec<String>,
-    gex_cells_specified: &mut bool,
-    cr_version: &mut String,
-    tigs: &mut Vec<TigData>,
     exiting: &AtomicBool,
-) -> Result<(), String> {
+) -> Result<JsonParseResult, String> {
+    let mut res: JsonParseResult = Default::default();
     let v: Value = match serde_json::from_slice(x) {
         Err(_) => {
             return Err(format!(
@@ -132,29 +138,28 @@ fn parse_vector_entry_from_json(
         is_cell = true;
     }
 
-    let is_gex_cell = v["is_gex_cell"].as_bool();
-    if is_gex_cell.is_some() {
-        *gex_cells_specified = true;
-    }
-    if is_gex_cell == Some(true) {
-        gex_cells.push(barcode.clone());
+    if let Some(is_gex_cell) = v["is_gex_cell"].as_bool() {
+        res.gex_cells_specified = true;
+        if is_gex_cell {
+            res.gex_cell = Some(barcode.clone());
+        }
     }
 
     if !ctl.gen_opt.ncell && !is_cell {
-        return Ok(());
+        return Ok(res);
     }
     if is_cell {
-        vdj_cells.push(barcode.clone());
+        res.vdj_cell = Some(barcode.clone());
     }
 
     // Proceed.
 
     if !ctl.gen_opt.reprod && !v["productive"].as_bool().unwrap_or(false) {
-        return Ok(());
+        return Ok(res);
     }
     if !ctl.gen_opt.reprod && !ctl.gen_opt.ncell && !v["high_confidence"].as_bool().unwrap_or(false)
     {
-        return Ok(());
+        return Ok(res);
     }
     let tigname = v["contig_name"].to_string().between("\"", "\"").to_string();
     let full_seq = &v["sequence"].to_string().between("\"", "\"").to_string();
@@ -175,8 +180,8 @@ fn parse_vector_entry_from_json(
     let mut cdr3_aa: String;
     let mut cdr3_dna: String;
     let mut cdr3_start: usize;
-    if v.get("version").is_some() {
-        *cr_version = v["version"].to_string().between("\"", "\"").to_string();
+    if let Some(version) = v.get("version") {
+        res.cr_version = version.to_string().between("\"", "\"").to_string();
     }
 
     // Read validated and non-validated UMIs.
@@ -274,7 +279,7 @@ fn parse_vector_entry_from_json(
             ) {
                 print!("{}", strme(&log));
                 println!("invalid");
-                return Ok(());
+                return Ok(res);
             }
         } else if !is_valid(
             &x,
@@ -284,7 +289,7 @@ fn parse_vector_entry_from_json(
             &mut log,
             Some(ctl.gen_opt.gamma_delta),
         ) {
-            return Ok(());
+            return Ok(res);
         }
         let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
         get_cdr3_using_ann(&x, refdata, &ann, &mut cdr3);
@@ -435,7 +440,7 @@ fn parse_vector_entry_from_json(
             }
         }
         if v_ref_id == 1000000 {
-            return Ok(());
+            return Ok(res);
         }
 
         // Compute annv from cigarv.  We don't compute the mismatch entry.
@@ -495,14 +500,14 @@ fn parse_vector_entry_from_json(
         let x = DnaString::from_dna_string(full_seq);
         get_cdr3_using_ann(&x, refdata, &annv, &mut cdr3);
         if cdr3.is_empty() {
-            return Ok(());
+            return Ok(res);
         }
         let cdr3_aa_alt = stringme(&cdr3[0].1);
         if cdr3_aa != cdr3_aa_alt {
             // This is particularly pathological and rare:
 
             if tig_start as usize > cdr3[0].0 {
-                return Ok(());
+                return Ok(res);
             }
 
             // Define start.
@@ -525,10 +530,10 @@ fn parse_vector_entry_from_json(
     // It is not known if these correspond to bugs in cellranger that were subsequently fixed.
 
     if cdr3_aa.contains('*') {
-        return Ok(());
+        return Ok(res);
     }
     if cdr3_start + 3 * cdr3_aa.len() > tig_stop as usize - tig_start as usize {
-        return Ok(());
+        return Ok(res);
     }
 
     // Keep going.
@@ -606,7 +611,7 @@ fn parse_vector_entry_from_json(
     if invalidated_umis_present {
         invalu = Some(invalidated_umis);
     }
-    tigs.push(TigData {
+    res.tig = Some(TigData {
         cdr3_dna,
         len: seq.len(),
         v_start: tig_start,
@@ -648,7 +653,7 @@ fn parse_vector_entry_from_json(
         invalidated_umis: invalu,
         frac_reads_used,
     });
-    Ok(())
+    Ok(res)
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -682,8 +687,7 @@ struct ReadJsonResult {
     gex_cells: Vec<String>,
     gex_cells_specified: bool,
     cr_version: String,
-    tigs: Vec<TigData>,
-    err: String,
+    tig_bc: Vec<Vec<TigData>>,
 }
 
 fn read_json(
@@ -694,13 +698,8 @@ fn read_json(
     refdata: &RefData,
     to_ref_index: &HashMap<usize, usize>,
     reannotate: bool,
-    cr_version: &mut String,
     ctl: &EncloneControl,
-    vdj_cells: &mut Vec<String>,
-    gex_cells: &mut Vec<String>,
-    gex_cells_specified: &mut bool,
-) -> Result<Vec<Vec<TigData>>, String> {
-    *gex_cells_specified = false;
+) -> Result<ReadJsonResult, String> {
     let mut tigs = Vec::<TigData>::new();
     let mut jsonx = json.clone();
     if !path_exists(json) {
@@ -741,51 +740,48 @@ fn read_json(
             }
         }
     }
-    let mut results = Vec::<(usize, ReadJsonResult)>::new();
-    for i in 0..xs.len() {
-        results.push((i, Default::default()));
-    }
     let exiting = AtomicBool::new(false);
-    results.par_iter_mut().for_each(|(i, res)| {
-        let i = *i;
-        let resx = parse_vector_entry_from_json(
-            &xs[i],
-            json,
-            accept_inconsistent,
-            origin_info,
-            li,
-            refdata,
-            to_ref_index,
-            reannotate,
-            ctl,
-            &mut res.vdj_cells,
-            &mut res.gex_cells,
-            &mut res.gex_cells_specified,
-            &mut res.cr_version,
-            &mut res.tigs,
-            &exiting,
-        );
-        if let Err(resx) = resx {
-            res.err = resx;
+    let results: Vec<_> = xs
+        .par_iter()
+        .map(|entry| {
+            parse_vector_entry_from_json(
+                entry,
+                json,
+                accept_inconsistent,
+                origin_info,
+                li,
+                refdata,
+                to_ref_index,
+                reannotate,
+                ctl,
+                &exiting,
+            )
+        })
+        .collect::<Result<Vec<_>, String>>()?;
+
+    let mut tigs = Vec::new();
+    let mut vdj_cells = Vec::new();
+    let mut gex_cells = Vec::new();
+    let mut gex_cells_specified = false;
+    let mut cr_version = String::new();
+    for result in results {
+        if let Some(tig) = result.tig {
+            tigs.push(tig);
         }
-    });
-    for (_, result) in &results {
-        if !result.err.is_empty() {
-            return Err(result.err.clone());
+        if let Some(c) = result.vdj_cell {
+            vdj_cells.push(c);
         }
-    }
-    for (_, result) in results.iter_mut().take(xs.len()) {
-        vdj_cells.append(&mut result.vdj_cells);
-        gex_cells.append(&mut result.gex_cells);
+        if let Some(c) = result.gex_cell {
+            gex_cells.push(c);
+        }
         if result.gex_cells_specified {
-            *gex_cells_specified = true;
+            gex_cells_specified = true;
         }
         if !result.cr_version.is_empty() {
-            *cr_version = result.cr_version.clone();
+            cr_version = result.cr_version.clone();
         }
-        tigs.append(&mut result.tigs);
     }
-    unique_sort(gex_cells);
+    unique_sort(&mut gex_cells);
     let mut tig_bc = Vec::<Vec<TigData>>::new();
     let mut r = 0;
     while r < tigs.len() {
@@ -806,7 +802,7 @@ fn read_json(
         }
         r = s;
     }
-    unique_sort(vdj_cells);
+    unique_sort(&mut vdj_cells);
 
     // Subsample.
 
@@ -820,106 +816,90 @@ fn read_json(
             if y < 1.0 - ctl.gen_opt.subsample {
                 *del = true;
                 let bc = &bc[0].barcode;
-                let p = bin_position(vdj_cells, bc);
+                let p = bin_position(&vdj_cells, bc);
                 if p >= 0 {
                     to_delete2[p as usize] = true;
                 }
-                let p = bin_position(gex_cells, bc);
+                let p = bin_position(&gex_cells, bc);
                 if p >= 0 {
                     to_delete3[p as usize] = true;
                 }
             }
         }
         erase_if(&mut tig_bc, &to_delete1);
-        erase_if(vdj_cells, &to_delete2);
-        erase_if(gex_cells, &to_delete3);
+        erase_if(&mut vdj_cells, &to_delete2);
+        erase_if(&mut gex_cells, &to_delete3);
     }
 
     // Done.
 
-    Ok(tig_bc)
+    Ok(ReadJsonResult {
+        vdj_cells,
+        gex_cells,
+        gex_cells_specified,
+        cr_version,
+        tig_bc,
+    })
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-// Parse the JSON annotations file(s).
-#[derive(Default)]
-struct LoadResult {
+pub struct Annotations {
+    vdj_cells: Vec<Vec<String>>,
+    gex_cells: Vec<Vec<String>>,
+    gex_cells_specified: Vec<bool>,
     tig_bc: Vec<Vec<TigData>>,
-    cr_version: String,
-    vdj_cells: Vec<String>,
-    gex_cells: Vec<String>,
-    gex_cells_specified: bool,
-    err: String,
+    fate: Vec<HashMap<String, BarcodeFate>>,
 }
 
 pub fn parse_json_annotations_files(
     ctl: &EncloneControl,
-    tig_bc: &mut Vec<Vec<TigData>>,
     refdata: &RefData,
     to_ref_index: &HashMap<usize, usize>,
-    vdj_cells: &mut Vec<Vec<String>>,
-    gex_cells: &mut Vec<Vec<String>>,
-    gex_cells_specified: &mut Vec<bool>,
-    fate: &mut [HashMap<String, BarcodeFate>],
-) -> Result<(), String> {
-    let mut results = Vec::<(usize, LoadResult)>::new();
-    for i in 0..ctl.origin_info.dataset_path.len() {
-        results.push((i, Default::default()));
-    }
+) -> Result<Annotations, String> {
     // Note: only tracking truncated seq and quals initially
     let ann = if !ctl.gen_opt.cellranger {
         "all_contig_annotations.json"
     } else {
         "contig_annotations.json"
     };
-    results.par_iter_mut().for_each(|(li, res)| {
-        let li = *li;
-        let json = format!("{}/{ann}", ctl.origin_info.dataset_path[li]);
-        let json_lz4 = format!("{}/{ann}.lz4", ctl.origin_info.dataset_path[li]);
-        if !path_exists(&json) && !path_exists(&json_lz4) {
-            res.err = format!("\ncan't find {json} or {json_lz4}\n");
-            return;
-        }
-        let resx = read_json(
-            ctl.gen_opt.accept_inconsistent,
-            &ctl.origin_info,
-            li,
-            &json,
-            refdata,
-            to_ref_index,
-            ctl.gen_opt.reannotate,
-            &mut res.cr_version,
-            ctl,
-            &mut res.vdj_cells,
-            &mut res.gex_cells,
-            &mut res.gex_cells_specified,
-        );
-        if let Ok(resx) = resx {
-            let tig_bc: Vec<Vec<TigData>> = resx;
-            res.vdj_cells.sort();
-            res.tig_bc = tig_bc;
-        } else {
-            res.err = resx.err().unwrap();
-        }
-    });
-    for (_, result) in &results {
-        if !result.err.is_empty() {
-            return Err(result.err.clone());
-        }
-    }
-    let mut versions = Vec::<String>::new();
-    for (i, mut result) in results {
-        tig_bc.append(&mut result.tig_bc);
-        if result.cr_version.is_empty() {
-            versions.push("≤3.1".to_string());
-        } else {
-            versions.push(result.cr_version);
-        }
+    let results = ctl
+        .origin_info
+        .dataset_path
+        .par_iter()
+        .enumerate()
+        .map(|(li, dataset_path)| {
+            let json = format!("{}/{ann}", dataset_path);
+            let json_lz4 = format!("{}/{ann}.lz4", dataset_path);
+            if !path_exists(&json) && !path_exists(&json_lz4) {
+                return Err(format!("\ncan't find {json} or {json_lz4}\n"));
+            }
+            read_json(
+                ctl.gen_opt.accept_inconsistent,
+                &ctl.origin_info,
+                li,
+                &json,
+                refdata,
+                to_ref_index,
+                ctl.gen_opt.reannotate,
+                ctl,
+            )
+            .map(|r| (li, r))
+        })
+        .collect::<Result<Vec<_>, String>>()?;
 
+    let mut ann = Annotations {
+        tig_bc: Default::default(),
+        vdj_cells: Default::default(),
+        gex_cells: Default::default(),
+        gex_cells_specified: Default::default(),
+        fate: vec![HashMap::<String, BarcodeFate>::new(); ctl.origin_info.n()],
+    };
+
+    for (i, result) in results {
         let cells = &result.vdj_cells;
         let mut found = vec![false; cells.len()];
-        let tigs = result.tig_bc;
+        let tigs = &result.tig_bc;
         for tig in tigs {
             let p = bin_position(cells, &tig[0].barcode);
             if p >= 0 {
@@ -928,13 +908,14 @@ pub fn parse_json_annotations_files(
         }
         for j in 0..found.len() {
             if !found[j] {
-                fate[i].insert(cells[j].clone(), BarcodeFate::NonProductive);
+                ann.fate[i].insert(cells[j].clone(), BarcodeFate::NonProductive);
             }
         }
 
-        vdj_cells.push(result.vdj_cells);
-        gex_cells.push(result.gex_cells);
-        gex_cells_specified.push(result.gex_cells_specified);
+        ann.tig_bc.extend(result.tig_bc.into_iter());
+        ann.vdj_cells.push(result.vdj_cells);
+        ann.gex_cells.push(result.gex_cells);
+        ann.gex_cells_specified.push(result.gex_cells_specified);
     }
-    Ok(())
+    Ok(ann)
 }
