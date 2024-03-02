@@ -468,6 +468,7 @@ dependencies = [
  "serde_json",
  "string_utils",
  "vdj_ann",
+ "vdj_types",
  "vector_utils",
 ]
 

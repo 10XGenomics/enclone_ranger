@@ -1,41 +1,20 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
-// Fields that are used in all_contig_annotations.json:
-// • barcode
-// • is_cell and is_asm_cell -- both are optional, but at least one needs to be present and
-//   true for a cell called by the VDJ pipeline
-// • is_gex_cell -- optional
-// • productive -- optional but should be true for contigs to be used
-// • high_confidence -- optional but should be true for contigs to be used
-// • contig_name
-// • sequence
-// • version -- optional
-// • validated_umis -- optional
-// • non_validated_umis -- optional
-// • invalidated_umis -- optional
-// • fraction_of_reads_for_this_barcode_provided_as_input_to_assembly -- optional
-// • quals
-// • umi_count
-// • read_count
-// • cdr3, unless in reannotate mode
-// • cdr3_seq, unless in reannotate mode
-// • cdr3_start, unless in reannotate mode
-// • annotations, unless in reannotate mode.
-
 use self::annotate::{annotate_seq, get_cdr3_using_ann, print_some_annotations};
 use self::refx::RefData;
 use self::transcript::is_valid;
 use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, OriginInfo, TigData};
-use io_utils::{open_maybe_compressed, path_exists, read_vector_entry_from_json};
+use io_utils::{open_maybe_compressed, path_exists};
 use rand::Rng;
 use rayon::prelude::*;
-use serde_json::Value;
+use std::collections::HashMap;
 use std::fmt::Write;
-use std::{collections::HashMap, io::BufReader};
 use string_utils::{stringme, strme, TextUtils};
+use vdj_ann::annotate::ContigAnnotation;
 use vdj_ann::{annotate, refx, transcript};
+use vdj_types::{VdjChain, VdjRegion};
 use vector_utils::{bin_position, erase_if, unique_sort};
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -87,48 +66,35 @@ struct JsonParseResult {
     vdj_cell: Option<String>,
     gex_cell: Option<String>,
     gex_cells_specified: bool,
-    cr_version: String,
     tig: Option<TigData>,
 }
 
 fn parse_vector_entry_from_json(
-    x: &[u8],
+    ann: ContigAnnotation,
     json: &str,
     accept_inconsistent: bool,
     origin_info: &OriginInfo,
-    li: usize,
+    dataset_index: usize,
     refdata: &RefData,
     to_ref_index: &HashMap<usize, usize>,
     reannotate: bool,
     ctl: &EncloneControl,
 ) -> Result<JsonParseResult, String> {
     let mut res: JsonParseResult = Default::default();
-    let v: Value = match serde_json::from_slice(x) {
-        Err(_) => {
-            return Err(format!(
-                "\nInternal error, failed to parse a value from a string.  The string is:\n{}\n",
-                strme(x)
-            ));
-        }
-        Ok(v) => v,
-    };
-    let barcode = v["barcode"].to_string().between("\"", "\"").to_string();
 
     // Get cell status.  Sometime after CR 4.0 was released, and before 4.1 was released,
     // we added new fields is_asm_cell and is_gex_cell to the json file.  The value of
     // is_asm_cell is the original determination of "cell" in the VDJ pipeline, whereas the
     // value of is_gex_cell is that for the GEX pipeline.
-
-    let mut is_cell = v["is_cell"].as_bool().unwrap_or(false);
-    let is_asm_cell = v["is_asm_cell"].as_bool().unwrap_or(false);
-    if is_asm_cell {
+    let mut is_cell = ann.is_cell;
+    if ann.is_asm_cell.is_some_and(|is_asm_cell| is_asm_cell) {
         is_cell = true;
     }
 
-    if let Some(is_gex_cell) = v["is_gex_cell"].as_bool() {
+    if let Some(is_gex_cell) = ann.is_gex_cell {
         res.gex_cells_specified = true;
         if is_gex_cell {
-            res.gex_cell = Some(barcode.clone());
+            res.gex_cell = Some(ann.barcode.clone());
         }
     }
 
@@ -136,20 +102,17 @@ fn parse_vector_entry_from_json(
         return Ok(res);
     }
     if is_cell {
-        res.vdj_cell = Some(barcode.clone());
+        res.vdj_cell = Some(ann.barcode.clone());
     }
 
     // Proceed.
 
-    if !ctl.gen_opt.reprod && !v["productive"].as_bool().unwrap_or(false) {
+    if !ctl.gen_opt.reprod && !ann.productive.unwrap_or(false) {
         return Ok(res);
     }
-    if !ctl.gen_opt.reprod && !ctl.gen_opt.ncell && !v["high_confidence"].as_bool().unwrap_or(false)
-    {
+    if !ctl.gen_opt.reprod && !ctl.gen_opt.ncell && !ann.high_confidence {
         return Ok(res);
     }
-    let tigname = v["contig_name"].to_string().between("\"", "\"").to_string();
-    let full_seq = &v["sequence"].to_string().between("\"", "\"").to_string();
     let mut left = false;
     let (mut v_ref_id, mut j_ref_id) = (1000000, 0);
     let mut d_ref_id: Option<usize> = None;
@@ -167,99 +130,62 @@ fn parse_vector_entry_from_json(
     let mut cdr3_aa: String;
     let mut cdr3_dna: String;
     let mut cdr3_start: usize;
-    if let Some(version) = v.get("version") {
-        res.cr_version = version.to_string().between("\"", "\"").to_string();
-    }
 
-    // Read validated and non-validated UMIs.
-
-    let mut validated_umis = Vec::<String>::new();
-    let mut validated_umis_present = false;
-    let val = v["validated_umis"].as_array();
-    if let Some(val) = val {
-        validated_umis_present = true;
-        for vi in val {
-            validated_umis.push(vi.to_string().between("\"", "\"").to_string());
-        }
-    }
-    let mut non_validated_umis = Vec::<String>::new();
-    let mut non_validated_umis_present = false;
-    let non_val = v["non_validated_umis"].as_array();
-    if let Some(non_val) = non_val {
-        non_validated_umis_present = true;
-        for nv in non_val {
-            non_validated_umis.push(nv.to_string().between("\"", "\"").to_string());
-        }
-    }
-    let mut invalidated_umis = Vec::<String>::new();
-    let mut invalidated_umis_present = false;
-    let inval = v["invalidated_umis"].as_array();
-    if let Some(inval) = inval {
-        invalidated_umis_present = true;
-        for inv in inval {
-            invalidated_umis.push(inv.to_string().between("\"", "\"").to_string());
-        }
-    }
-
-    // Read fraction_of_reads_for_this_barcode_provided_as_input_to_assembly.
-
-    let mut frac_reads_used = None;
-    let f = v["fraction_of_reads_for_this_barcode_provided_as_input_to_assembly"].as_f64();
-    if let Some(f) = f {
-        frac_reads_used = Some((f * 1_000_000.0).round() as u32);
-    }
+    let frac_reads_used = ann
+        .fraction_of_reads_for_this_barcode_provided_as_input_to_assembly
+        .map(|f| (f * 1_000_000.0).round() as u32);
 
     // Reannotate.
-
     if reannotate || ctl.gen_opt.reprod {
-        let x = DnaString::from_dna_string(full_seq);
-        let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
-        annotate_seq(&x, refdata, &mut ann, true, false, true);
+        let x = DnaString::from_dna_string(&ann.sequence);
+        let mut ann1 = Vec::<(i32, i32, i32, i32, i32)>::new();
+        annotate_seq(&x, refdata, &mut ann1, true, false, true);
 
         // If there are multiple V segment alignments, possibly reduce to just one.
 
         let mut ann2 = Vec::<(i32, i32, i32, i32, i32)>::new();
         let mut j = 0;
-        while j < ann.len() {
-            let t = ann[j].2 as usize;
+        while j < ann1.len() {
+            let t = ann1[j].2 as usize;
             let mut k = j + 1;
-            while k < ann.len() {
-                if refdata.segtype[ann[k].2 as usize] != refdata.segtype[t] {
+            while k < ann1.len() {
+                if refdata.segtype[ann1[k].2 as usize] != refdata.segtype[t] {
                     break;
                 }
                 k += 1;
             }
             if refdata.segtype[t] == "V" && k - j > 1 {
                 let mut entries = 1;
-                if j < ann.len() - 1
-                    && ann[j + 1].2 as usize == t
-                    && ((ann[j].0 + ann[j].1 == ann[j + 1].0 && ann[j].3 + ann[j].1 < ann[j + 1].3)
-                        || (ann[j].0 + ann[j].1 < ann[j + 1].0
-                            && ann[j].3 + ann[j].1 == ann[j + 1].3))
+                if j < ann1.len() - 1
+                    && ann1[j + 1].2 as usize == t
+                    && ((ann1[j].0 + ann1[j].1 == ann1[j + 1].0
+                        && ann1[j].3 + ann1[j].1 < ann1[j + 1].3)
+                        || (ann1[j].0 + ann1[j].1 < ann1[j + 1].0
+                            && ann1[j].3 + ann1[j].1 == ann1[j + 1].3))
                 {
                     entries = 2;
                 }
-                ann2.extend(&ann[j..j + entries]);
+                ann2.extend(&ann1[j..j + entries]);
             } else {
-                ann2.extend(&ann[j..k]);
+                ann2.extend(&ann1[j..k]);
             }
             j = k;
         }
-        ann = ann2;
+        ann1 = ann2;
 
         // Proceed.
 
-        if ctl.gen_opt.trace_barcode == *barcode {
+        if ctl.gen_opt.trace_barcode == ann.barcode {
             let mut log = Vec::<u8>::new();
-            print_some_annotations(refdata, &ann, &mut log, false);
+            print_some_annotations(refdata, &ann1, &mut log, false);
             print!("\n{}", strme(&log));
         }
         let mut log = Vec::<u8>::new();
-        if ctl.gen_opt.trace_barcode == *barcode {
+        if ctl.gen_opt.trace_barcode == ann.barcode {
             if !is_valid(
                 &x,
                 refdata,
-                &ann,
+                &ann1,
                 true,
                 &mut log,
                 Some(ctl.gen_opt.gamma_delta),
@@ -271,7 +197,7 @@ fn parse_vector_entry_from_json(
         } else if !is_valid(
             &x,
             refdata,
-            &ann,
+            &ann1,
             false,
             &mut log,
             Some(ctl.gen_opt.gamma_delta),
@@ -279,14 +205,14 @@ fn parse_vector_entry_from_json(
             return Ok(res);
         }
         let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
-        get_cdr3_using_ann(&x, refdata, &ann, &mut cdr3);
+        get_cdr3_using_ann(&x, refdata, &ann1, &mut cdr3);
         cdr3_aa = stringme(&cdr3[0].1);
         cdr3_start = cdr3[0].0;
         cdr3_dna = x
             .slice(cdr3_start, cdr3_start + 3 * cdr3_aa.len())
             .to_string();
         let mut seen_j = false;
-        for anni in ann {
+        for anni in ann1 {
             let t = anni.2 as usize;
             if refdata.is_u(t) {
                 u_ref_id = Some(t);
@@ -305,7 +231,7 @@ fn parse_vector_entry_from_json(
                     if tig_start > cdr3_start as isize {
                         panic!(
                             "Something is wrong with the CDR3 start for this contig:\n\n{}.",
-                            &full_seq
+                            ann.sequence
                         );
                     }
                     cdr3_start -= tig_start as usize;
@@ -332,35 +258,31 @@ fn parse_vector_entry_from_json(
     } else {
         // Use annotations from json file.
 
-        cdr3_aa = v["cdr3"].to_string().between("\"", "\"").to_string();
-        cdr3_dna = v["cdr3_seq"].to_string().between("\"", "\"").to_string();
-        cdr3_start = v["cdr3_start"].as_u64().unwrap() as usize;
-        let ann = v["annotations"].as_array();
-        if ann.is_none() {
+        cdr3_aa = ann.cdr3.unwrap();
+        cdr3_dna = ann.cdr3_seq.unwrap();
+        cdr3_start = ann.cdr3_start.unwrap();
+        let annotations = ann.annotations;
+        if annotations.is_empty() {
             return Err(format!(
                 "\nThe file\n{json}\ndoes not contain annotations.  To use enclone with it, \
                     please specify the argument BUILT_IN\nto force use of the internal \
                     reference and recompute annotations.\n"
             ));
         }
-        let ann = ann.unwrap();
         let mut cigarv = String::new(); // cigar for V segment
-        for a in ann {
-            let region_type = &a["feature"]["region_type"];
-            let feature_id = a["feature"]["feature_id"].as_u64().unwrap() as usize;
+        for a in annotations {
+            let region_type = a.feature.region_type;
+            let feature_id = a.feature.feature_id;
             if !to_ref_index.contains_key(&feature_id) {
                 continue;
             }
             let feature_idx = to_ref_index[&feature_id];
-            let ref_start = a["annotation_match_start"].as_u64().unwrap() as usize;
-            if region_type == "L-REGION+V-REGION" {
-                v_stop = a["contig_match_end"].as_i64().unwrap() as usize;
-                v_stop_ref = a["annotation_match_end"].as_i64().unwrap() as usize;
+            let ref_start = a.annotation_match_start;
+            if region_type == VdjRegion::V {
+                v_stop = a.contig_match_end;
+                v_stop_ref = a.annotation_match_end;
             }
-            let gene_name = a["feature"]["gene_name"]
-                .to_string()
-                .between("\"", "\"")
-                .to_string();
+            let gene_name = a.feature.gene_name;
             if refdata.name[feature_idx] != gene_name && !accept_inconsistent {
                 return Err(format!(
                     "\nThere is an inconsistency between the reference \
@@ -383,43 +305,39 @@ fn parse_vector_entry_from_json(
                     refdata.name[feature_idx]
                 ));
             }
-            if region_type == "L-REGION+V-REGION" && ref_start == 0 {
-                let chain = a["feature"]["chain"]
-                    .to_string()
-                    .between("\"", "\"")
-                    .to_string();
-                // if !chain.starts_with("IG") { continue; } // *******************
-                tig_start = a["contig_match_start"].as_i64().unwrap() as isize;
+            if region_type == VdjRegion::V && ref_start == 0 {
+                let chain = a.feature.chain;
+
+                tig_start = a.contig_match_start as isize;
                 cdr3_start -= tig_start as usize;
-                chain_type = chain.clone();
-                if chain == *"IGH"
-                    || chain == *"TRB"
-                    || (chain == *"TRD" && ctl.gen_opt.gamma_delta)
+                if chain == VdjChain::IGH
+                    || chain == VdjChain::TRB
+                    || (chain == VdjChain::TRD && ctl.gen_opt.gamma_delta)
                 {
                     left = true;
                 }
                 v_ref_id = feature_idx;
-                cigarv = a["cigar"].to_string().between("\"", "\"").to_string();
+                cigarv = a.cigar;
             } else {
                 // also check for IG chain?????????????????????????????????????????
-                let ref_stop = a["annotation_match_end"].as_u64().unwrap() as usize;
-                let ref_len = a["annotation_length"].as_u64().unwrap() as usize;
-                if region_type == "J-REGION" && ref_stop == ref_len {
-                    tig_stop = a["contig_match_end"].as_i64().unwrap() as isize;
+                let ref_stop = a.annotation_match_end;
+                let ref_len = a.annotation_length;
+                if region_type == VdjRegion::J && ref_stop == ref_len {
+                    tig_stop = a.contig_match_end as isize;
                     j_ref_id = feature_idx;
-                    j_start = a["contig_match_start"].as_i64().unwrap() as usize;
-                    j_start_ref = a["annotation_match_start"].as_i64().unwrap() as usize;
+                    j_start = a.contig_match_start;
+                    j_start_ref = a.annotation_match_start;
                 }
-                if region_type == "5'UTR" {
+                if region_type == VdjRegion::UTR {
                     u_ref_id = Some(feature_idx);
                 }
-                if region_type == "D-REGION" {
-                    d_start = Some(a["contig_match_start"].as_i64().unwrap() as usize);
+                if region_type == VdjRegion::D {
+                    d_start = Some(a.contig_match_start);
                     d_ref_id = Some(feature_idx);
                 }
-                if region_type == "C-REGION" {
+                if region_type == VdjRegion::C {
                     c_ref_id = Some(feature_idx);
-                    c_start = Some(a["contig_match_start"].as_i64().unwrap() as usize);
+                    c_start = Some(a.contig_match_start);
                 }
             }
         }
@@ -481,7 +399,7 @@ fn parse_vector_entry_from_json(
         // inconsistencies, leading to an assert somewhere downstream.
 
         let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
-        let x = DnaString::from_dna_string(full_seq);
+        let x = DnaString::from_dna_string(&ann.sequence);
         get_cdr3_using_ann(&x, refdata, &annv, &mut cdr3);
         if cdr3.is_empty() {
             return Ok(res);
@@ -527,11 +445,9 @@ fn parse_vector_entry_from_json(
         return Err(json_error(Some(json), ctl.gen_opt.internal_run, &msg));
     }
     let (tig_start, tig_stop) = (tig_start as usize, tig_stop as usize);
-    let quals0 = v["quals"].to_string();
-    let quals0 = quals0.after("\"").as_bytes();
     let mut quals = Vec::<u8>::new();
     let mut slashed = false;
-    for &qual in quals0.iter().take(quals0.len() - 1) {
+    for &qual in ann.quals.as_bytes() {
         if !slashed && qual == b'\\'
         /* && ( i == 0 || quals0[i-1] != b'\\' ) */
         {
@@ -541,36 +457,42 @@ fn parse_vector_entry_from_json(
         slashed = false;
         quals.push(qual);
     }
-    assert_eq!(full_seq.len(), quals.len());
-    let seq = &full_seq[tig_start..tig_stop].to_string();
+    assert_eq!(ann.sequence.len(), quals.len());
+    let seq = &ann.sequence[tig_start..tig_stop].to_string();
     for qual in quals.iter_mut() {
         *qual -= 33_u8;
     }
     let full_quals = quals;
     let quals = full_quals[tig_start..tig_stop].to_vec();
-    let umi_count = v["umi_count"].as_i64().unwrap() as usize;
-    let read_count = v["read_count"].as_i64().unwrap() as usize;
-    let origin = origin_info.origin_for_bc[li].get(&barcode).or_else(|| {
-        // the way we use s1 here is flaky
-        if !origin_info.origin_id[li].is_empty()
-            && (origin_info.origin_id[li] != *"s1" || origin_info.origin_for_bc[li].is_empty())
-        {
-            Some(&origin_info.origin_id[li])
-        } else {
-            None
-        }
-    });
-    let donor = origin_info.donor_for_bc[li].get(&barcode).or_else(|| {
-        // the way we use d1 here is flaky
-        if !origin_info.origin_id[li].is_empty()
-            && (origin_info.donor_id[li] != *"d1" || origin_info.donor_for_bc[li].is_empty())
-        {
-            Some(&origin_info.donor_id[li])
-        } else {
-            None
-        }
-    });
-    let tag = origin_info.tag[li].get(&barcode);
+    let umi_count = ann.umi_count;
+    let read_count = ann.read_count;
+    let origin = origin_info.origin_for_bc[dataset_index]
+        .get(&ann.barcode)
+        .or_else(|| {
+            // the way we use s1 here is flaky
+            if !origin_info.origin_id[dataset_index].is_empty()
+                && (origin_info.origin_id[dataset_index] != *"s1"
+                    || origin_info.origin_for_bc[dataset_index].is_empty())
+            {
+                Some(&origin_info.origin_id[dataset_index])
+            } else {
+                None
+            }
+        });
+    let donor = origin_info.donor_for_bc[dataset_index]
+        .get(&ann.barcode)
+        .or_else(|| {
+            // the way we use d1 here is flaky
+            if !origin_info.origin_id[dataset_index].is_empty()
+                && (origin_info.donor_id[dataset_index] != *"d1"
+                    || origin_info.donor_for_bc[dataset_index].is_empty())
+            {
+                Some(&origin_info.donor_id[dataset_index])
+            } else {
+                None
+            }
+        });
+    let tag = origin_info.tag[dataset_index].get(&ann.barcode);
     let mut origin_index = None;
     let mut donor_index = None;
     let mut tag_index = None;
@@ -583,18 +505,7 @@ fn parse_vector_entry_from_json(
     if let Some(tag) = tag {
         tag_index = Some(bin_position(&origin_info.tag_list, tag) as usize);
     }
-    let mut valu = None;
-    if validated_umis_present {
-        valu = Some(validated_umis);
-    }
-    let mut non_valu = None;
-    if non_validated_umis_present {
-        non_valu = Some(non_validated_umis);
-    }
-    let mut invalu = None;
-    if invalidated_umis_present {
-        invalu = Some(invalidated_umis);
-    }
+
     res.tig = Some(TigData {
         cdr3_dna,
         len: seq.len(),
@@ -606,7 +517,7 @@ fn parse_vector_entry_from_json(
         j_start_ref,
         j_stop: tig_stop,
         c_start,
-        full_seq: full_seq.as_bytes().to_vec(),
+        full_seq: ann.sequence.as_bytes().to_vec(),
         v_ref_id,
         d_ref_id,
         j_ref_id,
@@ -621,10 +532,10 @@ fn parse_vector_entry_from_json(
         cdr3_start,
         quals,
         full_quals,
-        barcode,
-        tigname,
+        barcode: ann.barcode,
+        tigname: ann.contig_name,
         left,
-        dataset_index: li,
+        dataset_index,
         origin_index,
         donor_index,
         tag_index,
@@ -632,9 +543,9 @@ fn parse_vector_entry_from_json(
         read_count,
         chain_type,
         annv,
-        validated_umis: valu,
-        non_validated_umis: non_valu,
-        invalidated_umis: invalu,
+        validated_umis: ann.validated_umis,
+        non_validated_umis: ann.non_validated_umis,
+        invalidated_umis: ann.invalidated_umis,
         frac_reads_used,
     });
     Ok(res)
@@ -644,40 +555,23 @@ fn parse_vector_entry_from_json(
 
 // Parse the JSON annotations file.
 //
-// In the future could be converted to LazyWrite:
-// https://martian-lang.github.io/martian-rust/doc/martian_filetypes/json_file/
-// index.html#lazy-readwrite-example.
-//
 // Tracking contigs using bc_cdr3_aa; could improve later.
 //
 // This section requires 3.1.  If you want to avoid that, do something to make tig_start
 // and tig_stop always nonnegative.  Or use the RE option.
-//
-// Computational performance.  It would appear that nearly all the time here is spent in
-// two lines:
-//
-// read_vector_entry_from_json(&mut f) {
-// let v: Value = serde_json::from_str(strme(&x)).unwrap();
-// (Should retest.)
-//
-// and simply reading the file lines is several times faster.  So the way we parse the
-// files is suboptimal.  If we want to make this faster, one option would be to speed up
-// this code.  Another would be to write out a binary version of the JSON file that contains
-// only the information that we need.
 
 #[derive(Default)]
 struct ReadJsonResult {
     vdj_cells: Vec<String>,
     gex_cells: Vec<String>,
     gex_cells_specified: bool,
-    cr_version: String,
     tig_bc: Vec<Vec<TigData>>,
 }
 
 fn read_json(
     accept_inconsistent: bool,
     origin_info: &OriginInfo,
-    li: usize,
+    dataset_index: usize,
     json: &String,
     refdata: &RefData,
     to_ref_index: &HashMap<usize, usize>,
@@ -707,45 +601,43 @@ fn read_json(
              input files to enclone, including the PRE argument.\n"
         ));
     }
-    let mut f = BufReader::new(open_maybe_compressed(&jsonx));
-    // ◼ This loop could be speeded up, see comments above.
-    let mut xs = Vec::<Vec<u8>>::new();
-    loop {
-        let x = read_vector_entry_from_json(&mut f);
-        if x.is_err() {
-            eprintln!("\nProblem reading {jsonx}.\n");
-            return Err(x.err().unwrap());
-        }
-        match x.unwrap() {
-            None => break,
-            Some(x) => {
-                xs.push(x);
-            }
-        }
-    }
-    let results: Vec<_> = xs
-        .par_iter()
-        .map(|entry| {
+    // Read the entire file to memory before parsing.
+    // See https://github.com/serde-rs/json/issues/160
+    // The previous implementation was essentially doing this anyway, so it
+    // shouldn't drastically change our memory consumption.
+    let mut contents = String::new();
+    open_maybe_compressed(&jsonx)
+        .read_to_string(&mut contents)
+        .unwrap();
+
+    let mut results: Vec<_> = serde_json::Deserializer::from_str(&contents)
+        .into_iter::<ContigAnnotation>()
+        .enumerate()
+        .par_bridge()
+        .map(|(ann_index, entry)| {
             parse_vector_entry_from_json(
-                entry,
+                entry.unwrap(),
                 json,
                 accept_inconsistent,
                 origin_info,
-                li,
+                dataset_index,
                 refdata,
                 to_ref_index,
                 reannotate,
                 ctl,
             )
+            .map(|r| (ann_index, r))
         })
         .collect::<Result<Vec<_>, String>>()?;
+    // rayon's par_bridge feature doesn't preserve order, so sort the result
+    // for stable behavior.
+    results.sort_by_key(|(ann_index, _)| *ann_index);
 
     let mut tigs = Vec::new();
     let mut vdj_cells = Vec::new();
     let mut gex_cells = Vec::new();
     let mut gex_cells_specified = false;
-    let mut cr_version = String::new();
-    for result in results {
+    for (_, result) in results {
         if let Some(tig) = result.tig {
             tigs.push(tig);
         }
@@ -757,9 +649,6 @@ fn read_json(
         }
         if result.gex_cells_specified {
             gex_cells_specified = true;
-        }
-        if !result.cr_version.is_empty() {
-            cr_version = result.cr_version.clone();
         }
     }
     unique_sort(&mut gex_cells);
@@ -818,7 +707,6 @@ fn read_json(
         vdj_cells,
         gex_cells,
         gex_cells_specified,
-        cr_version,
         tig_bc,
     })
 }
