@@ -39,9 +39,6 @@ string_utils = { path = "../string_utils" }
 vdj_ann = { path = "../vdj_ann" }
 vector_utils = { path = "../vector_utils" }
 
-[dev-dependencies]
-assert_cmd = "2"
-
 [target.'cfg(not(windows))'.dependencies]
 pager = "0.16"
 
