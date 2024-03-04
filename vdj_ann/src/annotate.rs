@@ -4,7 +4,7 @@
 // to VDJ reference contigs.  Also to find CDR3 sequences.  And some related things.
 
 use crate::refx::RefData;
-use crate::transcript::is_valid;
+use crate::transcript::is_productive_contig;
 use align_tools::affine_align;
 use amino::{aa_seq, have_start};
 use bio_edit::alignment::AlignmentOperation::{Del, Ins, Match, Subst, Xclip, Yclip};
@@ -3185,8 +3185,7 @@ impl ContigAnnotation {
     ) -> ContigAnnotation {
         let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
         annotate_seq(b, refdata, &mut ann, true, false, true);
-        let mut log = Vec::<u8>::new();
-        let productive = is_valid(b, refdata, &ann, false, &mut log, is_gd);
+        let productive = is_productive_contig(b, refdata, &ann);
         ContigAnnotation::from_annotate_seq(
             b,
             q,
@@ -3200,7 +3199,7 @@ impl ContigAnnotation {
             non_validated_umis,
             invalidated_umis,
             is_cell,
-            productive,
+            productive.0,
             jsupp,
         )
     }
