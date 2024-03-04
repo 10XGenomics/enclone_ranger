@@ -45,8 +45,6 @@ fn print_fasta(header: &str, seq: &DnaStringSlice) {
 fn main() {
     // Force panic to yield a traceback, and make it a pretty one.
 
-    PrettyTrace::new().on();
-
     // Parse arguments.
 
     let args: Vec<String> = env::args().collect();

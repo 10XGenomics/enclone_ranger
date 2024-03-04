@@ -11,7 +11,6 @@ use pretty_trace::PrettyTrace;
 use std::fs;
 
 fn main() {
-    PrettyTrace::new().on();
     let not = "file_that_does_not_exist";
     let _ = fs::read_to_string(not).unwrap();
 }

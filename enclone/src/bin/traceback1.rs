@@ -10,7 +10,6 @@ use pretty_trace::PrettyTrace;
 use rayon::prelude::*;
 
 fn main() {
-    PrettyTrace::new().on();
     let z = vec![0; 100];
     let mut x = vec![0; 100];
     x.par_iter_mut().for_each(|r| {

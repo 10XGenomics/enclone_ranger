@@ -65,7 +65,7 @@
 //!
 //! <br> Next to turn on pretty traces, it is enough to insert this
 //! <pre>
-//!     PrettyTrace::new().on();
+//!     
 //! </pre>
 //! at the beginning of your main program.  And you're good to go!  Any panic
 //! will cause a pretty traceback to be generated.  

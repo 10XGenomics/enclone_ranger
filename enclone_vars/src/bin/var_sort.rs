@@ -7,7 +7,6 @@ use pretty_trace::PrettyTrace;
 use std::io::Write;
 
 fn main() {
-    PrettyTrace::new().on();
     let old = std::fs::read_to_string("enclone_vars/src/vars").unwrap();
     let new = sort_vars(&old);
     if new != old {

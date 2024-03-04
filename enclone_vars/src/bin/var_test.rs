@@ -6,7 +6,6 @@ use enclone_vars::var::parse_variables;
 use pretty_trace::PrettyTrace;
 
 fn main() {
-    PrettyTrace::new().on();
     let old = std::fs::read_to_string("enclone_vars/src/vars").unwrap();
     let _ = parse_variables(&old);
 }
