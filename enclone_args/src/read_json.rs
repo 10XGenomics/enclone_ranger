@@ -7,10 +7,13 @@ use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, OriginInfo, TigData};
 use io_utils::{open_maybe_compressed, path_exists};
+use martian_filetypes::json_file::{Json, LazyJsonReader};
+use martian_filetypes::LazyRead;
 use rand::Rng;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::fmt::Write;
+use std::io::BufReader;
 use string_utils::{stringme, strme, TextUtils};
 use vdj_ann::annotate::ContigAnnotation;
 use vdj_ann::{annotate, refx, transcript};
@@ -69,7 +72,7 @@ struct JsonParseResult {
     tig: Option<TigData>,
 }
 
-fn parse_vector_entry_from_json(
+fn process_json_annotation(
     ann: ContigAnnotation,
     json: &str,
     accept_inconsistent: bool,
@@ -601,21 +604,15 @@ fn read_json(
              input files to enclone, including the PRE argument.\n"
         ));
     }
-    // Read the entire file to memory before parsing.
-    // See https://github.com/serde-rs/json/issues/160
-    // The previous implementation was essentially doing this anyway, so it
-    // shouldn't drastically change our memory consumption.
-    let mut contents = String::new();
-    open_maybe_compressed(&jsonx)
-        .read_to_string(&mut contents)
-        .unwrap();
 
-    let mut results: Vec<_> = serde_json::Deserializer::from_str(&contents)
-        .into_iter::<ContigAnnotation>()
-        .enumerate()
-        .par_bridge()
-        .map(|(ann_index, entry)| {
-            parse_vector_entry_from_json(
+    let reader: LazyJsonReader<_, Json, _> =
+        LazyJsonReader::with_reader(BufReader::new(open_maybe_compressed(&jsonx)))
+            .map_err(|err| format!("{err:#?}"))?;
+
+    let results: Vec<_> = reader
+        .into_iter()
+        .map(|entry| {
+            process_json_annotation(
                 entry.unwrap(),
                 json,
                 accept_inconsistent,
@@ -626,18 +623,14 @@ fn read_json(
                 reannotate,
                 ctl,
             )
-            .map(|r| (ann_index, r))
         })
         .collect::<Result<Vec<_>, String>>()?;
-    // rayon's par_bridge feature doesn't preserve order, so sort the result
-    // for stable behavior.
-    results.sort_by_key(|(ann_index, _)| *ann_index);
 
     let mut tigs = Vec::new();
     let mut vdj_cells = Vec::new();
     let mut gex_cells = Vec::new();
     let mut gex_cells_specified = false;
-    for (_, result) in results {
+    for result in results {
         if let Some(tig) = result.tig {
             tigs.push(tig);
         }
