@@ -6,7 +6,6 @@
 
 use enclone_vars::export_code::export_code;
 use io_utils::{fwrite, open_for_write_new};
-use pretty_trace::PrettyTrace;
 
 use std::io::Write;
 

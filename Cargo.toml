@@ -24,7 +24,6 @@ members = [
     "kmer_lookup",
     "load_feature_bc",
     "perf_stats",
-    "pretty_trace",
     "stats_utils",
     "stirling_numbers",
     "string_utils",

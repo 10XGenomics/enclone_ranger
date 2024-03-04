@@ -13,7 +13,7 @@
 
 use debruijn::dna_string::DnaString;
 use flate2::read::MultiGzDecoder;
-use pretty_trace::PrettyTrace;
+
 use process::Command;
 use sha2::{Digest, Sha256};
 use std::io::copy;

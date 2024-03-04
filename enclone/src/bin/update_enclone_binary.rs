@@ -5,7 +5,7 @@
 
 use enclone_core::defs::get_config;
 use io_utils::path_exists;
-use pretty_trace::PrettyTrace;
+
 use std::collections::HashMap;
 use std::env;
 

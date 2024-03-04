@@ -34,7 +34,7 @@ use debruijn::{
 };
 use exons::fetch_exons;
 use fasta_tools::read_fasta_into_vec_dna_string_plus_headers;
-use pretty_trace::PrettyTrace;
+
 use std::{collections::HashMap, env};
 use string_utils::TextUtils;
 

@@ -650,7 +650,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         "COMP",
         "COMPE",
         "COMP2",
-        "CTRLC",
         "DUMP_INTERNAL_IDS",
         "EVIL_EYE",
         "FORCE_EXTERNAL",
@@ -667,7 +666,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         "PLAIN",
         "PRINT_CPU",
         "PRINT_CPU_INFO",
-        "PROFILE",
         "SVG",
     ];
 
