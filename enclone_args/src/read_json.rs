@@ -448,21 +448,10 @@ fn process_json_annotation(
         return Err(json_error(Some(json), ctl.gen_opt.internal_run, &msg));
     }
     let (tig_start, tig_stop) = (tig_start as usize, tig_stop as usize);
-    let mut quals = Vec::<u8>::new();
-    let mut slashed = false;
-    for &qual in ann.quals.as_bytes() {
-        if !slashed && qual == b'\\'
-        /* && ( i == 0 || quals0[i-1] != b'\\' ) */
-        {
-            slashed = true;
-            continue;
-        }
-        slashed = false;
-        quals.push(qual);
-    }
-    assert_eq!(ann.sequence.len(), quals.len());
+    let mut quals = ann.quals.as_bytes().to_vec();
+    assert_eq!(ann.sequence.len(), ann.quals.as_bytes().len());
     let seq = &ann.sequence[tig_start..tig_stop].to_string();
-    for qual in quals.iter_mut() {
+    for qual in &mut quals {
         *qual -= 33_u8;
     }
     let full_quals = quals;
