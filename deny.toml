@@ -139,3 +139,9 @@ github = ["10XGenomics"]
 gitlab = []
 # 1 or more bitbucket.org organizations to allow git sources for
 bitbucket = []
+
+
+[[bans.skip]]
+# many packages depend on syn 1
+name = "syn"
+version = "1.0.105"
