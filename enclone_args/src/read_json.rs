@@ -310,7 +310,7 @@ fn process_json_annotation(
             }
             if region_type == VdjRegion::V && ref_start == 0 {
                 let chain = a.feature.chain;
-
+                chain_type = chain.to_string();
                 tig_start = a.contig_match_start as isize;
                 cdr3_start -= tig_start as usize;
                 if chain == VdjChain::IGH
