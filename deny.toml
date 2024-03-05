@@ -130,6 +130,7 @@ allow-registry = ["https://github.com/rust-lang/crates.io-index"]
 allow-git = [
     # TODO: remove this
     "https://github.com/Barandis/qd",
+    "https://github.com/martian-lang/martian-rust",
 ]
 
 [sources.allow-org]
