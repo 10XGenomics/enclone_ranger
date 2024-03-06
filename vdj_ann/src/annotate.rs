@@ -2477,7 +2477,13 @@ pub fn annotate_seq_core(
 
     ann.clear();
     for x in annx.iter() {
-        ann.push((x.0, x.1, x.2, x.3, x.4.len() as i32));
+        ann.push(Annotation {
+            seq_start: x.0,
+            match_len: x.1,
+            ref_tig: x.2,
+            ref_start: x.3,
+            mismatches: x.4.len() as i32,
+        });
     }
 }
 
