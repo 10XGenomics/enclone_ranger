@@ -7,7 +7,7 @@
 use crate::align_to_vdj_ref::{align_to_vdj_ref, match_bit_score, zero_one};
 use enclone_proto::types::DonorReferenceItem;
 use std::cmp::min;
-use vdj_ann::refx::RefData;
+use vdj_ann::{annotate::Annotation, refx::RefData};
 
 pub fn vflank(_seq: &[u8], vref: &[u8]) -> usize {
     let mut flank = 13;
@@ -117,11 +117,11 @@ pub fn evaluate_d(
 }
 
 pub fn opt_d(
-    v_ref_id: usize,                    // ex.share[mid].v_ref_id
-    j_ref_id: usize,                    // ex.share[mid].j_ref_id
-    tig: &[u8],                         // ex.share[mid].seq_del
-    annv: &[(i32, i32, i32, i32, i32)], // ex.share[mid].annv
-    cdr3_aa: &str,                      // ex.share[mid].cdr3_aa
+    v_ref_id: usize,     // ex.share[mid].v_ref_id
+    j_ref_id: usize,     // ex.share[mid].j_ref_id
+    tig: &[u8],          // ex.share[mid].seq_del
+    annv: &[Annotation], // ex.share[mid].annv
+    cdr3_aa: &str,       // ex.share[mid].cdr3_aa
     refdata: &RefData,
     dref: &[DonorReferenceItem],
     scores: &mut Vec<f64>,
@@ -152,8 +152,8 @@ pub fn opt_d(
     let mut seq_start = vstart as isize;
     // probably not exactly right
     if annv.len() > 1 {
-        let q1 = annv[0].0 + annv[0].1;
-        let q2 = annv[1].0;
+        let q1 = annv[0].seq_start + annv[0].match_len;
+        let q2 = annv[1].seq_start;
 
         seq_start += q1 as isize - q2 as isize;
     }

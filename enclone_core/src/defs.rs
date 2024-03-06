@@ -729,7 +729,7 @@ pub struct TigData1 {
     pub cdr3_start: usize,                   // start position in bases of CDR3 on V..J
     pub left: bool,         // true if this is IGH or TRB (or TRD in gamma/delta mode)
     pub chain_type: String, // e.g. IGH
-    pub annv: Vec<(i32, i32, i32, i32, i32)>, // V annotation (one or two entries), for V..J
+    pub annv: Vec<Annotation>, // V annotation (one or two entries), for V..J
     pub vs: DnaString,      // reference V segment (possibly donor allele)
     pub vs_notesx: String,  // notes on reference V segment (probably to be replaced)
     pub js: DnaString,      // reference J segment
