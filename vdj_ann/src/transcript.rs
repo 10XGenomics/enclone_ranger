@@ -248,10 +248,7 @@ pub fn junction_seq(
     const TAG: i32 = 100;
     let mut jstops = Vec::<i32>::new();
     for j in 0..ann.len() {
-        let l = ann[j].0 as usize;
-        let len = ann[j].1 as usize;
-        let t = ann[j].2 as usize;
-        let p = ann[j].3 as usize;
+        let t = ann[j].ref_tig as usize;
         if (rheaders[t].contains("TRAJ")
             || rheaders[t].contains("IGHJ")
             || rheaders[t].contains("TRBJ")
@@ -259,10 +256,10 @@ pub fn junction_seq(
             || rheaders[t].contains("IGKJ")
             || (rheaders[t].contains("TRGJ") && gd_mode)
             || (rheaders[t].contains("TRDJ") && gd_mode))
-            && p + len == refs[t].len()
-            && l + len >= TAG as usize
+            && ann[j].ref_start + ann[j].match_len == refs[t].len() as i32
+            && ann[j].seq_start + ann[j].match_len >= TAG
         {
-            jstops.push((l + len) as i32);
+            jstops.push((ann[j].seq_start + ann[j].match_len) as i32);
         }
     }
     unique_sort(&mut jstops);
