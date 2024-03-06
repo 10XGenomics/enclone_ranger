@@ -31,7 +31,7 @@ use vector_utils::{
 };
 
 // Replacing ann object with format: { ( start on sequence, match length, ref tig, start on ref tig, mismatches on sequence ) }.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Annotation {
     pub seq_start: i32,
     pub match_len: i32,

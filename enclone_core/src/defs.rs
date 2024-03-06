@@ -20,6 +20,7 @@ use std::io::BufRead;
 use std::sync::atomic::AtomicBool;
 use std::time::{Instant, SystemTime};
 use string_utils::TextUtils;
+use vdj_ann::annotate::Annotation;
 use vector_utils::unique_sort;
 
 pub static FAILED: AtomicBool = AtomicBool::new(false);
@@ -641,7 +642,7 @@ pub struct TigData {
     pub umi_count: usize, // number of UMIs supporting contig
     pub read_count: usize, // number of reads supporting contig
     pub chain_type: String, // e.g. IGH
-    pub annv: Vec<(i32, i32, i32, i32, i32)>, // V annotation (one or two entries), for V..J
+    pub annv: Vec<Annotation>, // V annotation (one or two entries), for V..J
     pub validated_umis: Option<Vec<String>>, // validated UMIs
     pub non_validated_umis: Option<Vec<String>>, // non-validated UMIs
     pub invalidated_umis: Option<Vec<String>>, // invalidated UMIs
