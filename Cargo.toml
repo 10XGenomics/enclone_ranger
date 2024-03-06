@@ -6,7 +6,6 @@ members = [
     "ansi_escape",
     "binary_vec_io",
     "build_enclone_proto",
-    "dna",
     "enclone",
     "enclone_args",
     "enclone_core",
