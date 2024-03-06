@@ -4,7 +4,6 @@ members = [
     "align_tools",
     "amino",
     "ansi_escape",
-    "binary_vec_io",
     "build_enclone_proto",
     "dna",
     "enclone",
