@@ -3020,7 +3020,8 @@ pub struct ContigAnnotation {
     pub invalidated_umis: Option<Vec<String>>, // invalidated UMIs
     pub is_cell: bool,                       // was the barcode declared a cell?
     pub productive: Option<bool>,            // productive?  (null means not full length)
-    pub filtered: bool,                      // true and never changed (unused field)
+    #[serde(default = "set_true")]
+    pub filtered: bool, // true and never changed (unused field)
 
     pub is_gex_cell: Option<bool>, // Was the barcode declared a cell by Gene expression data, if available
     pub is_asm_cell: Option<bool>, // Was the barcode declared a cell by the VDJ assembler
@@ -3030,6 +3031,10 @@ pub struct ContigAnnotation {
     pub junction_support: Option<JunctionSupport>, // New field added in CR 7.2. Coverage of junction region for a good contig
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sample: Option<String>,
+}
+
+fn set_true() -> bool {
+    true
 }
 
 impl ContigAnnotation {
