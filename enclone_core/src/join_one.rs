@@ -611,8 +611,9 @@ pub fn join_one<'a>(
                         concat.extend(jref);
                         let mut seq_start = vstart as isize;
                         if ex1.share[h1].annv.len() > 1 {
-                            let q1 = ex1.share[h1].annv[0].0 + ex1.share[h1].annv[0].1;
-                            let q2 = ex1.share[h1].annv[1].0;
+                            let q1 =
+                                ex1.share[h1].annv[0].seq_start + ex1.share[h1].annv[0].match_len;
+                            let q2 = ex1.share[h1].annv[1].seq_start;
                             seq_start += q2 as isize - q1 as isize;
                         }
                         let mut seq_end = seq1.len() - (jref.len() - jend);

@@ -123,7 +123,7 @@ mod tests {
     #[test]
     fn test_d_region_alignment() {
         use debruijn::dna_string::DnaString;
-        use vdj_ann::annotate::annotate_seq;
+        use vdj_ann::annotate::{annotate_seq, Annotation};
         use vdj_ann::refx::make_vdj_ref_data_core;
         let seq = DnaString::from_acgt_bytes(
             b"GGAGGTGCGAATGACTCTGCTCTCTGTCCTGTCTCCTCATCTGCAAAATTAGGAAGCCTGTCTTGATTATCTCCAGGAA\
@@ -139,11 +139,11 @@ mod tests {
         let (is_tcr, is_bcr) = (true, false);
         let mut refdata = RefData::new();
         make_vdj_ref_data_core(&mut refdata, refx, &ext_refx, is_tcr, is_bcr, None);
-        let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
+        let mut ann = Vec::<Annotation>::new();
         annotate_seq(&seq, &refdata, &mut ann, true, false, true);
         let mut have_d = false;
         for i in 0..ann.len() {
-            if refdata.is_d(ann[i].2 as usize) {
+            if refdata.is_d(ann[i].ref_tig as usize) {
                 have_d = true;
             }
         }
