@@ -3010,7 +3010,8 @@ pub struct ContigAnnotation {
     #[serde(default)]
     pub annotations: Vec<AnnotationUnit>, // the annotations
     pub clonotype: Option<String>, // null, filled in later
-    pub info: ClonotypeInfo,       // Empty initially, may be filled in later
+    #[serde(default)]
+    pub info: ClonotypeInfo, // Empty initially, may be filled in later
 
     // state of the contig
     pub high_confidence: bool,               // declared high confidence?
