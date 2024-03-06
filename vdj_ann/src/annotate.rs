@@ -3083,9 +3083,8 @@ impl ContigAnnotation {
     ) -> ContigAnnotation {
         let mut vstart = -1_i32;
         for i in 0..ann.len() {
-            let t = ann[i].2 as usize;
-            if refdata.is_v(t) && ann[i].3 == 0 {
-                vstart = ann[i].0;
+            if refdata.is_v(ann[i].ref_tig as usize) && ann[i].ref_start == 0 {
+                vstart = ann[i].seq_start;
             }
         }
         let mut aa = String::new();
