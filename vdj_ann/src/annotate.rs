@@ -2500,32 +2500,29 @@ pub fn print_some_annotations(
     }
     let mut vstart = Vec::<i32>::new();
     for l in 0..ann.len() {
-        let estart = ann[l].0;
-        let t = ann[l].2 as usize;
-        let tstart = ann[l].3;
-        if tstart == 0 && (rheaders[t].contains("V-REGION") || rheaders[t].contains("L+V")) {
-            vstart.push(estart);
+        if ann[l].ref_start == 0
+            && (rheaders[ann[l].ref_tig as usize].contains("V-REGION")
+                || rheaders[ann[l].ref_tig as usize].contains("L+V"))
+        {
+            vstart.push(ann[l].seq_start);
         }
     }
     for l in 0..ann.len() {
-        let (estart, len) = (ann[l].0, ann[l].1);
-        let t = ann[l].2 as usize;
-        let tstart = ann[l].3;
-        let mis = ann[l].4;
         fwrite!(
             log,
             "{}-{} ==> {}-{} on {} [len={}] (mis={})",
-            estart,
-            estart + len,
-            tstart,
-            tstart + len,
-            rheaders[t],
-            refs[t].len(),
-            mis
+            ann[l].seq_start,
+            ann[l].seq_start + ann[l].match_len,
+            ann[l].ref_start,
+            ann[l].ref_start + ann[l].match_len,
+            rheaders[ann[l].ref_tig as usize],
+            refs[ann[l].ref_tig as usize].len(),
+            ann[l].mismatches
         );
         if vstart.solo()
-            && (rheaders[t].contains("V-REGION") || rheaders[t].contains("L+V"))
-            && (estart - vstart[0] - tstart) % 3 != 0
+            && (rheaders[ann[l].ref_tig as usize].contains("V-REGION")
+                || rheaders[ann[l].ref_tig as usize].contains("L+V"))
+            && (ann[l].seq_start - vstart[0] - ann[l].ref_start) % 3 != 0
         {
             fwrite!(log, " [SHIFT!]");
         }
