@@ -27,7 +27,7 @@ fn json_error(json: Option<&str>, internal_run: bool, msg: &str) -> String {
         "There is something wrong with the contig annotations in the cellranger output file"
             .to_string();
     if let Some(json) = json {
-        write!(msgx, "\n{}.", json).unwrap();
+        write!(msgx, "\n{json}.").unwrap();
     } else {
         msgx += ".";
     }
@@ -594,32 +594,27 @@ fn read_json(
         ));
     }
 
-    let reader: LazyJsonReader<_, Json, _> =
-        LazyJsonReader::with_reader(BufReader::new(open_maybe_compressed(&jsonx)))
-            .map_err(|err| format!("{err:#?}"))?;
-
-    let results: Vec<_> = reader
-        .into_iter()
-        .map(|entry| {
-            process_json_annotation(
-                entry.unwrap(),
-                json,
-                accept_inconsistent,
-                origin_info,
-                dataset_index,
-                refdata,
-                to_ref_index,
-                reannotate,
-                ctl,
-            )
-        })
-        .collect::<Result<Vec<_>, String>>()?;
-
     let mut tigs = Vec::new();
     let mut vdj_cells = Vec::new();
     let mut gex_cells = Vec::new();
     let mut gex_cells_specified = false;
-    for result in results {
+
+    let reader: LazyJsonReader<ContigAnnotation, Json, _> =
+        LazyJsonReader::with_reader(BufReader::new(open_maybe_compressed(&jsonx)))
+            .map_err(|err| format!("{err:#?}"))?;
+
+    for entry in reader.into_iter() {
+        let result = process_json_annotation(
+            entry.map_err(|err| err.to_string())?,
+            json,
+            accept_inconsistent,
+            origin_info,
+            dataset_index,
+            refdata,
+            to_ref_index,
+            reannotate,
+            ctl,
+        )?;
         if let Some(tig) = result.tig {
             tigs.push(tig);
         }
@@ -720,8 +715,8 @@ pub fn parse_json_annotations_files(
         .par_iter()
         .enumerate()
         .map(|(li, dataset_path)| {
-            let json = format!("{}/{ann}", dataset_path);
-            let json_lz4 = format!("{}/{ann}.lz4", dataset_path);
+            let json = format!("{dataset_path}/{ann}");
+            let json_lz4 = format!("{dataset_path}/{ann}.lz4");
             if !path_exists(&json) && !path_exists(&json_lz4) {
                 return Err(format!("\ncan't find {json} or {json_lz4}\n"));
             }

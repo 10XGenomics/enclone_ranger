@@ -20,7 +20,7 @@ use enclone::misc2::{check_for_barcode_reuse, find_exact_subclonotypes, search_f
 use enclone::misc3::sort_tig_bc;
 use enclone_args::read_json::{parse_json_annotations_files, Annotations};
 use enclone_core::barcode_fate::BarcodeFate;
-use enclone_core::defs::{AlleleData, CloneInfo, TigData};
+use enclone_core::defs::{AlleleData, CloneInfo};
 use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup};
 use enclone_core::hcomp::heavy_complexity;
 use enclone_print::define_mat::{define_mat, setup_define_mat};
