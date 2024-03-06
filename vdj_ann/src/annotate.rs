@@ -2843,10 +2843,12 @@ impl AnnotationUnit {
         let na = ann.len();
         assert!(na == 1 || na == 2);
         if ann.len() == 2 {
-            assert!(ann[0].2 == ann[1].2);
+            assert!(ann[0].ref_tig == ann[1].ref_tig);
             assert!(
-                (ann[0].0 + ann[0].1 == ann[1].0 && ann[0].3 + ann[0].1 < ann[1].3)
-                    || (ann[0].0 + ann[0].1 < ann[1].0 && ann[0].3 + ann[0].1 == ann[1].3)
+                (ann[0].seq_start + ann[0].match_len == ann[1].seq_start
+                    && ann[0].ref_start + ann[0].match_len < ann[1].ref_start)
+                    || (ann[0].seq_start + ann[0].match_len < ann[1].seq_start
+                        && ann[0].ref_start + ann[0].match_len == ann[1].ref_start)
             );
         }
 
@@ -2854,8 +2856,8 @@ impl AnnotationUnit {
         // where there are two alignment entities.  This does not show mismatches.
 
         let mut cig = String::new();
-        let left1 = ann[0].0 as usize;
-        let len1 = ann[0].1 as usize;
+        let left1 = ann[0].seq_start as usize;
+        let len1 = ann[0].match_len as usize;
         let right1 = b.len() - left1 - len1;
         if left1 > 0 {
             write!(cig, "{left1}S").unwrap();
@@ -2865,16 +2867,16 @@ impl AnnotationUnit {
             write!(cig, "{right1}S").unwrap();
         }
         if na == 2 {
-            let n1 = ann[1].0 - ann[0].0 - ann[0].1;
-            let n2 = ann[1].3 - ann[0].3 - ann[0].1;
+            let n1 = ann[1].seq_start - ann[0].seq_start - ann[0].match_len;
+            let n2 = ann[1].ref_start - ann[0].ref_start - ann[0].match_len;
             if n1 == 0 {
                 write!(cig, "{n2}D").unwrap();
             }
             if n2 == 0 {
                 write!(cig, "{n1}I").unwrap();
             }
-            let left2 = ann[1].0 as usize;
-            let len2 = ann[1].1 as usize;
+            let left2 = ann[1].seq_start as usize;
+            let len2 = ann[1].match_len as usize;
             let right2 = b.len() - left2 - len2;
             write!(cig, "{len2}M").unwrap();
             if right2 > 0 {
@@ -2906,11 +2908,11 @@ impl AnnotationUnit {
         // Compute alignment score.
 
         let mut s = 0_i32;
-        let t = ann[0].2 as usize;
-        let r = &refdata.refs[t];
+        let r = &refdata.refs[ann[0].ref_tig as usize];
         for l in 0..na {
-            for i in 0..ann[l].1 {
-                if b.get((ann[l].0 + i) as usize) == r.get((ann[l].3 + i) as usize) {
+            for i in 0..ann[l].match_len {
+                if b.get((ann[l].seq_start + i) as usize) == r.get((ann[l].ref_start + i) as usize)
+                {
                     s += 2;
                 } else {
                     s -= 3;
@@ -2918,8 +2920,8 @@ impl AnnotationUnit {
             }
         }
         if na == 2 {
-            let n1 = ann[1].0 - ann[0].0 - ann[0].1;
-            let n2 = ann[1].3 - ann[0].3 - ann[0].1;
+            let n1 = ann[1].seq_start - ann[0].seq_start - ann[0].match_len;
+            let n2 = ann[1].ref_start - ann[0].ref_start - ann[0].match_len;
             let n = max(n1, n2);
             s += 4 + n;
         }
@@ -2929,25 +2931,27 @@ impl AnnotationUnit {
         let types = ["IGH", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG"];
         let mut chain_type = String::new();
         for i in 0..types.len() {
-            if refdata.rheaders[t].contains(types[i]) {
+            if refdata.rheaders[ann[0].ref_tig as usize].contains(types[i]) {
                 chain_type = types[i].to_string();
                 break;
             }
         }
-        let v: Vec<&str> = refdata.rheaders[t].split_terminator('|').collect();
+        let v: Vec<&str> = refdata.rheaders[ann[0].ref_tig as usize]
+            .split_terminator('|')
+            .collect();
         AnnotationUnit {
-            contig_match_start: ann[0].0 as usize,
-            contig_match_end: (ann[na - 1].0 + ann[na - 1].1) as usize,
-            annotation_match_start: ann[0].3 as usize,
-            annotation_match_end: (ann[na - 1].3 + ann[na - 1].1) as usize,
-            annotation_length: refdata.refs[t].len(),
+            contig_match_start: ann[0].seq_start as usize,
+            contig_match_end: (ann[na - 1].seq_start + ann[na - 1].match_len) as usize,
+            annotation_match_start: ann[0].ref_start as usize,
+            annotation_match_end: (ann[na - 1].ref_start + ann[na - 1].match_len) as usize,
+            annotation_length: refdata.refs[ann[0].ref_tig as usize].len(),
             cigar: cig,
             score: s,
             feature: AnnotationFeature {
                 chain: chain_type.parse().unwrap(),
-                display_name: refdata.name[t].clone(),
+                display_name: refdata.name[ann[0].ref_tig as usize].clone(),
                 feature_id: v[1].force_usize(),
-                gene_name: refdata.name[t].clone(),
+                gene_name: refdata.name[ann[0].ref_tig as usize].clone(),
                 region_type: v[3].parse().unwrap(),
             },
         }
