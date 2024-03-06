@@ -184,11 +184,11 @@ fn process_json_annotation(
             print!("\n{}", strme(&log));
         }
         if ctl.gen_opt.trace_barcode == ann.barcode {
-            if !is_productive_contig(&x, refdata, &ann1) {
+            if !is_productive_contig(&x, refdata, &ann1).0 {
                 println!("invalid");
                 return Ok(res);
             }
-        } else if !is_productive_contig(&x, refdata, &ann1) {
+        } else if !is_productive_contig(&x, refdata, &ann1).0 {
             return Ok(res);
         }
         let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();

@@ -3022,7 +3022,8 @@ pub struct ContigAnnotation {
     pub productive: Option<bool>,            // productive?  (null means not full length)
     #[serde(default = "set_true")]
     pub filtered: bool, // true and never changed (unused field)
-    pub productive_criteria: Option<ContigStatus>, // New field added in CR 8.1
+    /// criteria used to asess productive status
+    pub productive_criteria: Option<ContigStatus>,
 
     pub is_gex_cell: Option<bool>, // Was the barcode declared a cell by Gene expression data, if available
     pub is_asm_cell: Option<bool>, // Was the barcode declared a cell by the VDJ assembler

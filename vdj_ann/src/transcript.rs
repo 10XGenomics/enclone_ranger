@@ -68,14 +68,23 @@ impl ContigStatus {
             self.has_expected_size,
             self.correct_ann_order,
         ) {
-            (Some(_), Some(_), Some(_), Some(_), Some(_), Some(_), Some(_)) => 0,
-            (Some(_), Some(_), Some(_), Some(_), Some(_), Some(_), _) => 1,
-            (Some(_), Some(_), Some(_), Some(_), Some(_), _, _) => 2,
-            (Some(_), Some(_), Some(_), Some(_), _, _, _) => 3,
-            (Some(_), Some(_), Some(_), _, _, _, _) => 4,
-            (Some(_), Some(_), _, _, _, _, _) => 5,
-            (Some(_), _, _, _, _, _, _) => 6,
-            _ => 7,
+            (
+                Some(true),
+                Some(true),
+                Some(true),
+                Some(true),
+                Some(true),
+                Some(true),
+                Some(true),
+            ) => 0,
+            (Some(_), Some(_), Some(_), Some(_), Some(_), Some(_), Some(_)) => 1,
+            (Some(_), Some(_), Some(_), Some(_), Some(_), Some(_), _) => 2,
+            (Some(_), Some(_), Some(_), Some(_), Some(_), _, _) => 3,
+            (Some(_), Some(_), Some(_), Some(_), _, _, _) => 4,
+            (Some(_), Some(_), Some(_), _, _, _, _) => 5,
+            (Some(_), Some(_), _, _, _, _, _) => 6,
+            (Some(_), _, _, _, _, _, _) => 7,
+            _ => 8,
         }
     }
 }
@@ -185,40 +194,35 @@ fn evaluate_contig_status(
     let inframe_pair = find_inframe_vdj_pair(vstarts, jstops);
     contig_status.in_frame = Some(inframe_pair.is_some());
 
-    contig_status.no_premature_stop = if let Some((vstart, jstop)) = inframe_pair {
-        Some(
+    if let Some((vstart, jstop)) = inframe_pair {
+        contig_status.no_premature_stop = Some(
             !(vstart.tig_start..jstop.tig_stop - 3)
                 .step_by(3)
                 .any(|j| have_stop(contig, j)),
         )
-    } else {
-        None
     };
 
     let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
     get_cdr3_using_ann(contig, reference, ann, &mut cdr3);
     contig_status.has_cdr3 = Some(!cdr3.is_empty());
 
-    contig_status.has_expected_size =
-        if let (Some((vstart, jstop)), Some(cdr3)) = (inframe_pair, cdr3.first()) {
-            let expected_len = (refs[vstart.ref_id].len() + refs[jstop.ref_id].len()) as i32
-                + (3 * cdr3.1.len() as i32)
-                - 20;
-            let observed_len = jstop.tig_stop as i32 - vstart.tig_start as i32;
-            let delta = expected_len - observed_len;
-            let min_delta = if vdj_chain == VdjChain::IGH {
-                MIN_DELTA_IGH
-            } else {
-                MIN_DELTA
-            };
-            if delta < min_delta || delta > MAX_DELTA {
-                Some(false)
-            } else {
-                Some(true)
-            }
+    if let (Some((vstart, jstop)), Some(cdr3)) = (inframe_pair, cdr3.first()) {
+        let expected_len = (refs[vstart.ref_id].len() + refs[jstop.ref_id].len()) as i32
+            + (3 * cdr3.1.len() as i32)
+            - 20;
+        let observed_len = jstop.tig_stop as i32 - vstart.tig_start as i32;
+        let delta = expected_len - observed_len;
+        let min_delta = if vdj_chain == VdjChain::IGH {
+            MIN_DELTA_IGH
         } else {
-            None
+            MIN_DELTA
         };
+        contig_status.has_expected_size = if delta < min_delta || delta > MAX_DELTA {
+            Some(false)
+        } else {
+            Some(true)
+        }
+    };
 
     let observed_order: Vec<i32> = annotation
         .into_iter()
