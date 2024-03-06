@@ -2472,6 +2472,7 @@ pub fn annotate_seq_core(
         }
     }
     erase_if(&mut annx, &to_delete);
+    // TODO Update annx object ^^
 
     // Transform.
 
@@ -2719,10 +2720,12 @@ pub fn cdr3_loc<'a>(
     }
     let mut i = ann.len() - 1;
     loop {
-        let t = ann[i].2 as usize;
-        if !refdata.rheaders[t].contains("segment") && refdata.is_v(t) {
-            let (l, p) = (ann[i].0 as isize, ann[i].3 as isize);
-            let vstop_on_tig = l + refdata.refs[t].len() as isize - p;
+        if !refdata.rheaders[ann[i].ref_tig as usize].contains("segment")
+            && refdata.is_v(ann[i].ref_tig as usize)
+        {
+            let vstop_on_tig = ann[i].seq_start as isize
+                + refdata.refs[ann[i].ref_tig as usize].len() as isize
+                - ann[i].ref_start as isize;
             let mut start = vstop_on_tig + LOW_RELV_CDR3;
             if start < 0 {
                 start = 0;
