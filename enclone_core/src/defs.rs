@@ -8,9 +8,6 @@ use hdf5::Dataset;
 
 use io_utils::{open_for_read, path_exists};
 
-#[cfg(not(target_os = "windows"))]
-use perf_stats::peak_mem_usage_gb;
-
 use regex::Regex;
 use std::cmp::max;
 use std::collections::HashMap;

@@ -406,7 +406,6 @@ dependencies = [
  "io_utils",
  "itertools",
  "pager",
- "perf_stats",
  "petgraph",
  "qd",
  "rayon",
@@ -454,7 +453,6 @@ dependencies = [
  "io_utils",
  "itertools",
  "lazy_static",
- "perf_stats",
  "qd",
  "rayon",
  "regex",
@@ -1249,15 +1247,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4fd5641d01c8f18a23da7b6fe29298ff4b55afcccdf78973b24cf3175fee32e"
 
 [[package]]
-name = "perf_stats"
-version = "0.1.8"
-dependencies = [
- "io_utils",
- "libc",
- "string_utils",
-]
-
-[[package]]
 name = "permutation"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1940,7 +1929,6 @@ dependencies = [
  "fasta_tools",
  "flate2",
  "io_utils",
- "perf_stats",
  "sha2",
  "string_utils",
  "vdj_ann",

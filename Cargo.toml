@@ -23,7 +23,6 @@ members = [
     "io_utils",
     "kmer_lookup",
     "load_feature_bc",
-    "perf_stats",
     "stats_utils",
     "stirling_numbers",
     "string_utils",
