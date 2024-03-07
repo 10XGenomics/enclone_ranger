@@ -7,7 +7,6 @@ use evalexpr::Node;
 use hdf5::Dataset;
 
 use io_utils::{open_for_read, path_exists};
-use perf_stats::elapsed;
 
 #[cfg(not(target_os = "windows"))]
 use perf_stats::peak_mem_usage_gb;

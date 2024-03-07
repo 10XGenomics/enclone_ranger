@@ -19,16 +19,6 @@ use std::{
 };
 use string_utils::TextUtils;
 
-// Find elapsed time.  Usage example:
-//    let t = Instant::now( );
-//    .. do something ..
-//    println!( "{} seconds used doing such and such", elapsed(&t) );
-
-pub fn elapsed(start: &Instant) -> f64 {
-    let d = start.elapsed();
-    d.as_secs() as f64 + d.subsec_nanos() as f64 / 1e9
-}
-
 // Report number of threads in use.
 
 pub fn nthreads() -> i64 {
