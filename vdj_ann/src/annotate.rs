@@ -3,8 +3,8 @@
 // This file contains code to annotate a contig, in the sense of finding alignments
 // to VDJ reference contigs.  Also to find CDR3 sequences.  And some related things.
 
-use crate::refx::RefData;
-use crate::transcript::is_valid;
+use crate::transcript::is_productive_contig;
+use crate::{refx::RefData, transcript::ContigStatus};
 use align_tools::affine_align;
 use amino::{aa_seq, have_start};
 use bio_edit::alignment::AlignmentOperation::{Del, Ins, Match, Subst, Xclip, Yclip};
@@ -3022,6 +3022,8 @@ pub struct ContigAnnotation {
     pub productive: Option<bool>,            // productive?  (null means not full length)
     #[serde(default = "set_true")]
     pub filtered: bool, // true and never changed (unused field)
+    /// criteria used to asess productive status
+    pub productive_criteria: Option<ContigStatus>,
 
     pub is_gex_cell: Option<bool>, // Was the barcode declared a cell by Gene expression data, if available
     pub is_asm_cell: Option<bool>, // Was the barcode declared a cell by the VDJ assembler
@@ -3057,6 +3059,7 @@ impl ContigAnnotation {
         invalidated_umis: Option<Vec<String>>,   // invalidated UMIs
         is_cellx: bool,                          // was the barcode declared a cell?
         productivex: bool,                       // productive?
+        productive_criteria: ContigStatus,       // criteria used to asess productive status
         jsupp: Option<JunctionSupport>,          // num reads, umis supporting junction
     ) -> ContigAnnotation {
         let mut vstart = -1_i32;
@@ -3146,6 +3149,7 @@ impl ContigAnnotation {
             invalidated_umis,
             is_cell: is_cellx,
             productive: Some(productivex),
+            productive_criteria: Some(productive_criteria),
             filtered: true,
             junction_support: jsupp,
             // These need to be populated by the assembler explicitly as needed
@@ -3180,13 +3184,11 @@ impl ContigAnnotation {
         non_validated_umis: Option<Vec<String>>, // non-validated UMIs
         invalidated_umis: Option<Vec<String>>,   // invalidated UMIs
         is_cell: bool,                           // was the barcode declared a cell?
-        is_gd: Option<bool>,                     // is gamma/delta mode
         jsupp: Option<JunctionSupport>,          // num reads, umis supporting junction
     ) -> ContigAnnotation {
         let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
         annotate_seq(b, refdata, &mut ann, true, false, true);
-        let mut log = Vec::<u8>::new();
-        let productive = is_valid(b, refdata, &ann, false, &mut log, is_gd);
+        let (is_productive, productive_criteria) = is_productive_contig(b, refdata, &ann);
         ContigAnnotation::from_annotate_seq(
             b,
             q,
@@ -3200,7 +3202,8 @@ impl ContigAnnotation {
             non_validated_umis,
             invalidated_umis,
             is_cell,
-            productive,
+            is_productive,
+            productive_criteria,
             jsupp,
         )
     }
@@ -3357,7 +3360,6 @@ mod tests {
             None,
             None,
             false, // is_cell, should be changed to None
-            None,
             None,
         );
 
