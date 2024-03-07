@@ -778,12 +778,12 @@ pub fn check_lvars(ctl: &EncloneControl, gex_info: &GexInfo) -> Result<(), Strin
             to_check.push(x.clone());
         }
     }
-    ctl.perf_stats(&t, "checking lvars top");
+
     let t = Instant::now();
     if !to_check.is_empty() {
         check_gene_fb(ctl, gex_info, &to_check, "lead")?;
     }
-    ctl.perf_stats(&t, "checking gene");
+
     Ok(())
 }
 

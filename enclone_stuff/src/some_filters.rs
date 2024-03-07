@@ -186,13 +186,11 @@ pub fn some_filters(
         orbits2.push(o);
     }
     *orbits = orbits2;
-    ctl.perf_stats(&tsig, "signature filtering");
 
     // Merge onesies where totally unambiguous.
 
     let tmerge = Instant::now();
     merge_onesies(orbits, ctl, exact_clonotypes, info, eq, disintegrated);
-    ctl.perf_stats(&tmerge, "merging onesies");
 
     // Check for disjoint orbits.
 
@@ -209,7 +207,6 @@ pub fn some_filters(
         refdata,
         dref,
     );
-    ctl.perf_stats(&tsplit, "splitting orbits 1");
 
     // Test for weak chains.
 
@@ -227,7 +224,6 @@ pub fn some_filters(
         refdata,
         dref,
     );
-    ctl.perf_stats(&tweak, "weak chain filtering");
 
     // Check for disjoint orbits (again).
 
@@ -244,7 +240,6 @@ pub fn some_filters(
         refdata,
         dref,
     );
-    ctl.perf_stats(&tsplit, "splitting orbits 2");
 
     // Find and mark for deletion exact subclonotypes having a variant base in V..J that,
     // accounting for all the cells in all the exact subclonotypes, never occurs as Q60
@@ -449,5 +444,4 @@ pub fn some_filters(
         dref,
     );
     // *orbits = orbits.iter().flatten().map(|x| vec![*x]).collect();
-    ctl.perf_stats(&tsplit, "splitting orbits 3");
 }

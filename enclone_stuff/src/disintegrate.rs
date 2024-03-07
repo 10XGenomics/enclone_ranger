@@ -67,7 +67,7 @@ pub fn disintegrate_onesies(
                 }
             }
         }
-        ctl.perf_stats(&t, "disintegrating onesies 1");
+
         let t = Instant::now();
         *join_info = join_info2;
         *exact_clonotypes = exacts2;
@@ -91,7 +91,7 @@ pub fn disintegrate_onesies(
             }
             to_info2.push(x);
         }
-        ctl.perf_stats(&t, "disintegrating onesies 2");
+
         let t = Instant::now();
         *info = info2;
         let mut raw_joins2 = Vec::<(i32, i32)>::new();
@@ -119,6 +119,5 @@ pub fn disintegrate_onesies(
             }
         }
         *eq = eq2;
-        ctl.perf_stats(&t, "disintegrating onesies 3");
     }
 }

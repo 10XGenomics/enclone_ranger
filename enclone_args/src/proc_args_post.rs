@@ -488,7 +488,6 @@ pub fn proc_args_post(
                 .to_string(),
         );
     }
-    ctl.perf_stats(&t, "after main args loop 1");
 
     // Process TCR, BCR and META.
 
@@ -515,7 +514,7 @@ pub fn proc_args_post(
             .collect();
         proc_meta_core(&lines, ctl)?;
     }
-    ctl.perf_stats(&t, "in proc_meta");
+
     if !xcrs.is_empty() {
         let arg = &xcrs[xcrs.len() - 1];
         proc_xcr(arg, gex, bc, have_gex, ctl)?;
@@ -669,7 +668,7 @@ pub fn proc_args_post(
             ctl.clono_filt_opt_def.donor = true;
         }
     }
-    ctl.perf_stats(&t, "after main args loop 2");
+
     proc_args_tail(ctl, args)?;
 
     // Sort chains_to_align.

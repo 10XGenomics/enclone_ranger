@@ -526,10 +526,6 @@ pub struct EncloneControl {
     pub last_modified: Vec<SystemTime>,          // last modified for pathlist
 }
 
-impl EncloneControl {
-    pub fn perf_stats(&self, t: &Instant, msg: &str) {}
-}
-
 // Set up data structure to track clonotype data.  A TigData is for one contig;
 // a Vec<TigData> is for one barcode, and an ExactClonotype is for an exact subclonotype.
 

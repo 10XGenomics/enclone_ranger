@@ -259,6 +259,6 @@ pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), S
             }
         }
     }
-    ctl.perf_stats(&tall, "in proc_args_tail");
+
     Ok(())
 }

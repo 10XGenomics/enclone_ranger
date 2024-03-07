@@ -36,7 +36,7 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
         }
     }
     unique_sort(&mut vars);
-    ctl.perf_stats(&tstar, "doing miscellaneous stuff");
+
     let tomega = Instant::now();
     for x in vars.iter() {
         for (iy, y) in ends.iter().enumerate() {
@@ -122,6 +122,6 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
             }
         }
     }
-    ctl.perf_stats(&tomega, "messing with variables");
+
     Ok(())
 }

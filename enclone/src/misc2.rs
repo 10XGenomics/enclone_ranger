@@ -321,7 +321,7 @@ pub fn find_exact_subclonotypes(
         groups.push((r, s));
         r = s;
     }
-    ctl.perf_stats(&t, "finding exact subclonotypes one");
+
     let t = Instant::now();
     let mut results = Vec::<(
         usize,
@@ -423,7 +423,7 @@ pub fn find_exact_subclonotypes(
             res.1.push(ExactClonotype { share, clones });
         }
     });
-    ctl.perf_stats(&t, "finding exact subclonotypes two");
+
     let t = Instant::now();
     let mut max_exact = 0;
     for i in 0..results.len() {
@@ -519,7 +519,7 @@ pub fn find_exact_subclonotypes(
         }
         println!();
     }
-    ctl.perf_stats(&t, "finding exact subclonotypes three");
+
     exact_clonotypes
 }
 

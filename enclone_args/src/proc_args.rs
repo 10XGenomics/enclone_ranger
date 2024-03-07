@@ -934,8 +934,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
 
     // Record time.
 
-    ctl.perf_stats(&targs, "in main args loop");
-
     // Do residual argument processing.
 
     if ctl.gen_opt.internal_run && ctl.gen_opt.config.is_empty() {

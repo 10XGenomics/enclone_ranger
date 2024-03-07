@@ -104,7 +104,7 @@ pub fn join_exacts(
     if !ctl.silent {
         println!("comparing {} simple clonotypes", info.len());
     }
-    ctl.perf_stats(&timer1, "join setup");
+
     let timer2 = Instant::now();
 
     let joinf = |r: &mut (
@@ -601,7 +601,6 @@ pub fn join_exacts(
 
     results.par_iter_mut().for_each(joinf);
 
-    ctl.perf_stats(&timer2, "in main part of join");
     for r in &results {
         for &j in &r.5 {
             raw_joins.push((j.0 as i32, j.1 as i32));

@@ -116,7 +116,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     let mut log = Vec::<u8>::new();
     let mut broken = Vec::<bool>::new();
     flag_defective(ctl, refdata, &mut log, &mut broken);
-    ctl.perf_stats(&tr, "flagging defective references");
 
     // Parse the json annotations file.
 
@@ -129,7 +128,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         vdj_cells,
         mut fate,
     } = parse_json_annotations_files(ctl, refdata, to_ref_index)?;
-    ctl.perf_stats(&tparse, "loading from json");
 
     // Populate features.
 
@@ -162,7 +160,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             x.cdr2_start = cdr2_starts[x.v_ref_id];
         }
     }
-    ctl.perf_stats(&tpop, "populating features");
 
     // Test for no data.
 
@@ -205,7 +202,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Look for barcode reuse.
 
     check_for_barcode_reuse(ctl, &tig_bc)?;
-    ctl.perf_stats(&tproto, "in proto stuff");
 
     // Find exact subclonotypes.
 
@@ -282,14 +278,12 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         }
         erase_if(&mut exact_clonotypes, &to_delete);
     }
-    ctl.perf_stats(&t, "filtering foursies");
 
     // Build info about clonotypes.  Note that this edits the V reference sequence to perform
     // an indel in some cases.
 
     let tinfo = Instant::now();
     let mut info: Vec<CloneInfo> = build_info(refdata, ctl, &mut exact_clonotypes, &mut fate);
-    ctl.perf_stats(&tinfo, "building info");
 
     // Derive consensus sequences for alternate alleles of V segments.  Then create donor
     // reference sequences for Loupe.
@@ -300,7 +294,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     if !ctl.gen_opt.no_alt_alleles {
         alt_refs = find_alleles(refdata, ctl, &exact_clonotypes);
     }
-    ctl.perf_stats(&talt, "finding alt alleles");
+
     if !ctl.gen_opt.dref_file.is_empty() {
         let f = File::create(&ctl.gen_opt.dref_file);
         if f.is_err() {
@@ -332,7 +326,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     }
     let tdonor = Instant::now();
     let drefs = make_donor_refs(&alt_refs, refdata);
-    ctl.perf_stats(&tdonor, "making donor refs");
 
     // Analyze donor reference.
 
@@ -356,13 +349,11 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                 .push(x.barcode.clone());
         }
     }
-    ctl.perf_stats(&tbc, "computing to_bc");
 
     // Make stirling ratio table.  Not sure that fixing the size of this is safe.
 
     let tsr = Instant::now();
     let sr = stirling2_ratio_table_double(3000);
-    ctl.perf_stats(&tsr, "computing stirling number table");
 
     // Compute complexity.
 
@@ -378,7 +369,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             }
         }
     }
-    ctl.perf_stats(&tcomp, "computing complexity");
 
     // Form equivalence relation on exact subclonotypes.  We also keep the raw joins, consisting
     // of pairs of info indices, that were originally joined.
@@ -461,7 +451,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             }
         }
     }
-    ctl.perf_stats(&txxx, "in some odds and ends");
 
     // Filter B cells based on UMI counts.
 
@@ -533,7 +522,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Filter using constraints imposed by FCELL.
 
     filter_by_fcell(ctl, &mut orbits, info, &mut exact_clonotypes, gex_info)?;
-    ctl.perf_stats(&tumi, "umi filtering and such");
 
     // Break up clonotypes containing a large number of chains. These are
     // very likely to be false merges
@@ -886,7 +874,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             }
         }
     }
-    ctl.perf_stats(&tmark, "marking vdj noncells");
+
     if !ctl.gen_opt.trace_barcode.is_empty() {
         for ex in &exact_clonotypes {
             for clone in &ex.clones {
