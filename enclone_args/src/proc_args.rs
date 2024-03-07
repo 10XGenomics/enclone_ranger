@@ -500,7 +500,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
             "UMI_RATIO_FILT_MARK",
             &mut ctl.clono_filt_opt_def.umi_ratio_filt_mark,
         ),
-        ("UNACCOUNTED", &mut ctl.perf_opt.unaccounted),
         ("UTR_CON", &mut ctl.gen_opt.utr_con),
         ("VDUP", &mut ctl.clono_filt_opt.vdup),
         ("VIS_DUMP", &mut ctl.gen_opt.vis_dump),
@@ -646,9 +645,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
 
     let set_nothing_simple = [
         "CELLRANGER",
-        "COMP",
-        "COMPE",
-        "COMP2",
         "DUMP_INTERNAL_IDS",
         "EVIL_EYE",
         "FORCE_EXTERNAL",

@@ -496,108 +496,41 @@ pub struct ParseableOpt {
     pub pno_header: bool,         // suppress header line
 }
 
-// Computational performance options.
-
-#[derive(Default, PartialEq, Eq)]
-pub struct PerfOpt {
-    pub comp: bool,         // print computational performance stats
-    pub comp2: bool,        // print more detailed computational performance stats
-    pub unaccounted: bool,  // show unaccounted time at each step
-    pub comp_enforce: bool, // comp plus enforce no unaccounted time
-}
-
 // Set up control datastructure (EncloneControl).  This is stuff that is constant for a given
 // run of enclone.  If you add something to this, be sure to update the "changed" section in
 // enclone_server.rs, if needed.
 
 #[derive(Default)]
 pub struct EncloneControl {
-    pub perf_opt: PerfOpt,                // computational performance options
-    pub start_time: Option<Instant>,      // enclone start time
-    pub gen_opt: GeneralOpt,              // miscellaneous general options
-    pub plot_opt: PlotOpt,                // plot options
-    pub pretty: bool,                     // use escape characters to enhance view
-    pub nogray: bool,                     // don't gray in per cell lines
-    pub silent: bool,                     // turn off extra logging
-    pub force: bool,                      // make joins even if redundant
-    pub debug_table_printing: bool,       // turn on debugging for table printing
-    pub merge_all_impropers: bool,        // merge all improper exact subclonotypes
-    pub heur: ClonotypeHeuristics,        // algorithmic heuristics
-    pub origin_info: OriginInfo,          // origin (sample) info
-    pub allele_alg_opt: AlleleAlgOpt,     // algorithmic options for allele finding
-    pub allele_print_opt: AllelePrintOpt, // print options for allele finding
-    pub join_alg_opt: JoinAlgOpt,         // algorithmic options for join
-    pub join_print_opt: JoinPrintOpt,     // printing options for join operations
+    pub start_time: Option<Instant>,             // enclone start time
+    pub gen_opt: GeneralOpt,                     // miscellaneous general options
+    pub plot_opt: PlotOpt,                       // plot options
+    pub pretty: bool,                            // use escape characters to enhance view
+    pub nogray: bool,                            // don't gray in per cell lines
+    pub silent: bool,                            // turn off extra logging
+    pub force: bool,                             // make joins even if redundant
+    pub debug_table_printing: bool,              // turn on debugging for table printing
+    pub merge_all_impropers: bool,               // merge all improper exact subclonotypes
+    pub heur: ClonotypeHeuristics,               // algorithmic heuristics
+    pub origin_info: OriginInfo,                 // origin (sample) info
+    pub allele_alg_opt: AlleleAlgOpt,            // algorithmic options for allele finding
+    pub allele_print_opt: AllelePrintOpt,        // print options for allele finding
+    pub join_alg_opt: JoinAlgOpt,                // algorithmic options for join
+    pub join_print_opt: JoinPrintOpt,            // printing options for join operations
     pub clono_filt_opt_def: ClonoFiltOptDefault, // default filtering options for clonotypes
-    pub clono_filt_opt: ClonoFiltOpt,     // filtering options for clonotypes
-    pub clono_print_opt: ClonoPrintOpt,   // printing options for clonotypes
-    pub clono_group_opt: ClonoGroupOpt,   // grouping options for clonotypes
-    pub parseable_opt: ParseableOpt,      // parseable output options
-    pub pathlist: Vec<String>,            // list of input files
-    pub last_modified: Vec<SystemTime>,   // last modified for pathlist
+    pub clono_filt_opt: ClonoFiltOpt,            // filtering options for clonotypes
+    pub clono_print_opt: ClonoPrintOpt,          // printing options for clonotypes
+    pub clono_group_opt: ClonoGroupOpt,          // grouping options for clonotypes
+    pub parseable_opt: ParseableOpt,             // parseable output options
+    pub pathlist: Vec<String>,                   // list of input files
+    pub last_modified: Vec<SystemTime>,          // last modified for pathlist
 }
 
 pub static mut WALLCLOCK: f64 = 0.0;
 pub static mut LAST_IPEAK: f64 = -0.0;
 
 impl EncloneControl {
-    pub fn perf_stats(&self, t: &Instant, msg: &str) {
-        let used = elapsed(t);
-        let t2 = Instant::now();
-        #[allow(unused_mut)]
-        let mut usedx = String::new();
-        #[cfg(not(target_os = "windows"))]
-        {
-            if self.perf_opt.comp {
-                let peak = peak_mem_usage_gb();
-                let ipeak = (100.0 * peak).round();
-                let peak_mem = format!("peak mem = {peak:.2} GB");
-                usedx = format!("{used:.2}");
-                let mut ipeak_changed = false;
-                unsafe {
-                    if ipeak != LAST_IPEAK {
-                        ipeak_changed = true;
-                        LAST_IPEAK = ipeak;
-                    }
-                }
-                if usedx != "0.00" || ipeak_changed {
-                    println!("used {usedx} seconds {msg}, {peak_mem}");
-                }
-            }
-        }
-
-        // Check for time used in the above computation, which could otherwise introduce a
-        // discrepancy into the time accounting stats.  Surprisingly, the time spent in that
-        // section can be nontrivial.
-
-        let used2 = elapsed(&t2);
-        let used2x = format!("{used2:.2}");
-        if self.perf_opt.comp && used2x != "0.00" {
-            println!("used {used2x} seconds computing perf stats for {msg}");
-        }
-
-        // Update total time used.
-
-        unsafe {
-            WALLCLOCK += used + used2;
-        }
-
-        // Report unaccounted time.
-
-        if self.perf_opt.comp && self.perf_opt.unaccounted && msg != "total" {
-            let delta;
-            unsafe {
-                delta = elapsed(&self.start_time.unwrap()) - WALLCLOCK;
-            }
-            let deltas = format!("{delta:.2}");
-            if deltas != "0.00" {
-                if usedx == "0.00" {
-                    println!("used 0.00 seconds {msg}");
-                }
-                println!("used {deltas} seconds unaccounted for");
-            }
-        }
-    }
+    pub fn perf_stats(&self, t: &Instant, msg: &str) {}
 }
 
 // Set up data structure to track clonotype data.  A TigData is for one contig;
