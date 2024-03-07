@@ -89,20 +89,6 @@ impl ContigStatus {
     }
 }
 
-pub struct VdjChainSpecificVJGenes {
-    v_type: String,
-    j_type: String,
-}
-
-impl From<VdjChain> for VdjChainSpecificVJGenes {
-    fn from(chain: VdjChain) -> Self {
-        VdjChainSpecificVJGenes {
-            v_type: format!("{chain}V"),
-            j_type: format!("{chain}J"),
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 pub struct Vstart {
     ref_id: usize,
@@ -140,7 +126,8 @@ fn evaluate_contig_status(
     reference: &RefData,
     contig: &DnaString,
 ) -> Option<ContigStatus> {
-    let vj_pair = VdjChainSpecificVJGenes::from(vdj_chain);
+    let valid_v_type = format!("{vdj_chain}V");
+    let valid_j_type = format!("{vdj_chain}J");
     let rheaders = &reference.rheaders;
     let refs = &reference.refs;
     let annotation: Vec<Annotation> = ann
@@ -157,7 +144,7 @@ fn evaluate_contig_status(
     let mut vstarts: Vec<Vstart> = annotation
         .iter()
         .filter(|a| reference.is_v(a.ref_id))
-        .filter(|a| rheaders[a.ref_id].contains(vj_pair.v_type.as_str()))
+        .filter(|a| rheaders[a.ref_id].contains(&valid_v_type))
         .filter(|a| a.ref_start == 0)
         .map(|a| Vstart {
             ref_id: a.ref_id,
@@ -167,7 +154,7 @@ fn evaluate_contig_status(
     let jstops: Vec<Jstop> = annotation
         .iter()
         .filter(|a| reference.is_j(a.ref_id))
-        .filter(|a| rheaders[a.ref_id].contains(vj_pair.j_type.as_str()))
+        .filter(|a| rheaders[a.ref_id].contains(&valid_j_type))
         .filter(|a| a.ref_start + a.match_length == refs[a.ref_id].len())
         .map(|a| Jstop {
             ref_id: a.ref_id,
