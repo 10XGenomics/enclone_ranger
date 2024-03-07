@@ -526,9 +526,6 @@ pub struct EncloneControl {
     pub last_modified: Vec<SystemTime>,          // last modified for pathlist
 }
 
-pub static mut WALLCLOCK: f64 = 0.0;
-pub static mut LAST_IPEAK: f64 = -0.0;
-
 impl EncloneControl {
     pub fn perf_stats(&self, t: &Instant, msg: &str) {}
 }
