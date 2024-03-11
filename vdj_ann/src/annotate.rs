@@ -30,6 +30,15 @@ use vector_utils::{
     reverse_sort, unique_sort, VecUtils,
 };
 
+// Replacing ann object with format: { ( start on sequence, match length, ref tig, start on ref tig, mismatches on sequence ) }.
+pub struct Annotation {
+    pub seq_start: i32,
+    pub match_len: i32,
+    pub ref_tig: i32,
+    pub ref_start: i32,
+    pub mismatches: i32,
+}
+
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 // START CODONS
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -148,7 +157,7 @@ pub fn chain_type(b: &DnaString, rkmers_plus_full_20: &[(Kmer20, i32, i32)], rty
 pub fn annotate_seq(
     b: &DnaString,
     refdata: &RefData,
-    ann: &mut Vec<(i32, i32, i32, i32, i32)>,
+    ann: &mut Vec<Annotation>,
     allow_weak: bool,
     allow_improper: bool,
     abut: bool,
@@ -231,7 +240,7 @@ fn report_semis(
 pub fn annotate_seq_core(
     b: &DnaString,
     refdata: &RefData,
-    ann: &mut Vec<(i32, i32, i32, i32, i32)>,
+    ann: &mut Vec<Annotation>,
     allow_weak: bool,
     allow_improper: bool,
     abut: bool,
@@ -2480,7 +2489,7 @@ pub fn annotate_seq_core(
 
 pub fn print_some_annotations(
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     log: &mut Vec<u8>,
     verbose: bool,
 ) {
@@ -2532,7 +2541,7 @@ pub fn print_annotations(
     abut: bool,
     verbose: bool,
 ) {
-    let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
+    let mut ann = Vec::<Annotation>::new();
     annotate_seq_core(
         b,
         refdata,
@@ -2697,7 +2706,7 @@ pub fn print_cdr3(tig: &DnaStringSlice, log: &mut Vec<u8>) {
 pub fn cdr3_loc<'a>(
     tig: &'a DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
 ) -> DnaStringSlice<'a> {
     // Given the design of this function, the following bound appears to be optimal
     // except possibly for changes less than ten.
@@ -2734,7 +2743,7 @@ pub fn cdr3_loc<'a>(
 pub fn get_cdr3_using_ann(
     tig: &DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     cdr3: &mut Vec<(usize, Vec<u8>, usize, usize)>,
 ) {
     let window = cdr3_loc(tig, refdata, ann);
@@ -2761,7 +2770,7 @@ pub fn get_cdr3_using_ann(
 pub fn print_cdr3_using_ann(
     tig: &DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     log: &mut Vec<u8>,
 ) {
     let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
@@ -2820,7 +2829,7 @@ impl AnnotationUnit {
     pub fn from_annotate_seq(
         b: &DnaString,
         refdata: &RefData,
-        ann: &[(i32, i32, i32, i32, i32)],
+        ann: &[Annotation],
     ) -> AnnotationUnit {
         // Sanity check the inputs.  Obviously these conditions should be checked
         // before calling, so that they can never fail.
@@ -3050,7 +3059,7 @@ impl ContigAnnotation {
         q: &[u8],                                // qual scores for the contig
         tigname: &str,                           // name of the contig
         refdata: &RefData,                       // reference data
-        ann: &[(i32, i32, i32, i32, i32)],       // output of annotate_seq
+        ann: &[Annotation],                      // output of annotate_seq
         nreads: usize,                           // number of reads assigned to contig
         numis: usize,                            // number of umis assigned to contig
         high_confidencex: bool,                  // declared high confidence?
@@ -3186,7 +3195,7 @@ impl ContigAnnotation {
         is_cell: bool,                           // was the barcode declared a cell?
         jsupp: Option<JunctionSupport>,          // num reads, umis supporting junction
     ) -> ContigAnnotation {
-        let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
+        let mut ann = Vec::<Annotation>::new();
         annotate_seq(b, refdata, &mut ann, true, false, true);
         let (is_productive, productive_criteria) = is_productive_contig(b, refdata, &ann);
         ContigAnnotation::from_annotate_seq(
@@ -3270,7 +3279,7 @@ fn check_full_length(v_ann: Option<&AnnotationUnit>, j_ann: Option<&AnnotationUn
 pub fn make_annotation_units(
     b: &DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
 ) -> Vec<AnnotationUnit> {
     let mut x = Vec::<AnnotationUnit>::new();
     let rtype = &["U", "V", "D", "J", "C"];
@@ -3307,7 +3316,7 @@ pub fn make_annotation_units(
         reverse_sort(&mut locs);
         if !locs.is_empty() {
             let (j, entries) = (locs[0].1, locs[0].2);
-            let mut annx = Vec::<(i32, i32, i32, i32, i32)>::new();
+            let mut annx = Vec::<Annotation>::new();
             for k in j..j + entries {
                 annx.push(ann[k]);
             }
