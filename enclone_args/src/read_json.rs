@@ -149,7 +149,6 @@ fn process_json_annotation(
         let mut ann2 = Vec::<Annotation>::new();
         let mut j = 0;
         while j < ann1.len() {
-            // let t = ann1[j].ref_tig as usize;
             let mut k = j + 1;
             while k < ann1.len() {
                 if refdata.segtype[ann1[k].ref_tig as usize]
@@ -202,7 +201,6 @@ fn process_json_annotation(
             .to_string();
         let mut seen_j = false;
         for anni in ann1 {
-            // let t = anni.ref_tig as usize;
             if refdata.is_u(anni.ref_tig as usize) {
                 u_ref_id = Some(anni.ref_tig as usize);
             } else if refdata.is_v(anni.ref_tig as usize) && !seen_j {

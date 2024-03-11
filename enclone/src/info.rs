@@ -206,7 +206,7 @@ pub fn build_info(
                 // insertion
                 } else if x.annv[1].ref_start == x.annv[0].ref_start + x.annv[0].match_len {
                     /*
-                    for m in x.annv[0].seq_start + x.annv[0].match_len..x.annv[1].0 {
+                    for m in x.annv[0].seq_start + x.annv[0].match_len..x.annv[1].seq_start {
                         if m as usize >= x.seq.len() {
                             eprintln!( "\nannotation problem with {}", strme(&x.seq) );
                         }
