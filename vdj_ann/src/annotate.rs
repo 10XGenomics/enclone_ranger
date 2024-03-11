@@ -31,6 +31,7 @@ use vector_utils::{
 };
 
 // Replacing ann object with format: { ( start on sequence, match length, ref tig, start on ref tig, mismatches on sequence ) }.
+#[derive(Clone, Copy)]
 pub struct Annotation {
     pub seq_start: i32,
     pub match_len: i32,
@@ -3296,26 +3297,29 @@ pub fn make_annotation_units(
         let mut locs = Vec::<(usize, usize, usize)>::new();
         let mut j = 0;
         while j < ann.len() {
-            let t = ann[j].2 as usize;
-            if refdata.segtype[t] != rt {
+            if refdata.segtype[ann[j].ref_tig as usize] != rt {
                 j += 1;
                 continue;
             }
             let mut entries = 1;
-            let mut len = ann[j].1;
+            let mut len = ann[j].match_len;
             if j < ann.len() - 1
-                && ann[j + 1].2 as usize == t
-                && ((ann[j].0 + ann[j].1 == ann[j + 1].0 && ann[j].3 + ann[j].1 < ann[j + 1].3)
-                    || (ann[j].0 + ann[j].1 < ann[j + 1].0 && ann[j].3 + ann[j].1 == ann[j + 1].3))
+                && ann[j + 1].ref_tig as usize == ann[j].ref_tig as usize
+                && ((ann[j].seq_start + ann[j].match_len == ann[j + 1].seq_start
+                    && ann[j].ref_start + ann[j].match_len < ann[j + 1].ref_start)
+                    || (ann[j].seq_start + ann[j].match_len < ann[j + 1].seq_start
+                        && ann[j].ref_start + ann[j].match_len == ann[j + 1].ref_start))
             {
                 entries = 2;
-                len += ann[j + 1].1;
+                len += ann[j + 1].match_len;
             }
             let mut score = len as usize;
-            if refdata.segtype[t] == "V" && ann[j].3 == 0 {
+            if refdata.segtype[ann[j].ref_tig as usize] == "V" && ann[j].ref_start == 0 {
                 score += 1_000_000;
             }
-            if refdata.segtype[t] == "J" && (ann[j].3 + ann[j].1) as usize == refdata.refs[t].len()
+            if refdata.segtype[ann[j].ref_tig as usize] == "J"
+                && (ann[j].ref_start + ann[j].match_len) as usize
+                    == refdata.refs[ann[j].ref_tig as usize].len()
             {
                 score += 1_000_000;
             }
