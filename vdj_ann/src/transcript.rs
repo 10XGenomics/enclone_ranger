@@ -25,13 +25,13 @@ const MAX_DELTA: i32 = 35;
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Default)]
 pub struct ContigStatus {
-    full_length: Option<bool>,
-    has_v_start: Option<bool>,
-    in_frame: Option<bool>,
-    no_premature_stop: Option<bool>,
-    has_cdr3: Option<bool>,
-    has_expected_size: Option<bool>,
-    correct_ann_order: Option<bool>,
+    pub full_length: Option<bool>,
+    pub has_v_start: Option<bool>,
+    pub in_frame: Option<bool>,
+    pub no_premature_stop: Option<bool>,
+    pub has_cdr3: Option<bool>,
+    pub has_expected_size: Option<bool>,
+    pub correct_ann_order: Option<bool>,
 }
 
 impl ContigStatus {
