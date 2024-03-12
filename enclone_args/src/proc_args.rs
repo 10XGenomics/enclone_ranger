@@ -495,7 +495,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
             &mut ctl.plot_opt.plot_by_isotype_nolegend,
         ),
         ("TOY", &mut ctl.gen_opt.toy),
-        ("TOY_COM", &mut ctl.gen_opt.toy_com),
         ("UMI_FILT_MARK", &mut ctl.clono_filt_opt_def.umi_filt_mark),
         (
             "UMI_RATIO_FILT_MARK",
