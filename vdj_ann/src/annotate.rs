@@ -6,7 +6,7 @@
 use crate::transcript::is_productive_contig;
 use crate::{refx::RefData, transcript::ContigStatus};
 use align_tools::affine_align;
-use amino::{aa_seq, have_start};
+use amino::{have_start, nucleotide_to_aminoacid_sequence};
 use bio_edit::alignment::AlignmentOperation::{Del, Ins, Match, Subst, Xclip, Yclip};
 use debruijn::{
     dna_string::{DnaString, DnaStringSlice},
@@ -2580,71 +2580,97 @@ pub fn cdr3_motif_right() -> Vec<Vec<u8>> {
     vec![b"LTFG.GTRVTV".to_vec(), b"LIWG.GSKLSI".to_vec()]
 }
 
-pub fn cdr3_min_len() -> usize {
-    5
-}
+const CDR3_MIN_LEN: usize = 5;
+const RIGHT_FLANK_MIN_SCORE: usize = 3;
+const LEFT_FLANK_MIN_SCORE: usize = 4;
 
-pub fn get_cdr3(tig: &DnaStringSlice, cdr3: &mut Vec<(usize, Vec<u8>, usize, usize)>) {
+pub fn get_cdr3(contig: &DnaStringSlice, cdr3: &mut Vec<(usize, Vec<u8>, usize, usize)>) {
     const MIN_TOTAL_CDR3_SCORE: usize = 10; // about as high as one can go
-    let (left, right) = (cdr3_motif_left(), cdr3_motif_right());
+
+    let left_motifs = cdr3_motif_left();
+    let right_motifs = cdr3_motif_right();
+
     cdr3.clear();
-    let x = tig.to_owned().to_ascii_vec();
-    for i in 0..3 {
+
+    let contig_seq = contig.to_owned().to_ascii_vec();
+
+    for frame_idx in 0..3 {
         // go through three frames
-        let a = aa_seq(&x, i);
-        if a.len() < 4 {
+        let amino_acid_seq = nucleotide_to_aminoacid_sequence(&contig_seq, frame_idx);
+        if amino_acid_seq.len() < 4 {
             return;
         }
-        for j in 0..a.len() - min(a.len(), (cdr3_min_len() + 3) + 1) {
-            if a[j] == b'C' {
-                // CDR3 starts at position j on a
-                let first_f = j + (cdr3_min_len() - 3);
-                let last_f = a.len() - 4;
-                for k in first_f..last_f {
-                    if k + right[0].len() > a.len() {
+        for cdr3_start_pos in
+            0..amino_acid_seq.len() - min(amino_acid_seq.len(), (CDR3_MIN_LEN + 3) + 1)
+        {
+            if amino_acid_seq[cdr3_start_pos] == b'C' {
+                // CDR3 starts at position pos on amino_acid_seq
+
+                let first_f = cdr3_start_pos + (CDR3_MIN_LEN - 3); // basically = cdr3_start_pos + 2
+                let last_f = amino_acid_seq.len() - 4;
+                for right_motif_start_pos in first_f..last_f {
+                    // loop through possible right_motif_start_pos from (cdr3_start_pos + 2) to (amino_acid_seq.len() - 4)
+
+                    if right_motif_start_pos + right_motifs[0].len() > amino_acid_seq.len() {
+                        // break if amino_acid_seq is to short
                         break;
                     }
-                    let mut rscore = 0;
-                    for m in 0..right[0].len() {
+
+                    // match the right flank and calculate the score
+                    let mut right_flank_score = 0;
+                    for right_motif_col in 0..right_motifs[0].len() {
                         let mut hit = false;
-                        for r in 0..right.len() {
-                            if a[k + m] == right[r][m] {
+                        for right_motif_row in &right_motifs {
+                            if amino_acid_seq[right_motif_start_pos + right_motif_col]
+                                == right_motif_row[right_motif_col]
+                            {
                                 hit = true;
                             }
                         }
                         if hit {
-                            rscore += 1;
+                            right_flank_score += 1;
                         }
                     }
-                    if rscore >= 4 {
-                        let mut st = false;
-                        for l in j + 1..k + 2 {
-                            if a[l] == b'*' {
-                                st = true;
+
+                    // if right flank score is larger than 4 attempt to match left flank
+                    if right_flank_score >= RIGHT_FLANK_MIN_SCORE {
+                        let mut stop_codon = false;
+                        for aa in amino_acid_seq
+                            .iter()
+                            .take(right_motif_start_pos + 2)
+                            .skip(cdr3_start_pos + 1)
+                        {
+                            if aa == &b'*' {
+                                stop_codon = true;
                             }
                         }
-                        let ll = left[0].len();
-                        if !st && j >= ll {
-                            let mut lscore = 0;
-                            for m in 0..ll {
+                        let ll = left_motifs[0].len();
+                        if !stop_codon && cdr3_start_pos >= ll {
+                            let mut left_flank_score = 0;
+                            for left_motif_col in 0..ll {
                                 let mut hit = false;
-                                for r in 0..left.len() {
-                                    if a[j - ll + m] == left[r][m] {
+                                for left_motif_row in &left_motifs {
+                                    if amino_acid_seq[cdr3_start_pos - ll + left_motif_col]
+                                        == left_motif_row[left_motif_col]
+                                    {
                                         hit = true;
                                     }
                                 }
                                 if hit {
-                                    lscore += 1;
+                                    left_flank_score += 1;
                                 }
                             }
-                            // ◼ It's possible that the lscore + rscore
+                            // ◼ It's possible that the left_flank_score + right_flank_score
                             // ◼ bound should be increased.
-                            if lscore >= 3 && lscore + rscore >= MIN_TOTAL_CDR3_SCORE {
+                            if left_flank_score >= LEFT_FLANK_MIN_SCORE
+                                && left_flank_score + right_flank_score >= MIN_TOTAL_CDR3_SCORE
+                            {
                                 cdr3.push((
-                                    tig.start + i + 3 * j,
-                                    a[j..k + 2 + 1].to_vec(),
-                                    lscore,
-                                    rscore,
+                                    contig.start + frame_idx + 3 * cdr3_start_pos,
+                                    amino_acid_seq[cdr3_start_pos..right_motif_start_pos + 2 + 1]
+                                        .to_vec(),
+                                    left_flank_score,
+                                    right_flank_score,
                                 ));
                             }
                         }
@@ -2655,14 +2681,15 @@ pub fn get_cdr3(tig: &DnaStringSlice, cdr3: &mut Vec<(usize, Vec<u8>, usize, usi
     }
 
     // Only return cdr3s having the maximum score.
-
-    let m = cdr3.iter().map(|cdi| cdi.2 + cdi.3).max().unwrap_or(0);
-    let to_delete = cdr3.iter().map(|cdi| cdi.2 + cdi.3 < m).collect::<Vec<_>>();
+    let max_score = cdr3.iter().map(|cdi| cdi.2 + cdi.3).max().unwrap_or(0);
+    let to_delete = cdr3
+        .iter()
+        .map(|cdi| cdi.2 + cdi.3 < max_score)
+        .collect::<Vec<_>>();
     erase_if(cdr3, &to_delete);
     cdr3.sort();
 
     // Prefer later start and prefer longer CDR3.
-
     if cdr3.len() > 1 {
         // ◼ This is awkward.
         let n = cdr3.len();
@@ -2695,7 +2722,7 @@ pub fn print_cdr3(tig: &DnaStringSlice, log: &mut Vec<u8>) {
 // ◼ of the V segment is not right.
 
 pub fn cdr3_loc<'a>(
-    tig: &'a DnaString,
+    contig: &'a DnaString,
     refdata: &RefData,
     ann: &[(i32, i32, i32, i32, i32)],
 ) -> DnaStringSlice<'a> {
@@ -2703,25 +2730,25 @@ pub fn cdr3_loc<'a>(
     // except possibly for changes less than ten.
     const LOW_RELV_CDR3: isize = -40;
     if ann.is_empty() {
-        return tig.slice(0, 0);
+        return contig.slice(0, 0);
     }
     let mut i = ann.len() - 1;
     loop {
         let t = ann[i].2 as usize;
         if !refdata.rheaders[t].contains("segment") && refdata.is_v(t) {
             let (l, p) = (ann[i].0 as isize, ann[i].3 as isize);
-            let vstop_on_tig = l + refdata.refs[t].len() as isize - p;
-            let mut start = vstop_on_tig + LOW_RELV_CDR3;
+            let vstop_on_contig = l + refdata.refs[t].len() as isize - p;
+            let mut start = vstop_on_contig + LOW_RELV_CDR3;
             if start < 0 {
                 start = 0;
             }
-            if start > tig.len() as isize {
-                start = tig.len() as isize;
+            if start > contig.len() as isize {
+                start = contig.len() as isize;
             }
-            return tig.slice(start as usize, tig.len());
+            return contig.slice(start as usize, contig.len());
         }
         if i == 0 {
-            return tig.slice(0, 0);
+            return contig.slice(0, 0);
         }
         i -= 1;
     }
@@ -3073,7 +3100,7 @@ impl ContigAnnotation {
         let mut stop = -1_i32;
         let x = b.to_owned().to_ascii_vec();
         if vstart >= 0 {
-            let y = aa_seq(&x, vstart as usize);
+            let y = nucleotide_to_aminoacid_sequence(&x, vstart as usize);
             aa = stringme(&y);
             for i in 0..y.len() {
                 if y[i] == b'*' {

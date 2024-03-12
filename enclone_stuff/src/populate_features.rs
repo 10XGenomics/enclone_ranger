@@ -2,7 +2,7 @@
 
 // Populate features.
 
-use amino::aa_seq;
+use amino::nucleotide_to_aminoacid_sequence;
 use enclone_core::defs::EncloneControl;
 use io_utils::fwriteln;
 use std::fmt::Write as _;
@@ -34,7 +34,7 @@ pub fn populate_features(
             if broken[i] && ctl.gen_opt.require_unbroken_ok {
                 continue;
             }
-            let aa = aa_seq(&refdata.refs[i].to_ascii_vec(), 0);
+            let aa = nucleotide_to_aminoacid_sequence(&refdata.refs[i].to_ascii_vec(), 0);
             let rtype = refdata.rtype[i];
             let chain_type = if rtype == 0 {
                 "IGH"

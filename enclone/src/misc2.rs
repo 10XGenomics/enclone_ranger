@@ -4,7 +4,7 @@
 
 use crate::innate::mark_innate;
 use crate::misc3::study_consensus;
-use amino::aa_seq;
+use amino::nucleotide_to_aminoacid_sequence;
 use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, ExactClonotype, Junction, TigData, TigData0, TigData1};
@@ -180,7 +180,7 @@ pub fn create_exact_subclonotype_core(
         // are the same, which in principle they should be, but this is not actually always true.
         // However this is hard to fix.
 
-        let aa = aa_seq(tig_bc[r][m].seq(), 0);
+        let aa = nucleotide_to_aminoacid_sequence(tig_bc[r][m].seq(), 0);
         let mut d_start = None;
         if tig_bc[r][m].d_start.is_some() {
             d_start = Some(tig_bc[r][m].d_start.unwrap() + utr.len() - tig_bc[r][m].v_start);

@@ -2,7 +2,7 @@
 
 // Flag defective reference sequences.
 
-use amino::aa_seq;
+use amino::nucleotide_to_aminoacid_sequence;
 use enclone_core::defs::EncloneControl;
 use io_utils::fwriteln;
 use itertools::Itertools;
@@ -93,8 +93,8 @@ pub fn flag_defective(
             // Continue.
 
             let seq = refs.to_ascii_vec();
-            let aa0 = aa_seq(&seq, 0);
-            let aa2 = aa_seq(&seq, 2);
+            let aa0 = nucleotide_to_aminoacid_sequence(&seq, 0);
+            let aa2 = nucleotide_to_aminoacid_sequence(&seq, 2);
             if aa2.contains(&b'*') && !aa0.contains(&b'*') {
                 count += 1;
                 *broken = true;
@@ -142,7 +142,7 @@ pub fn flag_defective(
             // Test for broken.
 
             let seq = refs.to_ascii_vec();
-            let aa = aa_seq(&seq, 0);
+            let aa = nucleotide_to_aminoacid_sequence(&seq, 0);
             let mut reasons = Vec::<&'static str>::new();
             if !aa.starts_with(b"M") {
                 reasons.push("does not begin with a start codon");
@@ -171,7 +171,7 @@ pub fn flag_defective(
                         let mut seqx = seq.clone();
                         for _ in 1..=2 {
                             let _ = seqx.remove(3 * j);
-                            let aax = aa_seq(&seqx, 0);
+                            let aax = nucleotide_to_aminoacid_sequence(&seqx, 0);
                             if !aax.contains(&b'*') {
                                 fixable = true;
                             }
@@ -184,7 +184,7 @@ pub fn flag_defective(
             }
             if aa.len() >= 31 {
                 for del in 1..=2 {
-                    let aad = aa_seq(&seq, del);
+                    let aad = nucleotide_to_aminoacid_sequence(&seq, del);
                     if cdr3_score(&aad, chain_type, false) > 4 + cdr3_score(&aa, chain_type, false)
                     {
                         reasons.push("appears to be frameshifted");
@@ -208,7 +208,7 @@ pub fn flag_defective(
                 let score = cdr3_score(&aa, chain_type, false);
                 let mut frameshift = false;
                 for del in 1..=2 {
-                    let aad = aa_seq(&seq, del);
+                    let aad = nucleotide_to_aminoacid_sequence(&seq, del);
                     if score <= 6 && cdr3_score(&aad, chain_type, false) >= 3 + score {
                         frameshift = true;
                     }

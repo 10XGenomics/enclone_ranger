@@ -6,7 +6,7 @@ use enclone_core::barcode_fate::BarcodeFate;
 use vdj_ann::refx;
 
 use self::refx::RefData;
-use amino::{aa_seq, codon_to_aa};
+use amino::{codon_to_aa, nucleotide_to_aminoacid_sequence};
 use ansi_escape::emit_end_escape;
 use debruijn::{dna_string::DnaString, Mer};
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
@@ -129,8 +129,8 @@ pub fn build_info(
 
                 // Optimize to compute entry in aa_mod_indel and the inserted aa sequence.
 
-                let aa_full = aa_seq(&x.seq, 0);
-                let ref_aa = aa_seq(&refdata.refs[vid].to_ascii_vec(), 0);
+                let aa_full = nucleotide_to_aminoacid_sequence(&x.seq, 0);
+                let ref_aa = nucleotide_to_aminoacid_sequence(&refdata.refs[vid].to_ascii_vec(), 0);
                 let ins_len_aa = ins_len / 3;
                 const EXT: usize = 10;
                 let ins_pos_low = if ins_pos / 3 < EXT {
@@ -179,7 +179,7 @@ pub fn build_info(
                 lens.push(x.seq.len());
                 tigs.push(x.seq.clone());
                 tigs_amino.push(x.seq.clone());
-                aa_mod_indel.push(aa_seq(&x.seq, 0));
+                aa_mod_indel.push(nucleotide_to_aminoacid_sequence(&x.seq, 0));
                 tigs_ins.push(Vec::new());
             }
 
