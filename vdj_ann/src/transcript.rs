@@ -124,22 +124,22 @@ fn evaluate_contig_status(
     let refs = &reference.refs;
     let mut vstarts: Vec<Vstart> = ann
         .iter()
-        .filter(|a| reference.is_v(a.f2 as usize))
-        .filter(|a| rheaders[a.f2 as usize].contains(&valid_v_type))
-        .filter(|a| a.f3 == 0)
+        .filter(|a| reference.is_v(a.ref_id as usize))
+        .filter(|a| rheaders[a.ref_id as usize].contains(&valid_v_type))
+        .filter(|a| a.ref_start == 0)
         .map(|a| Vstart {
-            ref_id: a.f2 as usize,
-            tig_start: a.f0 as usize,
+            ref_id: a.ref_id as usize,
+            tig_start: a.tig_start as usize,
         })
         .collect();
     let jstops: Vec<Jstop> = ann
         .iter()
-        .filter(|a| reference.is_j(a.f2 as usize))
-        .filter(|a| rheaders[a.f2 as usize].contains(&valid_j_type))
-        .filter(|a| a.f3 + a.f1 == refs[a.f2 as usize].len() as i32)
+        .filter(|a| reference.is_j(a.ref_id as usize))
+        .filter(|a| rheaders[a.ref_id as usize].contains(&valid_j_type))
+        .filter(|a| a.ref_start + a.match_len == refs[a.ref_id as usize].len() as i32)
         .map(|a| Jstop {
-            ref_id: a.f2 as usize,
-            tig_stop: a.f0 as usize + a.f1 as usize,
+            ref_id: a.ref_id as usize,
+            tig_stop: a.tig_start as usize + a.match_len as usize,
         })
         .collect();
 
@@ -194,7 +194,7 @@ fn evaluate_contig_status(
 
     let observed_order: Vec<i32> = ann
         .into_iter()
-        .map(|a| reference.segtype[a.f2 as usize])
+        .map(|a| reference.segtype[a.ref_id as usize])
         .map(|s| match s {
             "U" => 0,
             "V" => 1,

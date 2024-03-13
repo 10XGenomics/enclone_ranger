@@ -147,11 +147,11 @@ pub fn chain_type(b: &DnaString, rkmers_plus_full_20: &[(Kmer20, i32, i32)], rty
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Annotation {
-    pub f0: i32,
-    pub f1: i32,
-    pub f2: i32,
-    pub f3: i32,
-    pub f4: i32,
+    pub tig_start: i32,
+    pub match_len: i32,
+    pub ref_id: i32,
+    pub ref_start: i32,
+    pub mismatches: i32,
 }
 
 pub fn annotate_seq(
@@ -2478,11 +2478,11 @@ pub fn annotate_seq_core(
     ann.clear();
     for x in annx.iter() {
         ann.push(Annotation {
-            f0: x.0,
-            f1: x.1,
-            f2: x.2,
-            f3: x.3,
-            f4: x.4.len() as i32,
+            tig_start: x.0,
+            match_len: x.1,
+            ref_id: x.2,
+            ref_start: x.3,
+            mismatches: x.4.len() as i32,
         });
     }
 }
@@ -2506,18 +2506,18 @@ pub fn print_some_annotations(
     }
     let mut vstart = Vec::<i32>::new();
     for l in 0..ann.len() {
-        let estart = ann[l].f0;
-        let t = ann[l].f2 as usize;
-        let tstart = ann[l].f3;
+        let estart = ann[l].tig_start;
+        let t = ann[l].ref_id as usize;
+        let tstart = ann[l].ref_start;
         if tstart == 0 && (rheaders[t].contains("V-REGION") || rheaders[t].contains("L+V")) {
             vstart.push(estart);
         }
     }
     for l in 0..ann.len() {
-        let (estart, len) = (ann[l].f0, ann[l].f1);
-        let t = ann[l].f2 as usize;
-        let tstart = ann[l].f3;
-        let mis = ann[l].f4;
+        let (estart, len) = (ann[l].tig_start, ann[l].match_len);
+        let t = ann[l].ref_id as usize;
+        let tstart = ann[l].ref_start;
+        let mis = ann[l].mismatches;
         fwrite!(
             log,
             "{}-{} ==> {}-{} on {} [len={}] (mis={})",
@@ -2722,9 +2722,9 @@ pub fn cdr3_loc<'a>(
     }
     let mut i = ann.len() - 1;
     loop {
-        let t = ann[i].f2 as usize;
+        let t = ann[i].ref_id as usize;
         if !refdata.rheaders[t].contains("segment") && refdata.is_v(t) {
-            let (l, p) = (ann[i].f0 as isize, ann[i].f3 as isize);
+            let (l, p) = (ann[i].tig_start as isize, ann[i].ref_start as isize);
             let vstop_on_tig = l + refdata.refs[t].len() as isize - p;
             let mut start = vstop_on_tig + LOW_RELV_CDR3;
             if start < 0 {
@@ -2843,10 +2843,12 @@ impl AnnotationUnit {
         let na = ann.len();
         assert!(na == 1 || na == 2);
         if ann.len() == 2 {
-            assert!(ann[0].f2 == ann[1].f2);
+            assert!(ann[0].ref_id == ann[1].ref_id);
             assert!(
-                (ann[0].f0 + ann[0].f1 == ann[1].f0 && ann[0].f3 + ann[0].f1 < ann[1].f3)
-                    || (ann[0].f0 + ann[0].f1 < ann[1].f0 && ann[0].f3 + ann[0].f1 == ann[1].f3)
+                (ann[0].tig_start + ann[0].match_len == ann[1].tig_start
+                    && ann[0].ref_start + ann[0].match_len < ann[1].ref_start)
+                    || (ann[0].tig_start + ann[0].match_len < ann[1].tig_start
+                        && ann[0].ref_start + ann[0].match_len == ann[1].ref_start)
             );
         }
 
@@ -2854,8 +2856,8 @@ impl AnnotationUnit {
         // where there are two alignment entities.  This does not show mismatches.
 
         let mut cig = String::new();
-        let left1 = ann[0].f0 as usize;
-        let len1 = ann[0].f1 as usize;
+        let left1 = ann[0].tig_start as usize;
+        let len1 = ann[0].match_len as usize;
         let right1 = b.len() - left1 - len1;
         if left1 > 0 {
             write!(cig, "{left1}S").unwrap();
@@ -2865,16 +2867,16 @@ impl AnnotationUnit {
             write!(cig, "{right1}S").unwrap();
         }
         if na == 2 {
-            let n1 = ann[1].f0 - ann[0].f0 - ann[0].f1;
-            let n2 = ann[1].f3 - ann[0].f3 - ann[0].f1;
+            let n1 = ann[1].tig_start - ann[0].tig_start - ann[0].match_len;
+            let n2 = ann[1].ref_start - ann[0].ref_start - ann[0].match_len;
             if n1 == 0 {
                 write!(cig, "{n2}D").unwrap();
             }
             if n2 == 0 {
                 write!(cig, "{n1}I").unwrap();
             }
-            let left2 = ann[1].f0 as usize;
-            let len2 = ann[1].f1 as usize;
+            let left2 = ann[1].tig_start as usize;
+            let len2 = ann[1].match_len as usize;
             let right2 = b.len() - left2 - len2;
             write!(cig, "{len2}M").unwrap();
             if right2 > 0 {
@@ -2906,11 +2908,12 @@ impl AnnotationUnit {
         // Compute alignment score.
 
         let mut s = 0_i32;
-        let t = ann[0].f2 as usize;
+        let t = ann[0].ref_id as usize;
         let r = &refdata.refs[t];
         for l in 0..na {
-            for i in 0..ann[l].f1 {
-                if b.get((ann[l].f0 + i) as usize) == r.get((ann[l].f3 + i) as usize) {
+            for i in 0..ann[l].match_len {
+                if b.get((ann[l].tig_start + i) as usize) == r.get((ann[l].ref_start + i) as usize)
+                {
                     s += 2;
                 } else {
                     s -= 3;
@@ -2918,8 +2921,8 @@ impl AnnotationUnit {
             }
         }
         if na == 2 {
-            let n1 = ann[1].f0 - ann[0].f0 - ann[0].f1;
-            let n2 = ann[1].f3 - ann[0].f3 - ann[0].f1;
+            let n1 = ann[1].tig_start - ann[0].tig_start - ann[0].match_len;
+            let n2 = ann[1].ref_start - ann[0].ref_start - ann[0].match_len;
             let n = max(n1, n2);
             s += 4 + n;
         }
@@ -2936,10 +2939,10 @@ impl AnnotationUnit {
         }
         let v: Vec<&str> = refdata.rheaders[t].split_terminator('|').collect();
         AnnotationUnit {
-            contig_match_start: ann[0].f0 as usize,
-            contig_match_end: (ann[na - 1].f0 + ann[na - 1].f1) as usize,
-            annotation_match_start: ann[0].f3 as usize,
-            annotation_match_end: (ann[na - 1].f3 + ann[na - 1].f1) as usize,
+            contig_match_start: ann[0].tig_start as usize,
+            contig_match_end: (ann[na - 1].tig_start + ann[na - 1].match_len) as usize,
+            annotation_match_start: ann[0].ref_start as usize,
+            annotation_match_end: (ann[na - 1].ref_start + ann[na - 1].match_len) as usize,
             annotation_length: refdata.refs[t].len(),
             cigar: cig,
             score: s,
@@ -3079,9 +3082,9 @@ impl ContigAnnotation {
     ) -> ContigAnnotation {
         let mut vstart = -1_i32;
         for i in 0..ann.len() {
-            let t = ann[i].f2 as usize;
-            if refdata.is_v(t) && ann[i].f3 == 0 {
-                vstart = ann[i].f0;
+            let t = ann[i].ref_id as usize;
+            if refdata.is_v(t) && ann[i].ref_start == 0 {
+                vstart = ann[i].tig_start;
             }
         }
         let mut aa = String::new();
@@ -3293,29 +3296,29 @@ pub fn make_annotation_units(
         let mut locs = Vec::<(usize, usize, usize)>::new();
         let mut j = 0;
         while j < ann.len() {
-            let t = ann[j].f2 as usize;
+            let t = ann[j].ref_id as usize;
             if refdata.segtype[t] != rt {
                 j += 1;
                 continue;
             }
             let mut entries = 1;
-            let mut len = ann[j].f1;
+            let mut len = ann[j].match_len;
             if j < ann.len() - 1
-                && ann[j + 1].f2 as usize == t
-                && ((ann[j].f0 + ann[j].f1 == ann[j + 1].f0
-                    && ann[j].f3 + ann[j].f1 < ann[j + 1].f3)
-                    || (ann[j].f0 + ann[j].f1 < ann[j + 1].f0
-                        && ann[j].f3 + ann[j].f1 == ann[j + 1].f3))
+                && ann[j + 1].ref_id as usize == t
+                && ((ann[j].tig_start + ann[j].match_len == ann[j + 1].tig_start
+                    && ann[j].ref_start + ann[j].match_len < ann[j + 1].ref_start)
+                    || (ann[j].tig_start + ann[j].match_len < ann[j + 1].tig_start
+                        && ann[j].ref_start + ann[j].match_len == ann[j + 1].ref_start))
             {
                 entries = 2;
-                len += ann[j + 1].f1;
+                len += ann[j + 1].match_len;
             }
             let mut score = len as usize;
-            if refdata.segtype[t] == "V" && ann[j].f3 == 0 {
+            if refdata.segtype[t] == "V" && ann[j].ref_start == 0 {
                 score += 1_000_000;
             }
             if refdata.segtype[t] == "J"
-                && (ann[j].f3 + ann[j].f1) as usize == refdata.refs[t].len()
+                && (ann[j].ref_start + ann[j].match_len) as usize == refdata.refs[t].len()
             {
                 score += 1_000_000;
             }

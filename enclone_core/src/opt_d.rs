@@ -153,8 +153,8 @@ pub fn opt_d(
     let mut seq_start = vstart as isize;
     // probably not exactly right
     if annv.len() > 1 {
-        let q1 = annv[0].f0 + annv[0].f1;
-        let q2 = annv[1].f0;
+        let q1 = annv[0].tig_start + annv[0].match_len;
+        let q2 = annv[1].tig_start;
 
         seq_start += q1 as isize - q2 as isize;
     }
