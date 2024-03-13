@@ -475,6 +475,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         info,
         &mut fate,
     );
+    println!("In start.rs: oribts1 {:?}", orbits);
     if !ctl.gen_opt.trace_barcode.is_empty() {
         for ex in &exact_clonotypes {
             for clone in &ex.clones {
@@ -529,10 +530,12 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         }
         orbits2
     };
+    println!("In start.rs: oribts2 {:?}", orbits);
 
     // Filter using constraints imposed by FCELL.
 
     filter_by_fcell(ctl, &mut orbits, info, &mut exact_clonotypes, gex_info)?;
+    println!("In start.rs: oribts3 {:?}", orbits);
     ctl.perf_stats(&tumi, "umi filtering and such");
 
     // Break up clonotypes containing a large number of chains. These are
@@ -605,9 +608,9 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             }
         })
         .collect();
-
+    println!("In start.rs: oribts4 {:?}", orbits);
     // Run some filters.
-
+    
     some_filters(
         &mut orbits,
         is_bcr,
@@ -623,7 +626,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         refdata,
         &drefs,
     );
-
+    println!("In start.rs: oribts5 {:?}", orbits);
     // Pre evaluate (PRE_EVAL).
 
     if ctl.gen_opt.pre_eval || ctl.join_alg_opt.basic_h.is_some() {
@@ -667,6 +670,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                 exacts.push(r.1);
             }
         }
+        println!("In start.rs: oribts6 {:?}", orbits);
 
         // Apply POST_FILTER.
 
@@ -711,6 +715,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             erase_if(&mut exacts, &to_delete);
         }
 
+        println!("In start.rs: oribts7 {:?}", orbits);
         // Set up metrics.
 
         let mut merges2 = 0;
@@ -875,6 +880,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Mark VDJ noncells.
 
+    println!("In start.rs: oribts8 {:?}", orbits);
     let tmark = Instant::now();
     if ctl.clono_filt_opt_def.non_cell_mark {
         for ex in exact_clonotypes.iter_mut() {
@@ -900,6 +906,8 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             }
         }
     }
+
+    println!("In start.rs: oribts9 {:?}", orbits);
     Ok(EncloneIntermediates {
         setup,
         ex: EncloneExacts {
