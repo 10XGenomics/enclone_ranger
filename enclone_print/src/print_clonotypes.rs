@@ -224,6 +224,7 @@ pub fn print_clonotypes(
         ));
     }
     results.par_iter_mut().for_each(|res| {
+        println!("in print_clonotypes_1_1");
         let i = res.0;
         let o = &orbits[i];
         let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
