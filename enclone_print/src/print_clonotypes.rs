@@ -188,6 +188,7 @@ pub fn print_clonotypes(
     //    [parallel to 1]
     // next to last three entries = whitelist contam, denominator for that, low gex count
     // added out_datas (used to be next to last three, now one more)
+    println!("in print_clonotypes_1");
     let mut results = Vec::<(
         usize,
         Vec<String>,
@@ -255,7 +256,7 @@ pub fn print_clonotypes(
             exacts.push(od[j].1);
             j = k;
         }
-
+        println!("in print_clonotypes_2");
         // There are two passes.  On the first pass we only identify the exact subclonotypes that
         // are junk.  On the second pass we remove those and then print the orbit.
 
@@ -311,7 +312,7 @@ pub fn print_clonotypes(
             // corresponding to the given column col of the clonotype, which may or may not be
             // defined.  Then define other information associated to each chain.  These are
             // reference sequence identifiers, CDR3 start positions, and the like.
-
+            println!("in print_clonotypes_3");
             let nexacts = exacts.len();
             let mat = define_mat(
                 is_bcr,
@@ -357,7 +358,7 @@ pub fn print_clonotypes(
             }
 
             // Generate Loupe data.
-
+            println!("in print_clonotypes_4");
             if (!ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty()) && pass == 2 {
                 loupe_clonotypes.push(make_loupe_clonotype(
                     exact_clonotypes,
@@ -523,7 +524,7 @@ pub fn print_clonotypes(
                 }
 
                 // Now build table content.
-
+                println!("in print_clonotypes_5");
                 let mut sr = Vec::<(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)>::new();
                 let mut groups = HashMap::<usize, Vec<usize>>::new();
                 for lvar in &lvars {
@@ -568,7 +569,7 @@ pub fn print_clonotypes(
                         groups.insert(d, c);
                     }
                 }
-
+                println!("in print_clonotypes_6");
                 // Set up to record stats that assign a value to each cell for a given variable.
 
                 let mut stats = Vec::<(String, Vec<String>)>::new();
@@ -605,7 +606,7 @@ pub fn print_clonotypes(
                 }
 
                 // Form CDR3 consensus sequences.
-
+                println!("in print_clonotypes_7");
                 let mut cdr3_con = Vec::<Vec<u8>>::new();
                 if ctl.gen_opt.color == "codon-diffs" {
                     cdr3_con = consensus_codon_cdr3(&rsi, &exacts, exact_clonotypes);
@@ -670,6 +671,7 @@ pub fn print_clonotypes(
                         &cdr3_con,
                         allele_data,
                     );
+                    println!("in print_clonotypes_8");
                     stats.append(&mut these_stats.clone());
                     if pass == 1 {
                         stats_pass1.push(these_stats.clone());
@@ -763,7 +765,7 @@ pub fn print_clonotypes(
                     i = j;
                 }
                 stats = stats2;
-
+                println!("in print_clonotypes_9");
                 // Traverse the bounds and apply them.
                 // Notes:
                 // 1. This seems to run during both pass 1 and 2, and should only run
@@ -904,6 +906,7 @@ pub fn print_clonotypes(
             if pass == 2 {
                 res.7.push(out_data);
             }
+            println!("in print_clonotypes_10");
         }
     });
     for r in &results {
@@ -939,7 +942,7 @@ pub fn print_clonotypes(
     }
 
     // Set up to group and print clonotypes.
-
+    println!("in print_clonotypes_11");
     for ri in results.iter_mut().take(orbits.len()) {
         for (v1, (v2, &v12)) in ri.1.iter().zip(ri.2.iter().zip(ri.12.iter())) {
             pics.push(v1.clone());
@@ -976,5 +979,6 @@ pub fn print_clonotypes(
             }
         }
     }
+    println!("in print_clonotypes_12");
     Ok(())
 }
