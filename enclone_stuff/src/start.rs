@@ -475,6 +475,8 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         info,
         &mut fate,
     );
+    println!("In start.rs: eq {:?}", eq);
+    println!("In start.rs: exact_clonotypes {:?}", exact_clonotypes);
     println!("In start.rs: oribts1 {:?}", orbits);
     if !ctl.gen_opt.trace_barcode.is_empty() {
         for ex in &exact_clonotypes {
@@ -610,7 +612,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         .collect();
     println!("In start.rs: oribts4 {:?}", orbits);
     // Run some filters.
-    
+
     some_filters(
         &mut orbits,
         is_bcr,

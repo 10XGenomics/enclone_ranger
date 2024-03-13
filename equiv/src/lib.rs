@@ -30,7 +30,7 @@ use std::mem::swap;
 // - time to find an orbit = O(size of orbit)
 // - time to find the size of an orbit = O(1)
 // - time to find the class id of an element = O(1).
-
+#[derive(Debug)]
 pub struct EquivRel {
     x: Vec<i32>, // next element in orbit
     y: Vec<i32>, // orbit class id

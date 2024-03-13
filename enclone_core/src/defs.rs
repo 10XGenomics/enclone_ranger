@@ -661,7 +661,7 @@ impl TigData {
 // TigData0: data for each cell
 // TigData1: shared data
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TigData0 {
     pub quals: Vec<u8>,                          // quality scores, truncated to V..J
     pub v_start: usize,                          // start of V on full contig sequence
@@ -684,7 +684,7 @@ pub struct TigData0 {
     pub v_ref_id: usize, // index of V segment reference sequence in ref file
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Junction {
     pub hcomp: usize,                // junction alignment complexity
     pub matches: usize,              // matches
@@ -695,7 +695,7 @@ pub struct Junction {
     pub indels: Vec<(usize, isize)>, // indel tig start, size (+ ins, - del)
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TigData1 {
     pub cdr3_dna: String,           // CDR3 DNA sequence
     pub seq: Vec<u8>,               // V..J contig subsequence
@@ -754,7 +754,7 @@ impl TigData1 {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ExactClonotype {
     pub share: Vec<TigData1>,       // clone info that is shared
     pub clones: Vec<Vec<TigData0>>, // clone info, excluding shared stuff
