@@ -146,11 +146,17 @@ pub fn chain_type(b: &DnaString, rkmers_plus_full_20: &[(Kmer20, i32, i32)], rty
 // { ( start on sequence, match length, ref tig, start on ref tig, mismatches on sequence ) }.
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+/// Annotation object denotes matches of a DnaString sequence to a reference sequence
 pub struct Annotation {
+    /// Start position on sequence (contig)
     pub tig_start: i32,
+    /// Match length
     pub match_len: i32,
+    /// Reference id (that this contig matches)
     pub ref_id: i32,
+    /// Start position on reference
     pub ref_start: i32,
+    /// Number of mismatches on the sequence (contig)
     pub mismatches: i32,
 }
 
