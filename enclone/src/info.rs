@@ -74,12 +74,12 @@ pub fn build_info(
             jsids.push(jid);
             let mut vsnx = String::new();
             // DELETION
-            if annv.len() == 2 && annv[1].0 == annv[0].0 + annv[0].1 {
+            if annv.len() == 2 && annv[1].f0 == annv[0].f0 + annv[0].f1 {
                 let mut t = Vec::<u8>::new();
-                let (mut del_start, mut del_stop) = (annv[0].1, annv[1].3);
+                let (mut del_start, mut del_stop) = (annv[0].f1, annv[1].f3);
                 t.extend(&x.seq[..del_start.try_into().unwrap()]);
                 t.resize(del_stop.try_into().unwrap(), b'-');
-                t.extend(&x.seq[annv[1].0 as usize..]);
+                t.extend(&x.seq[annv[1].f0 as usize..]);
                 lens.push(t.len());
                 tigs.push(t.clone());
                 if del_start % 3 != 0 {
@@ -90,9 +90,9 @@ pub fn build_info(
                     t.clear();
                     t.extend(&x.seq[..del_start.try_into().unwrap()]);
                     t.resize(del_stop.try_into().unwrap(), b'-');
-                    t.extend(&x.seq[((annv[1].0 - offset) as usize)..]);
+                    t.extend(&x.seq[((annv[1].f0 - offset) as usize)..]);
                 }
-                annv[0].1 += (del_stop - del_start) + annv[1].1;
+                annv[0].f1 += (del_stop - del_start) + annv[1].f1;
                 annv.truncate(1);
                 tigs_amino.push(t.clone());
                 let mut aa = Vec::<u8>::new();
@@ -108,9 +108,9 @@ pub fn build_info(
                 tigs_ins.push(Vec::new());
                 has_del.push(true);
             // INSERTION
-            } else if annv.len() == 2 && annv[1].3 == annv[0].3 + annv[0].1 {
-                let ins_len = (annv[1].0 - annv[0].0 - annv[0].1) as usize;
-                let ins_pos = (annv[0].0 + annv[0].1) as usize;
+            } else if annv.len() == 2 && annv[1].f3 == annv[0].f3 + annv[0].f1 {
+                let ins_len = (annv[1].f0 - annv[0].f0 - annv[0].f1) as usize;
+                let ins_pos = (annv[0].f0 + annv[0].f1) as usize;
                 let mut t = Vec::<u8>::new();
                 let mut nt = Vec::<u8>::new();
                 for i in 0..x.seq.len() {
@@ -172,7 +172,7 @@ pub fn build_info(
 
                 // Finish up ann.
 
-                annv[0].1 += annv[1].1;
+                annv[0].f1 += annv[1].f1;
                 annv.truncate(1);
             } else {
                 has_del.push(false);
@@ -189,21 +189,21 @@ pub fn build_info(
 
             let rt = &refdata.refs[vid];
             if x.annv.len() == 2 {
-                let mut r = rt.slice(0, x.annv[0].1 as usize).to_owned();
+                let mut r = rt.slice(0, x.annv[0].f1 as usize).to_owned();
                 // deletion
-                if x.annv[1].0 == x.annv[0].0 + x.annv[0].1 {
+                if x.annv[1].f0 == x.annv[0].f0 + x.annv[0].f1 {
                     // DEAD CODE
-                    for m in x.annv[1].3 as usize..rt.len() {
+                    for m in x.annv[1].f3 as usize..rt.len() {
                         r.push(rt.get(m));
                     }
                     vs.push(r.clone());
                     vs_notes.push(format!(
                         "has deletion of {} bases relative to reference",
-                        x.annv[1].3 - x.annv[0].1
+                        x.annv[1].f3 - x.annv[0].f1
                     ));
                     vs_notesx.push(String::new());
                 // insertion
-                } else if x.annv[1].3 == x.annv[0].3 + x.annv[0].1 {
+                } else if x.annv[1].f3 == x.annv[0].f3 + x.annv[0].f1 {
                     /*
                     for m in x.annv[0].0 + x.annv[0].1..x.annv[1].0 {
                         if m as usize >= x.seq.len() {
@@ -212,7 +212,7 @@ pub fn build_info(
                         r.push( *x.seq.get(m as usize).unwrap() );
                     }
                     */
-                    for m in x.annv[1].3 as usize..rt.len() {
+                    for m in x.annv[1].f3 as usize..rt.len() {
                         r.push(rt.get(m));
                     }
                     vs.push(r.clone());

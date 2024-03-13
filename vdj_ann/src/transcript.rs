@@ -2,7 +2,7 @@
 
 // Code that analyzes transcripts.
 
-use crate::annotate::get_cdr3_using_ann;
+use crate::annotate::{get_cdr3_using_ann, Annotation};
 use crate::refx::RefData;
 use amino::{have_start, have_stop};
 use debruijn::{dna_string::DnaString, kmer::Kmer20, Mer, Vmer};
@@ -101,14 +101,6 @@ pub struct Jstop {
     tig_stop: usize,
 }
 
-#[derive(Debug)]
-struct Annotation {
-    tig_start: usize,
-    match_length: usize,
-    ref_id: usize,
-    ref_start: usize,
-}
-
 fn find_inframe_vdj_pair(vstarts: Vec<Vstart>, jstops: Vec<Jstop>) -> Option<(Vstart, Jstop)> {
     let mut vj_combinations: Vec<(Vstart, Jstop, i32)> = iproduct!(vstarts, jstops)
         .map(|(v, j)| (v, j, j.tig_stop as i32 - v.tig_start as i32))
@@ -122,7 +114,7 @@ fn find_inframe_vdj_pair(vstarts: Vec<Vstart>, jstops: Vec<Jstop>) -> Option<(Vs
 
 fn evaluate_contig_status(
     vdj_chain: VdjChain,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     reference: &RefData,
     contig: &DnaString,
 ) -> Option<ContigStatus> {
@@ -130,35 +122,24 @@ fn evaluate_contig_status(
     let valid_j_type = format!("{vdj_chain}J");
     let rheaders = &reference.rheaders;
     let refs = &reference.refs;
-    let annotation: Vec<Annotation> = ann
+    let mut vstarts: Vec<Vstart> = ann
         .iter()
-        .map(
-            |(tig_start, match_length, ref_id, ref_start, _)| Annotation {
-                tig_start: *tig_start as usize,
-                match_length: *match_length as usize,
-                ref_id: *ref_id as usize,
-                ref_start: *ref_start as usize,
-            },
-        )
-        .collect();
-    let mut vstarts: Vec<Vstart> = annotation
-        .iter()
-        .filter(|a| reference.is_v(a.ref_id))
-        .filter(|a| rheaders[a.ref_id].contains(&valid_v_type))
-        .filter(|a| a.ref_start == 0)
+        .filter(|a| reference.is_v(a.f2 as usize))
+        .filter(|a| rheaders[a.f2 as usize].contains(&valid_v_type))
+        .filter(|a| a.f3 == 0)
         .map(|a| Vstart {
-            ref_id: a.ref_id,
-            tig_start: a.tig_start,
+            ref_id: a.f2 as usize,
+            tig_start: a.f0 as usize,
         })
         .collect();
-    let jstops: Vec<Jstop> = annotation
+    let jstops: Vec<Jstop> = ann
         .iter()
-        .filter(|a| reference.is_j(a.ref_id))
-        .filter(|a| rheaders[a.ref_id].contains(&valid_j_type))
-        .filter(|a| a.ref_start + a.match_length == refs[a.ref_id].len())
+        .filter(|a| reference.is_j(a.f2 as usize))
+        .filter(|a| rheaders[a.f2 as usize].contains(&valid_j_type))
+        .filter(|a| a.f3 + a.f1 == refs[a.f2 as usize].len() as i32)
         .map(|a| Jstop {
-            ref_id: a.ref_id,
-            tig_stop: a.tig_start + a.match_length,
+            ref_id: a.f2 as usize,
+            tig_stop: a.f0 as usize + a.f1 as usize,
         })
         .collect();
 
@@ -211,9 +192,9 @@ fn evaluate_contig_status(
         }
     };
 
-    let observed_order: Vec<i32> = annotation
+    let observed_order: Vec<i32> = ann
         .into_iter()
-        .map(|a| reference.segtype[a.ref_id])
+        .map(|a| reference.segtype[a.f2 as usize])
         .map(|s| match s {
             "U" => 0,
             "V" => 1,
@@ -233,7 +214,7 @@ fn evaluate_contig_status(
 pub fn is_productive_contig(
     b: &DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
 ) -> (bool, ContigStatus) {
     let contig_status = VDJ_CHAINS
         .iter()

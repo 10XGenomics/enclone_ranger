@@ -145,10 +145,19 @@ pub fn chain_type(b: &DnaString, rkmers_plus_full_20: &[(Kmer20, i32, i32)], rty
 // The structure of the output is:
 // { ( start on sequence, match length, ref tig, start on ref tig, mismatches on sequence ) }.
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub struct Annotation {
+    pub f0: i32,
+    pub f1: i32,
+    pub f2: i32,
+    pub f3: i32,
+    pub f4: i32,
+}
+
 pub fn annotate_seq(
     b: &DnaString,
     refdata: &RefData,
-    ann: &mut Vec<(i32, i32, i32, i32, i32)>,
+    ann: &mut Vec<Annotation>,
     allow_weak: bool,
     allow_improper: bool,
     abut: bool,
@@ -231,7 +240,7 @@ fn report_semis(
 pub fn annotate_seq_core(
     b: &DnaString,
     refdata: &RefData,
-    ann: &mut Vec<(i32, i32, i32, i32, i32)>,
+    ann: &mut Vec<Annotation>,
     allow_weak: bool,
     allow_improper: bool,
     abut: bool,
@@ -2468,7 +2477,13 @@ pub fn annotate_seq_core(
 
     ann.clear();
     for x in annx.iter() {
-        ann.push((x.0, x.1, x.2, x.3, x.4.len() as i32));
+        ann.push(Annotation {
+            f0: x.0,
+            f1: x.1,
+            f2: x.2,
+            f3: x.3,
+            f4: x.4.len() as i32,
+        });
     }
 }
 
@@ -2480,7 +2495,7 @@ pub fn annotate_seq_core(
 
 pub fn print_some_annotations(
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     log: &mut Vec<u8>,
     verbose: bool,
 ) {
@@ -2491,18 +2506,18 @@ pub fn print_some_annotations(
     }
     let mut vstart = Vec::<i32>::new();
     for l in 0..ann.len() {
-        let estart = ann[l].0;
-        let t = ann[l].2 as usize;
-        let tstart = ann[l].3;
+        let estart = ann[l].f0;
+        let t = ann[l].f2 as usize;
+        let tstart = ann[l].f3;
         if tstart == 0 && (rheaders[t].contains("V-REGION") || rheaders[t].contains("L+V")) {
             vstart.push(estart);
         }
     }
     for l in 0..ann.len() {
-        let (estart, len) = (ann[l].0, ann[l].1);
-        let t = ann[l].2 as usize;
-        let tstart = ann[l].3;
-        let mis = ann[l].4;
+        let (estart, len) = (ann[l].f0, ann[l].f1);
+        let t = ann[l].f2 as usize;
+        let tstart = ann[l].f3;
+        let mis = ann[l].f4;
         fwrite!(
             log,
             "{}-{} ==> {}-{} on {} [len={}] (mis={})",
@@ -2532,7 +2547,7 @@ pub fn print_annotations(
     abut: bool,
     verbose: bool,
 ) {
-    let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
+    let mut ann = Vec::<Annotation>::new();
     annotate_seq_core(
         b,
         refdata,
@@ -2697,7 +2712,7 @@ pub fn print_cdr3(tig: &DnaStringSlice, log: &mut Vec<u8>) {
 pub fn cdr3_loc<'a>(
     tig: &'a DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
 ) -> DnaStringSlice<'a> {
     // Given the design of this function, the following bound appears to be optimal
     // except possibly for changes less than ten.
@@ -2707,9 +2722,9 @@ pub fn cdr3_loc<'a>(
     }
     let mut i = ann.len() - 1;
     loop {
-        let t = ann[i].2 as usize;
+        let t = ann[i].f2 as usize;
         if !refdata.rheaders[t].contains("segment") && refdata.is_v(t) {
-            let (l, p) = (ann[i].0 as isize, ann[i].3 as isize);
+            let (l, p) = (ann[i].f0 as isize, ann[i].f3 as isize);
             let vstop_on_tig = l + refdata.refs[t].len() as isize - p;
             let mut start = vstop_on_tig + LOW_RELV_CDR3;
             if start < 0 {
@@ -2734,7 +2749,7 @@ pub fn cdr3_loc<'a>(
 pub fn get_cdr3_using_ann(
     tig: &DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     cdr3: &mut Vec<(usize, Vec<u8>, usize, usize)>,
 ) {
     let window = cdr3_loc(tig, refdata, ann);
@@ -2761,7 +2776,7 @@ pub fn get_cdr3_using_ann(
 pub fn print_cdr3_using_ann(
     tig: &DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     log: &mut Vec<u8>,
 ) {
     let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
@@ -2820,7 +2835,7 @@ impl AnnotationUnit {
     pub fn from_annotate_seq(
         b: &DnaString,
         refdata: &RefData,
-        ann: &[(i32, i32, i32, i32, i32)],
+        ann: &[Annotation],
     ) -> AnnotationUnit {
         // Sanity check the inputs.  Obviously these conditions should be checked
         // before calling, so that they can never fail.
@@ -2828,10 +2843,10 @@ impl AnnotationUnit {
         let na = ann.len();
         assert!(na == 1 || na == 2);
         if ann.len() == 2 {
-            assert!(ann[0].2 == ann[1].2);
+            assert!(ann[0].f2 == ann[1].f2);
             assert!(
-                (ann[0].0 + ann[0].1 == ann[1].0 && ann[0].3 + ann[0].1 < ann[1].3)
-                    || (ann[0].0 + ann[0].1 < ann[1].0 && ann[0].3 + ann[0].1 == ann[1].3)
+                (ann[0].f0 + ann[0].f1 == ann[1].f0 && ann[0].f3 + ann[0].f1 < ann[1].f3)
+                    || (ann[0].f0 + ann[0].f1 < ann[1].f0 && ann[0].f3 + ann[0].f1 == ann[1].f3)
             );
         }
 
@@ -2839,8 +2854,8 @@ impl AnnotationUnit {
         // where there are two alignment entities.  This does not show mismatches.
 
         let mut cig = String::new();
-        let left1 = ann[0].0 as usize;
-        let len1 = ann[0].1 as usize;
+        let left1 = ann[0].f0 as usize;
+        let len1 = ann[0].f1 as usize;
         let right1 = b.len() - left1 - len1;
         if left1 > 0 {
             write!(cig, "{left1}S").unwrap();
@@ -2850,16 +2865,16 @@ impl AnnotationUnit {
             write!(cig, "{right1}S").unwrap();
         }
         if na == 2 {
-            let n1 = ann[1].0 - ann[0].0 - ann[0].1;
-            let n2 = ann[1].3 - ann[0].3 - ann[0].1;
+            let n1 = ann[1].f0 - ann[0].f0 - ann[0].f1;
+            let n2 = ann[1].f3 - ann[0].f3 - ann[0].f1;
             if n1 == 0 {
                 write!(cig, "{n2}D").unwrap();
             }
             if n2 == 0 {
                 write!(cig, "{n1}I").unwrap();
             }
-            let left2 = ann[1].0 as usize;
-            let len2 = ann[1].1 as usize;
+            let left2 = ann[1].f0 as usize;
+            let len2 = ann[1].f1 as usize;
             let right2 = b.len() - left2 - len2;
             write!(cig, "{len2}M").unwrap();
             if right2 > 0 {
@@ -2891,11 +2906,11 @@ impl AnnotationUnit {
         // Compute alignment score.
 
         let mut s = 0_i32;
-        let t = ann[0].2 as usize;
+        let t = ann[0].f2 as usize;
         let r = &refdata.refs[t];
         for l in 0..na {
-            for i in 0..ann[l].1 {
-                if b.get((ann[l].0 + i) as usize) == r.get((ann[l].3 + i) as usize) {
+            for i in 0..ann[l].f1 {
+                if b.get((ann[l].f0 + i) as usize) == r.get((ann[l].f3 + i) as usize) {
                     s += 2;
                 } else {
                     s -= 3;
@@ -2903,8 +2918,8 @@ impl AnnotationUnit {
             }
         }
         if na == 2 {
-            let n1 = ann[1].0 - ann[0].0 - ann[0].1;
-            let n2 = ann[1].3 - ann[0].3 - ann[0].1;
+            let n1 = ann[1].f0 - ann[0].f0 - ann[0].f1;
+            let n2 = ann[1].f3 - ann[0].f3 - ann[0].f1;
             let n = max(n1, n2);
             s += 4 + n;
         }
@@ -2921,10 +2936,10 @@ impl AnnotationUnit {
         }
         let v: Vec<&str> = refdata.rheaders[t].split_terminator('|').collect();
         AnnotationUnit {
-            contig_match_start: ann[0].0 as usize,
-            contig_match_end: (ann[na - 1].0 + ann[na - 1].1) as usize,
-            annotation_match_start: ann[0].3 as usize,
-            annotation_match_end: (ann[na - 1].3 + ann[na - 1].1) as usize,
+            contig_match_start: ann[0].f0 as usize,
+            contig_match_end: (ann[na - 1].f0 + ann[na - 1].f1) as usize,
+            annotation_match_start: ann[0].f3 as usize,
+            annotation_match_end: (ann[na - 1].f3 + ann[na - 1].f1) as usize,
             annotation_length: refdata.refs[t].len(),
             cigar: cig,
             score: s,
@@ -3050,7 +3065,7 @@ impl ContigAnnotation {
         q: &[u8],                                // qual scores for the contig
         tigname: &str,                           // name of the contig
         refdata: &RefData,                       // reference data
-        ann: &[(i32, i32, i32, i32, i32)],       // output of annotate_seq
+        ann: &[Annotation],                      // output of annotate_seq
         nreads: usize,                           // number of reads assigned to contig
         numis: usize,                            // number of umis assigned to contig
         high_confidencex: bool,                  // declared high confidence?
@@ -3064,9 +3079,9 @@ impl ContigAnnotation {
     ) -> ContigAnnotation {
         let mut vstart = -1_i32;
         for i in 0..ann.len() {
-            let t = ann[i].2 as usize;
-            if refdata.is_v(t) && ann[i].3 == 0 {
-                vstart = ann[i].0;
+            let t = ann[i].f2 as usize;
+            if refdata.is_v(t) && ann[i].f3 == 0 {
+                vstart = ann[i].f0;
             }
         }
         let mut aa = String::new();
@@ -3186,7 +3201,7 @@ impl ContigAnnotation {
         is_cell: bool,                           // was the barcode declared a cell?
         jsupp: Option<JunctionSupport>,          // num reads, umis supporting junction
     ) -> ContigAnnotation {
-        let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
+        let mut ann = Vec::<Annotation>::new();
         annotate_seq(b, refdata, &mut ann, true, false, true);
         let (is_productive, productive_criteria) = is_productive_contig(b, refdata, &ann);
         ContigAnnotation::from_annotate_seq(
@@ -3270,7 +3285,7 @@ fn check_full_length(v_ann: Option<&AnnotationUnit>, j_ann: Option<&AnnotationUn
 pub fn make_annotation_units(
     b: &DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
 ) -> Vec<AnnotationUnit> {
     let mut x = Vec::<AnnotationUnit>::new();
     let rtype = &["U", "V", "D", "J", "C"];
@@ -3278,26 +3293,29 @@ pub fn make_annotation_units(
         let mut locs = Vec::<(usize, usize, usize)>::new();
         let mut j = 0;
         while j < ann.len() {
-            let t = ann[j].2 as usize;
+            let t = ann[j].f2 as usize;
             if refdata.segtype[t] != rt {
                 j += 1;
                 continue;
             }
             let mut entries = 1;
-            let mut len = ann[j].1;
+            let mut len = ann[j].f1;
             if j < ann.len() - 1
-                && ann[j + 1].2 as usize == t
-                && ((ann[j].0 + ann[j].1 == ann[j + 1].0 && ann[j].3 + ann[j].1 < ann[j + 1].3)
-                    || (ann[j].0 + ann[j].1 < ann[j + 1].0 && ann[j].3 + ann[j].1 == ann[j + 1].3))
+                && ann[j + 1].f2 as usize == t
+                && ((ann[j].f0 + ann[j].f1 == ann[j + 1].f0
+                    && ann[j].f3 + ann[j].f1 < ann[j + 1].f3)
+                    || (ann[j].f0 + ann[j].f1 < ann[j + 1].f0
+                        && ann[j].f3 + ann[j].f1 == ann[j + 1].f3))
             {
                 entries = 2;
-                len += ann[j + 1].1;
+                len += ann[j + 1].f1;
             }
             let mut score = len as usize;
-            if refdata.segtype[t] == "V" && ann[j].3 == 0 {
+            if refdata.segtype[t] == "V" && ann[j].f3 == 0 {
                 score += 1_000_000;
             }
-            if refdata.segtype[t] == "J" && (ann[j].3 + ann[j].1) as usize == refdata.refs[t].len()
+            if refdata.segtype[t] == "J"
+                && (ann[j].f3 + ann[j].f1) as usize == refdata.refs[t].len()
             {
                 score += 1_000_000;
             }
@@ -3307,7 +3325,7 @@ pub fn make_annotation_units(
         reverse_sort(&mut locs);
         if !locs.is_empty() {
             let (j, entries) = (locs[0].1, locs[0].2);
-            let mut annx = Vec::<(i32, i32, i32, i32, i32)>::new();
+            let mut annx = Vec::<Annotation>::new();
             for k in j..j + entries {
                 annx.push(ann[k]);
             }
