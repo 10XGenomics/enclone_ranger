@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// For more explanation, see <https://10xgenomics.github.io/enclone/pages/auto/default_filters.html>
 /// and <https://10xgenomics.github.io/enclone/pages/auto/help.special.html>
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum BarcodeFate {
     Doublet,
     WeakChains,

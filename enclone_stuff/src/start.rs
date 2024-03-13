@@ -129,6 +129,9 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         vdj_cells,
         mut fate,
     } = parse_json_annotations_files(ctl, refdata, to_ref_index)?;
+    println!("In start.rs: fate {:?}", fate);
+    println!("In start.rs: vdj_cells {:?}", vdj_cells);
+    println!("In start.rs: tig_bc {:?}", tig_bc);
     ctl.perf_stats(&tparse, "loading from json");
 
     // Populate features.

@@ -605,7 +605,7 @@ impl EncloneControl {
 // Set up data structure to track clonotype data.  A TigData is for one contig;
 // a Vec<TigData> is for one barcode, and an ExactClonotype is for an exact subclonotype.
 
-#[derive(Eq, Ord, PartialEq, PartialOrd, Default, Clone)] // not sure these are all needed
+#[derive(Debug, Eq, Ord, PartialEq, PartialOrd, Default, Clone)] // not sure these are all needed
 pub struct TigData {
     pub cdr3_dna: String,                        // CDR3 DNA sequence
     pub len: usize,                              // length of V..J sequence
