@@ -8,22 +8,6 @@
 //!
 //! This crate consists of a few functions related to these Stirling numbers.
 
-#[cfg(not(debug_assertions))]
-#[cfg(test)]
-extern crate num_bigint;
-#[cfg(not(debug_assertions))]
-#[cfg(test)]
-extern crate num_rational;
-#[cfg(not(debug_assertions))]
-#[cfg(test)]
-extern crate rand;
-#[cfg(not(debug_assertions))]
-#[cfg(test)]
-extern crate rayon;
-#[cfg(not(debug_assertions))]
-#[cfg(test)]
-extern crate vector_utils;
-
 use num_traits::{Num, One, Zero};
 use std::ops::MulAssign;
 

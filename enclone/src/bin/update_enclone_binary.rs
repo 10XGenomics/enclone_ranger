@@ -5,7 +5,7 @@
 
 use enclone_core::defs::get_config;
 use io_utils::path_exists;
-use pretty_trace::PrettyTrace;
+
 use std::collections::HashMap;
 use std::env;
 
@@ -13,7 +13,6 @@ use std::env;
 use std::os::unix::fs::PermissionsExt;
 
 fn main() {
-    PrettyTrace::new().on();
     let mut config = HashMap::<String, String>::new();
     let mut config_file = String::new();
     for (key, value) in env::vars() {

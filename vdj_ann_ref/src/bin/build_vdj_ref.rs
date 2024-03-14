@@ -85,7 +85,7 @@ use debruijn::{
 use fasta_tools::load_genbank_accession;
 use flate2::read::MultiGzDecoder;
 use perf_stats::elapsed;
-use pretty_trace::PrettyTrace;
+
 use process::Command;
 use sha2::{Digest, Sha256};
 use std::io::copy;
@@ -377,8 +377,6 @@ fn main() {
     let t = Instant::now();
 
     // Force panic to yield a traceback, and make it a pretty one.
-
-    PrettyTrace::new().on();
 
     // Parse arguments.
 

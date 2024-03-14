@@ -176,7 +176,6 @@ impl EquivRel {
     // there are 1618950 orbits
     // 1.5 seconds, delta peak mem = 258 Mb
     // disjoint-sets = "0.4.2"
-    // extern crate disjoint_sets;
 
     use disjoint_sets::UnionFind;
     let mut uf = UnionFind::<u32>::new(N as usize);

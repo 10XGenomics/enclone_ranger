@@ -107,7 +107,6 @@ pub fn expand_integer_ranges(x: &str) -> String {
 }
 
 lazy_static! {
-    pub static ref BUG_REPORT_ADDRESS: Mutex<Vec<String>> = Mutex::new(Vec::<String>::new());
     pub static ref REMOTE_HOST: Mutex<Vec<String>> = Mutex::new(Vec::<String>::new());
 }
 
