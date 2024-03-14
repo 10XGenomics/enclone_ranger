@@ -237,7 +237,7 @@ pub fn is_productive_contig(
 pub fn junction_seq(
     tig: &DnaString,
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     jseq: &mut DnaString,
     is_gd: Option<bool>,
 ) {
@@ -248,10 +248,10 @@ pub fn junction_seq(
     const TAG: i32 = 100;
     let mut jstops = Vec::<i32>::new();
     for j in 0..ann.len() {
-        let l = ann[j].0 as usize;
-        let len = ann[j].1 as usize;
-        let t = ann[j].2 as usize;
-        let p = ann[j].3 as usize;
+        let l = ann[j].tig_start as usize;
+        let len = ann[j].match_len as usize;
+        let t = ann[j].ref_id as usize;
+        let p = ann[j].ref_start as usize;
         if (rheaders[t].contains("TRAJ")
             || rheaders[t].contains("IGHJ")
             || rheaders[t].contains("TRBJ")
@@ -290,7 +290,7 @@ pub fn junction_supp(
     x: &Hyper,
     umi_id: &[i32],
     refdata: &RefData,
-    ann: &[(i32, i32, i32, i32, i32)],
+    ann: &[Annotation],
     jsupp: &mut (i32, i32),
     is_gd: Option<bool>,
 ) {
