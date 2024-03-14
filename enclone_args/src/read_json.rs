@@ -191,10 +191,10 @@ fn process_json_annotation(
         } else if !is_productive_contig(&x, refdata, &ann1).0 {
             return Ok(res);
         }
-        let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
-        get_cdr3_using_ann(&x, refdata, &ann1, &mut cdr3);
-        cdr3_aa = stringme(&cdr3[0].1);
-        cdr3_start = cdr3[0].0;
+        let found_cdr3s = get_cdr3_using_ann(&x, refdata, &ann1);
+        let cdr3 = found_cdr3s.first().unwrap();
+        cdr3_aa = stringme(&cdr3.aa_seq);
+        cdr3_start = cdr3.start_position_on_contig;
         cdr3_dna = x
             .slice(cdr3_start, cdr3_start + 3 * cdr3_aa.len())
             .to_string();
@@ -385,23 +385,23 @@ fn process_json_annotation(
         // than is used in the current version of enclone.  This could result in internal
         // inconsistencies, leading to an assert somewhere downstream.
 
-        let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
         let x = DnaString::from_dna_string(&ann.sequence);
-        get_cdr3_using_ann(&x, refdata, &annv, &mut cdr3);
-        if cdr3.is_empty() {
+        let found_cdr3s = get_cdr3_using_ann(&x, refdata, &annv);
+        if found_cdr3s.is_empty() {
             return Ok(res);
         }
-        let cdr3_aa_alt = stringme(&cdr3[0].1);
+        let cdr3 = found_cdr3s.first().unwrap();
+        let cdr3_aa_alt = stringme(&cdr3.aa_seq);
         if cdr3_aa != cdr3_aa_alt {
             // This is particularly pathological and rare:
 
-            if tig_start as usize > cdr3[0].0 {
+            if tig_start as usize > cdr3.start_position_on_contig {
                 return Ok(res);
             }
 
             // Define start.
 
-            cdr3_start = cdr3[0].0 - tig_start as usize;
+            cdr3_start = cdr3.start_position_on_contig - tig_start as usize;
 
             // Define cdr3.
 
