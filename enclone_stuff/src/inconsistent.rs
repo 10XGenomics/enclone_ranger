@@ -27,8 +27,6 @@ pub fn test_vdj_gex_inconsistent(
     vdj_cells: &[Vec<String>],
     gex_info: &GexInfo,
 ) -> Result<(), &'static str> {
-    let tinc = Instant::now();
-
     let mut results = Vec::<(usize, String)>::new();
     for li in 0..ctl.origin_info.n() {
         results.push((li, String::new()));

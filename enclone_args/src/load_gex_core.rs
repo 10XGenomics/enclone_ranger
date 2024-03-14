@@ -56,7 +56,6 @@ pub fn load_gex(
     json_metrics: &mut Vec<HashMap<String, f64>>,
     metrics: &mut Vec<String>,
 ) -> Result<(), String> {
-    let t = Instant::now();
     let mut results = Vec::<(usize, LoadResult)>::new();
     for i in 0..ctl.origin_info.gex_path.len() {
         results.push((i, LoadResult::default()));
@@ -557,7 +556,6 @@ pub fn load_gex(
 
     // Test for error.
 
-    let t = Instant::now();
     for (_, r) in &results {
         if !r.error.is_empty() {
             return Err(r.error.clone());

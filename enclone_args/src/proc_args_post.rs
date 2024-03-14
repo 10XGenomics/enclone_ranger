@@ -157,7 +157,6 @@ pub fn proc_args_post(
 ) -> Result<(), String> {
     // Process INFO.
 
-    let t = Instant::now();
     if ctl.gen_opt.info.is_some() {
         let f = open_for_read![&ctl.gen_opt.info.as_ref().unwrap()];
         let mut lines = Vec::<String>::new();
@@ -491,7 +490,6 @@ pub fn proc_args_post(
 
     // Process TCR, BCR and META.
 
-    let t = Instant::now();
     check_cvars(ctl)?;
     if !metas.is_empty() {
         let mut v = Vec::<String>::with_capacity(metas.len());
@@ -528,7 +526,6 @@ pub fn proc_args_post(
 
     // More argument sanity checking.
 
-    let t = Instant::now();
     if ctl.clono_filt_opt.dataset.is_some() {
         let d = &ctl.clono_filt_opt.dataset.as_ref().unwrap();
         for x in d.iter() {

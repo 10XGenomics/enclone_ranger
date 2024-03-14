@@ -26,7 +26,6 @@ pub fn finish_join(
     // Tally results.
 
     let (mut joins, mut errors) = (0, 0);
-    let timer3 = Instant::now();
     for r in results {
         joins += r.2;
         errors += r.3;

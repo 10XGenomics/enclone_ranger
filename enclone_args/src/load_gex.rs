@@ -52,7 +52,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
         &mut json_metrics,
         &mut metrics,
     )?;
-    let t = Instant::now();
     if ctl.gen_opt.gene_scan_test.is_some() && !ctl.gen_opt.accept_inconsistent {
         let mut allf = gex_features.clone();
         unique_sort(&mut allf);

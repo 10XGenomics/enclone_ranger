@@ -764,7 +764,6 @@ pub fn build_ends() -> Vec<String> {
 // Check lvars args.
 
 pub fn check_lvars(ctl: &EncloneControl, gex_info: &GexInfo) -> Result<(), String> {
-    let t = Instant::now();
     let mut to_check = Vec::<String>::new();
     let ends = build_ends();
     let mut nd_used = false;
@@ -779,7 +778,6 @@ pub fn check_lvars(ctl: &EncloneControl, gex_info: &GexInfo) -> Result<(), Strin
         }
     }
 
-    let t = Instant::now();
     if !to_check.is_empty() {
         check_gene_fb(ctl, gex_info, &to_check, "lead")?;
     }

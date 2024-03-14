@@ -512,7 +512,6 @@ pub fn sub_alts(
     info: &mut Vec<CloneInfo>,
     exact_clonotypes: &mut [ExactClonotype],
 ) {
-    let t = Instant::now();
     for i in 0..info.len() {
         for j in 0..info[i].vs.len() {
             if info[i].vs[j].len() - ctl.heur.ref_v_trim <= info[i].tigs[j].len() {

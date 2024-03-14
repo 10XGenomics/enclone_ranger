@@ -42,7 +42,6 @@ pub fn join_exacts(
     //
     // Run special option for joining by barcode identity.
 
-    let timer1 = Instant::now();
     if ctl.join_alg_opt.bcjoin {
         let mut eq: EquivRel = EquivRel::new(info.len() as i32);
         let mut bcx = Vec::<(String, usize)>::new(); // {(barcode, info_index)}
@@ -104,8 +103,6 @@ pub fn join_exacts(
     if !ctl.silent {
         println!("comparing {} simple clonotypes", info.len());
     }
-
-    let timer2 = Instant::now();
 
     let joinf = |r: &mut (
         usize,

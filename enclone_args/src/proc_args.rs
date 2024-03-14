@@ -20,7 +20,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     //
     // Start.
 
-    let targs = Instant::now();
     let evil_eye = ctl.gen_opt.evil_eye;
     if evil_eye {
         println!("processing args");

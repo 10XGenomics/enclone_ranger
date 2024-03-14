@@ -192,7 +192,7 @@ fn evaluate_contig_status(
     };
 
     let observed_order: Vec<i32> = ann
-        .into_iter()
+        .iter()
         .map(|a| reference.segtype[a.ref_id as usize])
         .map(|s| match s {
             "U" => 0,

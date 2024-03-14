@@ -55,7 +55,6 @@ pub fn some_filters(
     //
     // Note duplication of calls to define_mat with other code.  This is expensive.
 
-    let tsig = Instant::now();
     const SIG_MULT: usize = 20;
     let mut results = Vec::<(usize, Vec<(usize, String, BarcodeFate)>, Vec<usize>)>::new();
     for i in 0..orbits.len() {
@@ -189,12 +188,10 @@ pub fn some_filters(
 
     // Merge onesies where totally unambiguous.
 
-    let tmerge = Instant::now();
     merge_onesies(orbits, ctl, exact_clonotypes, info, eq, disintegrated);
 
     // Check for disjoint orbits.
 
-    let tsplit = Instant::now();
     split_orbits(
         orbits,
         is_bcr,
@@ -210,7 +207,6 @@ pub fn some_filters(
 
     // Test for weak chains.
 
-    let tweak = Instant::now();
     weak_chains(
         orbits,
         is_bcr,
@@ -227,7 +223,6 @@ pub fn some_filters(
 
     // Check for disjoint orbits (again).
 
-    let tsplit = Instant::now();
     split_orbits(
         orbits,
         is_bcr,
@@ -430,7 +425,6 @@ pub fn some_filters(
 
     // Check for disjoint orbits (again again).
 
-    let tsplit = Instant::now();
     split_orbits(
         orbits,
         is_bcr,

@@ -19,7 +19,6 @@ pub fn disintegrate_onesies(
     raw_joins: &mut Vec<(i32, i32)>,
 ) {
     if ctl.clono_filt_opt_def.weak_onesies {
-        let t = Instant::now();
         let ncells_total = exact_clonotypes
             .iter()
             .map(enclone_core::defs::ExactClonotype::ncells)
@@ -68,7 +67,6 @@ pub fn disintegrate_onesies(
             }
         }
 
-        let t = Instant::now();
         *join_info = join_info2;
         *exact_clonotypes = exacts2;
         let mut info2 = Vec::<CloneInfo>::new();
@@ -92,7 +90,6 @@ pub fn disintegrate_onesies(
             to_info2.push(x);
         }
 
-        let t = Instant::now();
         *info = info2;
         let mut raw_joins2 = Vec::<(i32, i32)>::new();
         for i in 0..raw_joins.len() {

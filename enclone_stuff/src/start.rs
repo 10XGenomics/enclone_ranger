@@ -102,7 +102,6 @@ pub fn stirling2_ratio_table_double(n_max: usize) -> Vec<Vec<Double>> {
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, String> {
-    let tr = Instant::now();
     let ctl = &setup.ctl;
     let gex_info = &setup.gex_info;
     let refdata = &setup.refdata;
@@ -119,8 +118,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Parse the json annotations file.
 
-    let tparse = Instant::now();
-
     let Annotations {
         mut tig_bc,
         gex_cells,
@@ -131,7 +128,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Populate features.
 
-    let tpop = Instant::now();
     let mut fr1_starts = Vec::<usize>::new();
     let mut fr2_starts = Vec::<Option<usize>>::new();
     let mut fr3_starts = Vec::<Option<usize>>::new();
@@ -163,7 +159,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Test for no data.
 
-    let tproto = Instant::now();
     if ctl.origin_info.n() == 0 {
         return Err("\nNo TCR or BCR data have been specified.\n".to_string());
     }
@@ -229,7 +224,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Filter out some foursie artifacts.
 
-    let t = Instant::now();
     let mut to_delete = vec![false; exact_clonotypes.len()];
     let mut twosies = Vec::<(&[u8], &[u8])>::new();
     for ex in &exact_clonotypes {
@@ -282,13 +276,11 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Build info about clonotypes.  Note that this edits the V reference sequence to perform
     // an indel in some cases.
 
-    let tinfo = Instant::now();
     let mut info: Vec<CloneInfo> = build_info(refdata, ctl, &mut exact_clonotypes, &mut fate);
 
     // Derive consensus sequences for alternate alleles of V segments.  Then create donor
     // reference sequences for Loupe.
 
-    let talt = Instant::now();
     // {(donor, ref id, alt seq, support, is_ref)}:
     let mut alt_refs = Vec::<(usize, usize, DnaString, usize, bool)>::new();
     if !ctl.gen_opt.no_alt_alleles {
@@ -324,7 +316,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             count += 1;
         }
     }
-    let tdonor = Instant::now();
     let drefs = make_donor_refs(&alt_refs, refdata);
 
     // Analyze donor reference.
@@ -338,7 +329,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Compute to_bc, which maps (dataset_index, clonotype_id) to {barcodes}.
     // This is intended as a replacement for some old code below.
 
-    let tbc = Instant::now();
     let mut to_bc = HashMap::<(usize, usize), Vec<String>>::new();
     for (i, ex) in exact_clonotypes.iter().enumerate() {
         for clone in &ex.clones {
@@ -352,12 +342,10 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Make stirling ratio table.  Not sure that fixing the size of this is safe.
 
-    let tsr = Instant::now();
     let sr = stirling2_ratio_table_double(3000);
 
     // Compute complexity.
 
-    let tcomp = Instant::now();
     if ctl.join_alg_opt.comp_filt < 1_000_000 {
         let jun = heavy_complexity(refdata, &exact_clonotypes, ctl, &drefs);
         for u in 0..exact_clonotypes.len() {
@@ -404,7 +392,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Update to_bc.
 
-    let txxx = Instant::now();
     let mut to_bc = HashMap::<(usize, usize), Vec<String>>::new();
     for (i, ex) in exact_clonotypes.iter().enumerate() {
         for clone in &ex.clones {
@@ -454,7 +441,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Filter B cells based on UMI counts.
 
-    let tumi = Instant::now();
     let mut orbits = Vec::<Vec<i32>>::new();
     filter_umi(
         &eq,
@@ -863,7 +849,6 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     // Mark VDJ noncells.
 
-    let tmark = Instant::now();
     if ctl.clono_filt_opt_def.non_cell_mark {
         for ex in exact_clonotypes.iter_mut() {
             for clone in ex.clones.iter_mut() {

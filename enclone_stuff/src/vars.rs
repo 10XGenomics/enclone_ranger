@@ -10,7 +10,6 @@ use vector_utils::unique_sort;
 pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), String> {
     // Find matching features for <regular expression>_g etc.
 
-    let tstar = Instant::now();
     ctl.clono_print_opt.regex_match =
         vec![HashMap::<String, Vec<usize>>::new(); ctl.origin_info.n()];
     let ends0 = [
@@ -37,7 +36,6 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
     }
     unique_sort(&mut vars);
 
-    let tomega = Instant::now();
     for x in vars.iter() {
         for (iy, y) in ends.iter().enumerate() {
             let mut xc = x.clone();

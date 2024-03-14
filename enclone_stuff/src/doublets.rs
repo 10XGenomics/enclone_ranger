@@ -32,7 +32,6 @@ pub fn delete_doublets(
     fate: &mut [HashMap<String, BarcodeFate>],
 ) {
     if ctl.clono_filt_opt_def.doublet {
-        let t = Instant::now();
         // Define pure subclonotypes.  To do this we break each clonotype up by chain signature.
         // Note duplication of code with print_clonotypes.rs.  And this is doing some
         // superfluous compute.
@@ -43,7 +42,6 @@ pub fn delete_doublets(
         }
         let mut pures = Vec::<Vec<usize>>::new();
 
-        let t = Instant::now();
         results.par_iter_mut().for_each(|res| {
             let i = res.0;
             let o = orbits[i].clone();
@@ -99,7 +97,6 @@ pub fn delete_doublets(
 
         // Find the pairs of pure subclonotypes that share identical CDR3 sequences.
 
-        let t = Instant::now();
         let mut shares = Vec::<(usize, usize)>::new();
         {
             let mut content = Vec::<(&str, usize)>::new();
@@ -114,7 +111,6 @@ pub fn delete_doublets(
             content.par_sort();
             content.dedup();
 
-            let t = Instant::now();
             let mut j = 0;
             while j < content.len() {
                 let k = next_diff1_2(&content, j as i32) as usize;
@@ -133,7 +129,6 @@ pub fn delete_doublets(
         // Find triples of pure subclonotypes in which the first two have no share, but both
         // of the first two share with the third.
 
-        let t = Instant::now();
         const MIN_MULT_DOUBLET: usize = 5;
         let mut trips = Vec::<(usize, usize, usize)>::new();
         {
@@ -186,7 +181,6 @@ pub fn delete_doublets(
 
         // Delete some of the third members of the triples.
 
-        let t = Instant::now();
         let mut to_delete = vec![false; exact_clonotypes.len()];
         for (v1, v2, v0) in trips {
             let verbose = false;

@@ -449,7 +449,6 @@ pub fn proc_xcr(
     {
         return Err("\nOnly one of TCR, BCR, or TCRGD can be specified.\n".to_string());
     }
-    let t = Instant::now();
     ctl.gen_opt.tcr = f.starts_with("TCR=");
     ctl.gen_opt.tcrgd = f.starts_with("TCRGD=");
     ctl.gen_opt.bcr = f.starts_with("BCR=");
@@ -508,7 +507,6 @@ pub fn proc_xcr(
         ));
     }
 
-    let t = Instant::now();
     for (id, d) in donor_groups.iter().enumerate() {
         let origin_groups = if ctl.gen_opt.cellranger {
             vec![&d[..]]
@@ -615,7 +613,6 @@ pub fn proc_xcr(
     // clock time for these can add up.  There should be a way to do this that does not involve
     // multithreading.
 
-    let t = Instant::now();
     let source = if f.contains('=') { f.before("=") } else { f };
     let mut results = Vec::<(String, String, bool, String)>::new();
     for (id, d) in donor_groups.iter().enumerate() {
@@ -641,7 +638,6 @@ pub fn proc_xcr(
         }
     }
 
-    let t = Instant::now();
     let spinlock: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     results.par_iter_mut().for_each(|res| {
         let (p, pg) = (&mut res.0, &mut res.1);

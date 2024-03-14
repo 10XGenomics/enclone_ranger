@@ -26,7 +26,6 @@ pub fn filter_by_fcell(
         // Load the GEX and FB data.  This is quite horrible: the code and computation are
         // duplicated verbatim in stop.rs.
 
-        let tdi = Instant::now();
         let mut d_readers = Vec::<Option<Reader>>::new();
         let mut ind_readers = Vec::<Option<Reader>>::new();
         for li in 0..ctl.origin_info.n() {
