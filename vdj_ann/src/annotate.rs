@@ -26,8 +26,8 @@ use std::{
 use string_utils::{stringme, strme, TextUtils};
 use vdj_types::{VdjChain, VdjRegion};
 use vector_utils::{
-    bin_member, erase_if, lower_bound1_3, next_diff12_4, next_diff1_2, next_diff1_3, next_diff1_5,
-    reverse_sort, unique_sort, VecUtils,
+    bin_member, erase_if, lower_bound1_3, next_diff12_4, next_diff1_2, next_diff1_3, reverse_sort,
+    unique_sort, VecUtils,
 };
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -160,6 +160,31 @@ pub struct Annotation {
     pub mismatches: i32,
 }
 
+#[derive(Ord, PartialOrd, PartialEq, Eq)]
+/// Used prior to creatrion of Annotation object, includes a vector of mismatches
+pub struct PreAnnotation {
+    /// Start position on sequence (contig)
+    pub f0: i32,
+    /// Match length
+    pub f1: i32,
+    /// Reference id (that this contig matches)
+    pub f2: i32,
+    /// Start position on reference
+    pub f3: i32,
+    /// Vector mismatches on the sequence (contig)
+    pub f4: Vec<i32>,
+}
+
+pub fn next_diff_pre_annotation(x: &[PreAnnotation], i: i32) -> i32 {
+    let mut j: i32 = i + 1;
+    loop {
+        if j == x.len() as i32 || x[j as usize].f0 != x[i as usize].f0 {
+            return j;
+        }
+        j += 1;
+    }
+}
+
 pub fn annotate_seq(
     b: &DnaString,
     refdata: &RefData,
@@ -181,12 +206,12 @@ pub fn annotate_seq(
     );
 }
 
-fn print_alignx(log: &mut Vec<u8>, a: &(i32, i32, i32, i32, Vec<i32>), refdata: &RefData) {
-    let t = a.2 as usize;
-    let l = a.0;
-    let len = a.1;
-    let p = a.3;
-    let mis = a.4.len();
+fn print_alignx(log: &mut Vec<u8>, a: &PreAnnotation, refdata: &RefData) {
+    let t = a.f2 as usize;
+    let l = a.f0;
+    let len = a.f1;
+    let p = a.f3;
+    let mis = a.f4.len();
     fwriteln!(
         log,
         "{}-{} ==> {}-{} on {} (mis={})",
@@ -845,9 +870,15 @@ pub fn annotate_seq_core(
     // Transform to create annx, having structure:
     // { ( sequence start, match length, ref tig, ref tig start, {mismatches} ) }.
 
-    let mut annx = Vec::<(i32, i32, i32, i32, Vec<i32>)>::new();
+    let mut annx = Vec::<PreAnnotation>::new();
     for x in semi.iter() {
-        annx.push((x.2, x.3, x.0, x.2 + x.1, x.4.clone()));
+        annx.push(PreAnnotation {
+            f0: x.2,
+            f1: x.3,
+            f2: x.0,
+            f3: x.2 + x.1,
+            f4: x.4.clone(),
+        });
     }
     unique_sort(&mut annx);
 
@@ -856,8 +887,8 @@ pub fn annotate_seq_core(
     if !allow_improper {
         let mut to_delete: Vec<bool> = vec![false; annx.len()];
         for annxi in annx.iter_mut() {
-            std::mem::swap(&mut annxi.0, &mut annxi.2);
-            std::mem::swap(&mut annxi.1, &mut annxi.3);
+            std::mem::swap(&mut annxi.f0, &mut annxi.f2);
+            std::mem::swap(&mut annxi.f1, &mut annxi.f3);
         }
         annx.sort();
         let mut i1 = 0;
@@ -865,10 +896,10 @@ pub fn annotate_seq_core(
             if i1 == annx.len() {
                 break;
             }
-            let j1 = next_diff1_5(&annx, i1 as i32);
+            let j1 = next_diff_pre_annotation(&annx, i1 as i32);
             let mut min_imp = 1000000000;
             for k in i1..j1 as usize {
-                let imp = min(annx[k].1, annx[k].2);
+                let imp = min(annx[k].f1, annx[k].f2);
                 min_imp = min(imp, min_imp);
             }
             const MAX_IMP: i32 = 60;
@@ -881,8 +912,8 @@ pub fn annotate_seq_core(
         }
         erase_if(&mut annx, &to_delete);
         for annxi in annx.iter_mut() {
-            std::mem::swap(&mut annxi.0, &mut annxi.2);
-            std::mem::swap(&mut annxi.1, &mut annxi.3);
+            std::mem::swap(&mut annxi.f0, &mut annxi.f2);
+            std::mem::swap(&mut annxi.f1, &mut annxi.f3);
         }
         annx.sort();
     }
@@ -901,9 +932,9 @@ pub fn annotate_seq_core(
 
     let mut have_starter = false;
     for annxi in &annx {
-        let t = annxi.2 as usize;
-        if !rheaders[t].contains("segment") && refdata.is_v(t) && annxi.3 == 0 {
-            let p = annxi.0 as usize;
+        let t = annxi.f2 as usize;
+        if !rheaders[t].contains("segment") && refdata.is_v(t) && annxi.f3 == 0 {
+            let p = annxi.f0 as usize;
             if b_seq[p] == 0 // A
                 && b_seq[p+1] == 3 // T
                 && b_seq[p+2] == 2
@@ -918,9 +949,9 @@ pub fn annotate_seq_core(
         let to_delete: Vec<bool> = annx
             .iter()
             .map(|annxi| {
-                let t = annxi.2 as usize;
-                if !rheaders[t].contains("segment") && refdata.is_v(t) && annxi.3 == 0 {
-                    let p = annxi.0 as usize;
+                let t = annxi.f2 as usize;
+                if !rheaders[t].contains("segment") && refdata.is_v(t) && annxi.f3 == 0 {
+                    let p = annxi.f0 as usize;
                     if !(b_seq[p] == 0 && b_seq[p + 1] == 3 && b_seq[p + 2] == 2) {
                         return true;
                     }
@@ -958,7 +989,7 @@ pub fn annotate_seq_core(
     let mut ts: Vec<(usize, usize)> = annx
         .iter()
         .enumerate()
-        .map(|(i, annxi)| (annxi.2 as usize, i))
+        .map(|(i, annxi)| (annxi.f2 as usize, i))
         .collect(); // { ( contig index, annx index ) }
     ts.sort_unstable();
     let mut i1 = 0;
@@ -966,14 +997,14 @@ pub fn annotate_seq_core(
         let j1 = next_diff1_2(&ts, i1 as i32) as usize;
         let mut tlen1 = 0;
         for k in i1..j1 {
-            tlen1 += annx[ts[k].1].1;
+            tlen1 += annx[ts[k].1].f1;
         }
         let mut i2 = 0;
         while i2 < ts.len() {
             let j2 = next_diff1_2(&ts, i2 as i32) as usize;
             let mut tlen2 = 0;
             for k in i2..j2 {
-                tlen2 += annx[ts[k].1].1;
+                tlen2 += annx[ts[k].1].f1;
             }
             let (mut m1, mut m2) = (0, 0);
             let mut over = 0_i64;
@@ -981,11 +1012,11 @@ pub fn annotate_seq_core(
             let mut offsets2 = Vec::<i32>::new();
             for k1 in i1..j1 {
                 let u1 = ts[k1].1;
-                offsets1.push(annx[u1].0 - annx[u1].3);
+                offsets1.push(annx[u1].f0 - annx[u1].f3);
             }
             for k2 in i2..j2 {
                 let u2 = ts[k2].1;
-                offsets2.push(annx[u2].0 - annx[u2].3);
+                offsets2.push(annx[u2].f0 - annx[u2].f3);
             }
             offsets1.sort_unstable();
             offsets2.sort_unstable();
@@ -993,12 +1024,12 @@ pub fn annotate_seq_core(
             m2 += offsets2[offsets2.len() - 1] - offsets2[0];
             for k1 in i1..j1 {
                 let u1 = ts[k1].1;
-                let l1 = annx[u1].0;
-                let len1 = annx[u1].1;
+                let l1 = annx[u1].f0;
+                let len1 = annx[u1].f1;
                 for k2 in i2..j2 {
                     let u2 = ts[k2].1;
-                    let l2 = annx[u2].0;
-                    let len2 = annx[u2].1;
+                    let l2 = annx[u2].f0;
+                    let len2 = annx[u2].f1;
                     let start = max(l1, l2);
                     let stop = min(l1 + len1, l2 + len2);
                     if start >= stop {
@@ -1006,12 +1037,12 @@ pub fn annotate_seq_core(
                     }
                     over += stop as i64;
                     over -= start as i64;
-                    for x in annx[u1].4.iter() {
+                    for x in annx[u1].f4.iter() {
                         if *x >= start && *x < stop {
                             m1 += 1;
                         }
                     }
-                    for x in annx[u2].4.iter() {
+                    for x in annx[u2].f4.iter() {
                         if *x >= start && *x < stop {
                             m2 += 1;
                         }
@@ -1048,10 +1079,10 @@ pub fn annotate_seq_core(
                         for k in i1..j1 {
                             let t = ts[k].0;
                             let u = ts[k].1;
-                            let l = annx[u].0;
-                            let len = annx[u].1;
-                            let p = annx[u].3;
-                            let mis = annx[u].4.len();
+                            let l = annx[u].f0;
+                            let len = annx[u].f1;
+                            let p = annx[u].f3;
+                            let mis = annx[u].f4.len();
                             fwriteln!(
                                 log,
                                 "{}-{} ==> {}-{} on {}(mis={})",
@@ -1067,10 +1098,10 @@ pub fn annotate_seq_core(
                         for k in i2..j2 {
                             let t = ts[k].0;
                             let u = ts[k].1;
-                            let l = annx[u].0;
-                            let len = annx[u].1;
-                            let p = annx[u].3;
-                            let mis = annx[u].4.len();
+                            let l = annx[u].f0;
+                            let len = annx[u].f1;
+                            let p = annx[u].f3;
+                            let mis = annx[u].f4.len();
                             fwriteln!(
                                 log,
                                 "{}-{} ==> {}-{} on {}(mis={})",
@@ -1115,33 +1146,33 @@ pub fn annotate_seq_core(
         let mut to_delete: Vec<bool> = vec![false; annx.len()];
         let mut aligns = vec![0; refs.len()];
         for i in 0..annx.len() {
-            aligns[annx[i].2 as usize] += 1;
+            aligns[annx[i].f2 as usize] += 1;
         }
         for i1 in 0..annx.len() {
-            let t = annx[i1].2 as usize;
+            let t = annx[i1].f2 as usize;
             if rheaders[t].contains("segment") {
                 continue;
             }
             if !rheaders[t].contains("segment") && !refdata.is_u(t) && !refdata.is_v(t) {
                 continue;
             }
-            let off1 = annx[i1].3 - annx[i1].0;
+            let off1 = annx[i1].f3 - annx[i1].f0;
             for i2 in 0..annx.len() {
                 if to_delete[i1] || to_delete[i2] {
                     continue;
                 }
-                if i2 == i1 || annx[i2].2 as usize != t {
+                if i2 == i1 || annx[i2].f2 as usize != t {
                     continue;
                 }
-                let (l1, mut l2) = (annx[i1].0 as usize, annx[i2].0 as usize);
+                let (l1, mut l2) = (annx[i1].f0 as usize, annx[i2].f0 as usize);
                 if l1 >= l2 {
                     continue;
                 }
-                let (mut len1, mut len2) = (annx[i1].1 as usize, annx[i2].1 as usize);
+                let (mut len1, mut len2) = (annx[i1].f1 as usize, annx[i2].f1 as usize);
                 if l1 + len1 > l2 + len2 {
                     continue;
                 }
-                let (p1, p2) = (annx[i1].3, annx[i2].3);
+                let (p1, p2) = (annx[i1].f3, annx[i2].f3);
                 let (start1, stop1) = (l1, (l2 + len2)); // extent on contig
                 let (start2, stop2) = (p1 as usize, (p2 as usize + len2)); // extent on ref
                 if !(start1 < stop1 && start2 < stop2) {
@@ -1149,20 +1180,20 @@ pub fn annotate_seq_core(
                 }
                 let tot1 = stop1 - start1;
                 let tot2 = stop2 - start2;
-                let off2 = annx[i2].3 - annx[i2].0;
+                let off2 = annx[i2].f3 - annx[i2].f0;
 
                 // Case where there is no indel.
 
                 if tot1 == tot2 && aligns[t] == 2 {
-                    let mut mis = annx[i1].4.clone();
+                    let mut mis = annx[i1].f4.clone();
                     for p in l1 + len1..l2 {
                         if b_seq[p] != refs[t].get((p as i32 + off1) as usize) {
                             mis.push(p as i32);
                         }
                     }
-                    mis.append(&mut annx[i2].4.clone());
-                    annx[i1].1 = tot1 as i32;
-                    annx[i1].4 = mis;
+                    mis.append(&mut annx[i2].f4.clone());
+                    annx[i1].f1 = tot1 as i32;
+                    annx[i1].f4 = mis;
                     to_delete[i2] = true;
                     continue;
                 }
@@ -1198,12 +1229,12 @@ pub fn annotate_seq_core(
                             best_ipos = ipos;
                         }
                     }
-                    annx[i1].1 = best_ipos - start1;
-                    annx[i1].4 = best_mis1;
-                    annx[i2].1 = stop1 - best_ipos - ins;
-                    annx[i2].0 = best_ipos + ins;
-                    annx[i2].3 = best_ipos + ins + off2;
-                    annx[i2].4 = best_mis2;
+                    annx[i1].f1 = best_ipos - start1;
+                    annx[i1].f4 = best_mis1;
+                    annx[i2].f1 = stop1 - best_ipos - ins;
+                    annx[i2].f0 = best_ipos + ins;
+                    annx[i2].f3 = best_ipos + ins + off2;
+                    annx[i2].f4 = best_mis2;
                     continue;
                 }
 
@@ -1240,12 +1271,12 @@ pub fn annotate_seq_core(
                             best_dpos = dpos;
                         }
                     }
-                    annx[i1].1 = best_dpos - start2;
-                    annx[i1].4 = best_mis1;
-                    annx[i2].0 = best_dpos + del - off2;
-                    annx[i2].1 = stop2 - best_dpos - del;
-                    annx[i2].3 = best_dpos + del;
-                    annx[i2].4 = best_mis2;
+                    annx[i1].f1 = best_dpos - start2;
+                    annx[i1].f4 = best_mis1;
+                    annx[i2].f0 = best_dpos + del - off2;
+                    annx[i2].f1 = stop2 - best_dpos - del;
+                    annx[i2].f3 = best_dpos + del;
+                    annx[i2].f4 = best_mis2;
                     continue;
                 }
 
@@ -1341,30 +1372,30 @@ pub fn annotate_seq_core(
                 }
                 if del.len() + ins.len() == 0 {
                     to_delete[i2] = true;
-                    len1 = (annx[i2].0 + annx[i2].1 - annx[i1].0) as usize;
-                    annx[i1].1 = len1 as i32;
-                    annx[i1].4.truncate(0);
+                    len1 = (annx[i2].f0 + annx[i2].f1 - annx[i1].f0) as usize;
+                    annx[i1].f1 = len1 as i32;
+                    annx[i1].f4.truncate(0);
                     for j in 0..len1 {
                         if b_seq[l1 + j] != refs[t].get(p1 + j) {
-                            annx[i1].4.push((l1 + j) as i32);
+                            annx[i1].f4.push((l1 + j) as i32);
                         }
                     }
                 }
                 if del.len() + ins.len() == 1 {
-                    annx[i2].0 = l2 as i32;
-                    annx[i1].1 = len1 as i32;
-                    annx[i2].1 = len2 as i32;
-                    annx[i2].3 = p2 as i32;
-                    annx[i1].4.truncate(0);
-                    annx[i2].4.truncate(0);
+                    annx[i2].f0 = l2 as i32;
+                    annx[i1].f1 = len1 as i32;
+                    annx[i2].f1 = len2 as i32;
+                    annx[i2].f3 = p2 as i32;
+                    annx[i1].f4.truncate(0);
+                    annx[i2].f4.truncate(0);
                     for j in 0..len1 {
                         if b_seq[l1 + j] != refs[t].get(p1 + j) {
-                            annx[i1].4.push((l1 + j) as i32);
+                            annx[i1].f4.push((l1 + j) as i32);
                         }
                     }
                     for j in 0..len2 {
                         if b_seq[l2 + j] != refs[t].get(p2 + j) {
-                            annx[i2].4.push((l2 + j) as i32);
+                            annx[i2].f4.push((l2 + j) as i32);
                         }
                     }
                 }
@@ -1398,7 +1429,7 @@ pub fn annotate_seq_core(
 
     let mut combo = Vec::<(String, i32, usize)>::new();
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
+        let t = annx[i].f2 as usize;
         if !rheaders[t].contains("segment") {
             combo.push((
                 refdata.name[t].clone() + "." + &refdata.transcript[t],
@@ -1421,11 +1452,11 @@ pub fn annotate_seq_core(
         for k in i..j {
             locs.push(combo[k].2);
             let a = &annx[combo[k].2];
-            rstarts.push(a.3 as usize);
-            cov.push((a.0 as usize, (a.0 + a.1) as usize));
-            mis += a.4.len();
-            if !refdata.is_u(a.2 as usize) {
-                mis_nutr += a.4.len();
+            rstarts.push(a.f3 as usize);
+            cov.push((a.f0 as usize, (a.f0 + a.f1) as usize));
+            mis += a.f4.len();
+            if !refdata.is_u(a.f2 as usize) {
+                mis_nutr += a.f4.len();
             }
         }
         data.push((cov, mis, locs, rstarts, mis_nutr));
@@ -1441,8 +1472,8 @@ pub fn annotate_seq_core(
             if i2 == i1 {
                 continue;
             }
-            let t1 = annx[data[i1].2[0]].2 as usize;
-            let t2 = annx[data[i2].2[0]].2 as usize;
+            let t1 = annx[data[i1].2[0]].f2 as usize;
+            let t2 = annx[data[i2].2[0]].f2 as usize;
 
             let same_class = (refdata.segtype[t1] == refdata.segtype[t2])
                 || (refdata.is_v(t1) && refdata.is_u(t2))
@@ -1465,12 +1496,12 @@ pub fn annotate_seq_core(
             }
             let (mut have_utr_align1, mut have_utr_align2) = (false, false);
             for j in data[i1].2.iter() {
-                if refdata.is_u(annx[*j].2 as usize) {
+                if refdata.is_u(annx[*j].f2 as usize) {
                     have_utr_align1 = true;
                 }
             }
             for j in data[i2].2.iter() {
-                if refdata.is_u(annx[*j].2 as usize) {
+                if refdata.is_u(annx[*j].f2 as usize) {
                     have_utr_align2 = true;
                 }
             }
@@ -1480,12 +1511,12 @@ pub fn annotate_seq_core(
             let n = b_seq.len();
             let (mut mis1, mut mis2) = (vec![false; n], vec![false; n]);
             for j in data[i1].2.iter() {
-                for p in annx[*j].4.iter() {
+                for p in annx[*j].f4.iter() {
                     mis1[*p as usize] = true;
                 }
             }
             for j in data[i2].2.iter() {
-                for p in annx[*j].4.iter() {
+                for p in annx[*j].f4.iter() {
                     mis2[*p as usize] = true;
                 }
             }
@@ -1495,7 +1526,7 @@ pub fn annotate_seq_core(
 
             let (mut cov1, mut cov2) = (vec![false; n], vec![false; n]);
             for j in 0..data[i1].0.len() {
-                let t = annx[data[i1].2[j]].2;
+                let t = annx[data[i1].2[j]].f2;
                 if utr2 || !refdata.is_u(t as usize) {
                     let x = &data[i1].0[j];
                     for m in x.0..x.1 {
@@ -1504,7 +1535,7 @@ pub fn annotate_seq_core(
                 }
             }
             for j in 0..data[i2].0.len() {
-                let t = annx[data[i2].2[j]].2;
+                let t = annx[data[i2].2[j]].f2;
                 if utr1 || !refdata.is_u(t as usize) {
                     let x = &data[i2].0[j];
                     for m in x.0..x.1 {
@@ -1528,7 +1559,7 @@ pub fn annotate_seq_core(
 
             let (mut cov1_nu, mut cov2_nu) = (vec![false; n], vec![false; n]);
             for j in 0..data[i1].0.len() {
-                let t = annx[data[i1].2[j]].2;
+                let t = annx[data[i1].2[j]].f2;
                 if !refdata.is_u(t as usize) {
                     let x = &data[i1].0[j];
                     for m in x.0..x.1 {
@@ -1537,7 +1568,7 @@ pub fn annotate_seq_core(
                 }
             }
             for j in 0..data[i2].0.len() {
-                let t = annx[data[i2].2[j]].2;
+                let t = annx[data[i2].2[j]].f2;
                 if !refdata.is_u(t as usize) {
                     let x = &data[i2].0[j];
                     for m in x.0..x.1 {
@@ -1595,13 +1626,13 @@ pub fn annotate_seq_core(
 
             let (mut zstop1, mut zstop2) = (0, 0);
             for l in 0..data[i1].2.len() {
-                let t = annx[data[i1].2[l]].2 as usize;
+                let t = annx[data[i1].2[l]].f2 as usize;
                 if refdata.is_v(t) && (data[i1].3[l] == 0 || data[i1].0[l].0 == 0) {
                     zstop1 = max(zstop1, data[i1].0[l].1);
                 }
             }
             for l in 0..data[i2].2.len() {
-                let t = annx[data[i2].2[l]].2 as usize;
+                let t = annx[data[i2].2[l]].f2 as usize;
                 if refdata.is_v(t) && (data[i2].3[l] == 0 || data[i2].0[l].0 == 0) {
                     zstop2 = max(zstop2, data[i2].0[l].1);
                 }
@@ -1653,7 +1684,7 @@ pub fn annotate_seq_core(
             if verbose {
                 fwriteln!(log, "\nCOMPARING");
                 for l in 0..data[i1].2.len() {
-                    let t = annx[data[i1].2[l]].2 as usize;
+                    let t = annx[data[i1].2[l]].f2 as usize;
                     let cov = &data[i1].0[l];
                     let mis = data[i1].1;
                     fwriteln!(
@@ -1667,7 +1698,7 @@ pub fn annotate_seq_core(
                 }
                 fwriteln!(log, "TO");
                 for l in 0..data[i2].2.len() {
-                    let t = annx[data[i2].2[l]].2 as usize;
+                    let t = annx[data[i2].2[l]].f2 as usize;
                     let cov = &data[i2].0[l];
                     let mis = data[i2].1;
                     fwriteln!(
@@ -1749,14 +1780,17 @@ pub fn annotate_seq_core(
     while i < annx.len() {
         let mut j = i + 1;
         while j < annx.len() {
-            if annx[j].0 != annx[i].0 {
+            if annx[j].f0 != annx[i].f0 {
                 break;
             }
             j += 1;
         }
         for k1 in i..j {
             for k2 in i..j {
-                if annx[k1].2 == annx[k2].2 && annx[k1].3 == annx[k2].3 && annx[k1].1 > annx[k2].1 {
+                if annx[k1].f2 == annx[k2].f2
+                    && annx[k1].f3 == annx[k2].f3
+                    && annx[k1].f1 > annx[k2].f1
+                {
                     to_delete[k2] = true;
                 }
             }
@@ -1770,24 +1804,24 @@ pub fn annotate_seq_core(
 
     let mut aligns = vec![0; refs.len()];
     for i in 0..annx.len() {
-        aligns[annx[i].2 as usize] += 1;
+        aligns[annx[i].f2 as usize] += 1;
     }
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
-        let len = annx[i].1 as usize;
+        let t = annx[i].f2 as usize;
+        let len = annx[i].f1 as usize;
         if aligns[t] == 1
-            && annx[i].3 == 0
+            && annx[i].f3 == 0
             && len < refs[t].len()
             && len as f64 / refs[t].len() as f64 >= 0.75
-            && (refs[t].len() as i32 + annx[i].0 - annx[i].3) as usize <= b_seq.len()
+            && (refs[t].len() as i32 + annx[i].f0 - annx[i].f3) as usize <= b_seq.len()
         {
             for p in len..refs[t].len() {
-                let q = p as i32 + annx[i].0 - annx[i].3;
+                let q = p as i32 + annx[i].f0 - annx[i].f3;
                 if b_seq[q as usize] != refs[t].get(p) {
-                    annx[i].4.push(q);
+                    annx[i].f4.push(q);
                 }
             }
-            annx[i].1 = refs[t].len() as i32;
+            annx[i].f1 = refs[t].len() as i32;
         }
     }
 
@@ -1805,13 +1839,13 @@ pub fn annotate_seq_core(
 
     let mut lens = vec![0; refdata.refs.len()];
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
-        lens[t] += annx[i].3 + annx[i].1;
+        let t = annx[i].f2 as usize;
+        lens[t] += annx[i].f3 + annx[i].f1;
     }
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
         for i2 in 0..annx.len() {
-            let (t1, t2) = (annx[i1].2 as usize, annx[i2].2 as usize);
+            let (t1, t2) = (annx[i1].f2 as usize, annx[i2].f2 as usize);
             if rheaders[t1].contains("segment") || rheaders[t2].contains("segment") {
                 continue;
             }
@@ -1821,7 +1855,7 @@ pub fn annotate_seq_core(
             if t1 == t2 {
                 continue;
             }
-            let (p1, p2) = (annx[i1].3, annx[i2].3);
+            let (p1, p2) = (annx[i1].f3, annx[i2].f3);
             if p1 > 0 {
                 continue;
             }
@@ -1850,7 +1884,7 @@ pub fn annotate_seq_core(
     const J_TOT: i32 = 20;
     const J_MIS: i32 = 5;
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
+        let t = annx[i].f2 as usize;
         if rheaders[t].contains("segment") {
             continue;
         }
@@ -1861,11 +1895,11 @@ pub fn annotate_seq_core(
             } else if refdata.segtype[t] == "J" {
                 igj = true;
             } else if refdata.segtype[t] == "C"
-                && annx[i].3 == 0
-                && annx[i].0 >= J_TOT
+                && annx[i].f3 == 0
+                && annx[i].f0 >= J_TOT
                 && refs[t].len() >= J_TOT as usize
             {
-                igc = annx[i].0;
+                igc = annx[i].f0;
             }
         }
     }
@@ -1908,7 +1942,13 @@ pub fn annotate_seq_core(
                     mis.push(i + j);
                 }
             }
-            annx.push((i, n, best_t, 0_i32, mis));
+            annx.push(PreAnnotation {
+                f0: i,
+                f1: n,
+                f2: best_t,
+                f3: 0,
+                f4: mis,
+            });
             annx.sort();
         }
     }
@@ -1918,11 +1958,11 @@ pub fn annotate_seq_core(
 
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
-        let t1 = annx[i1].2 as usize;
+        let t1 = annx[i1].f2 as usize;
         if !rheaders[t1].contains("segment") && refdata.segtype[t1] == "D" {
             let mut have_v = false;
             for i2 in 0..annx.len() {
-                let t2 = annx[i2].2 as usize;
+                let t2 = annx[i2].f2 as usize;
                 if !rheaders[t2].contains("segment")
                     && refdata.segtype[t2] == "V"
                     && refdata.rtype[t1] == refdata.rtype[t2]
@@ -1950,20 +1990,20 @@ pub fn annotate_seq_core(
     const VJTRIM: i32 = 10;
     let mut v_rtype = -2_i32;
     for ann in &annx {
-        let t = ann.2 as usize;
+        let t = ann.f2 as usize;
         if !rheaders[t].contains("segment") {
             let rt = refdata.rtype[t];
             // IGH or TRB (or TRD in Gamma/delta mode)
             if rt == 0 || rt == 4 || rt == 5 {
                 if refdata.segtype[t] == "V" {
                     v = true;
-                    vstop = ann.0 + ann.1;
+                    vstop = ann.f0 + ann.f1;
                     v_rtype = rt;
                 } else if refdata.segtype[t] == "D" {
                     d = true;
                 } else if refdata.segtype[t] == "J" {
                     j = true;
-                    jstart = ann.0;
+                    jstart = ann.f0;
                 }
             }
         }
@@ -2010,7 +2050,13 @@ pub fn annotate_seq_core(
                     let t = results[0].2;
                     let r = results[0].0 + results[0].1;
                     let m = results[0].4;
-                    annx.push((m as i32, r as i32, t as i32, 0, results[0].5.clone()));
+                    annx.push(PreAnnotation {
+                        f0: m as i32,
+                        f1: r as i32,
+                        f2: t as i32,
+                        f3: 0,
+                        f4: results[0].5.clone(),
+                    });
                     annx.sort();
                 }
             }
@@ -2032,16 +2078,16 @@ pub fn annotate_seq_core(
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
         for i2 in 0..annx.len() {
-            let (t1, t2) = (annx[i1].2 as usize, annx[i2].2 as usize);
+            let (t1, t2) = (annx[i1].f2 as usize, annx[i2].f2 as usize);
             if rheaders[t1].contains("segment") || rheaders[t2].contains("segment") {
                 continue;
             }
             if !refdata.is_j(t1) || !refdata.is_j(t2) {
                 continue;
             }
-            let (len1, len2) = (annx[i1].1, annx[i2].1);
-            let (l1, l2) = (annx[i1].0, annx[i2].0);
-            let (p1, p2) = (annx[i1].3, annx[i2].3);
+            let (len1, len2) = (annx[i1].f1, annx[i2].f1);
+            let (l1, l2) = (annx[i1].f0, annx[i2].f0);
+            let (p1, p2) = (annx[i1].f3, annx[i2].f3);
             if len1 + p1 == refs[t1].len() as i32 && len2 + p2 < refs[t2].len() as i32 {
                 to_delete[i2] = true;
             }
@@ -2081,15 +2127,15 @@ pub fn annotate_seq_core(
             if i2 == i1 {
                 continue;
             }
-            let (t1, t2) = (annx[i1].2 as usize, annx[i2].2 as usize);
+            let (t1, t2) = (annx[i1].f2 as usize, annx[i2].f2 as usize);
             if rheaders[t1].contains("segment") || rheaders[t2].contains("segment") {
                 continue;
             }
             if !refdata.is_c(t1) || !refdata.is_c(t2) {
                 continue;
             }
-            let (l1, l2) = (annx[i1].0, annx[i2].0);
-            let (p1, p2) = (annx[i1].3, annx[i2].3);
+            let (l1, l2) = (annx[i1].f0, annx[i2].f0);
+            let (p1, p2) = (annx[i1].f3, annx[i2].f3);
             if p1 > 0 {
                 continue;
             }
@@ -2137,7 +2183,7 @@ pub fn annotate_seq_core(
 
     let mut nv = 0;
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
+        let t = annx[i].f2 as usize;
         if rheaders[t].contains("segment") {
             continue;
         }
@@ -2149,7 +2195,7 @@ pub fn annotate_seq_core(
         let mut to_delete: Vec<bool> = vec![false; annx.len()];
         for i1 in 0..annx.len() {
             for i2 in 0..annx.len() {
-                let (t1, t2) = (annx[i1].2 as usize, annx[i2].2 as usize);
+                let (t1, t2) = (annx[i1].f2 as usize, annx[i2].f2 as usize);
                 if t2 == t1 {
                     continue;
                 }
@@ -2159,8 +2205,8 @@ pub fn annotate_seq_core(
                 if !refdata.is_v(t1) || !refdata.is_v(t2) {
                     continue;
                 }
-                let (l1, l2) = (annx[i1].0, annx[i2].0);
-                let (p1, p2) = (annx[i1].3, annx[i2].3);
+                let (l1, l2) = (annx[i1].f0, annx[i2].f0);
+                let (p1, p2) = (annx[i1].f3, annx[i2].f3);
                 if p1 > 0 {
                     continue;
                 }
@@ -2201,7 +2247,7 @@ pub fn annotate_seq_core(
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let (mut u, mut v) = (Vec::<String>::new(), Vec::<String>::new());
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
+        let t = annx[i].f2 as usize;
         if !rheaders[t].contains("segment") {
             let name = rheaders[t].after("|").between("|", "|");
             if rheaders[t].contains("UTR") {
@@ -2216,7 +2262,7 @@ pub fn annotate_seq_core(
     for i in 0..u.len() {
         if !bin_member(&v, &u[i]) {
             for j in 0..annx.len() {
-                let t = annx[j].2 as usize;
+                let t = annx[j].f2 as usize;
                 if !rheaders[t].contains("segment") {
                     let name = rheaders[t].after("|").between("|", "|");
                     if rheaders[t].contains("UTR") && u[i] == name {
@@ -2244,7 +2290,7 @@ pub fn annotate_seq_core(
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let mut vs = Vec::<(usize, usize)>::new();
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
+        let t = annx[i].f2 as usize;
         if !rheaders[t].contains("V-REGION") {
             continue;
         }
@@ -2261,13 +2307,13 @@ pub fn annotate_seq_core(
     while j < vs.len() {
         let k = next_diff1_2(&vs, j as i32) as usize;
         if k - j == 1 {
-            score.push((annx[j].1, k - j, annx[j].4.len(), vs[j].1));
+            score.push((annx[j].f1, k - j, annx[j].f4.len(), vs[j].1));
         } else if k - j == 2 {
             let (i1, i2) = (vs[j].1, vs[j + 1].1);
             let (a1, a2) = (&annx[i1], &annx[i2]);
             let mut simple = false;
-            let (l1, p1, len1) = (a1.0, a1.3, a1.1);
-            let (l2, p2, len2) = (a2.0, a2.3, a2.1);
+            let (l1, p1, len1) = (a1.f0, a1.f3, a1.f1);
+            let (l2, p2, len2) = (a2.f0, a2.f3, a2.f1);
             if l1 + len1 == l2
                 && p1 + len1 < p2
                 && (p2 - p1 - len1) % 3 == 0
@@ -2284,7 +2330,7 @@ pub fn annotate_seq_core(
             }
             if simple {
                 have_split = true;
-                score.push((len1 + len2, k - j, a1.4.len() + a2.4.len(), vs[j].1));
+                score.push((len1 + len2, k - j, a1.f4.len() + a2.f4.len(), vs[j].1));
             } else {
                 nonsimple = true;
             }
@@ -2306,12 +2352,12 @@ pub fn annotate_seq_core(
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
         for i2 in 0..annx.len() {
-            if i2 == i1 || annx[i1].2 != annx[i2].2 {
+            if i2 == i1 || annx[i1].f2 != annx[i2].f2 {
                 continue;
             }
-            let (l1, l2) = (annx[i1].0, annx[i2].0);
-            let (len1, len2) = (annx[i1].1, annx[i2].1);
-            let (p1, p2) = (annx[i1].3, annx[i2].3);
+            let (l1, l2) = (annx[i1].f0, annx[i2].f0);
+            let (len1, len2) = (annx[i1].f1, annx[i2].f1);
+            let (p1, p2) = (annx[i1].f3, annx[i2].f3);
             if l1 != l2 || p1 != p2 {
                 continue;
             }
@@ -2327,7 +2373,7 @@ pub fn annotate_seq_core(
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let (mut j1, mut j2) = (false, false);
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
+        let t = annx[i].f2 as usize;
         if rheaders[t].contains("TRBJ1") {
             j1 = true;
         }
@@ -2336,7 +2382,7 @@ pub fn annotate_seq_core(
         }
     }
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
+        let t = annx[i].f2 as usize;
         if j1 && !j2 && rheaders[t].contains("TRBC2") {
             to_delete[i] = true;
         }
@@ -2351,7 +2397,7 @@ pub fn annotate_seq_core(
     let mut to_delete = vec![false; annx.len()];
     for pass in 0..2 {
         for i1 in 0..annx.len() {
-            let t1 = annx[i1].2;
+            let t1 = annx[i1].f2;
             if pass == 1 {
                 if !rheaders[t1 as usize].contains("J-REGION") {
                     continue;
@@ -2360,7 +2406,7 @@ pub fn annotate_seq_core(
                 continue;
             }
             for i2 in 0..annx.len() {
-                let t2 = annx[i2].2;
+                let t2 = annx[i2].f2;
                 if pass == 1 {
                     if !rheaders[t2 as usize].contains("J-REGION") {
                         continue;
@@ -2368,12 +2414,12 @@ pub fn annotate_seq_core(
                 } else if !rheaders[t2 as usize].contains("C-REGION") {
                     continue;
                 }
-                let (l1, l2) = (annx[i1].0, annx[i2].0);
-                let (len1, len2) = (annx[i1].1, annx[i2].1);
+                let (l1, l2) = (annx[i1].f0, annx[i2].f0);
+                let (len1, len2) = (annx[i1].f1, annx[i2].f1);
                 if l1 != l2 || len1 != len2 {
                     continue;
                 }
-                let (p1, p2) = (annx[i1].3, annx[i2].3);
+                let (p1, p2) = (annx[i1].f3, annx[i2].f3);
                 if pass == 1 {
                     if p1 + len1 != refs[t1 as usize].len() as i32 {
                         continue;
@@ -2384,7 +2430,7 @@ pub fn annotate_seq_core(
                 } else if p1 > 0 || p2 > 0 {
                     continue;
                 }
-                if annx[i1].4.len() != annx[i2].4.len() {
+                if annx[i1].f4.len() != annx[i2].f4.len() {
                     continue;
                 }
                 if t1 < t2 {
@@ -2399,22 +2445,22 @@ pub fn annotate_seq_core(
 
     let mut to_delete = vec![false; annx.len()];
     for i1 in 0..annx.len() {
-        let t1 = annx[i1].2;
+        let t1 = annx[i1].f2;
         if !rheaders[t1 as usize].contains("C-REGION") {
             continue;
         }
         for i2 in 0..annx.len() {
-            let t2 = annx[i2].2;
+            let t2 = annx[i2].f2;
             if !rheaders[t2 as usize].contains("C-REGION") {
                 continue;
             }
-            let (l1, l2) = (annx[i1].0 as usize, annx[i2].0 as usize);
-            let (len1, len2) = (annx[i1].1 as usize, annx[i2].1 as usize);
+            let (l1, l2) = (annx[i1].f0 as usize, annx[i2].f0 as usize);
+            let (len1, len2) = (annx[i1].f1 as usize, annx[i2].f1 as usize);
             // let (p1,p2) = (annx[i1].3,annx[i2].3);
             if l1 + len1 != l2 + len2 {
                 continue;
             }
-            if l1 + annx[i1].4.len() >= l2 + annx[i2].4.len() {
+            if l1 + annx[i1].f4.len() >= l2 + annx[i2].f4.len() {
                 continue;
             }
             to_delete[i2] = true;
@@ -2429,7 +2475,7 @@ pub fn annotate_seq_core(
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let (mut u, mut v) = (Vec::<String>::new(), Vec::<String>::new());
     for i in 0..annx.len() {
-        let t = annx[i].2 as usize;
+        let t = annx[i].f2 as usize;
         if !rheaders[t].contains("segment") {
             let name = rheaders[t].after("|").between("|", "|");
             if rheaders[t].contains("UTR") {
@@ -2444,7 +2490,7 @@ pub fn annotate_seq_core(
     for i in 0..u.len() {
         if !bin_member(&v, &u[i]) {
             for j in 0..annx.len() {
-                let t = annx[j].2 as usize;
+                let t = annx[j].f2 as usize;
                 if !rheaders[t].contains("segment") {
                     let name = rheaders[t].after("|").between("|", "|");
                     if rheaders[t].contains("UTR") && u[i] == name {
@@ -2460,12 +2506,12 @@ pub fn annotate_seq_core(
 
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
-        let l1 = annx[i1].0 as usize;
-        let len1 = annx[i1].1 as usize;
+        let l1 = annx[i1].f0 as usize;
+        let len1 = annx[i1].f1 as usize;
         for i2 in 0..annx.len() {
-            let t2 = annx[i2].2 as usize;
-            let l2 = annx[i2].0 as usize;
-            let len2 = annx[i2].1 as usize;
+            let t2 = annx[i2].f2 as usize;
+            let l2 = annx[i2].f0 as usize;
+            let len2 = annx[i2].f1 as usize;
             if len2 >= len1 {
                 continue;
             }
@@ -2484,11 +2530,11 @@ pub fn annotate_seq_core(
     ann.clear();
     for x in annx.iter() {
         ann.push(Annotation {
-            tig_start: x.0,
-            match_len: x.1,
-            ref_id: x.2,
-            ref_start: x.3,
-            mismatches: x.4.len() as i32,
+            tig_start: x.f0,
+            match_len: x.f1,
+            ref_id: x.f2,
+            ref_start: x.f3,
+            mismatches: x.f4.len() as i32,
         });
     }
 }
