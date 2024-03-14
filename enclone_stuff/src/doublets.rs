@@ -14,7 +14,7 @@ use itertools::Itertools;
 use qd::Double;
 use rayon::prelude::*;
 use std::collections::HashMap;
-use std::time::Instant;
+
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, erase_if, next_diff, next_diff1_2, sort_sync2};
 

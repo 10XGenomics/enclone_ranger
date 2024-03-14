@@ -34,7 +34,6 @@ use std::{
     env,
     fs::File,
     io::{BufRead, BufWriter, Write},
-    time::Instant,
 };
 use string_utils::{add_commas, TextUtils};
 use vector_utils::{bin_member, erase_if, next_diff12_3, sort_sync2, unique_sort};

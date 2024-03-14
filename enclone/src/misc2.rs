@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 use std::fmt::Write as _;
 use std::io::Write;
-use std::time::Instant;
+
 use string_utils::strme;
 use vdj_ann::refx::RefData;
 use vector_utils::{

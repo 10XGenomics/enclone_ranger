@@ -5,7 +5,7 @@ use io_utils::{open_userfile_for_read, path_exists};
 use rayon::prelude::*;
 use std::fmt::Write;
 use std::fs::{remove_file, File};
-use std::{io::BufRead, time::Instant};
+use std::io::BufRead;
 use string_utils::TextUtils;
 use vector_utils::next_diff;
 

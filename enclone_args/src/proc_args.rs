@@ -11,7 +11,7 @@ use enclone_core::test_def::replace_at_test;
 use enclone_core::{require_readable_file, tilde_expand_me};
 use itertools::Itertools;
 use std::fmt::Write;
-use std::{process::Command, time::Instant};
+use std::process::Command;
 use string_utils::{strme, TextUtils};
 
 // Process arguments.

@@ -8,8 +8,8 @@ use enclone_core::defs::{EncloneControl, GexInfo};
 
 use hdf5::Dataset;
 use rayon::prelude::*;
+use std::collections::HashMap;
 use std::fmt::Write;
-use std::{collections::HashMap, time::Instant};
 use vector_utils::{bin_position, unique_sort};
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓

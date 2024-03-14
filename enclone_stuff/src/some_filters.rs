@@ -14,7 +14,7 @@ use qd::Double;
 use rayon::prelude::*;
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
-use std::time::Instant;
+
 use vdj_ann::refx::RefData;
 use vector_utils::{erase_if, next_diff1_2, unique_sort};
 

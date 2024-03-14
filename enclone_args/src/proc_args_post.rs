@@ -11,7 +11,7 @@ use expr_tools::vars_of_node;
 use io_utils::{open_for_read, open_userfile_for_read, path_exists};
 use std::collections::HashMap;
 use std::io::BufRead;
-use std::time::Instant;
+
 use string_utils::{parse_csv, TextUtils};
 use vector_utils::{bin_member, next_diff, sort_sync2, unique_sort};
 

@@ -5,7 +5,7 @@
 use enclone_core::defs::{CloneInfo, EncloneControl};
 use equiv::EquivRel;
 use stats_utils::percent_ratio;
-use std::time::Instant;
+
 use vector_utils::next_diff1_2;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓

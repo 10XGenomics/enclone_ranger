@@ -15,7 +15,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time;
-use std::time::Instant;
+
 use string_utils::TextUtils;
 use vector_utils::unique_sort;
 

@@ -13,7 +13,7 @@ use io_utils::{dir_list, open_for_read, open_userfile_for_read, path_exists};
 use itertools::Itertools;
 use rayon::prelude::*;
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Write, fs::read_to_string, io::BufRead, time::Instant};
+use std::{collections::HashMap, fmt::Write, fs::read_to_string, io::BufRead};
 use string_utils::{parse_csv, TextUtils};
 use vector_utils::{unique_sort, VecUtils};
 

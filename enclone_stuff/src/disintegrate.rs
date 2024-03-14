@@ -6,7 +6,7 @@
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
 use equiv::EquivRel;
 use std::collections::HashMap;
-use std::time::Instant;
+
 use vector_utils::unique_sort;
 
 pub fn disintegrate_onesies(

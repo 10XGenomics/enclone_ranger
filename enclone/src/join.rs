@@ -24,7 +24,7 @@ use rayon::prelude::*;
 use std::cmp::min;
 use std::collections::HashMap;
 use std::io::Write;
-use std::time::Instant;
+
 use vector_utils::{bin_member, erase_if, next_diff1_2};
 
 pub fn join_exacts(

@@ -10,7 +10,7 @@ use enclone_core::defs::{EncloneControl, GexInfo};
 use itertools::Itertools;
 use rayon::prelude::*;
 use regex::Regex;
-use std::time::Instant;
+
 use string_utils::{strme, TextUtils};
 use vector_utils::{bin_member, unique_sort};
 

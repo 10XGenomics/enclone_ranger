@@ -12,7 +12,7 @@ use rayon::prelude::*;
 use std::env;
 use std::thread;
 use std::time;
-use std::time::Instant;
+
 use vector_utils::{bin_position, erase_if};
 
 pub fn filter_by_fcell(

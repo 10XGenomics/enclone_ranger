@@ -17,7 +17,7 @@
 use enclone_core::defs::{EncloneControl, ExactClonotype, GexInfo, TigData};
 use rayon::prelude::*;
 use stats_utils::binomial_sum;
-use std::time::Instant;
+
 use vector_utils::{bin_member, bin_position, reverse_sort};
 
 pub fn test_vdj_gex_inconsistent(

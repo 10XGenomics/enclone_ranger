@@ -3,7 +3,7 @@
 use enclone_core::defs::{EncloneControl, GexInfo};
 use regex::Regex;
 use std::collections::HashMap;
-use std::time::Instant;
+
 use string_utils::TextUtils;
 use vector_utils::unique_sort;
 
