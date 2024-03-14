@@ -90,6 +90,6 @@ pub fn finish_join(
         let bad_rate = percent_ratio(bads, denom);
         println!("whitelist contamination rate = {bad_rate:.2}%");
     }
-    ctl.perf_stats(&timer3, "in tail of join");
+
     eq
 }

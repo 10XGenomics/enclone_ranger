@@ -42,7 +42,7 @@ pub fn delete_doublets(
             results.push((i, Vec::new()));
         }
         let mut pures = Vec::<Vec<usize>>::new();
-        ctl.perf_stats(&t, "doublet filtering setup");
+
         let t = Instant::now();
         results.par_iter_mut().for_each(|res| {
             let i = res.0;
@@ -99,7 +99,6 @@ pub fn delete_doublets(
 
         // Find the pairs of pure subclonotypes that share identical CDR3 sequences.
 
-        ctl.perf_stats(&t, "doublet filtering main");
         let t = Instant::now();
         let mut shares = Vec::<(usize, usize)>::new();
         {
@@ -114,7 +113,7 @@ pub fn delete_doublets(
             }
             content.par_sort();
             content.dedup();
-            ctl.perf_stats(&t, "doublet filtering shares setup");
+
             let t = Instant::now();
             let mut j = 0;
             while j < content.len() {
@@ -129,7 +128,6 @@ pub fn delete_doublets(
             }
             shares.par_sort();
             shares.dedup();
-            ctl.perf_stats(&t, "doublet filtering shares");
         }
 
         // Find triples of pure subclonotypes in which the first two have no share, but both
@@ -185,7 +183,6 @@ pub fn delete_doublets(
                 trips.append(&mut r.1);
             }
         }
-        ctl.perf_stats(&t, "doublet filtering trips");
 
         // Delete some of the third members of the triples.
 
@@ -248,6 +245,5 @@ pub fn delete_doublets(
             orbits2.push(o);
         }
         *orbits = orbits2;
-        ctl.perf_stats(&t, "doublet filtering tail");
     }
 }

@@ -10,7 +10,7 @@ use equiv::EquivRel;
 use itertools::Itertools;
 #[cfg(not(target_os = "windows"))]
 use pager::Pager;
-use perf_stats::elapsed;
+
 use std::collections::HashMap;
 use std::time::Instant;
 use string_utils::stringme;
@@ -161,7 +161,7 @@ pub fn lookup_heavy_chain_reuse(
         }
         println!(
             "\nused {:.2} seconds in heavy chain reuse calculation\n",
-            elapsed(&t)
+            t.elapsed().as_secs_f64()
         );
     }
 }

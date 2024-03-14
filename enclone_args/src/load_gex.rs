@@ -132,7 +132,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
                 .collect()
         })
         .collect();
-    ctl.perf_stats(&t, "after load_gex");
 
     // Answer.
 

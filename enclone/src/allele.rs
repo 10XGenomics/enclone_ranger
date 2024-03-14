@@ -595,5 +595,4 @@ pub fn sub_alts(
             }
         }
     }
-    ctl.perf_stats(&t, "substituting alt alleles");
 }

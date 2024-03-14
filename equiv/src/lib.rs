@@ -200,7 +200,7 @@ impl EquivRel {
 
     let delta_peak = peak_mem_usage_bytes() - peak;
     println!(
-        "{} seconds used, delta peak mem = {} bytes", elapsed(&t), delta_peak );
+        "{} seconds used, delta peak mem = {} bytes", t.elapsed().as_secs_f64(), delta_peak );
 
 */
 

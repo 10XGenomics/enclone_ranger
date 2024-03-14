@@ -275,8 +275,6 @@ HAPS_DEBUG: turn on debug mode for the HAPS option
 
 ROW_FILL_VERBOSE: special option for debugging
 
-COMPE: COMP, plus enforce no unaccounted time (except up to 0.02 seconds)
-UNACCOUNTED: show unaccounted time at each step
 EVIL_EYE: print logging to facilitate diagnosis of mysterious hanging
 
 TOOLTIP: add tooltip text to honeycomb plots
