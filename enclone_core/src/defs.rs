@@ -215,7 +215,6 @@ pub struct GeneralOpt {
     pub row_fill_verbose: bool,
     pub config_file: String,
     pub config: HashMap<String, String>,
-    pub toy_com: bool,
     pub chains_to_align: Vec<usize>,
     pub chains_to_align2: Vec<usize>,
     pub chains_to_jun_align: Vec<usize>,

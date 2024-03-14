@@ -2,7 +2,7 @@
 
 use self::annotate::{annotate_seq, get_cdr3_using_ann, print_some_annotations};
 use self::refx::RefData;
-use self::transcript::is_valid;
+use self::transcript::is_productive_contig;
 use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, OriginInfo, TigData};
@@ -183,28 +183,12 @@ fn process_json_annotation(
             print_some_annotations(refdata, &ann1, &mut log, false);
             print!("\n{}", strme(&log));
         }
-        let mut log = Vec::<u8>::new();
         if ctl.gen_opt.trace_barcode == ann.barcode {
-            if !is_valid(
-                &x,
-                refdata,
-                &ann1,
-                true,
-                &mut log,
-                Some(ctl.gen_opt.gamma_delta),
-            ) {
-                print!("{}", strme(&log));
+            if !is_productive_contig(&x, refdata, &ann1).0 {
                 println!("invalid");
                 return Ok(res);
             }
-        } else if !is_valid(
-            &x,
-            refdata,
-            &ann1,
-            false,
-            &mut log,
-            Some(ctl.gen_opt.gamma_delta),
-        ) {
+        } else if !is_productive_contig(&x, refdata, &ann1).0 {
             return Ok(res);
         }
         let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
