@@ -2581,8 +2581,8 @@ pub fn cdr3_motif_right() -> Vec<Vec<u8>> {
 }
 
 const CDR3_MIN_LEN: usize = 5;
-const RIGHT_FLANK_MIN_SCORE: usize = 3;
-const LEFT_FLANK_MIN_SCORE: usize = 4;
+const LEFT_FLANK_MIN_SCORE: usize = 3;
+const RIGHT_FLANK_MIN_SCORE: usize = 4;
 
 pub fn get_cdr3(contig: &DnaStringSlice, cdr3: &mut Vec<(usize, Vec<u8>, usize, usize)>) {
     const MIN_TOTAL_CDR3_SCORE: usize = 10; // about as high as one can go
@@ -2595,28 +2595,30 @@ pub fn get_cdr3(contig: &DnaStringSlice, cdr3: &mut Vec<(usize, Vec<u8>, usize, 
     let contig_seq = contig.to_owned().to_ascii_vec();
 
     for frame_idx in 0..3 {
-        // go through three frames
+        // Go through three frames.
+
+        // Convert the DNA sequence + frame to an amino acid sequence.
         let amino_acid_seq = nucleotide_to_aminoacid_sequence(&contig_seq, frame_idx);
         if amino_acid_seq.len() < 4 {
             return;
         }
+
+        // Check each position in the AA seq to see if we find a CDR3 there.
         for cdr3_start_pos in
             0..amino_acid_seq.len() - min(amino_acid_seq.len(), (CDR3_MIN_LEN + 3) + 1)
         {
+            // The CDR3 has to start with a Cysteine.
             if amino_acid_seq[cdr3_start_pos] == b'C' {
-                // CDR3 starts at position pos on amino_acid_seq
-
-                let first_f = cdr3_start_pos + (CDR3_MIN_LEN - 3); // basically = cdr3_start_pos + 2
-                let last_f = amino_acid_seq.len() - 4;
+                // Search for the right flank set up start and end positions for the search.
+                let first_f = cdr3_start_pos + (CDR3_MIN_LEN - 3);
+                let last_f = amino_acid_seq.len() - RIGHT_FLANK_MIN_SCORE;
                 for right_motif_start_pos in first_f..last_f {
-                    // loop through possible right_motif_start_pos from (cdr3_start_pos + 2) to (amino_acid_seq.len() - 4)
-
+                    // Don't look further if the remaining part of the amino_acid_seq is to short to find the full right flank motif.
                     if right_motif_start_pos + right_motifs[0].len() > amino_acid_seq.len() {
-                        // break if amino_acid_seq is to short
                         break;
                     }
 
-                    // match the right flank and calculate the score
+                    // Match the right flank and calculate the score.
                     let mut right_flank_score = 0;
                     for right_motif_col in 0..right_motifs[0].len() {
                         let mut hit = false;
@@ -2632,8 +2634,10 @@ pub fn get_cdr3(contig: &DnaStringSlice, cdr3: &mut Vec<(usize, Vec<u8>, usize, 
                         }
                     }
 
-                    // if right flank score is larger than 4 attempt to match left flank
+                    // If right flank score is larger than RIGHT_FLANK_MIN_SCORE, continue and attempt to match left flank,
+                    // otherwise continue with next possible CDR3 start position.
                     if right_flank_score >= RIGHT_FLANK_MIN_SCORE {
+                        // Check if there is a stop codon in the CDR3.
                         let mut stop_codon = false;
                         for aa in amino_acid_seq
                             .iter()
@@ -2644,6 +2648,8 @@ pub fn get_cdr3(contig: &DnaStringSlice, cdr3: &mut Vec<(usize, Vec<u8>, usize, 
                                 stop_codon = true;
                             }
                         }
+
+                        // If there is no stop codon and there is room for the full left motif in the AA seq, match left flank.
                         let ll = left_motifs[0].len();
                         if !stop_codon && cdr3_start_pos >= ll {
                             let mut left_flank_score = 0;
@@ -2660,6 +2666,8 @@ pub fn get_cdr3(contig: &DnaStringSlice, cdr3: &mut Vec<(usize, Vec<u8>, usize, 
                                     left_flank_score += 1;
                                 }
                             }
+
+                            // If the left flank score and total score is above cutoff push the CDR3 to the vec.
                             // ◼ It's possible that the left_flank_score + right_flank_score
                             // ◼ bound should be increased.
                             if left_flank_score >= LEFT_FLANK_MIN_SCORE
