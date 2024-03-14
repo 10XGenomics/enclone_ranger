@@ -1,6 +1,6 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
-use self::annotate::{annotate_seq, get_cdr3_using_ann, print_some_annotations};
+use self::annotate::{annotate_seq, get_cdr3_using_ann, print_some_annotations, Annotation};
 use self::refx::RefData;
 use self::transcript::is_productive_contig;
 use debruijn::dna_string::DnaString;
@@ -129,7 +129,7 @@ fn process_json_annotation(
     let mut j_start = 0;
     let mut j_start_ref = 0;
     let mut c_start = None;
-    let mut annv = Vec::<(i32, i32, i32, i32, i32)>::new();
+    let mut annv = Vec::<Annotation>::new();
     let mut cdr3_aa: String;
     let mut cdr3_dna: String;
     let mut cdr3_start: usize;
@@ -141,18 +141,18 @@ fn process_json_annotation(
     // Reannotate.
     if reannotate || ctl.gen_opt.reprod {
         let x = DnaString::from_dna_string(&ann.sequence);
-        let mut ann1 = Vec::<(i32, i32, i32, i32, i32)>::new();
+        let mut ann1 = Vec::<Annotation>::new();
         annotate_seq(&x, refdata, &mut ann1, true, false, true);
 
         // If there are multiple V segment alignments, possibly reduce to just one.
 
-        let mut ann2 = Vec::<(i32, i32, i32, i32, i32)>::new();
+        let mut ann2 = Vec::<Annotation>::new();
         let mut j = 0;
         while j < ann1.len() {
-            let t = ann1[j].2 as usize;
+            let t = ann1[j].ref_id as usize;
             let mut k = j + 1;
             while k < ann1.len() {
-                if refdata.segtype[ann1[k].2 as usize] != refdata.segtype[t] {
+                if refdata.segtype[ann1[k].ref_id as usize] != refdata.segtype[t] {
                     break;
                 }
                 k += 1;
@@ -160,11 +160,11 @@ fn process_json_annotation(
             if refdata.segtype[t] == "V" && k - j > 1 {
                 let mut entries = 1;
                 if j < ann1.len() - 1
-                    && ann1[j + 1].2 as usize == t
-                    && ((ann1[j].0 + ann1[j].1 == ann1[j + 1].0
-                        && ann1[j].3 + ann1[j].1 < ann1[j + 1].3)
-                        || (ann1[j].0 + ann1[j].1 < ann1[j + 1].0
-                            && ann1[j].3 + ann1[j].1 == ann1[j + 1].3))
+                    && ann1[j + 1].ref_id as usize == t
+                    && ((ann1[j].tig_start + ann1[j].match_len == ann1[j + 1].tig_start
+                        && ann1[j].ref_start + ann1[j].match_len < ann1[j + 1].ref_start)
+                        || (ann1[j].tig_start + ann1[j].match_len < ann1[j + 1].tig_start
+                            && ann1[j].ref_start + ann1[j].match_len == ann1[j + 1].ref_start))
                 {
                     entries = 2;
                 }
@@ -200,7 +200,7 @@ fn process_json_annotation(
             .to_string();
         let mut seen_j = false;
         for anni in ann1 {
-            let t = anni.2 as usize;
+            let t = anni.ref_id as usize;
             if refdata.is_u(t) {
                 u_ref_id = Some(t);
             } else if refdata.is_v(t) && !seen_j {
@@ -213,8 +213,8 @@ fn process_json_annotation(
                 {
                     left = true;
                 }
-                if anni.3 == 0 {
-                    tig_start = anni.0 as isize;
+                if anni.ref_start == 0 {
+                    tig_start = anni.tig_start as isize;
                     if tig_start > cdr3_start as isize {
                         panic!(
                             "Something is wrong with the CDR3 start for this contig:\n\n{}.",
@@ -223,24 +223,24 @@ fn process_json_annotation(
                     }
                     cdr3_start -= tig_start as usize;
                 }
-                v_stop = (anni.0 + anni.1) as usize;
-                v_stop_ref = (anni.3 + anni.1) as usize;
+                v_stop = (anni.tig_start + anni.match_len) as usize;
+                v_stop_ref = (anni.ref_start + anni.match_len) as usize;
             } else if refdata.is_d(t) {
-                d_start = Some(anni.0 as usize);
+                d_start = Some(anni.tig_start as usize);
                 d_ref_id = Some(t);
             } else if refdata.is_j(t) {
                 j_ref_id = t;
-                tig_stop = (anni.0 + anni.1) as isize;
-                j_start = anni.0 as usize;
-                j_start_ref = anni.3 as usize;
+                tig_stop = (anni.tig_start + anni.match_len) as isize;
+                j_start = anni.tig_start as usize;
+                j_start_ref = anni.ref_start as usize;
                 seen_j = true;
             } else if refdata.is_c(t) {
                 c_ref_id = Some(t);
-                c_start = Some(anni.0 as usize);
+                c_start = Some(anni.tig_start as usize);
             }
         }
         for i in (0..annv.len()).rev() {
-            annv[i].0 -= annv[0].0;
+            annv[i].tig_start -= annv[0].tig_start;
         }
     } else {
         // Use annotations from json file.
@@ -367,16 +367,34 @@ fn process_json_annotation(
                 del = x;
             }
         }
-        annv.push((0_i32, len1, t, 0, 0));
+        annv.push(Annotation {
+            tig_start: 0,
+            match_len: len1,
+            ref_id: t,
+            ref_start: 0,
+            mismatches: 0,
+        });
         if ins > 0 && ins % 3 == 0 && del == 0 && len2 > 0 {
             let start = len1 + ins;
-            annv.push((start, len2, t, len1, 0));
+            annv.push(Annotation {
+                tig_start: start,
+                match_len: len2,
+                ref_id: t,
+                ref_start: len1,
+                mismatches: 0,
+            });
         } else if del > 0 && del % 3 == 0 && ins == 0 && len2 > 0 {
-            annv.push((len1, len2, t, len1 + del, 0));
+            annv.push(Annotation {
+                tig_start: len1,
+                match_len: len2,
+                ref_id: t,
+                ref_start: len1 + del,
+                mismatches: 0,
+            });
         }
         let rt = &refdata.refs[v_ref_id];
-        if annv.len() == 2 && annv[0].1 as usize > rt.len() {
-            let msg = format!("annv[0].1 = {}, rt.len() = {}", annv[0].1, rt.len());
+        if annv.len() == 2 && annv[0].match_len as usize > rt.len() {
+            let msg = format!("annv[0].1 = {}, rt.len() = {}", annv[0].match_len, rt.len());
             return Err(json_error(None, ctl.gen_opt.internal_run, &msg));
         }
 

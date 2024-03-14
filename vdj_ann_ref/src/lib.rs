@@ -116,6 +116,8 @@ pub fn make_vdj_ref_data(
 
 #[cfg(test)]
 mod tests {
+    use vdj_ann::annotate::Annotation;
+
     use super::*;
 
     // The following test checks for alignment of a D region.  This example was fixed by code
@@ -139,11 +141,11 @@ mod tests {
         let (is_tcr, is_bcr) = (true, false);
         let mut refdata = RefData::new();
         make_vdj_ref_data_core(&mut refdata, refx, &ext_refx, is_tcr, is_bcr, None);
-        let mut ann = Vec::<(i32, i32, i32, i32, i32)>::new();
+        let mut ann = Vec::<Annotation>::new();
         annotate_seq(&seq, &refdata, &mut ann, true, false, true);
         let mut have_d = false;
         for i in 0..ann.len() {
-            if refdata.is_d(ann[i].2 as usize) {
+            if refdata.is_d(ann[i].ref_id as usize) {
                 have_d = true;
             }
         }
