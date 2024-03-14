@@ -2700,15 +2700,15 @@ pub fn get_cdr3(contig: &DnaStringSlice) -> Vec<CDR3Annotation> {
     // Only return cdr3s having the maximum score.
     let max_score = found_cdr3s
         .iter()
-        .map(|cdi| cdi.left_flank_score + cdi.right_flank_score)
+        .map(|cdr3| cdr3.left_flank_score + cdr3.right_flank_score)
         .max()
         .unwrap_or(0);
     let to_delete = found_cdr3s
         .iter()
-        .map(|cdi| cdi.left_flank_score + cdi.right_flank_score < max_score)
+        .map(|cdr3| cdr3.left_flank_score + cdr3.right_flank_score < max_score)
         .collect::<Vec<_>>();
     erase_if(&mut found_cdr3s, &to_delete);
-    found_cdr3s.sort_by_key(|cdi| cdi.start_position_on_contig);
+    found_cdr3s.sort_by_key(|cdr3| cdr3.start_position_on_contig);
 
     // Prefer later start and prefer longer CDR3.
     if found_cdr3s.len() > 1 {
