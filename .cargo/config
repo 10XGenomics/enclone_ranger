@@ -1,13 +1,20 @@
 [build]
 rustflags = [
+    # --- lint deny ---
+  # rustc lints
+  "-Dfuture_incompatible",
+  "-Dnonstandard_style",
+  "-Drust_2018_idioms",
+  "-Dunused",
+  "-D", "rust_2018_compatibility",
+  "-D", "rust_2021_compatibility",
+
+  # clippy categorical
   "-D", "clippy::perf",
   "-D", "clippy::style",
   "-D", "clippy::suspicious",
-  "-D", "future_incompatible",
-  "-D", "nonstandard_style",
-  "-D", "rust_2018_compatibility",
-  "-D", "rust_2021_compatibility",
-  "-D", "unused",
+
+  # clippy pedantic
   "-D", "clippy::enum_glob_use",
   "-D", "clippy::needless_lifetimes",
   "-D", "clippy::redundant_closure_for_method_calls",
@@ -20,6 +27,7 @@ rustflags = [
   "-D", "clippy::large-enum-variant",
   "-D", "clippy::missing_safety_doc",
   "-D", "clippy::result_unit_err",
+  # --- lint allow ---
   "-A", "clippy::type_complexity",
   "-A", "clippy::too_many_arguments",
   "-A", "clippy::needless_range_loop",

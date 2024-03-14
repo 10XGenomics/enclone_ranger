@@ -2665,7 +2665,7 @@ pub struct CDR3Annotation {
     right_flank_score: usize,
 }
 
-pub fn get_cdr3(contig: &DnaStringSlice) -> Vec<CDR3Annotation> {
+pub fn get_cdr3(contig: &DnaStringSlice<'_>) -> Vec<CDR3Annotation> {
     const MIN_TOTAL_CDR3_SCORE: usize = 10; // about as high as one can go
 
     let left_motifs = cdr3_motif_left();
@@ -2760,8 +2760,8 @@ pub fn get_cdr3(contig: &DnaStringSlice) -> Vec<CDR3Annotation> {
                                     aa_seq: amino_acid_seq
                                         [cdr3_start_pos..right_motif_start_pos + 2 + 1]
                                         .to_vec(),
-                                    left_flank_score: left_flank_score,
-                                    right_flank_score: right_flank_score,
+                                    left_flank_score,
+                                    right_flank_score,
                                 });
                             }
                         }
@@ -2795,7 +2795,7 @@ pub fn get_cdr3(contig: &DnaStringSlice) -> Vec<CDR3Annotation> {
     found_cdr3s
 }
 
-pub fn print_cdr3(tig: &DnaStringSlice, log: &mut Vec<u8>) {
+pub fn print_cdr3(tig: &DnaStringSlice<'_>, log: &mut Vec<u8>) {
     let cdr3_anns = get_cdr3(tig);
     for cdr3 in cdr3_anns {
         fwriteln!(

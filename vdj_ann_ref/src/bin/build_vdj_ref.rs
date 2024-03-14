@@ -148,7 +148,7 @@ fn header_from_gene(gene: &str, is_utr: bool, record: &mut usize, source: &str) 
     format!("{record}|{gene} {source}|{gene}|{region_type}|{header_tail}")
 }
 
-fn print_fasta<R: Write>(out: &mut R, header: &str, seq: &DnaStringSlice, none: bool) {
+fn print_fasta<R: Write>(out: &mut R, header: &str, seq: &DnaStringSlice<'_>, none: bool) {
     if none {
         return;
     }
@@ -158,7 +158,7 @@ fn print_fasta<R: Write>(out: &mut R, header: &str, seq: &DnaStringSlice, none: 
 fn print_oriented_fasta<R: Write>(
     out: &mut R,
     header: &str,
-    seq: &DnaStringSlice,
+    seq: &DnaStringSlice<'_>,
     fw: bool,
     none: bool,
 ) {

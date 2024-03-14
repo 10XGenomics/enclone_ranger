@@ -44,8 +44,8 @@ pub fn proc_lvar_auto(
     gex_counts_unsorted: &[usize],
     gex_fcounts_unsorted: &[f64],
     n_gexs: &[usize],
-    d_readers: &[Option<Reader>],
-    ind_readers: &[Option<Reader>],
+    d_readers: &[Option<Reader<'_>>],
+    ind_readers: &[Option<Reader<'_>>],
     h5_data: &[(usize, Vec<u32>, Vec<u32>)],
     alt_bcs: &[&str],
 ) -> Result<bool, String> {

@@ -169,7 +169,7 @@ pub fn define_mat(
                         }
                         let (l1, l2) = (infos[k1], infos[k2]);
                         if info[l1].lens == info[l2].lens {
-                            let mut pot = Vec::<PotentialJoin>::new();
+                            let mut pot = Vec::<PotentialJoin<'_>>::new();
                             if join_one(
                                 is_bcr,
                                 l1,
@@ -245,7 +245,7 @@ pub fn define_mat(
                 if info[i1].lens != info[i2].lens {
                     continue;
                 }
-                let mut pot = Vec::<PotentialJoin>::new();
+                let mut pot = Vec::<PotentialJoin<'_>>::new();
                 if join_one(
                     is_bcr,
                     i1,

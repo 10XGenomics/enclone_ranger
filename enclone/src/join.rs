@@ -116,7 +116,7 @@ pub fn join_exacts(
         let joins = &mut r.2;
         let errors = &mut r.3;
         let logplus = &mut r.4;
-        let mut pot = Vec::<PotentialJoin>::new();
+        let mut pot = Vec::<PotentialJoin<'_>>::new();
 
         // Main join logic.  If you change par_iter_mut to iter_mut above, and run happening,
         // a lot of time shows up on the following line.  If further you manually inline join_core
