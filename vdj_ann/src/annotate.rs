@@ -162,20 +162,20 @@ pub struct Annotation {
 
 #[derive(Ord, PartialOrd, PartialEq, Eq)]
 /// Used prior to creatrion of Annotation object, includes a vector of mismatches
-pub struct PreAnnotation {
+struct PreAnnotation {
     /// Start position on sequence (contig)
-    pub tig_start: i32,
+    tig_start: i32,
     /// Match length
-    pub match_len: i32,
+    match_len: i32,
     /// Reference id (that this contig matches)
-    pub ref_id: i32,
+    ref_id: i32,
     /// Start position on reference
-    pub ref_start: i32,
+    ref_start: i32,
     /// Vector mismatches on the sequence (contig)
-    pub mismatches: Vec<i32>,
+    mismatches: Vec<i32>,
 }
 
-pub fn next_diff_pre_annotation(x: &[PreAnnotation], i: i32) -> i32 {
+fn next_diff_pre_annotation(x: &[PreAnnotation], i: i32) -> i32 {
     let mut j: i32 = i + 1;
     loop {
         if j == x.len() as i32 || x[j as usize].tig_start != x[i as usize].tig_start {
