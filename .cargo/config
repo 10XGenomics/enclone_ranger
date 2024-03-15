@@ -24,6 +24,7 @@ rustflags = [
   "-Dclippy::flat_map_option",
   "-Dclippy::from_iter_instead_of_collect",
   "-Dclippy::implicit_clone",
+  "-Dclippy::inefficient_to_string",
 
   "-D", "clippy::needless_lifetimes",
   "-D", "clippy::redundant_closure_for_method_calls",

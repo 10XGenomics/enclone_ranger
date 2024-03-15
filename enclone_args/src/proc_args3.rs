@@ -342,7 +342,7 @@ fn parse_bc(mut bc: String, ctl: &mut EncloneControl, call_type: &str) -> Result
                     ));
                 }
                 for x in &fields {
-                    fieldnames.push(x.to_string());
+                    fieldnames.push((*x).to_string());
                 }
                 for i in 0..fields.len() {
                     if fields[i] == "color" {

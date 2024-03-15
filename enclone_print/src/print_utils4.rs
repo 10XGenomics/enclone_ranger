@@ -386,7 +386,7 @@ pub fn compute_some_stats(
             let mat = bcs
                 .iter()
                 .zip(lis.iter())
-                .map(|(bc, &li)| gex_info.pca[li][&bc.to_string()].clone())
+                .map(|(bc, &li)| gex_info.pca[li][&(*bc).to_string()].clone())
                 .collect::<Vec<_>>();
             let mut matg = Vec::<Vec<f64>>::new();
             for li in 0..ctl.origin_info.n() {

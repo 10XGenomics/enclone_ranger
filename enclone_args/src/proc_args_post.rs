@@ -51,7 +51,7 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
                 return Err(format!("\nThe file\n{bc}\nis missing the barcode field.\n",));
             }
             for x in &fields {
-                fieldnames.push(x.to_string());
+                fieldnames.push((*x).to_string());
             }
             for (i, field) in fields.into_iter().enumerate() {
                 if field == "color" {
