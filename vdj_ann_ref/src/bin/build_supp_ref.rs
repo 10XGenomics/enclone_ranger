@@ -25,7 +25,6 @@
 //
 // And these also need to go into the references on /mnt/opt and possibly /mnt/test.
 
-// extern crate vdj_asm_utils;
 // use vdj_asm_utils::*;
 
 use debruijn::{
@@ -34,7 +33,7 @@ use debruijn::{
 };
 use exons::fetch_exons;
 use fasta_tools::read_fasta_into_vec_dna_string_plus_headers;
-use pretty_trace::PrettyTrace;
+
 use std::{collections::HashMap, env};
 use string_utils::TextUtils;
 
@@ -44,8 +43,6 @@ fn print_fasta(header: &str, seq: &DnaStringSlice) {
 
 fn main() {
     // Force panic to yield a traceback, and make it a pretty one.
-
-    PrettyTrace::new().on();
 
     // Parse arguments.
 

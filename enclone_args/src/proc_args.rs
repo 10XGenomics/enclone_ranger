@@ -495,17 +495,14 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
             &mut ctl.plot_opt.plot_by_isotype_nolegend,
         ),
         ("TOY", &mut ctl.gen_opt.toy),
-        ("TOY_COM", &mut ctl.gen_opt.toy_com),
         ("UMI_FILT_MARK", &mut ctl.clono_filt_opt_def.umi_filt_mark),
         (
             "UMI_RATIO_FILT_MARK",
             &mut ctl.clono_filt_opt_def.umi_ratio_filt_mark,
         ),
-        ("UNACCOUNTED", &mut ctl.perf_opt.unaccounted),
         ("UTR_CON", &mut ctl.gen_opt.utr_con),
         ("VDUP", &mut ctl.clono_filt_opt.vdup),
         ("VIS_DUMP", &mut ctl.gen_opt.vis_dump),
-        ("VISUAL", &mut ctl.visual_mode),
         ("WEAK", &mut ctl.gen_opt.weak),
         ("WHITEF", &mut ctl.clono_filt_opt_def.whitef),
     ];
@@ -648,10 +645,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
 
     let set_nothing_simple = [
         "CELLRANGER",
-        "COMP",
-        "COMPE",
-        "COMP2",
-        "CTRLC",
         "DUMP_INTERNAL_IDS",
         "EVIL_EYE",
         "FORCE_EXTERNAL",
@@ -668,7 +661,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         "PLAIN",
         "PRINT_CPU",
         "PRINT_CPU_INFO",
-        "PROFILE",
         "SVG",
     ];
 
@@ -940,17 +932,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         }
     }
 
-    // Force visual mode if plot file is gui or if VIS_DUMP was invoked.
-
-    if (ctl.plot_opt.plot_file == "gui" || ctl.plot_opt.plot_file == "gui_stdout")
-        && !ctl.gen_opt.vis_dump
-    {
-        ctl.visual_mode = true;
-    }
-
     // Record time.
-
-    ctl.perf_stats(&targs, "in main args loop");
 
     // Do residual argument processing.
 

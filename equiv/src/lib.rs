@@ -176,7 +176,6 @@ impl EquivRel {
     // there are 1618950 orbits
     // 1.5 seconds, delta peak mem = 258 Mb
     // disjoint-sets = "0.4.2"
-    // extern crate disjoint_sets;
 
     use disjoint_sets::UnionFind;
     let mut uf = UnionFind::<u32>::new(N as usize);
@@ -201,7 +200,7 @@ impl EquivRel {
 
     let delta_peak = peak_mem_usage_bytes() - peak;
     println!(
-        "{} seconds used, delta peak mem = {} bytes", elapsed(&t), delta_peak );
+        "{} seconds used, delta peak mem = {} bytes", t.elapsed().as_secs_f64(), delta_peak );
 
 */
 

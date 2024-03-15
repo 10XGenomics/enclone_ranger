@@ -13,7 +13,7 @@
 
 use debruijn::dna_string::DnaString;
 use flate2::read::MultiGzDecoder;
-use pretty_trace::PrettyTrace;
+
 use process::Command;
 use sha2::{Digest, Sha256};
 use std::io::copy;
@@ -176,8 +176,6 @@ fn parse_gtf_file(gtf: &str, demangle: &HashMap<String, String>, exons: &mut Vec
 
 fn main() {
     // Force panic to yield a traceback, and make it a pretty one.
-
-    PrettyTrace::new().on();
 
     // Parse arguments.
 

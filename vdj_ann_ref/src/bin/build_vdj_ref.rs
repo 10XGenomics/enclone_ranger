@@ -84,8 +84,7 @@ use debruijn::{
 };
 use fasta_tools::load_genbank_accession;
 use flate2::read::MultiGzDecoder;
-use perf_stats::elapsed;
-use pretty_trace::PrettyTrace;
+
 use process::Command;
 use sha2::{Digest, Sha256};
 use std::io::copy;
@@ -377,8 +376,6 @@ fn main() {
     let t = Instant::now();
 
     // Force panic to yield a traceback, and make it a pretty one.
-
-    PrettyTrace::new().on();
 
     // Parse arguments.
 
@@ -1201,7 +1198,10 @@ fn main() {
     // and it might be possible to speed it up.
     // ◼ Put this 'selective fasta loading' into its own function.
 
-    println!("{:.1} seconds used, loading fasta", elapsed(&t));
+    println!(
+        "{:.1} seconds used, loading fasta",
+        t.elapsed().as_secs_f64()
+    );
     let mut refs = Vec::<DnaString>::new();
     let mut rheaders = Vec::<String>::new();
     let gz = MultiGzDecoder::new(std::fs::File::open(&fasta).unwrap());
@@ -1242,7 +1242,10 @@ fn main() {
 
     // Get the DNA sequences for the exons.
 
-    println!("{:.1} seconds used, getting exon seqs", elapsed(&t));
+    println!(
+        "{:.1} seconds used, getting exon seqs",
+        t.elapsed().as_secs_f64()
+    );
     let mut dna = Vec::<DnaString>::new();
     for i in 0..exons.len() {
         let chr = &exons[i].2;
@@ -1257,7 +1260,7 @@ fn main() {
 
     println!(
         "{:.1} seconds used, checking for nearly identical transcripts",
-        elapsed(&t)
+        t.elapsed().as_secs_f64()
     );
     let mut to_delete = vec![false; exons.len()];
     let mut i = 0;
@@ -1312,7 +1315,10 @@ fn main() {
 
     // Build fasta.
 
-    println!("{:.1} seconds used, building fasta", elapsed(&t));
+    println!(
+        "{:.1} seconds used, building fasta",
+        t.elapsed().as_secs_f64()
+    );
     let mut i = 0;
     let mut record = 0;
     while i < exons.len() {
@@ -1523,7 +1529,10 @@ fn main() {
 
     // Add genes.
 
-    println!("{:.1} seconds used, adding genes", elapsed(&t));
+    println!(
+        "{:.1} seconds used, adding genes",
+        t.elapsed().as_secs_f64()
+    );
     for i in 0..added_genes.len() {
         add_gene(
             &mut out,

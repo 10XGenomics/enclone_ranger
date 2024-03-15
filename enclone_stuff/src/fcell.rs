@@ -99,7 +99,6 @@ pub fn filter_by_fcell(
                 res.2 = ind_readers[li].as_ref().unwrap().read_raw().unwrap();
             }
         });
-        ctl.perf_stats(&tdi, "setting up readers, zero");
 
         // Proceed.
 

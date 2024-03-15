@@ -271,18 +271,11 @@ NO_UNCAP_SIM: turn off uncapping simulation
 
 HAPS_DEBUG: turn on debug mode for the HAPS option
 
-PROFILE: turn on profiling, normally used with NOPRINT; paging is turned off because this
-This won't work with paging, however you can pipe to "less -r".
-
 ===================================================================================================
 
 ROW_FILL_VERBOSE: special option for debugging
 
-COMPE: COMP, plus enforce no unaccounted time (except up to 0.02 seconds)
-UNACCOUNTED: show unaccounted time at each step
 EVIL_EYE: print logging to facilitate diagnosis of mysterious hanging
-
-TOY_COM: compute clonotypes, then act as toy server, which can speak to enclone_client
 
 TOOLTIP: add tooltip text to honeycomb plots
 

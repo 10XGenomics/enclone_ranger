@@ -554,7 +554,6 @@ pub fn load_gex(
     for (_, r) in &results {
         ctl.pathlist.extend(r.f15.iter().cloned());
     }
-    ctl.perf_stats(&t, "in load_gex main loop");
 
     // Test for error.
 
@@ -631,6 +630,5 @@ pub fn load_gex(
 
     // Done.
 
-    ctl.perf_stats(&t, "in load_gex tail");
     Ok(())
 }

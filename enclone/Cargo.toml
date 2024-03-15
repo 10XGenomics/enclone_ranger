@@ -30,18 +30,13 @@ equiv = { path = "../equiv" }
 graph_simple = { path = "../graph_simple" }
 io_utils = { path = "../io_utils" }
 itertools.workspace = true
-perf_stats = { path = "../perf_stats" }
 petgraph = "0.6"
-pretty_trace = { path = "../pretty_trace" }
 qd = { git = "https://github.com/Barandis/qd" }
 rayon = "1"
 stats_utils = { path = "../stats_utils" }
 string_utils = { path = "../string_utils" }
 vdj_ann = { path = "../vdj_ann" }
 vector_utils = { path = "../vector_utils" }
-
-[dev-dependencies]
-assert_cmd = "2"
 
 [target.'cfg(not(windows))'.dependencies]
 pager = "0.16"

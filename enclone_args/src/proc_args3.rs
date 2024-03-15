@@ -507,7 +507,7 @@ pub fn proc_xcr(
              other's structure.\n"
         ));
     }
-    ctl.perf_stats(&t, "in proc_xcr 1");
+
     let t = Instant::now();
     for (id, d) in donor_groups.iter().enumerate() {
         let origin_groups = if ctl.gen_opt.cellranger {
@@ -609,7 +609,6 @@ pub fn proc_xcr(
             }
         }
     }
-    ctl.perf_stats(&t, "in proc_xcr 2");
 
     // Get paths.  This will need to change when cellranger switches to multi.  This code is
     // parallelized because this code can indirectly make many calls to path_exists, and the wall
@@ -641,7 +640,7 @@ pub fn proc_xcr(
             }
         }
     }
-    ctl.perf_stats(&t, "in proc_xcr 3");
+
     let t = Instant::now();
     let spinlock: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     results.par_iter_mut().for_each(|res| {
@@ -688,7 +687,7 @@ pub fn proc_xcr(
         ctl.origin_info.dataset_path.push(result.0);
         ctl.origin_info.gex_path.push(result.1);
     }
-    ctl.perf_stats(&t, "in proc_xcr 4");
+
     Ok(())
 }
 

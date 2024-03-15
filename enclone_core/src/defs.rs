@@ -7,10 +7,6 @@ use evalexpr::Node;
 use hdf5::Dataset;
 
 use io_utils::{open_for_read, path_exists};
-use perf_stats::elapsed;
-
-#[cfg(not(target_os = "windows"))]
-use perf_stats::peak_mem_usage_gb;
 
 use regex::Regex;
 use std::cmp::max;
@@ -20,6 +16,7 @@ use std::io::BufRead;
 use std::sync::atomic::AtomicBool;
 use std::time::{Instant, SystemTime};
 use string_utils::TextUtils;
+use vdj_ann::annotate::Annotation;
 use vector_utils::unique_sort;
 
 pub static FAILED: AtomicBool = AtomicBool::new(false);
@@ -206,7 +203,6 @@ pub struct GeneralOpt {
     pub subset_json: String,
     pub fold_headers: bool,
     pub no_uncap_sim: bool,
-    pub profile: bool,
     pub nopager: bool,
     pub info: Option<String>,
     pub info_fields: Vec<String>,
@@ -216,7 +212,6 @@ pub struct GeneralOpt {
     pub row_fill_verbose: bool,
     pub config_file: String,
     pub config: HashMap<String, String>,
-    pub toy_com: bool,
     pub chains_to_align: Vec<usize>,
     pub chains_to_align2: Vec<usize>,
     pub chains_to_jun_align: Vec<usize>,
@@ -497,24 +492,12 @@ pub struct ParseableOpt {
     pub pno_header: bool,         // suppress header line
 }
 
-// Computational performance options.
-
-#[derive(Default, PartialEq, Eq)]
-pub struct PerfOpt {
-    pub comp: bool,         // print computational performance stats
-    pub comp2: bool,        // print more detailed computational performance stats
-    pub unaccounted: bool,  // show unaccounted time at each step
-    pub comp_enforce: bool, // comp plus enforce no unaccounted time
-}
-
 // Set up control datastructure (EncloneControl).  This is stuff that is constant for a given
 // run of enclone.  If you add something to this, be sure to update the "changed" section in
 // enclone_server.rs, if needed.
 
 #[derive(Default)]
 pub struct EncloneControl {
-    pub visual_mode: bool,                       // running as enclone visual
-    pub perf_opt: PerfOpt,                       // computational performance options
     pub start_time: Option<Instant>,             // enclone start time
     pub gen_opt: GeneralOpt,                     // miscellaneous general options
     pub plot_opt: PlotOpt,                       // plot options
@@ -537,69 +520,6 @@ pub struct EncloneControl {
     pub parseable_opt: ParseableOpt,             // parseable output options
     pub pathlist: Vec<String>,                   // list of input files
     pub last_modified: Vec<SystemTime>,          // last modified for pathlist
-}
-
-pub static mut WALLCLOCK: f64 = 0.0;
-pub static mut LAST_IPEAK: f64 = -0.0;
-
-impl EncloneControl {
-    pub fn perf_stats(&self, t: &Instant, msg: &str) {
-        let used = elapsed(t);
-        let t2 = Instant::now();
-        #[allow(unused_mut)]
-        let mut usedx = String::new();
-        #[cfg(not(target_os = "windows"))]
-        {
-            if self.perf_opt.comp {
-                let peak = peak_mem_usage_gb();
-                let ipeak = (100.0 * peak).round();
-                let peak_mem = format!("peak mem = {peak:.2} GB");
-                usedx = format!("{used:.2}");
-                let mut ipeak_changed = false;
-                unsafe {
-                    if ipeak != LAST_IPEAK {
-                        ipeak_changed = true;
-                        LAST_IPEAK = ipeak;
-                    }
-                }
-                if usedx != "0.00" || ipeak_changed {
-                    println!("used {usedx} seconds {msg}, {peak_mem}");
-                }
-            }
-        }
-
-        // Check for time used in the above computation, which could otherwise introduce a
-        // discrepancy into the time accounting stats.  Surprisingly, the time spent in that
-        // section can be nontrivial.
-
-        let used2 = elapsed(&t2);
-        let used2x = format!("{used2:.2}");
-        if self.perf_opt.comp && used2x != "0.00" {
-            println!("used {used2x} seconds computing perf stats for {msg}");
-        }
-
-        // Update total time used.
-
-        unsafe {
-            WALLCLOCK += used + used2;
-        }
-
-        // Report unaccounted time.
-
-        if self.perf_opt.comp && self.perf_opt.unaccounted && msg != "total" {
-            let delta;
-            unsafe {
-                delta = elapsed(&self.start_time.unwrap()) - WALLCLOCK;
-            }
-            let deltas = format!("{delta:.2}");
-            if deltas != "0.00" {
-                if usedx == "0.00" {
-                    println!("used 0.00 seconds {msg}");
-                }
-                println!("used {deltas} seconds unaccounted for");
-            }
-        }
-    }
 }
 
 // Set up data structure to track clonotype data.  A TigData is for one contig;
@@ -642,7 +562,7 @@ pub struct TigData {
     pub umi_count: usize, // number of UMIs supporting contig
     pub read_count: usize, // number of reads supporting contig
     pub chain_type: String, // e.g. IGH
-    pub annv: Vec<(i32, i32, i32, i32, i32)>, // V annotation (one or two entries), for V..J
+    pub annv: Vec<Annotation>, // V annotation (one or two entries), for V..J
     pub validated_umis: Option<Vec<String>>, // validated UMIs
     pub non_validated_umis: Option<Vec<String>>, // non-validated UMIs
     pub invalidated_umis: Option<Vec<String>>, // invalidated UMIs
@@ -729,7 +649,7 @@ pub struct TigData1 {
     pub cdr3_start: usize,                   // start position in bases of CDR3 on V..J
     pub left: bool,         // true if this is IGH or TRB (or TRD in gamma/delta mode)
     pub chain_type: String, // e.g. IGH
-    pub annv: Vec<(i32, i32, i32, i32, i32)>, // V annotation (one or two entries), for V..J
+    pub annv: Vec<Annotation>, // V annotation (one or two entries), for V..J
     pub vs: DnaString,      // reference V segment (possibly donor allele)
     pub vs_notesx: String,  // notes on reference V segment (probably to be replaced)
     pub js: DnaString,      // reference J segment

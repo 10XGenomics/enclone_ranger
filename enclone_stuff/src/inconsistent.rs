@@ -124,6 +124,6 @@ pub fn test_vdj_gex_inconsistent(
             the argument ALLOW_INCONSISTENT to the command line.\n",
         );
     }
-    ctl.perf_stats(&tinc, "testing for inconsistency");
+
     Ok(())
 }
