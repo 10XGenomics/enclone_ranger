@@ -10,6 +10,7 @@ rustflags = [
   "-D", "rust_2021_compatibility",
 
   # clippy categorical
+  "-Dclippy::complexity",
   "-D", "clippy::perf",
   "-D", "clippy::style",
   "-D", "clippy::suspicious",
