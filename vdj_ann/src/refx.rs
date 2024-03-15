@@ -180,8 +180,8 @@ pub fn make_vdj_ref_data_core(
                 refdata.segtype.push("?");
             }
         }
-        for j in 0..types.len() {
-            if rheaders2[i].contains(types[j]) {
+        for (j, type_) in types.iter().enumerate() {
+            if rheaders2[i].contains(type_) {
                 refdata.rtype[i] = j as i32;
             }
         }
@@ -226,8 +226,8 @@ pub fn make_vdj_ref_data_core(
 
     // Fill in id.
 
-    for i in 0..rheaders.len() {
-        refdata.id.push(rheaders[i].between("|", "|").force_i32());
+    for header in rheaders.iter() {
+        refdata.id.push(header.between("|", "|").force_i32());
     }
 
     // Extend the reference.
@@ -251,18 +251,18 @@ pub fn make_vdj_ref_data_core(
 
     // Determine which V segments have matching UTRs in the reference.
 
-    for t in 0..rheaders.len() {
-        if !rheaders[t].contains("segment") {
-            let name = rheaders[t].after("|").between("|", "|");
-            if rheaders[t].contains("UTR") {
+    for header in rheaders.iter() {
+        if !header.contains("segment") {
+            let name = header.after("|").between("|", "|");
+            if header.contains("UTR") {
                 refdata.has_utr.insert(name.to_string(), true);
             }
         }
     }
-    for t in 0..rheaders.len() {
-        if !rheaders[t].contains("segment") {
-            let name = rheaders[t].after("|").between("|", "|");
-            if rheaders[t].contains("V-REGION") {
+    for header in rheaders.iter() {
+        if !header.contains("segment") {
+            let name = header.after("|").between("|", "|");
+            if header.contains("V-REGION") {
                 refdata.has_utr.entry(name.to_string()).or_insert(false);
             }
         }

@@ -246,11 +246,11 @@ pub fn junction_seq(
     let rheaders = &refdata.rheaders;
     const TAG: i32 = 100;
     let mut jstops = Vec::<i32>::new();
-    for j in 0..ann.len() {
-        let l = ann[j].tig_start as usize;
-        let len = ann[j].match_len as usize;
-        let t = ann[j].ref_id as usize;
-        let p = ann[j].ref_start as usize;
+    for a in ann {
+        let l = a.tig_start as usize;
+        let len = a.match_len as usize;
+        let t = a.ref_id as usize;
+        let p = a.ref_start as usize;
         if (rheaders[t].contains("TRAJ")
             || rheaders[t].contains("IGHJ")
             || rheaders[t].contains("TRBJ")
@@ -327,20 +327,19 @@ pub fn junction_supp_core(
             idj += 1;
         }
         let mut mm = Vec::<(i32, i32)>::new();
-        for r in idi..idj {
-            let ida = ids[r];
-            let b = &reads[ida as usize];
+        for ida in &ids[idi..idj] {
+            let b = &reads[*ida as usize];
             if b.len() < k {
                 continue;
             }
             for j in 0..b.len() - k + 1 {
                 let z: Kmer20 = b.get_kmer(j);
                 let low = lower_bound1_3(&kmers_plus, &z) as usize;
-                for m in low..kmers_plus.len() {
-                    if kmers_plus[m].0 != z {
+                for kmer in &kmers_plus[low..] {
+                    if kmer.0 != z {
                         break;
                     }
-                    let p = kmers_plus[m].2 as usize;
+                    let p = kmer.2 as usize;
                     if j > 0 && p > 0 && b.get(j - 1) == jseq.get(p - 1) {
                         continue;
                     }

@@ -1266,7 +1266,7 @@ fn main() {
     while i < exons.len() {
         let j = next_diff12_8(&exons, i as i32) as usize;
         let mut x = Vec::<DnaString>::new();
-        for d in dna.iter().take(j).skip(i) {
+        for d in &dna[i..j] {
             x.push(d.clone());
         }
         if !exons[i].6 {
@@ -1302,7 +1302,7 @@ fn main() {
                 }
                 if matches {
                     let (r, s) = (dnas[i - 1].1, dnas[i - 1].2);
-                    for item in to_delete.iter_mut().take(s).skip(r) {
+                    for item in &mut to_delete[r..s] {
                         *item = true;
                     }
                 }
@@ -1322,7 +1322,7 @@ fn main() {
     while i < exons.len() {
         let j = next_diff12_8(&exons, i as i32) as usize;
         let mut fws = Vec::<bool>::new();
-        for exon in exons.iter().take(j).skip(i) {
+        for exon in &exons[i..j] {
             fws.push(exon.6);
         }
         unique_sort(&mut fws);
@@ -1340,7 +1340,7 @@ fn main() {
         // ◼ NOT SURE WHAT THIS IS DOING NOW.
 
         let mut chrs = Vec::<String>::new();
-        for exon in exons.iter().take(j).skip(i) {
+        for exon in &exons[i..j] {
             chrs.push(exon.2.clone());
         }
         unique_sort(&mut chrs);
@@ -1353,7 +1353,7 @@ fn main() {
 
         let mut seq = DnaString::new();
         let trid = &exons[i].7;
-        for exon in exons.iter().take(j).skip(i) {
+        for exon in &exons[i..j] {
             if exon.2 != chr {
                 continue;
             }
@@ -1384,7 +1384,7 @@ fn main() {
         {
             let mut seq = DnaString::new();
             let mut ncodons = 0;
-            for exon in exons.iter().take(j).skip(i) {
+            for exon in &exons[i..j] {
                 if exon.2 != chr {
                     continue;
                 }
@@ -1447,8 +1447,9 @@ fn main() {
             && gene != "IGHD"
         {
             let mut using = Vec::<usize>::new();
-            for (k, exon) in exons.iter().enumerate().take(j).skip(i) {
-                if exon.2 == chr && exon.5 != "five_prime_utr" {
+            #[allow(clippy::needless_range_loop)]
+            for k in i..j {
+                if exons[k].2 == chr && exons[k].5 != "five_prime_utr" {
                     using.push(k);
                 }
             }
@@ -1497,7 +1498,7 @@ fn main() {
                 gene = format!("TRG{}", gene.after("TRGC"));
             }
             let mut seq = DnaString::new();
-            for exon in exons.iter().take(j).skip(i) {
+            for exon in &exons[i..j] {
                 if exon.2 != chr {
                     continue;
                 }
