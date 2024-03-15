@@ -1227,7 +1227,7 @@ fn main() {
                 using = false;
             }
         } else if using {
-            last += &s
+            last += &s;
         }
     }
     if using {

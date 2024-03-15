@@ -167,7 +167,7 @@ fn evaluate_contig_status(
             !(vstart.tig_start..jstop.tig_stop - 3)
                 .step_by(3)
                 .any(|j| have_stop(contig, j)),
-        )
+        );
     };
 
     let found_cdr3s = get_cdr3_using_ann(contig, reference, ann);

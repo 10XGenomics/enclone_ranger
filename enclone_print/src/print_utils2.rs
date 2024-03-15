@@ -382,7 +382,7 @@ pub fn row_fill(
                         median = format!("{:.1}", median_f64(&out_valsf));
                     }
                     if i < lvars.len() {
-                        row.push(median.clone())
+                        row.push(median.clone());
                     }
                     if pass == 2 {
                         if ctl.parseable_opt.pbarcode {

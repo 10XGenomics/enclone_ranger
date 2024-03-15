@@ -395,7 +395,7 @@ impl ColorState {
                 write!(s, "background-color:{};", self.background).unwrap();
             }
             if self.bold {
-                s += "font-weight:bold;"
+                s += "font-weight:bold;";
             }
             s += "\">";
             s
@@ -413,7 +413,7 @@ impl ColorState {
                 write!(s, "fill: {};", self.color).unwrap();
             }
             if self.bold {
-                s += "font-weight: bold;"
+                s += "font-weight: bold;";
             }
             s += "\">";
             s

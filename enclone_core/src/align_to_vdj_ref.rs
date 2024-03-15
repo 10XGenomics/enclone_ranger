@@ -160,7 +160,7 @@ pub fn cigar(
     }
     add_op(last, k, &mut cigar);
     if xlen > xend {
-        write!(cigar, "{}{clip_str}", xlen - xend).unwrap()
+        write!(cigar, "{}{clip_str}", xlen - xend).unwrap();
     }
     cigar
 }

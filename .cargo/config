@@ -37,6 +37,8 @@ rustflags = [
   "-Dclippy::needless_continue",
   "-Dclippy::needless_for_each",
 
+  "-Dclippy::semicolon_if_nothing_returned",
+
   "-D", "clippy::needless_lifetimes",
   "-D", "clippy::redundant_closure_for_method_calls",
   "-D", "clippy::unused_io_amount",

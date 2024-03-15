@@ -2999,7 +2999,7 @@ impl AnnotationUnit {
         for c in cig.chars() {
             if c.is_ascii_alphabetic() {
                 if c == 'S' {
-                    s_pos.push(char_pos)
+                    s_pos.push(char_pos);
                 }
                 char_pos += 1;
             }
@@ -3496,7 +3496,7 @@ mod tests {
             for c in ann.cigar.chars() {
                 if c.is_ascii_alphabetic() {
                     if c == 'S' {
-                        s_pos.push(char_pos)
+                        s_pos.push(char_pos);
                     }
                     char_pos += 1;
                 }
@@ -3505,7 +3505,7 @@ mod tests {
                 println!("Cigar : {:?}", ann.cigar);
                 println!("Soft clipping at : {s_pos:?}");
                 for p in &s_pos {
-                    assert!(*p == 0 || *p == (char_pos - 1))
+                    assert!(*p == 0 || *p == (char_pos - 1));
                 }
             }
         }

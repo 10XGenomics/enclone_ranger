@@ -570,7 +570,7 @@ pub fn proc_cvar_auto(
             if scores.len() > 1 {
                 delta = scores[0] - scores[1];
             }
-            score = format!("{delta:.1}")
+            score = format!("{delta:.1}");
         }
 
         (score, Vec::new(), "exact".to_string())
@@ -641,7 +641,7 @@ pub fn proc_cvar_auto(
             if scores.len() > 1 {
                 score = scores[1];
             }
-            scorex = format!("{score:.1}")
+            scorex = format!("{score:.1}");
         }
 
         (scorex, Vec::new(), "exact".to_string())
@@ -672,7 +672,7 @@ pub fn proc_cvar_auto(
             if scores.len() > 1 {
                 delta = scores[0] - scores[1];
             }
-            del = format!("{delta:.1}")
+            del = format!("{delta:.1}");
         }
 
         (del, Vec::new(), "exact".to_string())
@@ -781,7 +781,7 @@ pub fn proc_cvar_auto(
             if scores.len() > 1 {
                 delta = scores[0] - scores[1];
             }
-            del = format!("{delta:.1}")
+            del = format!("{delta:.1}");
         }
 
         (del, Vec::new(), "exact".to_string())

@@ -678,7 +678,7 @@ impl Hyper {
                 }
                 to_delete.push(edge_id.index() as u32);
                 for p in (self.h.k - 1)..(edge.len() as i32) {
-                    new_edge.push(edge.get(p as usize))
+                    new_edge.push(edge.get(p as usize));
                 }
                 v = self
                     .h
@@ -921,7 +921,7 @@ impl Hyper {
     fn total_supp(&mut self) -> usize {
         let mut total = 0;
         for e in 0..self.h.g.edge_count() {
-            total += self.ids[e].len()
+            total += self.ids[e].len();
         }
         total
     }

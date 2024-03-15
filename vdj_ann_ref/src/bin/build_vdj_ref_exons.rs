@@ -855,7 +855,7 @@ fn main() {
             }
             let mut h = s.get(1..).unwrap();
             if h.contains(' ') {
-                h = h.before(" ")
+                h = h.before(" ");
             }
             if bin_member(&all_chrs, h) {
                 rheaders.push(h.to_string());
@@ -864,7 +864,7 @@ fn main() {
                 using = false;
             }
         } else if using {
-            last += &s
+            last += &s;
         }
     }
     if using {

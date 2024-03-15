@@ -1388,7 +1388,7 @@ impl TracebackCell {
             "Expected a value <= TB_MAX while setting traceback bits"
         );
         self.v = (self.v & !bits) // First clear the bits
-            | (value << pos) // And set the bits
+            | (value << pos); // And set the bits
     }
 
     #[inline(always)]

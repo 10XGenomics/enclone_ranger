@@ -1528,7 +1528,7 @@ pub fn proc_lvar_auto(
                 eprintln!("i = {i}, lvars.len() = {}", lvars.len());
             }
             if i < lvars.len() {
-                row.push(String::new())
+                row.push(String::new());
             }
             if pass == 2 {
                 speak!(u, abbr, String::new());
@@ -1543,7 +1543,7 @@ pub fn proc_lvar_auto(
                 eprintln!("i = {i}, lvars.len() = {}", lvars.len());
             }
             if i < lvars.len() {
-                row.push(exact.clone())
+                row.push(exact.clone());
             }
             if pass == 2 {
                 speak!(u, abbr, exact.to_string());
