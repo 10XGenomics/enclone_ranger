@@ -5,7 +5,7 @@
 //
 // Problem: stack traces from this file consistently do not go back to the main program.
 
-use crate::define_mat::define_mat;
+use crate::define_mat::{define_mat, Od};
 use crate::filter::survives_filter;
 use crate::finish_table::{finish_table, Sr};
 use crate::gene_scan::gene_scan_test;
@@ -225,7 +225,7 @@ pub fn print_clonotypes(
     results.par_iter_mut().for_each(|res| {
         let i = res.0;
         let o = &orbits[i];
-        let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
+        let mut od = Vec::<Od>::new();
         for id in o {
             let x: &CloneInfo = &info[*id as usize];
             od.push((x.origin.clone(), x.clonotype_id, *id));
