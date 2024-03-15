@@ -7,7 +7,7 @@
 
 use crate::define_mat::define_mat;
 use crate::filter::survives_filter;
-use crate::finish_table::finish_table;
+use crate::finish_table::{finish_table, Sr};
 use crate::gene_scan::gene_scan_test;
 use crate::loupe::{loupe_out, make_loupe_clonotype};
 use crate::print_utils1::{compute_field_types, extra_args, start_gen};
@@ -524,7 +524,7 @@ pub fn print_clonotypes(
 
                 // Now build table content.
 
-                let mut sr = Vec::<(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)>::new();
+                let mut sr = Vec::<Sr>::new();
                 let mut groups = HashMap::<usize, Vec<usize>>::new();
                 for lvar in &lvars {
                     if let Some(Ok(d)) = lvar.strip_prefix('g').map(str::parse::<usize>) {
@@ -712,7 +712,6 @@ pub fn print_clonotypes(
                             exact_clonotypes,
                             &mut row,
                             &mut subrows,
-                            &varmat,
                             have_gex,
                             gex_info,
                             &rsi,
@@ -883,7 +882,7 @@ pub fn print_clonotypes(
                     &mut mlog,
                     &mut logz,
                     &stats,
-                    &mut sr,
+                    sr,
                     &extra_args,
                     pcols_sort,
                     &mut out_data,

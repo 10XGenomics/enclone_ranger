@@ -13,6 +13,8 @@ use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, bin_position1_2, unique_sort};
 
+use crate::finish_table::Sr;
+
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn get_gex_matrix_entry(
@@ -495,11 +497,10 @@ pub fn compute_bu(
     exact_clonotypes: &[ExactClonotype],
     row: &mut [String],
     subrows: &mut Vec<Vec<String>>,
-    varmat: &[Vec<Vec<u8>>],
     have_gex: bool,
     gex_info: &GexInfo,
     rsi: &ColInfo,
-    sr: &mut Vec<(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)>,
+    sr: &mut Vec<Sr>,
     fate: &[HashMap<String, BarcodeFate>],
     nd_fields: &[String],
     alt_bcs: &[String],
@@ -870,5 +871,8 @@ pub fn compute_bu(
             subrows.push(row);
         }
     }
-    sr.push((row.to_vec(), subrows.clone(), varmat[u].clone(), u));
+    sr.push(Sr {
+        row: row.to_vec(),
+        subrows: subrows.clone(),
+    });
 }

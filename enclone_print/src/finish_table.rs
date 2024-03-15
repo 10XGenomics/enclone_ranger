@@ -12,6 +12,11 @@ use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::bin_member;
 
+pub struct Sr {
+    pub row: Vec<String>,
+    pub subrows: Vec<Vec<String>>,
+}
+
 pub fn finish_table(
     n: usize,
     ctl: &EncloneControl,
@@ -28,7 +33,7 @@ pub fn finish_table(
     mlog: &mut Vec<u8>,
     logz: &mut String,
     stats: &[(String, Vec<String>)],
-    sr: &mut [(Vec<String>, Vec<Vec<String>>, Vec<Vec<u8>>, usize)],
+    sr: Vec<Sr>,
     extra_args: &[String],
     pcols_sort: &[String],
     out_data: &mut Vec<HashMap<String, String>>,
@@ -144,10 +149,10 @@ pub fn finish_table(
 
     // Finish building table content.
 
-    for (j, srj) in sr.iter_mut().enumerate() {
-        srj.0[0] = format!("{}", j + 1); // row number (#)
-        rows.push(srj.0.clone());
-        rows.extend(srj.1.clone());
+    for (j, mut srj) in sr.into_iter().enumerate() {
+        srj.row[0] = format!("{}", j + 1); // row number (#)
+        rows.push(srj.row);
+        rows.extend(srj.subrows);
     }
 
     // Add sum and mean rows.
