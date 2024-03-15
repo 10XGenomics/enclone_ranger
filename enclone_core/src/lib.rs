@@ -36,10 +36,10 @@ use tilde_expand::tilde_expand;
 
 // tilde_expand_me: not that this is NOT implementd for Windows
 
-pub fn tilde_expand_me(_s: &mut String) {
+pub fn tilde_expand_me(s: &mut String) {
     #[cfg(not(target_os = "windows"))]
     {
-        *_s = stringme(&tilde_expand(_s.as_bytes()));
+        *s = stringme(&tilde_expand(s.as_bytes()));
     }
 }
 

@@ -398,15 +398,8 @@ pub fn find_exact_subclonotypes(
 
         // Explore consensus.
 
-        let mut _count = 0;
-        study_consensus(
-            &mut _count,
-            ctl,
-            &share,
-            &clones,
-            &exact_clonotypes,
-            refdata,
-        );
+        let mut count = 0;
+        study_consensus(&mut count, ctl, &share, &clones, &exact_clonotypes, refdata);
 
         // Filter out putative gel bead contamination.
 

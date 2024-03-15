@@ -104,7 +104,7 @@ pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut [Vec<TigData>], refdata: &
 // - find code simplifications.
 
 pub fn study_consensus(
-    _count: &mut usize,
+    count: &mut usize,
     ctl: &EncloneControl,
     share: &[TigData1],
     clones: &[Vec<TigData0>],
@@ -127,7 +127,7 @@ pub fn study_consensus(
                 log,
                 "\n[{}] rev lefts for exact subclonotype {}, chain {}, \
                  vs = {}, utrs = {}, cdr3 = {}\n",
-                *_count + 1,
+                *count + 1,
                 exact_clonotypes.len(),
                 z,
                 v_ids.iter().format(","),
@@ -197,7 +197,7 @@ pub fn study_consensus(
             }
             if !(minlen == maxlen && diffs == 0 && utr_ids.len() == 1) {
                 print!("{}", strme(&log));
-                *_count += 1;
+                *count += 1;
             }
         }
     }
@@ -212,7 +212,7 @@ pub fn study_consensus(
             fwriteln!(
                 log,
                 "\n[{}] rights for exact subclonotype {}, chain {}, cs = {:?}\n",
-                *_count + 1,
+                *count + 1,
                 exact_clonotypes.len(),
                 z,
                 c_ref_ids.iter().format(",")
@@ -310,7 +310,7 @@ pub fn study_consensus(
             }
             // if !( minlen == maxlen && diffs == 0 && utr_ids.len() == 1 ) {
             print!("{}", strme(&log));
-            *_count += 1;
+            *count += 1;
             // }
         }
     }

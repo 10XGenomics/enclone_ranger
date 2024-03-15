@@ -40,7 +40,7 @@ rustflags = [
   "-Dclippy::semicolon_if_nothing_returned",
   "-Dclippy::uninlined_format_args",
   "-Dclippy::unused_self",
-
+  "-Dclippy::used_underscore_binding",
   "-D", "clippy::needless_lifetimes",
   "-D", "clippy::redundant_closure_for_method_calls",
   "-D", "clippy::unused_io_amount",
