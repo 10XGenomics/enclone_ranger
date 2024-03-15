@@ -1548,7 +1548,7 @@ pub fn proc_cvar_auto(
             if val.1.is_empty() {
                 stats.push((abbrc, vec![exact.to_string(); ex.ncells()]));
             } else {
-                stats.push((abbrc, cell.to_vec()));
+                stats.push((abbrc, cell.clone()));
             }
         } else if !cell.is_empty()
             && pass == 2

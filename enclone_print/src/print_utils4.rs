@@ -391,7 +391,7 @@ pub fn compute_some_stats(
             let mut matg = Vec::<Vec<f64>>::new();
             for li in 0..ctl.origin_info.n() {
                 for i in &gex_info.pca[li] {
-                    matg.push(i.1.to_vec());
+                    matg.push(i.1.clone());
                 }
             }
             let mut x = vec![0; bcs.len()];
@@ -870,5 +870,5 @@ pub fn compute_bu(
             subrows.push(row);
         }
     }
-    sr.push((row.to_vec(), subrows.to_vec(), varmat[u].clone(), u));
+    sr.push((row.to_vec(), subrows.clone(), varmat[u].clone(), u));
 }

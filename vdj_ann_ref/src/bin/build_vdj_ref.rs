@@ -1272,7 +1272,7 @@ fn main() {
         if !exons[i].6 {
             x.reverse();
             for k in 0..x.len() {
-                x[k] = x[k].rc().to_owned();
+                x[k] = x[k].rc().clone();
             }
         }
         dnas.push((x, i, j));

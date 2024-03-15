@@ -878,7 +878,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             to_bc,
             exact_clonotypes,
             raw_joins,
-            info: info.to_vec(),
+            info: info.clone(),
             orbits,
             vdj_cells,
             join_info,

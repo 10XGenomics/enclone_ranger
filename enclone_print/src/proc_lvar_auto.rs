@@ -1551,13 +1551,13 @@ pub fn proc_lvar_auto(
             if cell.is_empty() {
                 stats.push((abbr.to_string(), vec![exact; ex.ncells()]));
             } else {
-                stats.push((abbr.to_string(), cell.to_vec()));
+                stats.push((abbr.to_string(), cell.clone()));
             }
         } else if !cell.is_empty() {
             if pass == 2 {
                 speak!(u, abbr, format!("{}", cell.iter().format(POUT_SEP)));
             }
-            stats.push((abbr.to_string(), cell.to_vec()));
+            stats.push((abbr.to_string(), cell.clone()));
         }
         Ok(true)
     }

@@ -226,7 +226,7 @@ pub fn study_consensus(
                 if x.len() > SHOW {
                     x.truncate(SHOW);
                 }
-                rights.push(x.to_vec());
+                rights.push(x.clone());
                 bcs.push(clone[0].barcode.clone());
             }
             let rconst = c_ref_ids
