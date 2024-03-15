@@ -60,7 +60,6 @@ rustflags = [
   # --- lint allow ---
   "-A", "clippy::comparison_chain",
   # TODO: burn down these allow exceptions and then deny them
-  "-W", "clippy::type_complexity",
   "-A", "clippy::too_many_arguments",
   "-A", "clippy::needless_range_loop",
 ]
