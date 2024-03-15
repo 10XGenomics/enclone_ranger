@@ -255,9 +255,9 @@ fn parse_gtf_file(gtf: &str, demangle: &HashMap<String, String>, exons: &mut Vec
         // change it to CDS.
 
         let mut biotype = String::new();
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with(" gene_biotype") {
-                biotype = fields8[i].between("\"", "\"").to_string();
+        for field in &fields8 {
+            if field.starts_with(" gene_biotype") {
+                biotype = field.between("\"", "\"").to_string();
             }
         }
         let mut cat = fields[2];
@@ -286,9 +286,9 @@ fn parse_gtf_file(gtf: &str, demangle: &HashMap<String, String>, exons: &mut Vec
         // Get gene name and demangle.
 
         let mut gene = String::new();
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with(" gene_name") {
-                gene = fields8[i].between("\"", "\"").to_string();
+        for field in &fields8 {
+            if field.starts_with(" gene_name") {
+                gene = field.between("\"", "\"").to_string();
             }
         }
         gene = gene.to_uppercase();
@@ -334,18 +334,18 @@ fn parse_gtf_file(gtf: &str, demangle: &HashMap<String, String>, exons: &mut Vec
         // Get transcript name.
 
         let mut tr = String::new();
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with(" transcript_name") {
-                tr = fields8[i].between("\"", "\"").to_string();
+        for field in &fields8 {
+            if field.starts_with(" transcript_name") {
+                tr = field.between("\"", "\"").to_string();
             }
         }
 
         // Get transcript id.
 
         let mut trid = String::new();
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with(" transcript_id") {
-                trid = fields8[i].between("\"", "\"").to_string();
+        for field in &fields8 {
+            if field.starts_with(" transcript_id") {
+                trid = field.between("\"", "\"").to_string();
             }
         }
 
@@ -1057,15 +1057,15 @@ fn main() {
         let fields8: Vec<&str> = fields[8].split_terminator(';').collect();
         let (mut gene, mut gene2) = (String::new(), String::new());
         let mut biotype = String::new();
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with("Name=") {
-                gene = fields8[i].after("Name=").to_string();
+        for field in &fields8 {
+            if field.starts_with("Name=") {
+                gene = field.after("Name=").to_string();
             }
-            if fields8[i].starts_with("description=") {
-                gene2 = fields8[i].after("description=").to_string();
+            if field.starts_with("description=") {
+                gene2 = field.after("description=").to_string();
             }
-            if fields8[i].starts_with("biotype=") {
-                biotype = fields8[i].after("biotype=").to_string();
+            if field.starts_with("biotype=") {
+                biotype = field.after("biotype=").to_string();
             }
         }
 
@@ -1187,8 +1187,8 @@ fn main() {
     // Find the chromosomes that we're using.
 
     let mut all_chrs = Vec::<String>::new();
-    for k in 0..exons.len() {
-        all_chrs.push(exons[k].2.clone());
+    for exon in &exons {
+        all_chrs.push(exon.2.clone());
     }
     unique_sort(&mut all_chrs);
 
@@ -1234,8 +1234,8 @@ fn main() {
         refs.push(DnaString::from_dna_string(&last));
     }
     let mut to_chr = HashMap::new();
-    for i in 0..rheaders.len() {
-        to_chr.insert(rheaders[i].clone(), i);
+    for (i, header) in rheaders.iter().enumerate() {
+        to_chr.insert(header.clone(), i);
     }
 
     // Get the DNA sequences for the exons.
@@ -1245,10 +1245,10 @@ fn main() {
         t.elapsed().as_secs_f64()
     );
     let mut dna = Vec::<DnaString>::new();
-    for i in 0..exons.len() {
-        let chr = &exons[i].2;
+    for exon in &exons {
+        let chr = &exon.2;
         let chrid = to_chr[chr];
-        let (start, stop) = (exons[i].3, exons[i].4);
+        let (start, stop) = (exon.3, exon.4);
         let seq = refs[chrid].slice(start as usize, stop as usize).to_owned();
         dna.push(seq);
     }
@@ -1266,13 +1266,13 @@ fn main() {
     while i < exons.len() {
         let j = next_diff12_8(&exons, i as i32) as usize;
         let mut x = Vec::<DnaString>::new();
-        for k in i..j {
-            x.push(dna[k].clone());
+        for d in dna.iter().take(j).skip(i) {
+            x.push(d.clone());
         }
         if !exons[i].6 {
             x.reverse();
-            for k in 0..x.len() {
-                x[k] = x[k].rc().clone();
+            for item in &mut x {
+                *item = item.rc().clone();
             }
         }
         dnas.push((x, i, j));
@@ -1302,8 +1302,8 @@ fn main() {
                 }
                 if matches {
                     let (r, s) = (dnas[i - 1].1, dnas[i - 1].2);
-                    for k in r..s {
-                        to_delete[k] = true;
+                    for item in to_delete.iter_mut().take(s).skip(r) {
+                        *item = true;
                     }
                 }
             }
@@ -1322,8 +1322,8 @@ fn main() {
     while i < exons.len() {
         let j = next_diff12_8(&exons, i as i32) as usize;
         let mut fws = Vec::<bool>::new();
-        for k in i..j {
-            fws.push(exons[k].6);
+        for exon in exons.iter().take(j).skip(i) {
+            fws.push(exon.6);
         }
         unique_sort(&mut fws);
         assert!(fws.len() == 1);
@@ -1340,8 +1340,8 @@ fn main() {
         // ◼ NOT SURE WHAT THIS IS DOING NOW.
 
         let mut chrs = Vec::<String>::new();
-        for k in i..j {
-            chrs.push(exons[k].2.clone());
+        for exon in exons.iter().take(j).skip(i) {
+            chrs.push(exon.2.clone());
         }
         unique_sort(&mut chrs);
         let chr = chrs[0].clone();
@@ -1353,12 +1353,12 @@ fn main() {
 
         let mut seq = DnaString::new();
         let trid = &exons[i].7;
-        for k in i..j {
-            if exons[k].2 != chr {
+        for exon in exons.iter().take(j).skip(i) {
+            if exon.2 != chr {
                 continue;
             }
-            let (start, stop) = (exons[k].3, exons[k].4);
-            let cat = &exons[k].5;
+            let (start, stop) = (exon.3, exon.4);
+            let cat = &exon.5;
             if cat == "five_prime_utr" {
                 let seqx = refs[chrid].slice(start as usize, stop as usize);
                 for i in 0..seqx.len() {
@@ -1384,12 +1384,12 @@ fn main() {
         {
             let mut seq = DnaString::new();
             let mut ncodons = 0;
-            for k in i..j {
-                if exons[k].2 != chr {
+            for exon in exons.iter().take(j).skip(i) {
+                if exon.2 != chr {
                     continue;
                 }
-                let (start, stop) = (exons[k].3, exons[k].4);
-                let cat = &exons[k].5;
+                let (start, stop) = (exon.3, exon.4);
+                let cat = &exon.5;
                 if cat == "CDS" {
                     ncodons += 1;
                     let seqx = refs[chrid].slice(start as usize, stop as usize);
@@ -1447,8 +1447,8 @@ fn main() {
             && gene != "IGHD"
         {
             let mut using = Vec::<usize>::new();
-            for k in i..j {
-                if exons[k].2 == chr && exons[k].5 != "five_prime_utr" {
+            for (k, exon) in exons.iter().enumerate().take(j).skip(i) {
+                if exon.2 == chr && exon.5 != "five_prime_utr" {
                     using.push(k);
                 }
             }
@@ -1497,11 +1497,11 @@ fn main() {
                 gene = format!("TRG{}", gene.after("TRGC"));
             }
             let mut seq = DnaString::new();
-            for k in i..j {
-                if exons[k].2 != chr {
+            for exon in exons.iter().take(j).skip(i) {
+                if exon.2 != chr {
                     continue;
                 }
-                let (start, stop) = (exons[k].3, exons[k].4);
+                let (start, stop) = (exon.3, exon.4);
                 let seqx = refs[chrid].slice(start as usize, stop as usize);
                 for i in 0..seqx.len() {
                     seq.push(seqx.get(i));
@@ -1531,46 +1531,46 @@ fn main() {
         "{:.1} seconds used, adding genes",
         t.elapsed().as_secs_f64()
     );
-    for i in 0..added_genes.len() {
+    for gene in added_genes {
         add_gene(
             &mut out,
-            added_genes[i].0,
+            gene.0,
             &mut record,
-            added_genes[i].1,
-            added_genes[i].2,
-            added_genes[i].3,
+            gene.1,
+            gene.2,
+            gene.3,
             &to_chr,
             &refs,
             none,
-            added_genes[i].4,
+            gene.4,
             &source,
         );
     }
-    for i in 0..added_genes2.len() {
+    for gene in added_genes2 {
         add_gene2(
             &mut out,
-            added_genes2[i].0,
+            gene.0,
             &mut record,
-            added_genes2[i].1,
-            added_genes2[i].2,
-            added_genes2[i].3,
-            added_genes2[i].4,
-            added_genes2[i].5,
+            gene.1,
+            gene.2,
+            gene.3,
+            gene.4,
+            gene.5,
             &to_chr,
             &refs,
             none,
-            added_genes2[i].6,
+            gene.6,
             &source,
         );
     }
-    for i in 0..added_genes2_source.len() {
-        let gene = &added_genes2_source[i].0;
-        let start1 = added_genes2_source[i].1;
-        let stop1 = added_genes2_source[i].2;
-        let start2 = added_genes2_source[i].3;
-        let stop2 = added_genes2_source[i].4;
-        let fw = added_genes2_source[i].5;
-        let source = &added_genes2_source[i].6;
+    for added_gene in added_genes2_source {
+        let gene = &added_gene.0;
+        let start1 = added_gene.1;
+        let stop1 = added_gene.2;
+        let start2 = added_gene.3;
+        let stop2 = added_gene.4;
+        let fw = added_gene.5;
+        let source = &added_gene.6;
         let mut seq = DnaString::new();
         load_genbank_accession(source, &mut seq);
         let seq1 = seq.slice(start1 - 1, stop1);
@@ -1585,9 +1585,9 @@ fn main() {
         let header = header_from_gene(gene, false, &mut record, source);
         print_fasta(&mut out, &header, &seq.slice(0, seq.len()), none);
     }
-    for i in 0..added_genes_seq.len() {
-        let gene = &added_genes_seq[i].0;
-        let seq = DnaString::from_dna_string(added_genes_seq[i].1);
+    for added_gene in added_genes_seq {
+        let gene = added_gene.0;
+        let seq = DnaString::from_dna_string(added_gene.1);
         let header = header_from_gene(gene, false, &mut record, &source);
         print_fasta(&mut out, &header, &seq.slice(0, seq.len()), none);
     }

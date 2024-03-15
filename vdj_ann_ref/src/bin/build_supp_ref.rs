@@ -92,8 +92,8 @@ fn main() {
     let mut rheaders = Vec::<String>::new();
     read_fasta_into_vec_dna_string_plus_headers(fasta, &mut refs, &mut rheaders);
     let mut to_chr = HashMap::new();
-    for i in 0..rheaders.len() {
-        let chr = rheaders[i].before(" ");
+    for (i, header) in rheaders.iter().enumerate() {
+        let chr = header.before(" ");
         to_chr.insert(chr.to_string(), i);
     }
 
