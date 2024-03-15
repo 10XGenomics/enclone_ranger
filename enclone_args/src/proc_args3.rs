@@ -838,9 +838,7 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
             }
             let dp = donors
                 .iter()
-                .enumerate()
-                .filter_map(|(j, dj)| if donor == *dj { Some(j) } else { None })
-                .next();
+                .enumerate().find_map(|(j, dj)| if donor == *dj { Some(j) } else { None });
             if dp.is_none() {
                 donors.push(donor.clone());
             }
