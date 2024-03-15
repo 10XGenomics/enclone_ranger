@@ -12,23 +12,23 @@ use stats_utils::percent_ratio;
 use vector_utils::next_diff1_2;
 
 pub struct JoinResult {
-    pub f0: usize,               //i
-    pub f1: usize,               //j
-    pub f2: usize,               //joins
-    pub f3: usize,               //errors
-    pub f4: Vec<JoinInfo>,       //join_info
-    pub f5: Vec<(usize, usize)>, //join_list
+    pub i: usize,
+    pub j: usize,
+    pub joins: usize,
+    pub errors: usize,
+    pub join_info: Vec<JoinInfo>,
+    pub join_list: Vec<(usize, usize)>,
 }
 
 impl JoinResult {
     pub fn new(i: usize, j: usize) -> Self {
         Self {
-            f0: i,
-            f1: j,
-            f2: 0,
-            f3: 0,
-            f4: Default::default(),
-            f5: Default::default(),
+            i,
+            j,
+            joins: 0,
+            errors: 0,
+            join_info: Default::default(),
+            join_list: Default::default(),
         }
     }
 }
@@ -45,10 +45,10 @@ pub fn finish_join(
     let mut eq: EquivRel = EquivRel::new(info.len() as i32);
 
     for r in results {
-        joins += r.f2;
-        errors += r.f3;
-        join_info.extend(r.f4.into_iter());
-        for j in &r.f5 {
+        joins += r.joins;
+        errors += r.errors;
+        join_info.extend(r.join_info.into_iter());
+        for j in &r.join_list {
             eq.join(j.0 as i32, j.1 as i32);
         }
     }

@@ -67,8 +67,8 @@ pub struct EncloneExacts {
 
 #[derive(Clone)]
 pub struct JoinInfo {
-    pub j0: usize,   //index1
-    pub j1: usize,   //index2
-    pub j2: bool,    //err?
-    pub j3: Vec<u8>, //log
+    pub index1: usize,
+    pub index2: usize,
+    pub err: bool,
+    pub log: Vec<u8>,
 }

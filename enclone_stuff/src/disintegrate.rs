@@ -58,13 +58,13 @@ pub fn disintegrate_onesies(
         }
         let mut join_info2 = Vec::new();
         for ji in join_info.iter() {
-            let (u1, u2) = (ji.j0, ji.j1);
+            let (u1, u2) = (ji.index1, ji.index2);
             for v1 in &to_exact_new[u1] {
                 join_info2.reserve(to_exact_new[u2].len());
                 for v2 in &to_exact_new[u2] {
                     let mut x = ji.clone();
-                    x.j0 = *v1;
-                    x.j1 = *v2;
+                    x.index1 = *v1;
+                    x.index2 = *v2;
                     join_info2.push(x);
                 }
             }

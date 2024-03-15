@@ -92,10 +92,10 @@ pub fn join_exacts(
     }
 
     let joinf = |r: &mut JoinResult| {
-        let (i, j) = (r.f0, r.f1);
-        let joins = &mut r.f2;
-        let errors = &mut r.f3;
-        let logplus = &mut r.f4;
+        let (i, j) = (r.i, r.j);
+        let joins = &mut r.joins;
+        let errors = &mut r.errors;
+        let logplus = &mut r.join_info;
         let mut pot = Vec::<PotentialJoin<'_>>::new();
 
         // Main join logic.  If you change par_iter_mut to iter_mut above, and run happening,
@@ -208,7 +208,7 @@ pub fn join_exacts(
 
             // Save join and tally stats.
 
-            r.f5.push((k1, k2));
+            r.join_list.push((k1, k2));
             *joins += 1;
             if err {
                 *errors += 1;
@@ -573,10 +573,10 @@ pub fn join_exacts(
             }
             */
             logplus.push(JoinInfo {
-                j0: info[k1].clonotype_index,
-                j1: info[k2].clonotype_index,
-                j2: err,
-                j3: log,
+                index1: info[k1].clonotype_index,
+                index2: info[k2].clonotype_index,
+                err,
+                log,
             });
         }
     };
@@ -584,7 +584,7 @@ pub fn join_exacts(
     results.par_iter_mut().for_each(joinf);
 
     for r in &results {
-        for &j in &r.f5 {
+        for &j in &r.join_list {
             raw_joins.push((j.0 as i32, j.1 as i32));
         }
     }
