@@ -67,9 +67,9 @@ fn parse_gtf_file(gtf: &str, demangle: &HashMap<String, String>, exons: &mut Vec
         // change it to CDS. [NOT]
 
         let mut biotype = String::new();
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with(" gene_biotype") {
-                biotype = fields8[i].between("\"", "\"").to_string();
+        for field in &fields8 {
+            if field.starts_with(" gene_biotype") {
+                biotype = field.between("\"", "\"").to_string();
             }
         }
         let cat = fields[2];
@@ -89,9 +89,9 @@ fn parse_gtf_file(gtf: &str, demangle: &HashMap<String, String>, exons: &mut Vec
         // Get gene name and demangle.
 
         let mut gene = "";
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with(" gene_name") {
-                gene = fields8[i].between("\"", "\"");
+        for field in &fields8 {
+            if field.starts_with(" gene_name") {
+                gene = field.between("\"", "\"");
             }
         }
         let gene = gene.to_uppercase();
@@ -139,18 +139,18 @@ fn parse_gtf_file(gtf: &str, demangle: &HashMap<String, String>, exons: &mut Vec
         // Get transcript name.
 
         let mut tr = "";
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with(" transcript_name") {
-                tr = fields8[i].between("\"", "\"");
+        for field in &fields8 {
+            if field.starts_with(" transcript_name") {
+                tr = field.between("\"", "\"");
             }
         }
 
         // Get transcript id.
 
         let mut trid = "";
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with(" transcript_id") {
-                trid = fields8[i].between("\"", "\"");
+        for field in &fields8 {
+            if field.starts_with(" transcript_id") {
+                trid = field.between("\"", "\"");
             }
         }
 
@@ -698,15 +698,15 @@ fn main() {
         let fields8: Vec<&str> = fields[8].split_terminator(';').collect();
         let (mut gene, mut gene2) = (String::new(), String::new());
         let mut biotype = String::new();
-        for i in 0..fields8.len() {
-            if fields8[i].starts_with("Name=") {
-                gene = fields8[i].after("Name=").to_string();
+        for field in &fields8 {
+            if field.starts_with("Name=") {
+                gene = field.after("Name=").to_string();
             }
-            if fields8[i].starts_with("description=") {
-                gene2 = fields8[i].after("description=").to_string();
+            if field.starts_with("description=") {
+                gene2 = field.after("description=").to_string();
             }
-            if fields8[i].starts_with("biotype=") {
-                biotype = fields8[i].after("biotype=").to_string();
+            if field.starts_with("biotype=") {
+                biotype = field.after("biotype=").to_string();
             }
         }
 
@@ -828,8 +828,8 @@ fn main() {
     // Find the chromosomes that we're using.
 
     let mut all_chrs = Vec::<String>::new();
-    for k in 0..exons.len() {
-        all_chrs.push(exons[k].2.clone());
+    for exon in &exons {
+        all_chrs.push(exon.2.clone());
     }
     unique_sort(&mut all_chrs);
 
@@ -871,8 +871,8 @@ fn main() {
         refs.push(DnaString::from_dna_string(&last));
     }
     let mut to_chr = HashMap::new();
-    for i in 0..rheaders.len() {
-        to_chr.insert(rheaders[i].clone(), i);
+    for (i, header) in rheaders.iter().enumerate() {
+        to_chr.insert(header.clone(), i);
     }
 
     // Get the DNA sequences for the exons.  Extended by ten in both directions.
@@ -881,12 +881,12 @@ fn main() {
     let mut dna = Vec::<DnaString>::new();
     let mut starts = Vec::<usize>::new();
     let mut stops = Vec::<usize>::new();
-    for i in 0..exons.len() {
-        let chr = &exons[i].2;
+    for exon in &exons {
+        let chr = &exon.2;
         let chrid = to_chr[chr];
-        starts.push(exons[i].3 as usize);
-        stops.push(exons[i].4 as usize);
-        let (start, stop) = (exons[i].3 - EXT as i32, exons[i].4 + EXT as i32);
+        starts.push(exon.3 as usize);
+        stops.push(exon.4 as usize);
+        let (start, stop) = (exon.3 - EXT as i32, exon.4 + EXT as i32);
         let seq = refs[chrid].slice(start as usize, stop as usize).to_owned();
         dna.push(seq);
     }

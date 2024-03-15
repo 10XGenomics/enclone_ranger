@@ -73,27 +73,26 @@ pub fn print_tabular(
     };
     let nrows = rows.len();
     let mut ncols = 0;
-    for i in 0..nrows {
-        ncols = max(ncols, rows[i].len());
+    for row in rows.iter().take(nrows) {
+        ncols = max(ncols, row.len());
     }
     let mut maxcol = vec![0; ncols];
-    for i in 0..rows.len() {
-        for j in 0..rows[i].len() {
-            maxcol[j] = max(maxcol[j], rows[i][j].chars().count());
+    for row in rows {
+        for (j, item) in row.iter().enumerate() {
+            maxcol[j] = max(maxcol[j], item.chars().count());
         }
     }
-    for i in 0..rows.len() {
-        for j in 0..rows[i].len() {
-            let x = rows[i][j].clone();
+    for row in rows {
+        for (j, x) in row.iter().enumerate() {
             if j < just.len() && just[j] == b'r' {
                 log.append(&mut vec![b' '; maxcol[j] - x.chars().count()]);
                 log.append(&mut x.as_bytes().to_vec());
-                if j < rows[i].len() - 1 {
+                if j < row.len() - 1 {
                     log.append(&mut vec![b' '; sep]);
                 }
             } else {
                 log.append(&mut x.as_bytes().to_vec());
-                if j < rows[i].len() - 1 {
+                if j < row.len() - 1 {
                     log.append(&mut vec![b' '; maxcol[j] - x.chars().count() + sep]);
                 }
             }
@@ -177,14 +176,14 @@ pub fn print_tabular_vbox(
     let mut rrr = rows.to_owned();
     let nrows = rrr.len();
     let mut ncols = 0;
-    for i in 0..nrows {
-        ncols = max(ncols, rrr[i].len());
+    for item in rrr.iter().take(nrows) {
+        ncols = max(ncols, item.len());
     }
     let mut vert = vec![false; ncols];
     let mut just = Vec::<u8>::new();
     let mut count = 0_isize;
-    for i in 0..justify.len() {
-        if justify[i] == b'|' {
+    for item in justify {
+        if *item == b'|' {
             assert!(count > 0);
             if count >= ncols as isize {
                 eprintln!("\nposition of | in justify string is illegal");
@@ -193,7 +192,7 @@ pub fn print_tabular_vbox(
             assert!(count < ncols as isize);
             vert[(count - 1) as usize] = true;
         } else {
-            just.push(justify[i]);
+            just.push(*item);
             count += 1;
         }
     }
@@ -205,27 +204,22 @@ pub fn print_tabular_vbox(
             just.len()
         );
         eprintln!("justify = {}", strme(justify));
-        for i in 0..rows.len() {
-            eprintln!(
-                "row {} = {} = {}",
-                i + 1,
-                rows[i].len(),
-                rows[i].iter().format(",")
-            );
+        for (i, row) in rows.iter().enumerate() {
+            eprintln!("row {} = {} = {}", i + 1, row.len(), row.iter().format(","));
         }
         assert_eq!(just.len(), ncols);
     }
     let mut maxcol = vec![0; ncols];
     let mut ext = vec![0; ncols];
-    for i in 0..rrr.len() {
-        for j in 0..rrr[i].len() {
-            if j < rrr[i].len() - 1 && rrr[i][j + 1] == *"\\ext" {
+    for row in &rrr {
+        for (j, item) in row.iter().enumerate() {
+            if j < row.len() - 1 && row[j + 1] == "\\ext" {
                 continue;
             }
-            if rrr[i][j] == *"\\ext" || rrr[i][j] == *"\\hline" {
+            if item == "\\ext" || item == "\\hline" {
                 continue;
             }
-            maxcol[j] = max(maxcol[j], visible_width(&rrr[i][j]));
+            maxcol[j] = max(maxcol[j], visible_width(item));
         }
     }
     if debug_print {
@@ -278,11 +272,11 @@ pub fn print_tabular_vbox(
                     ext[k - 1] += need - have;
                 }
                 let mut m = 0;
-                for u in 0..rrr.len() {
-                    if j >= rrr[u].len() {
+                for (u, row) in rrr.iter().enumerate() {
+                    if j >= row.len() {
                         eprintln!("\nProblem with line {u}, not enough fields.\n");
                     }
-                    if rrr[u][j] != *"\\ext" {
+                    if row[j] != *"\\ext" {
                         m = max(m, visible_width(&rrr[u][j]));
                     }
                 }
@@ -318,26 +312,26 @@ pub fn print_tabular_vbox(
 
     // Go through the rows.
 
-    for i in 0..nrows {
+    for (i, row) in rrr.iter().take(nrows).enumerate() {
         if debug_print {
-            println!("now row {} = {}", i, rrr[i].iter().format(","));
+            println!("now row {} = {}", i, row.iter().format(","));
             println!("0 - pushing │ onto row {i}");
         }
         log.push(verty);
-        for j in 0..min(ncols, rrr[i].len()) {
+        for j in 0..min(ncols, row.len()) {
             // Pad entries according to justification.
 
             let mut x = String::new();
-            if j >= rrr[i].len() {
+            if j >= row.len() {
                 for _ in 0..maxcol[j] {
                     x.push(' ');
                 }
-            } else if rrr[i][j] == *"\\hline" {
+            } else if row[j] == *"\\hline" {
                 for _ in 0..maxcol[j] {
                     x.push(dash);
                 }
             } else {
-                let r = rrr[i][j].clone();
+                let r = row[j].clone();
                 let rlen = visible_width(&r);
                 let mut xlen = 0;
                 if r != *"\\ext" {
@@ -347,7 +341,7 @@ pub fn print_tabular_vbox(
                             xlen += 1;
                         }
                     }
-                    if j < rrr[i].len() {
+                    if j < row.len() {
                         x += &r;
                         xlen += visible_width(&r);
                     }
@@ -371,18 +365,18 @@ pub fn print_tabular_vbox(
             // Add separations and separators.
 
             let mut add_sep = true;
-            if j + 1 < rrr[i].len() && rrr[i][j + 1] == *"\\ext" {
+            if j + 1 < row.len() && row[j + 1] == *"\\ext" {
                 add_sep = false;
             }
             let mut jp = j;
-            while jp + 1 < rrr[i].len() {
-                if rrr[i][jp + 1] != *"\\ext" {
+            while jp + 1 < row.len() {
+                if row[jp + 1] != *"\\ext" {
                     break;
                 }
                 jp += 1;
             }
             if add_sep && jp < ncols - 1 {
-                if rrr[i][j] == *"\\hline" {
+                if row[j] == *"\\hline" {
                     for _ in 0..sep {
                         log.push(dash);
                     }
@@ -392,12 +386,12 @@ pub fn print_tabular_vbox(
                     }
                 }
             }
-            if vert[j] && rrr[i][j + 1] != "\\ext" {
+            if vert[j] && row[j + 1] != "\\ext" {
                 if debug_print {
                     println!("1 - pushing {verty} onto row {i}, j = {j}");
                 }
                 log.push(verty);
-                if rrr[i][j + 1] == *"\\hline" {
+                if row[j + 1] == *"\\hline" {
                     for _ in 0..sep {
                         log.push(dash);
                     }
@@ -458,8 +452,8 @@ pub fn print_tabular_vbox(
         if !z.is_empty() {
             all.push(z);
         }
-        for i in 0..all.len() {
-            mat.push(package_characters_with_escapes_char(&all[i]));
+        for chars in all {
+            mat.push(package_characters_with_escapes_char(&chars));
         }
     }
 
@@ -502,10 +496,10 @@ pub fn print_tabular_vbox(
     // Output matrix.
 
     log.clear();
-    for i in 0..mat.len() {
-        for j in 0..mat[i].len() {
-            for k in 0..mat[i][j].len() {
-                log.push(mat[i][j][k]);
+    for x in mat {
+        for y in x {
+            for z in y {
+                log.push(z);
             }
         }
         log.push('\n');

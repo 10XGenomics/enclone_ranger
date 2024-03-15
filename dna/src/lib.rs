@@ -91,12 +91,7 @@ pub fn tm_nearest_neighbor_full(s: &str, s_mol: f64, na_mol: f64, locked: &[bool
     for c in s.chars() {
         sx.push(c);
     }
-    let mut gc = 0;
-    for i in 0..sx.len() {
-        if sx[i] == 'G' || sx[i] == 'C' {
-            gc += 1;
-        }
-    }
+    let gc = sx.iter().filter(|c| **c == 'G' || **c == 'C').count();
     let gc_fract = gc as f64 / sx.len() as f64;
     let ln_na_mol = na_mol.ln();
 
@@ -431,12 +426,12 @@ pub fn thermodynamic_sums_dna(
         sx.push(c);
     }
     let mut b = Vec::<usize>::new();
-    for i in 0..sx.len() {
-        if sx[i] == 'A' {
+    for sx_i in &sx {
+        if *sx_i == 'A' {
             b.push(0);
-        } else if sx[i] == 'C' {
+        } else if *sx_i == 'C' {
             b.push(1);
-        } else if sx[i] == 'G' {
+        } else if *sx_i == 'G' {
             b.push(2);
         } else {
             b.push(3);
@@ -451,8 +446,8 @@ pub fn thermodynamic_sums_dna(
     // Handle locked bases.
 
     let mut have_lock = false;
-    for i in 0..locked.len() {
-        if locked[i] {
+    for locked_i in locked {
+        if *locked_i {
             have_lock = true;
         }
     }
