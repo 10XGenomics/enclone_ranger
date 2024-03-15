@@ -6,7 +6,7 @@ use crate::print_utils1::{
     test_internal_error_seq,
 };
 use crate::print_utils3::comp_edit;
-use amino::{aa_seq, codon_to_aa};
+use amino::{codon_to_aa, nucleotide_to_aminoacid_sequence};
 use enclone_core::align_to_vdj_ref::{align_to_vdj_ref, cigar};
 use enclone_core::defs::{AlleleData, ColInfo, EncloneControl, ExactClonotype, POUT_SEP};
 use enclone_core::median::rounded_median;
@@ -212,7 +212,7 @@ pub fn proc_cvar_auto(
                 let dna = refdata.refs[x.v_ref_id].to_ascii_vec()
                     [x.cdr1_start.unwrap()..x.fr2_start.unwrap()]
                     .to_vec();
-                y = stringme(&aa_seq(&dna, 0));
+                y = stringme(&nucleotide_to_aminoacid_sequence(&dna, 0));
             }
         } else if x.cdr2_start.is_some()
             && x.fr3_start.is_some()
@@ -221,7 +221,7 @@ pub fn proc_cvar_auto(
             let dna = refdata.refs[x.v_ref_id].to_ascii_vec()
                 [x.cdr2_start.unwrap()..x.fr3_start.unwrap()]
                 .to_vec();
-            y = stringme(&aa_seq(&dna, 0));
+            y = stringme(&nucleotide_to_aminoacid_sequence(&dna, 0));
         }
 
         (y, Vec::new(), "clono".to_string())
@@ -264,9 +264,9 @@ pub fn proc_cvar_auto(
         let arg1 = vname.between2("cdr", "_aa").force_i64();
         let x = &ex.share[mid];
         let y = if arg1 == 1 {
-            get_cdr1(x, 0, 0).map(|c| stringme(&aa_seq(c.as_bytes(), 0)))
+            get_cdr1(x, 0, 0).map(|c| stringme(&nucleotide_to_aminoacid_sequence(c.as_bytes(), 0)))
         } else if arg1 == 2 {
-            get_cdr2(x, 0, 0).map(|c| stringme(&aa_seq(c.as_bytes(), 0)))
+            get_cdr2(x, 0, 0).map(|c| stringme(&nucleotide_to_aminoacid_sequence(c.as_bytes(), 0)))
         } else {
             Some(x.cdr3_aa.clone())
         }
@@ -291,7 +291,7 @@ pub fn proc_cvar_auto(
             get_cdr3(x, -1, -1)
         };
         let y = if let Some(c) = c {
-            stringme(&aa_seq(c.as_bytes(), 0))
+            stringme(&nucleotide_to_aminoacid_sequence(c.as_bytes(), 0))
         } else {
             "unknown".to_string()
         };
@@ -348,7 +348,7 @@ pub fn proc_cvar_auto(
                     }
                 }
                 test_internal_error_seq(&x.seq, &dna, &x.cdr3_aa)?;
-                y = stringme(&aa_seq(&dna, 0));
+                y = stringme(&nucleotide_to_aminoacid_sequence(&dna, 0));
             }
         } else if arg1 == 2 {
             if x.cdr2_start.is_some()
@@ -372,7 +372,7 @@ pub fn proc_cvar_auto(
                     }
                 }
                 test_internal_error_seq(&x.seq, &dna, &x.cdr3_aa)?;
-                y = stringme(&aa_seq(&dna, 0));
+                y = stringme(&nucleotide_to_aminoacid_sequence(&dna, 0));
             }
         } else if x.cdr3_start as i64 - left >= 0
             && x.cdr3_start as i64 - left < x.seq_del_amino.len() as i64
@@ -395,7 +395,7 @@ pub fn proc_cvar_auto(
                 }
             }
             test_internal_error_seq(&x.seq, &dna, &x.cdr3_aa)?;
-            y = stringme(&aa_seq(&dna, 0));
+            y = stringme(&nucleotide_to_aminoacid_sequence(&dna, 0));
         }
 
         (y, Vec::new(), "exact".to_string())
@@ -848,7 +848,7 @@ pub fn proc_cvar_auto(
             Some(stringme(dna))
         };
         let y = if let Some(c) = c {
-            stringme(&aa_seq(c.as_bytes(), 0))
+            stringme(&nucleotide_to_aminoacid_sequence(c.as_bytes(), 0))
         } else {
             "unknown".to_string()
         };
@@ -868,21 +868,21 @@ pub fn proc_cvar_auto(
                 let dna = refdata.refs[x.v_ref_id].to_ascii_vec()
                     [x.fr1_start..x.cdr1_start.unwrap()]
                     .to_vec();
-                y = stringme(&aa_seq(&dna, 0));
+                y = stringme(&nucleotide_to_aminoacid_sequence(&dna, 0));
             }
         } else if arg1 == 2 {
             if x.fr2_start.unwrap() <= x.cdr2_start.unwrap() {
                 let dna = refdata.refs[x.v_ref_id].to_ascii_vec()
                     [x.fr2_start.unwrap()..x.cdr2_start.unwrap()]
                     .to_vec();
-                y = stringme(&aa_seq(&dna, 0));
+                y = stringme(&nucleotide_to_aminoacid_sequence(&dna, 0));
             }
         } else if arg1 == 3 {
             if x.fr3_start.is_some() && x.fr3_start.unwrap() <= x.cdr3_start - x.ins_len() {
                 let dna = refdata.refs[x.v_ref_id].to_ascii_vec();
                 if x.cdr3_start <= dna.len() {
                     let dna = dna[x.fr3_start.unwrap()..x.cdr3_start - x.ins_len()].to_vec();
-                    y = stringme(&aa_seq(&dna, 0));
+                    y = stringme(&nucleotide_to_aminoacid_sequence(&dna, 0));
                 }
             }
         } else {
@@ -890,7 +890,7 @@ pub fn proc_cvar_auto(
             let aa_len = if heavy { 10 } else { 9 };
             let dna = refdata.refs[x.j_ref_id].to_ascii_vec();
             let dna = &dna[dna.len() - 1 - 3 * aa_len..dna.len() - 1];
-            y = stringme(&aa_seq(dna, 0));
+            y = stringme(&nucleotide_to_aminoacid_sequence(dna, 0));
         }
 
         (y, Vec::new(), "clono".to_string())

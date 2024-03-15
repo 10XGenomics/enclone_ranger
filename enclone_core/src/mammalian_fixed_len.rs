@@ -1,6 +1,6 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
-use amino::aa_seq;
+use amino::nucleotide_to_aminoacid_sequence;
 use std::collections::HashMap;
 use string_utils::TextUtils;
 use superslice::Ext;
@@ -54,7 +54,7 @@ pub fn mammalian_fixed_len_peer_groups(refdata: &RefData) -> Vec<Vec<(usize, u8,
     let mut pg = vec![Vec::<(usize, u8, u32)>::new(); refdata.refs.len()];
     for (i, pgi) in pg.iter_mut().enumerate() {
         if refdata.is_v(i) {
-            let aa = aa_seq(&refdata.refs[i].to_ascii_vec(), 0);
+            let aa = nucleotide_to_aminoacid_sequence(&refdata.refs[i].to_ascii_vec(), 0);
             let rtype = refdata.rtype[i];
             let chain_type = if rtype == 0 {
                 "IGH"

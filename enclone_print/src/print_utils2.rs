@@ -7,7 +7,7 @@ use crate::print_utils1::color_codon;
 use crate::proc_cvar_auto::proc_cvar_auto;
 use crate::proc_lvar2::proc_lvar2;
 use crate::proc_lvar_auto::proc_lvar_auto;
-use amino::{aa_seq, codon_to_aa};
+use amino::{codon_to_aa, nucleotide_to_aminoacid_sequence};
 use enclone_core::allowed_vars::LVARS_ALLOWED;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, ColInfo, EncloneControl, ExactClonotype, GexInfo, POUT_SEP};
@@ -564,7 +564,12 @@ pub fn row_fill(
         // Speak some other column entries.
 
         let xm = &ex.share[mid];
-        speakc!(u, col, "vj_aa".to_string(), stringme(&aa_seq(&xm.seq, 0)));
+        speakc!(
+            u,
+            col,
+            "vj_aa".to_string(),
+            stringme(&nucleotide_to_aminoacid_sequence(&xm.seq, 0))
+        );
         speakc!(u, col, "vj_seq".to_string(), stringme(&xm.seq));
         let mut dna = Vec::<u8>::new();
         for p in xm.fr1_start..xm.seq_del_amino.len() {
@@ -578,7 +583,12 @@ pub fn row_fill(
                 dna.push(xm.seq_del_amino[p]);
             }
         }
-        speakc!(u, col, "vj_aa_nl".to_string(), stringme(&aa_seq(&dna, 0)));
+        speakc!(
+            u,
+            col,
+            "vj_aa_nl".to_string(),
+            stringme(&nucleotide_to_aminoacid_sequence(&dna, 0))
+        );
         speakc!(u, col, "vj_seq_nl".to_string(), stringme(&dna));
         speakc!(u, col, "seq".to_string(), stringme(&xm.full_seq));
         let mut vv = Vec::<usize>::new();

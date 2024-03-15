@@ -170,13 +170,12 @@ fn evaluate_contig_status(
         )
     };
 
-    let mut cdr3 = Vec::<(usize, Vec<u8>, usize, usize)>::new();
-    get_cdr3_using_ann(contig, reference, ann, &mut cdr3);
-    contig_status.has_cdr3 = Some(!cdr3.is_empty());
+    let found_cdr3s = get_cdr3_using_ann(contig, reference, ann);
+    contig_status.has_cdr3 = Some(!found_cdr3s.is_empty());
 
-    if let (Some((vstart, jstop)), Some(cdr3)) = (inframe_pair, cdr3.first()) {
+    if let (Some((vstart, jstop)), Some(cdr3)) = (inframe_pair, found_cdr3s.first()) {
         let expected_len = (refs[vstart.ref_id].len() + refs[jstop.ref_id].len()) as i32
-            + (3 * cdr3.1.len() as i32)
+            + (3 * cdr3.aa_seq.len() as i32)
             - 20;
         let observed_len = jstop.tig_stop as i32 - vstart.tig_start as i32;
         let delta = expected_len - observed_len;
