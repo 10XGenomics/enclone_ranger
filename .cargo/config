@@ -38,6 +38,8 @@ rustflags = [
   "-Dclippy::needless_for_each",
 
   "-Dclippy::semicolon_if_nothing_returned",
+  "-Dclippy::uninlined_format_args",
+  "-Dclippy::unused_self",
 
   "-D", "clippy::needless_lifetimes",
   "-D", "clippy::redundant_closure_for_method_calls",
@@ -50,6 +52,9 @@ rustflags = [
   "-D", "clippy::large-enum-variant",
   "-D", "clippy::missing_safety_doc",
   "-D", "clippy::result_unit_err",
+  # clippy nursery
+  "-Dclippy::needless_collect",
+  "-Dclippy::or_fun_call",
   # --- lint allow ---
   "-A", "clippy::type_complexity",
   "-A", "clippy::too_many_arguments",
