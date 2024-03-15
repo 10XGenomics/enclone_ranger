@@ -183,7 +183,7 @@ pub fn join_exacts(
                 {
                     let (k1, k2) = (x[0] as usize + i, x[1] as usize + i);
                     let k = min(k1, k2);
-                    for pj in to_pot[k - i].iter() {
+                    for pj in &to_pot[k - i] {
                         let cd = pot[*pj].cd;
                         let shares = &pot[*pj].shares;
 
@@ -253,10 +253,10 @@ pub fn join_exacts(
                 fwriteln!(log, "\nJOIN ERROR");
             }
             let (mut lena1, mut lena2) = (Vec::<String>::new(), Vec::<String>::new());
-            for l1 in info[k1].origin.iter() {
+            for l1 in &info[k1].origin {
                 lena1.push(ctl.origin_info.dataset_id[*l1].clone());
             }
-            for l2 in info[k2].origin.iter() {
+            for l2 in &info[k2].origin {
                 lena2.push(ctl.origin_info.dataset_id[*l2].clone());
             }
             fwriteln!(
@@ -284,7 +284,7 @@ pub fn join_exacts(
                 fwrite!(log, "{}={}", t, refdata.transcript[*t]);
             }
             fwriteln!(log, "");
-            for l1 in info[k1].origin.iter() {
+            for l1 in &info[k1].origin {
                 fwriteln!(
                     log,
                     "{} = {}",
@@ -292,7 +292,7 @@ pub fn join_exacts(
                     ctl.origin_info.descrips[*l1]
                 );
             }
-            for l2 in info[k2].origin.iter() {
+            for l2 in &info[k2].origin {
                 fwriteln!(
                     log,
                     "{} = {}",

@@ -120,7 +120,7 @@ pub fn proc_lvar_auto(
         (val, Vec::new(), "exact")
     } else if vname == "clonotype_ncells" {
         let mut n = 0;
-        for u in exacts.iter() {
+        for u in exacts {
             n += exact_clonotypes[*u].ncells();
         }
 
@@ -137,7 +137,7 @@ pub fn proc_lvar_auto(
             clust.push(cid);
         }
         let mut clustf = Vec::<String>::new();
-        for x in clust.iter() {
+        for x in &clust {
             clustf.push(format!("{x}"));
         }
         clust.sort_unstable();
@@ -563,7 +563,7 @@ pub fn proc_lvar_auto(
                 let mut creds = 0;
                 let mut z = Vec::<(f64, &str)>::new();
                 let x = &gex_info.pca[li][&bc.clone()];
-                for y in gex_info.pca[li].iter() {
+                for y in &gex_info.pca[li] {
                     let dist2 =
                         y.1.iter()
                             .zip(x.iter())
@@ -601,7 +601,7 @@ pub fn proc_lvar_auto(
                 let mut creds = 0;
                 let mut z = Vec::<(f64, &str)>::new();
                 let x = &gex_info.pca[li][&bc.clone()];
-                for y in gex_info.pca[li].iter() {
+                for y in &gex_info.pca[li] {
                     let dist2 =
                         y.1.iter()
                             .zip(x.iter())
@@ -865,7 +865,7 @@ pub fn proc_lvar_auto(
             entropy = median_f64(&entropies);
         }
         let mut e = Vec::<String>::new();
-        for x in entropies_unsorted.iter() {
+        for x in &entropies_unsorted {
             e.push(format!("{x:.2}"));
         }
 
@@ -957,7 +957,7 @@ pub fn proc_lvar_auto(
             entropy = median_f64(&entropies);
         }
         let mut e = Vec::<String>::new();
-        for x in entropies_unsorted.iter() {
+        for x in &entropies_unsorted {
             e.push(format!("{x:.2}"));
         }
 
@@ -970,7 +970,7 @@ pub fn proc_lvar_auto(
                 continue;
             }
             let mut d = 0_isize;
-            for c in fp[u].iter() {
+            for c in &fp[u] {
                 for j in 0..varmat[u][*c].len() {
                     if varmat[u][*c][j] != varmat[i2][*c][j] {
                         d += 1;
@@ -1001,7 +1001,7 @@ pub fn proc_lvar_auto(
         (String::new(), fates, "cell")
     } else if vname == "gex" {
         let mut f = Vec::<String>::new();
-        for x in gex_fcounts_unsorted.iter() {
+        for x in gex_fcounts_unsorted {
             f.push(format!("{}", *x));
         }
         let mut counts = gex_counts_unsorted.to_owned();
@@ -1011,7 +1011,7 @@ pub fn proc_lvar_auto(
         (format!("{gex_median}"), f, "cell-exact")
     } else if vname == "gex_cell" {
         let mut f = Vec::<String>::new();
-        for x in gex_fcounts_unsorted.iter() {
+        for x in gex_fcounts_unsorted {
             f.push(format!("{}", *x));
         }
         let mut counts = gex_counts_unsorted.to_owned();
@@ -1324,7 +1324,7 @@ pub fn proc_lvar_auto(
     } else if vname == "n_gex" {
         let mut n = Vec::<String>::new();
         let mut n_gex = 0;
-        for x in n_gexs.iter() {
+        for x in n_gexs {
             n.push(format!("{}", *x));
             n_gex += *x;
         }
@@ -1333,7 +1333,7 @@ pub fn proc_lvar_auto(
     } else if vname == "n_gex_cell" {
         let mut n = Vec::<String>::new();
         let mut n_gex = 0;
-        for x in n_gexs.iter() {
+        for x in n_gexs {
             n.push(format!("{}", *x));
             n_gex += *x;
         }
@@ -1409,7 +1409,7 @@ pub fn proc_lvar_auto(
                 continue;
             }
             let mut d = 0;
-            for c in fp[u].iter() {
+            for c in &fp[u] {
                 for j in 0..varmat[u][*c].len() {
                     if varmat[u][*c][j] != varmat[i2][*c][j] {
                         d += 1;

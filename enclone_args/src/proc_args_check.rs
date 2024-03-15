@@ -40,23 +40,23 @@ pub fn get_known_features(gex_info: &GexInfo) -> Result<Vec<String>, String> {
             }
             for z in 0..2 {
                 if ff[2].starts_with("Antibody") {
-                    for s in suffixes.iter() {
+                    for s in &suffixes {
                         res.1.push(format!("{}_ab{s}", ff[z]));
                     }
                 } else if ff[2].starts_with("CRISPR") {
-                    for s in suffixes.iter() {
+                    for s in &suffixes {
                         res.1.push(format!("{}_cr{s}", ff[z]));
                     }
                 } else if ff[2].starts_with("CUSTOM") {
-                    for s in suffixes.iter() {
+                    for s in &suffixes {
                         res.1.push(format!("{}_cu{s}", ff[z]));
                     }
                 } else if ff[2].starts_with("Antigen") {
-                    for s in suffixes.iter() {
+                    for s in &suffixes {
                         res.1.push(format!("{}_ag{s}", ff[z]));
                     }
                 } else {
-                    for s in suffixes_g.iter() {
+                    for s in &suffixes_g {
                         res.1.push(format!("{}_g{s}", ff[z]));
                     }
                 }
@@ -84,8 +84,8 @@ pub fn involves_gex_fb(x: &str) -> bool {
     ];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
     let mut ends = Vec::<String>::new();
-    for z in ends0.iter() {
-        for y in suffixes.iter() {
+    for z in &ends0 {
+        for y in &suffixes {
             ends.push(format!("{z}{y}"));
         }
     }
@@ -196,7 +196,7 @@ fn check_gene_fb(
         }
         if !gex_info.have_gex {
             let mut problem = false;
-            for y in g_ends.iter() {
+            for y in &g_ends {
                 if x.ends_with(y) {
                     problem = true;
                 }
@@ -345,7 +345,7 @@ fn check_gene_fb(
             }
             if !n_var {
                 let mut alts = Vec::<&str>::new();
-                for y in known_features.iter() {
+                for y in &known_features {
                     if x.eq_ignore_ascii_case(y) {
                         alts.push(y.as_str());
                     }
@@ -410,7 +410,7 @@ pub fn check_pcols(
     let pchains = &ctl.parseable_opt.pchains;
     let ends = build_ends();
     let mut nd_used = false;
-    for x in cols.iter() {
+    for x in cols {
         let mut x = x.to_string();
         if x.contains(':') {
             x = x.after(":").to_string();
@@ -428,7 +428,7 @@ pub fn check_pcols(
         if bin_member(&alt_bcs, &x) {
             ok = true;
         }
-        for y in ctl.clono_print_opt.lvars.iter() {
+        for y in &ctl.clono_print_opt.lvars {
             if y.contains(':') {
                 let y = y.before(":");
                 if x == y {
@@ -436,12 +436,12 @@ pub fn check_pcols(
                 }
             }
         }
-        for y in PLVARS_ALLOWED.iter() {
+        for y in &PLVARS_ALLOWED {
             if x == *y {
                 ok = true;
             }
         }
-        for y in ctl.origin_info.dataset_list.iter() {
+        for y in &ctl.origin_info.dataset_list {
             if *x == format!("{y}_barcodes") {
                 ok = true;
             }
@@ -450,7 +450,7 @@ pub fn check_pcols(
             if x == "barcode" {
                 ok = true;
             }
-            for y in ctl.origin_info.dataset_list.iter() {
+            for y in &ctl.origin_info.dataset_list {
                 if *x == format!("{y}_barcode") {
                     ok = true;
                 }
@@ -522,7 +522,7 @@ pub fn check_pcols(
 // Check cvars args.
 
 pub fn check_cvars(ctl: &EncloneControl) -> Result<(), String> {
-    for x in ctl.clono_print_opt.cvars.iter() {
+    for x in &ctl.clono_print_opt.cvars {
         let mut x = x.to_string();
         if x.contains(':') {
             x = x.after(":").to_string();
@@ -751,8 +751,8 @@ pub fn build_ends() -> Vec<String> {
         "_g", "_ab", "_ag", "_cr", "_cu", "_g_μ", "_ab_μ", "_ag_μ", "_cr_μ", "_cu_μ", "_g_%",
     ];
     let suffixes = ["", "_min", "_max", "_μ", "_Σ"];
-    for x in ends0.iter() {
-        for y in suffixes.iter() {
+    for x in &ends0 {
+        for y in &suffixes {
             ends.push(format!("{x}{y}"));
         }
     }
@@ -767,7 +767,7 @@ pub fn check_lvars(ctl: &EncloneControl, gex_info: &GexInfo) -> Result<(), Strin
     let mut to_check = Vec::<String>::new();
     let ends = build_ends();
     let mut nd_used = false;
-    for x in ctl.clono_print_opt.lvars.iter() {
+    for x in &ctl.clono_print_opt.lvars {
         if x.ends_with("_cell") {
             return Err(
                 "\nFields ending with _cell cannot be used in LVARS or LVARSP.\n".to_string(),
@@ -790,7 +790,7 @@ pub fn check_lvars(ctl: &EncloneControl, gex_info: &GexInfo) -> Result<(), Strin
 // Check gvars args.
 
 pub fn check_gvars(ctl: &EncloneControl) -> Result<(), String> {
-    for x in ctl.gen_opt.gvars.iter() {
+    for x in &ctl.gen_opt.gvars {
         if !GVARS_ALLOWED.contains(&x.as_str()) {
             return Err(format!("\nUnknown global variable {x}.\n"));
         }

@@ -99,7 +99,7 @@ pub fn parse_variables(input: &str) -> Vec<Variable> {
     // Form variables.
 
     let mut vars = Vec::<Variable>::new();
-    for g in groups.iter() {
+    for g in &groups {
         vars.push(Variable {
             name: g[0].clone(),
             inputs: g[1].clone(),

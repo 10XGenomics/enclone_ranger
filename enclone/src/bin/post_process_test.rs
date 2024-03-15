@@ -18,7 +18,7 @@ fn main() {
     for line in stdin.lock().lines() {
         let line = line.unwrap();
         let mut rejected = false;
-        for r in reject.iter() {
+        for r in &reject {
             if line.contains(r) {
                 rejected = true;
             }

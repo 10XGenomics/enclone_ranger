@@ -53,7 +53,7 @@ pub fn set_speakers(ctl: &EncloneControl, parseable_fields: &mut Vec<String>, ma
             all_lvars.push(x.to_string());
         }
     }
-    for x in all_lvars.iter() {
+    for x in &all_lvars {
         if (*x == "sec" || *x == "mem") && !ctl.gen_opt.using_secmem {
             continue;
         }
@@ -115,14 +115,14 @@ pub fn set_speakers(ctl: &EncloneControl, parseable_fields: &mut Vec<String>, ma
     speaker!("clonotype_id");
     speaker!("exact_subclonotype_id");
     speaker!("barcodes");
-    for x in ctl.origin_info.dataset_list.iter() {
+    for x in &ctl.origin_info.dataset_list {
         if !x.is_empty() {
             speaker!(&format!("{x}_barcodes"));
         }
     }
     if ctl.parseable_opt.pbarcode {
         speaker!("barcode");
-        for x in ctl.origin_info.dataset_list.iter() {
+        for x in &ctl.origin_info.dataset_list {
             speaker!(&format!("{x}_barcode"));
         }
     }

@@ -27,7 +27,7 @@ fn joiner(
         let u1 = info[j1].clonotype_index;
         let v1 = to_exacts[&u1];
         let m1s = &info[j1].exact_cols;
-        for i2 in raw_joinsx[i1].iter() {
+        for i2 in &raw_joinsx[i1] {
             let j2 = infos[*i2];
             let u2 = info[j2].clonotype_index;
             let v2 = to_exacts[&u2];
@@ -58,7 +58,7 @@ pub fn setup_define_mat(
     info: &[CloneInfo],
 ) -> (Vec<(Vec<usize>, usize, i32)>, Vec<usize>) {
     let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
-    for id in orbit.iter() {
+    for id in orbit {
         let x: &CloneInfo = &info[*id as usize];
         od.push((x.origin.clone(), x.clonotype_id, *id));
     }
@@ -136,7 +136,7 @@ pub fn define_mat(
 
     let mut raw_joinsx = vec![Vec::<usize>::new(); infos.len()];
     for (&j1, raw_i1) in infos.iter().zip(raw_joinsx.iter_mut()) {
-        for x in raw_joins[j1].iter() {
+        for x in &raw_joins[j1] {
             let i2 = bin_position(&infos, x);
             if i2 >= 0 {
                 raw_i1.push(i2 as usize);
@@ -154,15 +154,15 @@ pub fn define_mat(
 
     let mut extras = Vec::<(usize, usize)>::new();
     for (i1, (raw_i1, &j1)) in raw_joinsx.iter().zip(infos.iter()).enumerate() {
-        for &i2 in raw_i1.iter() {
+        for &i2 in raw_i1 {
             let j2 = infos[i2];
             let (u1, u2) = (info[j1].clonotype_index, info[j2].clonotype_index);
             let (ex1, ex2) = (&exact_clonotypes[u1], &exact_clonotypes[u2]);
             let (v1, v2) = (to_exacts[&u1], to_exacts[&u2]);
             if ex1.share.len() > 2 || ex2.share.len() > 2 {
                 let (s1, s2) = (&to_infos[v1], &to_infos[v2]);
-                for k1 in s1.iter() {
-                    for k2 in s2.iter() {
+                for k1 in s1 {
+                    for k2 in s2 {
                         let (k1, k2) = (*k1, *k2);
                         if (k1 == i1 && k2 == i2) || (k1 == i2 && k2 == i1) {
                             continue;
@@ -191,7 +191,7 @@ pub fn define_mat(
             }
         }
     }
-    for x in extras.iter() {
+    for x in &extras {
         raw_joinsx[x.0].push(x.1);
     }
 
@@ -238,8 +238,8 @@ pub fn define_mat(
     // This partially addresses the "second reason" described above.  It is partial because we
     // picked an info entry above at random, rather than trying them all.
 
-    for f1 in rxir.iter() {
-        for f2 in rxir.iter() {
+    for f1 in &rxir {
+        for f2 in &rxir {
             if f1.0 != f2.0 || f1.1 != f2.1 {
                 let (i1, i2) = (infos[f1.2], infos[f2.2]);
                 if info[i1].lens != info[i2].lens {
@@ -284,7 +284,7 @@ pub fn define_mat(
                 [2, 0, 1],
                 [2, 1, 0],
             ];
-            for z in zs.iter() {
+            for z in &zs {
                 if ex.share[z[0]].left && !ex.share[z[2]].left {
                     let p1 = e.class_id(bin_position(&chains, &(u, z[0])));
                     let p2 = e.class_id(bin_position(&chains, &(u, z[1])));
@@ -305,8 +305,8 @@ pub fn define_mat(
     // join algorithm would not have joined the third.  In this case, if the third chains are
     // "close enough", we join them anyway.  As before, we only test representatives.
 
-    for t1 in threes.iter() {
-        't2_loop: for t2 in threes.iter() {
+    for t1 in &threes {
+        't2_loop: for t2 in &threes {
             if t1 == t2 {
                 continue;
             }
@@ -381,7 +381,7 @@ pub fn define_mat(
         chainsox.push((c.2, c.3, i));
     }
     chainsox.sort_unstable();
-    for ri in r.iter_mut() {
+    for ri in &mut r {
         *ri = chainsox[*ri as usize].2 as i32;
     }
     r.sort_unstable();

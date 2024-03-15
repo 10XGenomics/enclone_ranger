@@ -90,7 +90,7 @@ impl LinearCondition {
         } else {
             parts.push(stringme(&lhsx[last + 1..]));
         }
-        for part in parts.iter_mut() {
+        for part in &mut parts {
             *part = part.replace('(', "");
             *part = part.replace(')', "");
             if part.contains('*') {

@@ -75,7 +75,7 @@ pub fn weak_chains(
             }
             for j in 0..cols {
                 if ncells[j] <= 20 && 8 * ncells[j] < total_cells {
-                    for d in col_entries[j].iter() {
+                    for d in &col_entries[j] {
                         if ctl.clono_filt_opt_def.weak_chains {
                             res.2.push(exacts[*d]);
                         }
@@ -98,7 +98,7 @@ pub fn weak_chains(
         for j in 0..results[i].1.len() {
             fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
         }
-        for x in results[i].2.iter() {
+        for x in &results[i].2 {
             to_delete[*x] = true;
         }
     }

@@ -115,7 +115,7 @@ pub fn analyze_donor_ref(
                 for ar in &alleles {
                     m = min(m, ar.0.len());
                 }
-                for ar in alleles.iter_mut() {
+                for ar in &mut alleles {
                     if ar.0.len() > m {
                         ar.0 = &ar.0[..m];
                     }
@@ -175,7 +175,7 @@ pub fn analyze_donor_ref(
 
                 let mut imgts = Vec::<&str>::new();
                 for ar in &allelesg {
-                    for n in ar.0.iter() {
+                    for n in &ar.0 {
                         if !n.starts_with('d') && !n.starts_with('u') {
                             imgts.push(n);
                         }
@@ -245,7 +245,7 @@ pub fn analyze_donor_ref(
                         let allele_name = (b'A' + r as u8) as char;
                         let mut an = String::new();
                         an.push(allele_name);
-                        for n in alleleg.0.iter() {
+                        for n in &alleleg.0 {
                             if n.starts_with("uref") {
                                 an.push('*');
                                 break;

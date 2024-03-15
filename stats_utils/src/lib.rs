@@ -11,12 +11,12 @@ pub fn n50(v: &[i32]) -> i32 {
     if v.is_empty() {
         return 0;
     }
-    for n in v.iter() {
+    for n in v {
         assert!(*n > 0);
     }
     let mut sum: i64 = 0;
     let mut half: i64 = 0;
-    for n in v.iter() {
+    for n in v {
         sum += i64::from(*n);
     }
     let mut vs = v.to_owned();
@@ -37,12 +37,12 @@ pub fn n90(v: &[i32]) -> i32 {
     if v.is_empty() {
         return 0;
     }
-    for n in v.iter() {
+    for n in v {
         assert!(*n > 0);
     }
     let mut sum: i64 = 0;
     let mut part: i64 = 0;
-    for n in v.iter() {
+    for n in v {
         sum += i64::from(*n);
     }
     let mut vs = v.to_owned();
@@ -64,7 +64,7 @@ pub fn n90(v: &[i32]) -> i32 {
 pub fn mean(v: &[i32]) -> f64 {
     let sum1 = v.len() as f64;
     let mut sum2 = 0_f64;
-    for x in v.iter() {
+    for x in v {
         sum2 += f64::from(*x);
     }
     if sum1 == 0_f64 {
@@ -80,7 +80,7 @@ pub fn mean(v: &[i32]) -> f64 {
 pub fn len_weighted_mean(v: &[i32]) -> f64 {
     let mut sum1 = 0_f64;
     let mut sum2 = 0_f64;
-    for x in v.iter() {
+    for x in v {
         sum1 += f64::from(*x);
         sum2 += f64::from(*x) * f64::from(*x);
     }

@@ -15,7 +15,11 @@ rustflags = [
   "-D", "clippy::suspicious",
 
   # clippy pedantic
+  "-Dclippy::cloned_instead_of_copied",
   "-D", "clippy::enum_glob_use",
+  "-Dclippy::explicit_deref_methods",
+  "-Dclippy::explicit_into_iter_loop",
+  "-Dclippy::explicit_iter_loop",
   "-D", "clippy::needless_lifetimes",
   "-D", "clippy::redundant_closure_for_method_calls",
   "-D", "clippy::unused_io_amount",

@@ -624,7 +624,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                 let i = res.0;
                 let o = &orbits[i];
                 let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
-                for id in o.iter() {
+                for id in o {
                     let x: &CloneInfo = &info[*id as usize];
                     od.push((x.origin.clone(), x.clonotype_id, *id));
                 }
@@ -655,7 +655,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                 }
             }
             post_filter.sort();
-            for ex in exact_clonotypes.iter_mut() {
+            for ex in &mut exact_clonotypes {
                 let mut to_delete = vec![false; ex.ncells()];
                 for (clone, d) in ex.clones.iter().zip(to_delete.iter_mut()) {
                     let x = &clone[0];
@@ -849,8 +849,8 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Mark VDJ noncells.
 
     if ctl.clono_filt_opt_def.non_cell_mark {
-        for ex in exact_clonotypes.iter_mut() {
-            for clone in ex.clones.iter_mut() {
+        for ex in &mut exact_clonotypes {
+            for clone in &mut ex.clones {
                 let di = clone[0].dataset_index;
                 if !bin_member(&vdj_cells[di], &clone[0].barcode) {
                     clone[0].marked = true;

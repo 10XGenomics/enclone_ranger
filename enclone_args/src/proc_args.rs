@@ -260,7 +260,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
                 }
             }
             const F: &str = include_str!["enclone.testdata.bcr.gex"];
-            for n in y.iter() {
+            for n in &y {
                 if *n != "m1" {
                     if n.parse::<usize>().is_err() || n.force_usize() < 1 || n.force_usize() > 47 {
                         return Err(

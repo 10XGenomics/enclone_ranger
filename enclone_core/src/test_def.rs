@@ -33,28 +33,28 @@ pub fn replace_at_test(x: &mut String) {
 pub fn test_donor_id(x: usize) -> usize {
     let test1 = expand_integer_ranges(&TEST1.replace(':', ","));
     let test1 = test1.split(',').collect::<Vec<&str>>();
-    for t in test1.iter() {
+    for t in &test1 {
         if t.force_usize() == x {
             return 1;
         }
     }
     let test2 = expand_integer_ranges(&TEST2.replace(':', ","));
     let test2 = test2.split(',').collect::<Vec<&str>>();
-    for t in test2.iter() {
+    for t in &test2 {
         if t.force_usize() == x {
             return 2;
         }
     }
     let test3 = expand_integer_ranges(&TEST3.replace(':', ","));
     let test3 = test3.split(',').collect::<Vec<&str>>();
-    for t in test3.iter() {
+    for t in &test3 {
         if t.force_usize() == x {
             return 3;
         }
     }
     let test4 = expand_integer_ranges(&TEST4.replace(':', ","));
     let test4 = test4.split(',').collect::<Vec<&str>>();
-    for t in test4.iter() {
+    for t in &test4 {
         if t.force_usize() == x {
             return 4;
         }

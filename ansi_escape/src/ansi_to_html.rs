@@ -231,7 +231,7 @@ pub fn compress_ansi_escapes(x: &str) -> String {
 
                         // Emit bold, then color, then background.
 
-                        for e in escapes.iter() {
+                        for e in &escapes {
                             if e.solo() && e[0] == 1 {
                                 if reset || new_state.bold != old_state.bold {
                                     out += strme(&pack_ansi_escape(e));

@@ -122,7 +122,7 @@ pub fn some_filters(
             for j in 0..freq.len() {
                 if j != i && freq[j].1.len() == 2 {
                     let mut share = false;
-                    for x in freq[j].1.iter() {
+                    for x in &freq[j].1 {
                         if freq[i].1.contains(x) {
                             share = true;
                         }
@@ -407,7 +407,7 @@ pub fn some_filters(
         for j in 0..results[i].1.len() {
             fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
         }
-        for x in results[i].2.iter() {
+        for x in &results[i].2 {
             to_delete[*x] = true;
         }
     }

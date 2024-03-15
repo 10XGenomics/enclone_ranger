@@ -62,7 +62,7 @@ pub fn build_show_aa(
     let cols = rsi.vids.len();
     let mut show_aa = vec![Vec::<usize>::new(); cols];
     for cx in 0..cols {
-        for x in ctl.clono_print_opt.amino.iter() {
+        for x in &ctl.clono_print_opt.amino {
             if x.contains('-') {
                 let (start, stop) = (x.before("-").force_usize(), x.after("-").force_usize());
                 for p in start..=stop {
@@ -278,7 +278,7 @@ pub fn compute_some_stats(
                         let mut creds = 0;
                         let mut z = Vec::<(f64, String)>::new();
                         let x = &gex_info.pca[li][&bc.clone()];
-                        for y in gex_info.pca[li].iter() {
+                        for y in &gex_info.pca[li] {
                             let dist2 = x
                                 .iter()
                                 .zip(y.1.iter())
@@ -390,7 +390,7 @@ pub fn compute_some_stats(
                 .collect::<Vec<_>>();
             let mut matg = Vec::<Vec<f64>>::new();
             for li in 0..ctl.origin_info.n() {
-                for i in gex_info.pca[li].iter() {
+                for i in &gex_info.pca[li] {
                     matg.push(i.1.to_vec());
                 }
             }
@@ -518,7 +518,7 @@ pub fn compute_bu(
     let cols = mat.len();
     *subrows = Vec::<Vec<String>>::new();
     if ctl.clono_print_opt.bu {
-        for bcl in bli.iter() {
+        for bcl in bli {
             let mut row = Vec::<String>::new();
             let bc = &bcl.0;
             let li = bcl.1;
@@ -711,7 +711,7 @@ pub fn compute_bu(
                         }
                         let y0 = y;
                         let suffixes = ["_min", "_max", "_μ", "_Σ", "_cell", "_%"];
-                        for &s in suffixes.iter() {
+                        for &s in &suffixes {
                             if y.ends_with(s) {
                                 y = y.rev_before(s);
                                 break;
@@ -728,7 +728,7 @@ pub fn compute_bu(
                                 .unwrap_or_default();
                             if !ux.is_empty() {
                                 computed = true;
-                                for fid in ux.iter() {
+                                for fid in &ux {
                                     let counti = get_gex_matrix_entry(
                                         ctl, gex_info, *fid, d_all, ind_all, li, l, y,
                                     );

@@ -133,7 +133,7 @@ pub fn print_clonotypes(
         }
     }
     all_vars.append(&mut extra_parseables);
-    for x in extra_args.iter() {
+    for x in &extra_args {
         if !rsi_vars.contains(x) {
             all_vars.push(x.as_str());
         }
@@ -168,7 +168,7 @@ pub fn print_clonotypes(
         .take(ctl.origin_info.n())
     {
         let mut n = 0;
-        for y in gex.iter() {
+        for y in gex {
             if bin_member(vdj, y.0) {
                 n += 1;
             }
@@ -226,7 +226,7 @@ pub fn print_clonotypes(
         let i = res.0;
         let o = &orbits[i];
         let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
-        for id in o.iter() {
+        for id in o {
             let x: &CloneInfo = &info[*id as usize];
             od.push((x.origin.clone(), x.clonotype_id, *id));
         }
@@ -518,7 +518,7 @@ pub fn print_clonotypes(
                 }
                 let lvars = lvarsc.clone();
                 let mut lvarsh = HashSet::<String>::new();
-                for x in lvars.iter() {
+                for x in &lvars {
                     lvarsh.insert(x.to_string());
                 }
 
@@ -925,7 +925,7 @@ pub fn print_clonotypes(
     // Write loupe output.
 
     let mut all_loupe_clonotypes = Vec::<Clonotype>::new();
-    for r in results.iter_mut() {
+    for r in &mut results {
         all_loupe_clonotypes.append(&mut r.6);
     }
     loupe_out(ctl, all_loupe_clonotypes, refdata, dref);

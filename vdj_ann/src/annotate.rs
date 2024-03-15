@@ -358,7 +358,7 @@ pub fn annotate_seq_core(
     }
     if verbose {
         fwriteln!(log, "\nINITIAL PERF ALIGNMENTS\n");
-        for s in perf.iter() {
+        for s in &perf {
             fwriteln!(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}",
@@ -439,7 +439,7 @@ pub fn annotate_seq_core(
     perf.sort_unstable();
     if verbose {
         fwriteln!(log, "\nPERF ALIGNMENTS\n");
-        for s in perf.iter() {
+        for s in &perf {
             fwriteln!(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}",
@@ -871,7 +871,7 @@ pub fn annotate_seq_core(
     // { ( sequence start, match length, ref tig, ref tig start, {mismatches} ) }.
 
     let mut annx = Vec::<PreAnnotation>::new();
-    for x in semi.iter() {
+    for x in &semi {
         annx.push(PreAnnotation {
             tig_start: x.2,
             match_len: x.3,
@@ -886,7 +886,7 @@ pub fn annotate_seq_core(
 
     if !allow_improper {
         let mut to_delete: Vec<bool> = vec![false; annx.len()];
-        for annxi in annx.iter_mut() {
+        for annxi in &mut annx {
             std::mem::swap(&mut annxi.tig_start, &mut annxi.ref_id);
             std::mem::swap(&mut annxi.match_len, &mut annxi.ref_start);
         }
@@ -911,7 +911,7 @@ pub fn annotate_seq_core(
             i1 = j1 as usize;
         }
         erase_if(&mut annx, &to_delete);
-        for annxi in annx.iter_mut() {
+        for annxi in &mut annx {
             std::mem::swap(&mut annxi.tig_start, &mut annxi.ref_id);
             std::mem::swap(&mut annxi.match_len, &mut annxi.ref_start);
         }
@@ -1037,12 +1037,12 @@ pub fn annotate_seq_core(
                     }
                     over += stop as i64;
                     over -= start as i64;
-                    for x in annx[u1].mismatches.iter() {
+                    for x in &annx[u1].mismatches {
                         if *x >= start && *x < stop {
                             m1 += 1;
                         }
                     }
-                    for x in annx[u2].mismatches.iter() {
+                    for x in &annx[u2].mismatches {
                         if *x >= start && *x < stop {
                             m2 += 1;
                         }
@@ -1496,12 +1496,12 @@ pub fn annotate_seq_core(
                 utr2 = refdata.has_utr[name2];
             }
             let (mut have_utr_align1, mut have_utr_align2) = (false, false);
-            for j in data[i1].2.iter() {
+            for j in &data[i1].2 {
                 if refdata.is_u(annx[*j].ref_id as usize) {
                     have_utr_align1 = true;
                 }
             }
-            for j in data[i2].2.iter() {
+            for j in &data[i2].2 {
                 if refdata.is_u(annx[*j].ref_id as usize) {
                     have_utr_align2 = true;
                 }
@@ -1511,13 +1511,13 @@ pub fn annotate_seq_core(
 
             let n = b_seq.len();
             let (mut mis1, mut mis2) = (vec![false; n], vec![false; n]);
-            for j in data[i1].2.iter() {
-                for p in annx[*j].mismatches.iter() {
+            for j in &data[i1].2 {
+                for p in &annx[*j].mismatches {
                     mis1[*p as usize] = true;
                 }
             }
-            for j in data[i2].2.iter() {
-                for p in annx[*j].mismatches.iter() {
+            for j in &data[i2].2 {
+                for p in &annx[*j].mismatches {
                     mis2[*p as usize] = true;
                 }
             }
@@ -1765,7 +1765,7 @@ pub fn annotate_seq_core(
             // Make decision.
 
             if win1 {
-                for l in data[i2].2.iter() {
+                for l in &data[i2].2 {
                     to_delete[*l] = true;
                 }
                 deleted[i2] = true;
@@ -2015,7 +2015,7 @@ pub fn annotate_seq_core(
         let start = max(0, vstop - VJTRIM);
         let stop = min(b.len() as i32, jstart + VJTRIM);
         const MAX_MISMATCHES: usize = 3;
-        for t in refdata.ds.iter() {
+        for t in &refdata.ds {
             if refdata.rtype[*t] == v_rtype {
                 let r = &refdata.refs[*t];
                 for m in start..=stop - (r.len() as i32) {
@@ -2535,7 +2535,7 @@ pub fn annotate_seq_core(
     // Transform.
 
     ann.clear();
-    for x in annx.iter() {
+    for x in &annx {
         ann.push(Annotation {
             tig_start: x.tig_start,
             match_len: x.match_len,

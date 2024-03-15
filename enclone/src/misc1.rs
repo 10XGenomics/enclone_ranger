@@ -122,7 +122,7 @@ pub fn lookup_heavy_chain_reuse(
         for z1 in 0..25 {
             for z2 in z1 + 1..25 {
                 let mut xcdr3 = cdr3.clone();
-                for cdr in xcdr3.iter_mut() {
+                for cdr in &mut xcdr3 {
                     if cdr.0.len() > z2 {
                         let mut t = cdr.0.as_bytes().to_vec();
                         t[z1] = b'*';

@@ -309,7 +309,7 @@ pub fn junction_supp_core(
     // ◼ What we're doing here is converting a Vec<u32> into a Vec<i32>.
     // ◼ There should be a function to do that.
     for e in 0..x.h.g.edge_count() {
-        for id in x.ids[e].iter() {
+        for id in &x.ids[e] {
             ids.push(*id as i32);
         }
     }
@@ -364,7 +364,7 @@ pub fn junction_supp_core(
             cov = false;
         }
         let mut reach = 0;
-        for m in mm.iter() {
+        for m in &mm {
             if m.0 <= reach {
                 reach = max(reach, m.1);
             }

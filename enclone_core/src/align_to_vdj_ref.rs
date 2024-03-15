@@ -149,7 +149,7 @@ pub fn cigar(
         write!(cigar, "{xstart}{clip_str}").unwrap();
     }
     let mut k = 1;
-    for &op in ops[1..].iter() {
+    for &op in &ops[1..] {
         if op == last {
             k += 1;
         } else {
@@ -329,7 +329,7 @@ pub fn align_to_vdj_ref(
                 j += 1;
             }
             let k = j - i;
-            for bi in [b1, b2, b3].iter() {
+            for bi in &[b1, b2, b3] {
                 let bi = *bi;
 
                 // Maybe can shift right one.
@@ -366,7 +366,7 @@ pub fn align_to_vdj_ref(
             i = j;
         }
     }
-    for x in edits.iter() {
+    for x in &edits {
         ops[x.0] = x.1;
     }
 
@@ -401,7 +401,7 @@ pub fn align_to_vdj_ref(
         println!("seq = {}", strme(seq));
         println!("ref = {}", strme(&concat));
         use itertools::Itertools;
-        for zo in zos1.iter() {
+        for zo in &zos1 {
             print!("{}", zo.iter().format(""));
         }
         println!();

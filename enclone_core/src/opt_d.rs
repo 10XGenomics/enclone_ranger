@@ -139,7 +139,7 @@ pub fn opt_d(
     // Go through every D segment, or possibly every concatenation of D segments.
 
     let mut todo = vec![vec![]];
-    for i in refdata.ds.iter() {
+    for i in &refdata.ds {
         todo.push(vec![*i]);
     }
     let mut ds = Vec::<Vec<usize>>::new();

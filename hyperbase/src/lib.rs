@@ -560,7 +560,7 @@ impl Hyper {
 
         let mut maxread: i32 = -1;
         for e in 0..self.h.g.edge_count() {
-            for id in self.ids[e].iter() {
+            for id in &self.ids[e] {
                 maxread = max(maxread, *id as i32);
             }
         }

@@ -90,7 +90,7 @@ pub fn delete_doublets(
 
         let mut npure = vec![0; pures.len()];
         for j in 0..pures.len() {
-            for id in pures[j].iter() {
+            for id in &pures[j] {
                 npure[j] += exact_clonotypes[*id].ncells();
             }
         }
@@ -214,7 +214,7 @@ pub fn delete_doublets(
                     println!("[{}] {}", u + 1, cdrs.iter().format(","));
                 }
             }
-            for m in pures[v0].iter() {
+            for m in &pures[v0] {
                 to_delete[*m] = true;
             }
         }

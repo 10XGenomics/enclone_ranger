@@ -149,7 +149,7 @@ pub fn filter_by_fcell(
                     let li = clone[0].dataset_index;
                     let bc = &clone[0].barcode;
                     let mut keep = true;
-                    for x in ctl.clono_filt_opt_def.fcell.iter() {
+                    for x in &ctl.clono_filt_opt_def.fcell {
                         let alt = &ctl.origin_info.alt_bc_fields[li];
                         let vars = x.iter_variable_identifiers().collect::<Vec<&str>>();
                         let mut vals = Vec::<String>::new();

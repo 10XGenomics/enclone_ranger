@@ -405,7 +405,7 @@ pub fn build_diff_row(
                     row.push(v);
                 }
             }
-            for r in row.iter_mut() {
+            for r in &mut row {
                 *r = format!("[01m{}[0m", *r);
             }
         }
@@ -457,7 +457,7 @@ pub fn insert_consensus_row(
                         }
                         unique_sort(&mut codons);
                         let mut gap = false;
-                        for x in codons.iter() {
+                        for x in &codons {
                             if x.contains(&b'-') {
                                 gap = true;
                             }
@@ -476,7 +476,7 @@ pub fn insert_consensus_row(
                             xdots += "X";
                         } else {
                             let mut aas = Vec::<u8>::new();
-                            for x in codons.iter() {
+                            for x in &codons {
                                 aas.push(codon_to_aa(x));
                             }
                             unique_sort(&mut aas);
@@ -485,7 +485,7 @@ pub fn insert_consensus_row(
                             } else if style == "x" {
                                 xdots += "X";
                             } else {
-                                for m in classes.iter() {
+                                for m in &classes {
                                     if meet_size(&aas, m.1) == aas.len() {
                                         xdots.push(m.0);
                                         break;

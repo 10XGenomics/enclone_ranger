@@ -50,7 +50,7 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
             if !fields.contains(&"barcode") {
                 return Err(format!("\nThe file\n{bc}\nis missing the barcode field.\n",));
             }
-            for x in fields.iter() {
+            for x in &fields {
                 fieldnames.push(x.to_string());
             }
             for (i, field) in fields.into_iter().enumerate() {
@@ -249,7 +249,7 @@ pub fn proc_args_post(
         &mut ctl.gen_opt.dref_file,
         &mut ctl.parseable_opt.pout,
     ];
-    for f in files.iter_mut() {
+    for f in &mut files {
         tilde_expand_me(f);
     }
 
@@ -528,7 +528,7 @@ pub fn proc_args_post(
 
     if ctl.clono_filt_opt.dataset.is_some() {
         let d = &ctl.clono_filt_opt.dataset.as_ref().unwrap();
-        for x in d.iter() {
+        for x in *d {
             if !ctl.origin_info.dataset_id.contains(x) {
                 return Err(format!(
                     "\nDATASET argument has {} in it, which is not a known \
@@ -548,7 +548,7 @@ pub fn proc_args_post(
     ];
     if !ctl.gen_opt.bcr {
         for arg in &args[1..] {
-            for x in bcr_only.iter() {
+            for x in &bcr_only {
                 if arg == x || arg.starts_with(&format!("{x}=")) {
                     return Err(format!("\nThe option {x} does not make sense for TCR.\n"));
                 }
@@ -635,15 +635,15 @@ pub fn proc_args_post(
     let mut origin_for_bc = Vec::<String>::new();
     let mut donor_for_bc = Vec::<String>::new();
     for i in 0..ctl.origin_info.n() {
-        for x in ctl.origin_info.origin_for_bc[i].iter() {
+        for x in &ctl.origin_info.origin_for_bc[i] {
             origins.push(x.1.clone());
             origin_for_bc.push(x.1.clone());
         }
-        for x in ctl.origin_info.donor_for_bc[i].iter() {
+        for x in &ctl.origin_info.donor_for_bc[i] {
             donors.push(x.1.clone());
             donor_for_bc.push(x.1.clone());
         }
-        for x in ctl.origin_info.tag[i].iter() {
+        for x in &ctl.origin_info.tag[i] {
             tags.push((x.1).clone());
         }
         donors.push(ctl.origin_info.donor_id[i].clone());

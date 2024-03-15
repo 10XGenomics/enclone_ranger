@@ -988,8 +988,8 @@ fn main() {
                 .expect("git commit failed");
         }
         // ◼ Add balbc if we're going ot use it.
-        for species in ["human", "mouse"].iter() {
-            for ftype in ["gff3", "gtf", "fasta"].iter() {
+        for species in &["human", "mouse"] {
+            for ftype in &["gff3", "gtf", "fasta"] {
                 fetch(species, ftype, release);
             }
         }
@@ -1125,7 +1125,7 @@ fn main() {
 
         // More fixing.  Replace e.g. "alpha " by A.
 
-        for x in [
+        for x in &[
             "alpha",
             "beta",
             "gamma",
@@ -1140,7 +1140,6 @@ fn main() {
             "constant",
             "heavy",
         ]
-        .iter()
         {
             gene2 = gene2.replace(&format!("{x} "), &x[0..1].to_uppercase());
         }

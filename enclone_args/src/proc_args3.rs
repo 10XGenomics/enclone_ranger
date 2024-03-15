@@ -129,7 +129,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
 // Functions to find the path to data.
 
 pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<String, String> {
-    for x in ctl.gen_opt.pre.iter() {
+    for x in &ctl.gen_opt.pre {
         let pp = format!("{x}/{p}");
         if path_exists(&pp) {
             return Ok(pp);
@@ -148,7 +148,7 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
             let path = std::env::current_dir().unwrap();
             let mut pre_msg =
                 "Here are the number of entries in your PRE directories:\n".to_string();
-            for x in ctl.gen_opt.pre.iter() {
+            for x in &ctl.gen_opt.pre {
                 let mut count = "(does not exist)".to_string();
                 if path_exists(x) {
                     count = dir_list(x).len().to_string();
@@ -172,7 +172,7 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
 
 fn get_path(p: &str, ctl: &EncloneControl, ok: &mut bool) -> String {
     *ok = false;
-    for x in ctl.gen_opt.pre.iter() {
+    for x in &ctl.gen_opt.pre {
         let mut pp = format!("{x}/{p}");
         if pp.starts_with('~') {
             tilde_expand_me(&mut pp);
@@ -222,7 +222,7 @@ fn get_path_or_internal_id(
                         msg += "In fact, there are no configuration variables.\n";
                     } else {
                         msg += "Here are the configuration variables that are defined:\n\n";
-                        for (key, value) in ctl.gen_opt.config.iter() {
+                        for (key, value) in &ctl.gen_opt.config {
                             write!(msg, "{key} = {value}").unwrap();
                         }
                         msg += "\n";
@@ -341,7 +341,7 @@ fn parse_bc(mut bc: String, ctl: &mut EncloneControl, call_type: &str) -> Result
                         "\nThe file\n{bc}\n{origin}\nis missing the barcode field.\n",
                     ));
                 }
-                for x in fields.iter() {
+                for x in &fields {
                     fieldnames.push(x.to_string());
                 }
                 for i in 0..fields.len() {
@@ -549,7 +549,7 @@ pub fn proc_xcr(
             } else {
                 (*s).split(',').collect::<Vec<&str>>()
             };
-            for ds in datasets.iter_mut() {
+            for ds in &mut datasets {
                 if ds.ends_with('/') {
                     *ds = ds.rev_before("/");
                 }
@@ -714,7 +714,7 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
                 "tcrgd".to_string(),
                 "color".to_string(),
             ];
-            for x in fields.iter() {
+            for x in &fields {
                 if !allowed_fields.contains(x) {
                     return Err(format!(
                         "\nThe CSV file that you specified using the META or METAX argument \
@@ -858,7 +858,7 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
 
 pub fn proc_meta(v: &[String], ctl: &mut EncloneControl) -> Result<(), String> {
     let mut lines_all = Vec::<Vec<String>>::new();
-    for f in v.iter() {
+    for f in v {
         if !path_exists(f) {
             return Err(format!(
                 "\nCan't find the file {f} referenced by your META argument.\n"
