@@ -48,7 +48,7 @@ pub fn make_donor_refs(
                 k - i + 1
             );
             let refx = refdata.refs[ref_id].to_ascii_vec();
-            let mut cigar = "".to_string();
+            let mut cigar = String::new();
             let mut matches = 0;
             for p in 0..refx.len() {
                 if alt[p] == refx[p] {

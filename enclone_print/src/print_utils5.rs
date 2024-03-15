@@ -496,7 +496,7 @@ pub fn insert_consensus_row(
                     }
                     row.push(xdots);
                 } else {
-                    row.push("".to_string());
+                    row.push(String::new());
                 }
             }
         }

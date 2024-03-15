@@ -25,6 +25,11 @@ rustflags = [
   "-Dclippy::from_iter_instead_of_collect",
   "-Dclippy::implicit_clone",
   "-Dclippy::inefficient_to_string",
+  # we should audit the codebase for panics that should be errors before turning
+  # this lint on
+  # "-Dclippy::manual_assert",
+  "-Dclippy::manual_let_else",
+  "-Dclippy::manual_string_new",
 
   "-D", "clippy::needless_lifetimes",
   "-D", "clippy::redundant_closure_for_method_calls",

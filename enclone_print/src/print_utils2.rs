@@ -148,7 +148,7 @@ pub fn row_fill(
     for l in &dataset_indices {
         lenas.push(ctl.origin_info.dataset_id[*l].clone());
     }
-    row.push("".to_string()); // row number (#), filled in below
+    row.push(String::new()); // row number (#), filled in below
     let mut counts = Vec::<usize>::new();
     let mut gex_counts_unsorted = Vec::<usize>::new();
     let mut gex_fcounts_unsorted = Vec::<f64>::new();

@@ -45,7 +45,7 @@ pub fn build_table_stuff(
 
     // Insert main chain row.  Then insert chain info row if we're using CHAIN_SPLIT.
 
-    let mut row = vec!["".to_string(); row1.len()];
+    let mut row = vec![String::new(); row1.len()];
     for j in 0..cols {
         if rsi.chain_descrip[j].contains(&"IGH".to_string())
             || rsi.chain_descrip[j].contains(&"TRB".to_string())
@@ -59,7 +59,7 @@ pub fn build_table_stuff(
         }
     }
     rows.push(row);
-    let mut row = vec!["".to_string(); row1.len()];
+    let mut row = vec![String::new(); row1.len()];
     for j in 0..cols {
         if !ctl.gen_opt.fold_headers {
             if rsi.chain_descrip[j].contains(&"IGH".to_string())
@@ -82,7 +82,7 @@ pub fn build_table_stuff(
     }
     rows.push(row);
     if ctl.gen_opt.fold_headers {
-        let mut row = vec!["".to_string(); row1.len()];
+        let mut row = vec![String::new(); row1.len()];
         for j in 0..cols {
             let mut next = rsi.chain_descrip[j].after(" ◆ ").to_string();
             if next.contains(" ◆ ") {
@@ -107,7 +107,7 @@ pub fn build_table_stuff(
             }
         }
         if have_last {
-            let mut row = vec!["".to_string(); row1.len()];
+            let mut row = vec![String::new(); row1.len()];
             for j in 0..cols {
                 let mut last = String::new();
                 if rsi.chain_descrip[j].after(" ◆ ").contains(" ◆ ") {
@@ -132,7 +132,7 @@ pub fn build_table_stuff(
 
     // Insert divider row (horizontal line across the chains).
 
-    let mut row = vec!["".to_string(); lvars.len() + 1];
+    let mut row = vec![String::new(); lvars.len() + 1];
     let mut ncall = 0;
     for j in 0..cols {
         ncall += rsi.cvars[j].len();
@@ -148,7 +148,7 @@ pub fn build_table_stuff(
 
     // Insert main per-chain header row.
 
-    let mut row = vec!["".to_string(); row1.len()];
+    let mut row = vec![String::new(); row1.len()];
     for cx in 0..cols {
         let show = &show_aa[cx];
         for j in 0..rsi.cvars[cx].len() {
@@ -156,7 +156,7 @@ pub fn build_table_stuff(
                 if drows.is_empty() {
                     row.push(rsi.cvars[cx][j].to_string());
                 } else {
-                    row.push("".to_string());
+                    row.push(String::new());
                 }
                 continue;
             }

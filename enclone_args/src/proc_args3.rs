@@ -584,7 +584,7 @@ pub fn proc_xcr(
                 }
             }
             for (ix, x) in datasets.iter().enumerate() {
-                ctl.origin_info.color.push("".to_string());
+                ctl.origin_info.color.push(String::new());
                 ctl.origin_info.tag.push(HashMap::<String, String>::new());
                 let donor_name = format!("d{}", id + 1);
                 let origin_name = format!("s{}", is + 1);
@@ -767,8 +767,8 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
             let mut gpath = String::new();
             let mut origin = "s1".to_string();
             let mut donor = "d1".to_string();
-            let mut color = "".to_string();
-            let mut bc = "".to_string();
+            let mut color = String::new();
+            let mut bc = String::new();
             for i in 0..fields.len() {
                 let x = &fields[i];
                 let mut y = val[i].to_string();

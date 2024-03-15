@@ -139,7 +139,7 @@ pub fn cigar(
         _ => {}
     };
 
-    let mut cigar = "".to_owned();
+    let mut cigar = String::new();
     if ops.is_empty() {
         return cigar;
     }

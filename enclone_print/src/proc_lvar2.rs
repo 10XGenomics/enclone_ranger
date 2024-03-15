@@ -201,7 +201,7 @@ pub fn proc_lvar2(
             lvar![i, x, format!("{median}")];
         }
     } else if i < lvars.len() {
-        lvar_stats1![i, x, "".to_string()];
+        lvar_stats1![i, x, String::new()];
     }
     true
 }

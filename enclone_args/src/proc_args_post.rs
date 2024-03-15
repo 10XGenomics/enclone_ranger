@@ -205,7 +205,7 @@ pub fn proc_args_post(
                     vj2 = vals[i].to_string();
                 } else {
                     other.push(vals[i].to_string());
-                    let mut log10_val = "".to_string();
+                    let mut log10_val = String::new();
                     if vals[i].parse::<f64>().is_ok() {
                         let val = vals[i].force_f64();
                         if val > 0.0 {

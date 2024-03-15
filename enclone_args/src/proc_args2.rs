@@ -204,7 +204,7 @@ pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), S
 
     if ctl.gen_opt.internal_run || ctl.gen_opt.descrip || ctl.gen_opt.vis_dump {
         ctl.origin_info.descrips.clear();
-        let mut results = vec![(0, "".to_string()); ctl.origin_info.n()];
+        let mut results = vec![(0, String::new()); ctl.origin_info.n()];
         for i in 0..ctl.origin_info.n() {
             results[i].0 = i;
         }

@@ -296,7 +296,7 @@ pub fn compute_some_stats(
                         let pc = 100.0 * creds as f64 / top as f64;
                         cred.push(format!("{pc:.1}"));
                     } else {
-                        cred.push("".to_string());
+                        cred.push(String::new());
                     }
                 }
             }
@@ -758,14 +758,14 @@ pub fn compute_bu(
                     }
                 }
                 if row.len() == nr {
-                    row.push("".to_string());
+                    row.push(String::new());
                 }
             }
             let mut ncall = 0;
             for k in 0..cols {
                 ncall += rsi.cvars[k].len();
             }
-            let mut cx = vec!["".to_string(); ncall];
+            let mut cx = vec![String::new(); ncall];
             let mut cp = 0;
             for (m, cvars) in mat.iter().take(cols).zip(rsi.cvars.iter()) {
                 if let Some(m) = m[u] {

@@ -218,7 +218,7 @@ pub fn analyze_donor_ref(
                             row
                         },
                         {
-                            let mut row = vec!["".to_string()];
+                            let mut row = vec![String::new()];
                             row.append(&mut vec![
                                 "\\hline".to_string();
                                 ndonors + nimgt + dp.len()
@@ -226,7 +226,7 @@ pub fn analyze_donor_ref(
                             row
                         },
                         {
-                            let mut row = vec!["".to_string()];
+                            let mut row = vec![String::new()];
                             for d in 0..ndonors {
                                 row.push(format!("{}", d + 1));
                             }

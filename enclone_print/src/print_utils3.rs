@@ -692,7 +692,7 @@ pub fn insert_reference_rows(
                 }
                 row.push(refx);
                 for _ in 1..rsi.cvars[cz].len() {
-                    row.push("".to_string());
+                    row.push(String::new());
                 }
             }
             rows.push(row);
