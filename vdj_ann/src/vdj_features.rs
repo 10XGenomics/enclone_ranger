@@ -337,8 +337,8 @@ pub fn cdr3_start(aa: &[u8], _chain_type: &str, _verbose: bool) -> usize {
     for j in aa.len().saturating_sub(nm + reach)..=aa.len().saturating_sub(nm) {
         let mut score = 0;
         for k in 0..nm {
-            for l in 0..motif.len() {
-                if aa[j + k] == motif[l][k] {
+            for m in motif {
+                if aa[j + k] == m[k] {
                     score += 1;
                     if aa[j + k] == b'Q' {
                         break;
@@ -360,8 +360,8 @@ pub fn cdr3_score(aa: &[u8], _chain_type: &str, _verbose: bool) -> usize {
     for j in aa.len().saturating_sub(nm + REACH)..=aa.len().saturating_sub(nm) {
         let mut score = 0;
         for k in 0..nm {
-            for l in 0..motif.len() {
-                if aa[j + k] == motif[l][k] {
+            for m in motif {
+                if aa[j + k] == m[k] {
                     score += 1;
                     if aa[j + k] == b'Q' {
                         break;

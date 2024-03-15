@@ -73,7 +73,7 @@ pub fn print_tabular(
     };
     let nrows = rows.len();
     let mut ncols = 0;
-    for row in rows.iter().take(nrows) {
+    for row in &rows[0..nrows] {
         ncols = max(ncols, row.len());
     }
     let mut maxcol = vec![0; ncols];
@@ -176,7 +176,7 @@ pub fn print_tabular_vbox(
     let mut rrr = rows.to_owned();
     let nrows = rrr.len();
     let mut ncols = 0;
-    for item in rrr.iter().take(nrows) {
+    for item in &rrr[0..nrows] {
         ncols = max(ncols, item.len());
     }
     let mut vert = vec![false; ncols];
@@ -312,7 +312,7 @@ pub fn print_tabular_vbox(
 
     // Go through the rows.
 
-    for (i, row) in rrr.iter().take(nrows).enumerate() {
+    for (i, row) in rrr[0..nrows].iter().enumerate() {
         if debug_print {
             println!("now row {} = {}", i, row.iter().format(","));
             println!("0 - pushing │ onto row {i}");

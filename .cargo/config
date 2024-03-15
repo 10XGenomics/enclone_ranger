@@ -61,7 +61,6 @@ rustflags = [
   "-A", "clippy::comparison_chain",
   # TODO: burn down these allow exceptions and then deny them
   "-A", "clippy::too_many_arguments",
-  "-W", "clippy::needless_range_loop",
 ]
 
 [target.x86_64-unknown-linux-gnu]

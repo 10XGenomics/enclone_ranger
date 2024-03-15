@@ -144,8 +144,8 @@ mod tests {
         let mut ann = Vec::<Annotation>::new();
         annotate_seq(&seq, &refdata, &mut ann, true, false, true);
         let mut have_d = false;
-        for i in 0..ann.len() {
-            if refdata.is_d(ann[i].ref_id as usize) {
+        for a in ann {
+            if refdata.is_d(a.ref_id as usize) {
                 have_d = true;
             }
         }
