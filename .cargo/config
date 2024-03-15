@@ -30,6 +30,8 @@ rustflags = [
   # "-Dclippy::manual_assert",
   "-Dclippy::manual_let_else",
   "-Dclippy::manual_string_new",
+  "-Dclippy::map_unwrap_or",
+  "-Dclippy::match_wildcard_for_single_variants",
 
   "-D", "clippy::needless_lifetimes",
   "-D", "clippy::redundant_closure_for_method_calls",
