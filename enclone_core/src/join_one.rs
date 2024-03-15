@@ -645,9 +645,8 @@ pub fn join_one<'a>(
                                         }
                                         i += indel.1 as usize;
                                         continue 'seq;
-                                    } else {
-                                        ref_pos += -indel.1 as usize;
                                     }
+                                    ref_pos += -indel.1 as usize;
                                 }
                             }
                             if i >= n || ref_pos >= concat.len() {

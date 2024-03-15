@@ -87,9 +87,8 @@ pub fn gene_scan_test(
                                 }
                             }
                             break;
-                        } else {
-                            count += 1;
                         }
+                        count += 1;
                     }
                 }
                 let n = vals.len() as f64;
@@ -110,9 +109,8 @@ pub fn gene_scan_test(
                                 }
                             }
                             break;
-                        } else {
-                            count += 1;
                         }
+                        count += 1;
                     }
                 }
                 means.push(vals.into_iter().sum::<f64>() / n as f64);

@@ -187,12 +187,11 @@ fn check_gene_fb(
                     "\nParseable field {x} does not make sense because neither gene expression \
                      nor feature barcode data\nwere provided as input.\n"
                 ));
-            } else {
-                return Err(format!(
-                    "\nLead variable {x} does not make sense because neither gene expression \
-                     not feature barcode data\nwere provided as input.\n"
-                ));
             }
+            return Err(format!(
+                "\nLead variable {x} does not make sense because neither gene expression \
+                     not feature barcode data\nwere provided as input.\n"
+            ));
         }
         if !gex_info.have_gex {
             let mut problem = false;
@@ -215,12 +214,11 @@ fn check_gene_fb(
                         "\nParseable field {x} does not make sense because gene expression \
                          data\nwere not provided as input.\n"
                     ));
-                } else {
-                    return Err(format!(
-                        "\nLead variable {x} does not make sense because gene expression \
-                         data\nwere not provided as input.\n"
-                    ));
                 }
+                return Err(format!(
+                    "\nLead variable {x} does not make sense because gene expression \
+                         data\nwere not provided as input.\n"
+                ));
             }
         }
         if !gex_info.have_fb {
@@ -234,12 +232,11 @@ fn check_gene_fb(
                             "\nParseable field {x} does not make sense because feature \
                              barcode data\nwere not provided as input.\n"
                         ));
-                    } else {
-                        return Err(format!(
-                            "\nLead variable {x} does not make sense because feature barcode \
-                             data\nwere not provided as input.\n"
-                        ));
                     }
+                    return Err(format!(
+                        "\nLead variable {x} does not make sense because feature barcode \
+                             data\nwere not provided as input.\n"
+                    ));
                 }
             }
         }
@@ -366,23 +363,22 @@ fn check_gene_fb(
                         "\nThe variable {x} for LVARS is unrecognized.  Please type \
                          \"enclone help lvars\".\n"
                     ));
-                } else {
-                    if !alts.is_empty() {
-                        return Err(format!(
-                            "\nUnrecognized parseable variable {}.  Might you have meant {}?\n\
+                }
+                if !alts.is_empty() {
+                    return Err(format!(
+                        "\nUnrecognized parseable variable {}.  Might you have meant {}?\n\
                             Please type \
                              \"enclone help parseable\".\nIf the variable is a chain variable \
                             (cvar), please make sure it is suffixed with the chain index.\n",
-                            x,
-                            alts.iter().format(" or "),
-                        ));
-                    }
-                    return Err(format!(
-                        "\nUnrecognized parseable variable {x}.  Please type \
-                         \"enclone help parseable\".\nIf the variable is a chain variable (cvar), \
-                        please make sure it is suffixed with the chain index.\n"
+                        x,
+                        alts.iter().format(" or "),
                     ));
                 }
+                return Err(format!(
+                    "\nUnrecognized parseable variable {x}.  Please type \
+                         \"enclone help parseable\".\nIf the variable is a chain variable (cvar), \
+                        please make sure it is suffixed with the chain index.\n"
+                ));
             }
         }
     }
@@ -736,9 +732,8 @@ pub fn check_one_lvar(
                 "\nUnrecognized variable {x} for LVARS.  Please type \
                  \"enclone help lvars\".\n"
             ));
-        } else {
-            return Ok(false);
         }
+        return Ok(false);
     }
     Ok(true)
 }

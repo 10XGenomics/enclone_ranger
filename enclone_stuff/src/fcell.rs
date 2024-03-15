@@ -72,9 +72,8 @@ pub fn filter_by_fcell(
                             }
                             msg += "Aborting.\n";
                             return Err(msg);
-                        } else {
-                            println!("h5 path exists.");
                         }
+                        println!("h5 path exists.");
                     } else {
                         println!("Path exists.");
                     }

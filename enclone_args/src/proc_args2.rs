@@ -71,12 +71,11 @@ pub fn is_usize_arg(arg: &str, x: &str) -> Result<bool, String> {
         let val = arg.after(&format!("{x}=")).parse::<usize>();
         if val.is_ok() {
             return Ok(true);
-        } else {
-            return Err(format!(
-                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{x}=n\", where n >= 0 is an integer.\n"
-            ));
         }
+        return Err(format!(
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n >= 0 is an integer.\n"
+        ));
     }
     Ok(false)
 }
@@ -93,12 +92,11 @@ pub fn is_i32_arg(arg: &str, x: &str) -> Result<bool, String> {
         let val = arg.after(&format!("{x}=")).parse::<i32>();
         if val.is_ok() {
             return Ok(true);
-        } else {
-            return Err(format!(
-                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{x}=n\", where n is an integer.\n"
-            ));
         }
+        return Err(format!(
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n is an integer.\n"
+        ));
     }
     Ok(false)
 }
@@ -113,12 +111,11 @@ pub fn is_f64_arg(arg: &str, x: &str) -> Result<bool, String> {
         let val = arg.after(&format!("{x}=")).parse::<f64>();
         if val.is_ok() {
             return Ok(true);
-        } else {
-            return Err(format!(
-                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{x}=n\", where n is a floating point number.\n"
-            ));
         }
+        return Err(format!(
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n is a floating point number.\n"
+        ));
     }
     Ok(false)
 }

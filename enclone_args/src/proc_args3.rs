@@ -93,11 +93,10 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                         tokens2.push(id.to_string());
                     }
                     continue;
-                } else {
-                    return Err(format!(
-                        "\nIt looks like you've provided an incorrect analysis set ID {setid}.\n"
-                    ));
                 }
+                return Err(format!(
+                    "\nIt looks like you've provided an incorrect analysis set ID {setid}.\n"
+                ));
             } else if setid.parse::<usize>().is_ok() {
                 let mut set_file = format!("~/enclone/sets/{setid}");
                 tilde_expand_me(&mut set_file);
@@ -144,28 +143,26 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
                 p,
                 source
             ));
-        } else {
-            let path = std::env::current_dir().unwrap();
-            let mut pre_msg =
-                "Here are the number of entries in your PRE directories:\n".to_string();
-            for x in &ctl.gen_opt.pre {
-                let mut count = "(does not exist)".to_string();
-                if path_exists(x) {
-                    count = dir_list(x).len().to_string();
-                }
-                writeln!(pre_msg, "{x}: {count}").unwrap();
+        }
+        let path = std::env::current_dir().unwrap();
+        let mut pre_msg = "Here are the number of entries in your PRE directories:\n".to_string();
+        for x in &ctl.gen_opt.pre {
+            let mut count = "(does not exist)".to_string();
+            if path_exists(x) {
+                count = dir_list(x).len().to_string();
             }
-            return Err(format!(
-                "\nIn directory {}, unable to find the\npath {},\n\
+            writeln!(pre_msg, "{x}: {count}").unwrap();
+        }
+        return Err(format!(
+            "\nIn directory {}, unable to find the\npath {},\n\
                 even if prepended by any of the directories \
                 in\nPRE={}.\nThis came from the {} argument.\n{}",
-                path.display(),
-                p,
-                ctl.gen_opt.pre.iter().format(","),
-                source,
-                pre_msg
-            ));
-        }
+            path.display(),
+            p,
+            ctl.gen_opt.pre.iter().format(","),
+            source,
+            pre_msg
+        ));
     }
     Ok(p.to_string())
 }
@@ -264,14 +261,13 @@ fn get_path_or_internal_id(
                                 if filesystem access blinks in and out of existence,\n\
                                 other more cryptic events are likely to occur.\n"
                             ));
-                        } else {
-                            return Err(format!(
-                                "\nIt looks like you've provided an analysis ID for \
+                        }
+                        return Err(format!(
+                            "\nIt looks like you've provided an analysis ID for \
                                 which the pipeline outs folder\n{p}\nhas not yet been generated.\n\
                                 This path did not exist:\n{pp}\n\n\
                                 Here is the stdout:\n{m}\n"
-                            ));
-                        }
+                        ));
                     }
                 } else {
                     return Err(format!(

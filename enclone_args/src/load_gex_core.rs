@@ -165,9 +165,8 @@ pub fn load_gex(
                         directory.\n"
                     );
                     return;
-                } else {
-                    pathlist.push(f.to_string());
                 }
+                pathlist.push(f.to_string());
             }
 
             // Find metrics summary file.
