@@ -780,8 +780,7 @@ fn main() {
             "joining",
             "constant",
             "heavy",
-        ]
-        {
+        ] {
             gene2 = gene2.replace(&format!("{x} "), &x[0..1].to_uppercase());
         }
 
