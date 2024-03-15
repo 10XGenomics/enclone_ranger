@@ -21,7 +21,7 @@ use enclone::misc3::sort_tig_bc;
 use enclone_args::read_json::{parse_json_annotations_files, Annotations};
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, CloneInfo};
-use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup};
+use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup, JoinInfo};
 use enclone_core::hcomp::heavy_complexity;
 use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_print::loupe::make_donor_refs;
@@ -360,7 +360,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Form equivalence relation on exact subclonotypes.  We also keep the raw joins, consisting
     // of pairs of info indices, that were originally joined.
 
-    let mut join_info = Vec::<(usize, usize, bool, Vec<u8>)>::new();
+    let mut join_info = Vec::<JoinInfo>::new();
     let mut raw_joins = Vec::<(i32, i32)>::new();
     let mut eq: EquivRel = join_exacts(
         is_bcr,

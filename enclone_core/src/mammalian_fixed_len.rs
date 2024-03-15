@@ -9,6 +9,7 @@ use vdj_ann::vdj_features::{cdr1_start, cdr2_start, cdr3_start, fr1_start, fr2_s
 
 // {chain, feature, len, {{(count, amino_acid)}}}
 
+#[allow(clippy::type_complexity)]
 pub fn mammalian_fixed_len() -> Vec<(&'static str, &'static str, usize, Vec<Vec<(u32, u8)>>)> {
     const X: &str = include_str!("mammalian_fixed_len.table");
     X.lines()

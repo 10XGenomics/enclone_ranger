@@ -7,11 +7,12 @@
 // contigs that represent the sequence of the "other" allele.  This does not look easy to
 // execute.
 
+use enclone_core::enclone_structs::JoinInfo;
 use vdj_ann::{annotate, refx};
 
 use self::annotate::print_annotations;
 use self::refx::RefData;
-use crate::join2::finish_join;
+use crate::join2::{finish_join, JoinResult};
 use crate::join_core::join_core;
 use debruijn::dna_string::DnaString;
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype, PotentialJoin};
@@ -34,7 +35,7 @@ pub fn join_exacts(
     ctl: &EncloneControl,
     exact_clonotypes: &[ExactClonotype],
     info: &[CloneInfo],
-    join_info: &mut Vec<(usize, usize, bool, Vec<u8>)>,
+    join_info: &mut Vec<JoinInfo>,
     raw_joins: &mut Vec<(i32, i32)>,
     sr: &[Vec<Double>],
     dref: &[DonorReferenceItem],
@@ -66,14 +67,7 @@ pub fn join_exacts(
     // Find potential joins.
 
     let mut i = 0;
-    let mut results = Vec::<(
-        usize,                              // i
-        usize,                              // j
-        usize,                              // joins
-        usize,                              // errors
-        Vec<(usize, usize, bool, Vec<u8>)>, // log+ (index1, index2, err?, log)
-        Vec<(usize, usize)>,                // joinlist
-    )>::new();
+    let mut results = Vec::<JoinResult>::new();
     while i < info.len() {
         let mut j = i + 1;
         while j < info.len() {
@@ -90,32 +84,18 @@ pub fn join_exacts(
             }
             j += 1;
         }
-        results.push((
-            i,
-            j,
-            0,
-            0,
-            Vec::<(usize, usize, bool, Vec<u8>)>::new(),
-            Vec::<(usize, usize)>::new(),
-        ));
+        results.push(JoinResult::new(i, j));
         i = j;
     }
     if !ctl.silent {
         println!("comparing {} simple clonotypes", info.len());
     }
 
-    let joinf = |r: &mut (
-        usize,
-        usize,
-        usize,
-        usize,
-        Vec<(usize, usize, bool, Vec<u8>)>,
-        Vec<(usize, usize)>,
-    )| {
-        let (i, j) = (r.0, r.1);
-        let joins = &mut r.2;
-        let errors = &mut r.3;
-        let logplus = &mut r.4;
+    let joinf = |r: &mut JoinResult| {
+        let (i, j) = (r.f0, r.f1);
+        let joins = &mut r.f2;
+        let errors = &mut r.f3;
+        let logplus = &mut r.f4;
         let mut pot = Vec::<PotentialJoin<'_>>::new();
 
         // Main join logic.  If you change par_iter_mut to iter_mut above, and run happening,
@@ -228,7 +208,7 @@ pub fn join_exacts(
 
             // Save join and tally stats.
 
-            r.5.push((k1, k2));
+            r.f5.push((k1, k2));
             *joins += 1;
             if err {
                 *errors += 1;
@@ -592,16 +572,21 @@ pub fn join_exacts(
                 }
             }
             */
-            logplus.push((info[k1].clonotype_index, info[k2].clonotype_index, err, log));
+            logplus.push(JoinInfo {
+                j0: info[k1].clonotype_index,
+                j1: info[k2].clonotype_index,
+                j2: err,
+                j3: log,
+            });
         }
     };
 
     results.par_iter_mut().for_each(joinf);
 
     for r in &results {
-        for &j in &r.5 {
+        for &j in &r.f5 {
             raw_joins.push((j.0 as i32, j.1 as i32));
         }
     }
-    finish_join(ctl, info, &results, join_info)
+    finish_join(ctl, info, results, join_info)
 }
