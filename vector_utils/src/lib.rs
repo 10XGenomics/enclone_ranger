@@ -333,6 +333,8 @@ pub fn count_instances<T: Ord + ?Sized>(x: &[impl Borrow<T>], d: &T) -> i32 {
 // NEXT DIFFERENCE
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
+/// Find first element that's different in a sorted vector, or different in
+/// first position.
 pub fn next_diff_any<T>(x: &[T], i: usize, eq: impl Fn(&T, &T) -> bool) -> usize {
     let mut j = i + 1;
     loop {
@@ -342,9 +344,6 @@ pub fn next_diff_any<T>(x: &[T], i: usize, eq: impl Fn(&T, &T) -> bool) -> usize
         j += 1;
     }
 }
-
-// Find first element that's different in a sorted vector, or different in
-// first position.
 
 pub fn next_diff<T: Eq>(x: &[T], i: usize) -> usize {
     next_diff_any(x, i, |a, b| a == b)
