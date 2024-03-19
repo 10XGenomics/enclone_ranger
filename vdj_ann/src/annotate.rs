@@ -263,16 +263,21 @@ fn report_semis(
     }
 }
 
+// TODO: combine this and the PreAnnotation type above
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct Perf {
-    // ref_id
-    pub f0: i32,
-    // ref_start - tig_start: "offset"
-    pub f1: i32,
-    // tig_start
-    pub f2: i32,
+struct PerfectMatch {
+    pub ref_id: i32,
+    /// ref_start - tig_start
+    pub offset: i32,
+    pub tig_start: i32,
     // len
-    pub f3: i32,
+    pub len: i32,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct Offset {
+    pub ref_id: i32,
+    pub offset: i32,
 }
 
 pub fn annotate_seq_core(
@@ -307,7 +312,7 @@ pub fn annotate_seq_core(
     //
     // perf = {(ref_id, ref_start - tig_start, tig_start, len)}
 
-    let mut perf = Vec::<Perf>::new();
+    let mut perf = Vec::<PerfectMatch>::new();
     if b.len() < K {
         return;
     }
@@ -359,11 +364,11 @@ pub fn annotate_seq_core(
                 }
             }
             if ok {
-                perf.push(Perf {
-                    f0: t as i32,
-                    f1: p as i32 - l as i32,
-                    f2: l as i32,
-                    f3: len as i32,
+                perf.push(PerfectMatch {
+                    ref_id: t as i32,
+                    offset: p as i32 - l as i32,
+                    tig_start: l as i32,
+                    len: len as i32,
                 });
             }
         }
@@ -374,11 +379,11 @@ pub fn annotate_seq_core(
             fwriteln!(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}",
-                s.f0,
-                s.f1,
-                s.f2,
-                s.f1 + s.f2,
-                s.f3,
+                s.ref_id,
+                s.offset,
+                s.tig_start,
+                s.offset + s.tig_start,
+                s.len,
             );
         }
     }
@@ -387,20 +392,27 @@ pub fn annotate_seq_core(
     // already found and are not equal to one of them.  But only do this if we already have at
     // least 150 bases aligned.
 
-    let mut offsets = Vec::<(i32, i32)>::new();
+    let mut offsets = Vec::<Offset>::new();
     for p in &perf {
-        offsets.push((p.f0, p.f1));
+        offsets.push(Offset {
+            ref_id: p.ref_id,
+            offset: p.offset,
+        });
     }
     unique_sort(&mut offsets);
     const MM_START: i32 = 150;
     const MM: i32 = 10;
-    for (t, off) in offsets {
+    for Offset {
+        ref_id: t,
+        offset: off,
+    } in offsets
+    {
         let mut tig_starts = Vec::<i32>::new();
         let mut total = 0;
         for pi in &perf {
-            if pi.f0 == t && pi.f1 == off {
-                tig_starts.push(pi.f2);
-                total += pi.f3;
+            if pi.ref_id == t && pi.offset == off {
+                tig_starts.push(pi.tig_start);
+                total += pi.len;
             }
         }
         if total < MM_START {
@@ -437,11 +449,11 @@ pub fn annotate_seq_core(
                         }
                     }
                     if !known {
-                        perf.push(Perf {
-                            f0: t,
-                            f1: p - l,
-                            f2: l,
-                            f3: len,
+                        perf.push(PerfectMatch {
+                            ref_id: t,
+                            offset: p - l,
+                            tig_start: l,
+                            len,
                         });
                     }
                 }
@@ -460,11 +472,11 @@ pub fn annotate_seq_core(
             fwriteln!(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}",
-                s.f0,
-                s.f1,
-                s.f2,
-                s.f1 + s.f2,
-                s.f3,
+                s.ref_id,
+                s.offset,
+                s.tig_start,
+                s.offset + s.tig_start,
+                s.len,
             );
         }
     }
@@ -476,13 +488,15 @@ pub fn annotate_seq_core(
     let mut semi = Vec::<(i32, i32, i32, i32, Vec<i32>)>::new();
     let mut i = 0;
     while i < perf.len() {
-        let j = next_diff_any(&perf, i, |a, b| a.f0 == b.f0 && a.f1 == b.f1);
-        let (t, off) = (perf[i].f0, perf[i].f1);
+        let j = next_diff_any(&perf, i, |a, b| {
+            a.ref_id == b.ref_id && a.offset == b.offset
+        });
+        let (t, off) = (perf[i].ref_id, perf[i].offset);
         let mut join = vec![false; j - i];
         let mut mis = vec![Vec::<i32>::new(); j - i];
         for k in i..j - 1 {
-            let (l1, len1) = (perf[k].f2, perf[k].f3);
-            let (l2, len2) = (perf[k + 1].f2, perf[k + 1].f3);
+            let (l1, len1) = (perf[k].tig_start, perf[k].len);
+            let (l2, len2) = (perf[k + 1].tig_start, perf[k + 1].len);
             for z in l1 + len1..l2 {
                 if b_seq[z as usize] != refs[t as usize].get((z + off) as usize) {
                     mis[k - i].push(z);
@@ -514,8 +528,8 @@ pub fn annotate_seq_core(
             semi.push((
                 t,
                 off,
-                perf[k1].f2,
-                perf[k2].f2 + perf[k2].f3 - perf[k1].f2,
+                perf[k1].tig_start,
+                perf[k2].tig_start + perf[k2].len - perf[k1].tig_start,
                 m,
             ));
             k1 = k2 + 1;
