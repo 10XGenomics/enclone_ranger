@@ -222,7 +222,7 @@ fn print_alignx(log: &mut Vec<u8>, a: &PreAnnotation, refdata: &RefData) {
 fn report_semis(
     verbose: bool,
     title: &str,
-    semi: &[(i32, i32, i32, i32, Vec<i32>)],
+    semi: &[SemiPerfectMatch],
     b_seq: &[u8],
     refs: &[DnaString],
     log: &mut Vec<u8>,
@@ -233,19 +233,19 @@ fn report_semis(
             fwrite!(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}, mis = {}",
-                s.0,
-                s.1,
-                s.2,
-                s.1 + s.2,
-                s.3,
-                s.4.len(),
+                s.ref_id,
+                s.offset,
+                s.tig_start,
+                s.offset + s.tig_start,
+                s.len,
+                s.mismatches.len(),
             );
-            let t = s.0 as usize;
-            let off = s.1;
-            let tig_start = s.2;
+            let t = s.ref_id as usize;
+            let off = s.offset;
+            let tig_start = s.tig_start;
             let ref_start = off + tig_start;
-            let len = s.3;
-            let mis = &s.4;
+            let len = s.len;
+            let mis = &s.mismatches;
             let mut new_mis = Vec::<i32>::new();
             for j in 0..len {
                 if b_seq[(tig_start + j) as usize] != refs[t].get((ref_start + j) as usize) {
@@ -263,7 +263,7 @@ fn report_semis(
     }
 }
 
-// TODO: combine this and the PreAnnotation type above
+// TODO: combine this and the PreAnnotation type above?
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 struct PerfectMatch {
     pub ref_id: i32,
@@ -272,6 +272,18 @@ struct PerfectMatch {
     pub tig_start: i32,
     // len
     pub len: i32,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct SemiPerfectMatch {
+    pub ref_id: i32,
+    /// off = pos on ref - pos on b
+    pub offset: i32,
+    /// pos on b
+    pub tig_start: i32,
+    pub len: i32,
+    /// positions on b of mismatches
+    pub mismatches: Vec<i32>,
 }
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
@@ -482,10 +494,8 @@ pub fn annotate_seq_core(
     }
 
     // Merge perfect matches.  We track the positions on b of mismatches.
-    // semi = {(t, off, pos on b, len, positions on b of mismatches)}
-    // where off = pos on ref - pos on b
 
-    let mut semi = Vec::<(i32, i32, i32, i32, Vec<i32>)>::new();
+    let mut semi = Vec::<SemiPerfectMatch>::new();
     let mut i = 0;
     while i < perf.len() {
         let j = next_diff_any(&perf, i, |a, b| {
@@ -525,13 +535,13 @@ pub fn annotate_seq_core(
                 m.append(&mut mis[k2 - i].clone());
                 k2 += 1;
             }
-            semi.push((
-                t,
-                off,
-                perf[k1].tig_start,
-                perf[k2].tig_start + perf[k2].len - perf[k1].tig_start,
-                m,
-            ));
+            semi.push(SemiPerfectMatch {
+                ref_id: t,
+                offset: off,
+                tig_start: perf[k1].tig_start,
+                len: perf[k2].tig_start + perf[k2].len - perf[k1].tig_start,
+                mismatches: m,
+            });
             k1 = k2 + 1;
         }
         i = j;
@@ -541,11 +551,11 @@ pub fn annotate_seq_core(
     // Extend backwards and then forwards.
 
     for s in &mut semi {
-        let t = s.0;
-        let off = s.1;
-        let mut l = s.2;
-        let mut len = s.3;
-        let mut mis = s.4.clone();
+        let t = s.ref_id;
+        let off = s.offset;
+        let mut l = s.tig_start;
+        let mut len = s.len;
+        let mut mis = s.mismatches.clone();
         while l > MIN_PERF_EXT as i32 && l + off > MIN_PERF_EXT as i32 {
             let mut ok = true;
             for j in 0..MIN_PERF_EXT {
@@ -592,12 +602,12 @@ pub fn annotate_seq_core(
                 len += 1;
             }
         }
-        s.2 = l;
-        s.3 = len;
-        s.4 = mis;
+        s.tig_start = l;
+        s.len = len;
+        s.mismatches = mis;
     }
     for s in &mut semi {
-        s.4.sort_unstable();
+        s.mismatches.sort_unstable();
     }
 
     // Add some 40-mers with the same offset having <= 6 mismatches.
@@ -616,17 +626,17 @@ pub fn annotate_seq_core(
     let mut i = 0;
     while i < semi.len() {
         let mut j = i + 1;
-        let t = semi[i].0;
-        let off = semi[i].1;
+        let t = semi[i].ref_id;
+        let off = semi[i].offset;
         while j < semi.len() {
-            if semi[j].0 != t || semi[j].1 != off {
+            if semi[j].ref_id != t || semi[j].offset != off {
                 break;
             }
             j += 1;
         }
         const L: i32 = 40;
         const MAX_DIFFS: usize = 6;
-        let p1 = off + semi[i].2;
+        let p1 = off + semi[i].tig_start;
         // let p2 = off + semi[j-1].2 + semi[j-1].3;
         if -off >= 0 && p1 - off <= b_seq.len() as i32 {
             for p in 0..p1 - L {
@@ -647,7 +657,13 @@ pub fn annotate_seq_core(
                             x.push(l + m);
                         }
                     }
-                    semi.push((t, off, p - off, L, x));
+                    semi.push(SemiPerfectMatch {
+                        ref_id: t,
+                        offset: off,
+                        tig_start: p - off,
+                        len: L,
+                        mismatches: x,
+                    });
                     break;
                 }
             }
@@ -663,11 +679,11 @@ pub fn annotate_seq_core(
     if allow_weak {
         let max_mis = 5;
         for s in &mut semi {
-            let t = s.0;
-            let off = s.1;
-            let l = s.2;
-            let mut len = s.3;
-            let mut mis = s.4.clone();
+            let t = s.ref_id;
+            let off = s.offset;
+            let l = s.tig_start;
+            let mut len = s.len;
+            let mut mis = s.mismatches.clone();
             let mut mis_count = 0;
             while l + len < b_seq.len() as i32 && l + len + off < refs[t as usize].len() as i32 {
                 if b_seq[(l + len) as usize] != refs[t as usize].get((l + off + len) as usize) {
@@ -677,16 +693,16 @@ pub fn annotate_seq_core(
                 len += 1;
             }
             if mis_count <= max_mis && l + len + off == refs[t as usize].len() as i32 {
-                s.3 = len;
-                s.4 = mis;
+                s.len = len;
+                s.mismatches = mis;
             }
         }
         for s in &mut semi {
-            let t = s.0;
-            let off = s.1;
-            let mut l = s.2;
-            let mut len = s.3;
-            let mut mis = s.4.clone();
+            let t = s.ref_id;
+            let off = s.offset;
+            let mut l = s.tig_start;
+            let mut len = s.len;
+            let mut mis = s.mismatches.clone();
             let mut mis_count = 0;
             while l > 0 && l + off > 0 {
                 if b_seq[(l - 1_i32) as usize] != refs[t as usize].get((l + off - 1_i32) as usize) {
@@ -697,13 +713,13 @@ pub fn annotate_seq_core(
                 len += 1;
             }
             if mis_count <= max_mis && l + off == 0 {
-                s.2 = l;
-                s.3 = len;
-                s.4 = mis;
+                s.tig_start = l;
+                s.len = len;
+                s.mismatches = mis;
             }
         }
         for s in &mut semi {
-            s.4.sort_unstable();
+            s.mismatches.sort_unstable();
         }
     }
     report_semis(verbose, "SEMI ALIGNMENTS", &semi, &b_seq, refs, log);
@@ -714,24 +730,24 @@ pub fn annotate_seq_core(
 
     let mut to_delete = vec![false; semi.len()];
     for i1 in 0..semi.len() {
-        let t1 = semi[i1].0;
+        let t1 = semi[i1].ref_id;
         if t1 < 0 {
             continue;
         }
-        let off1 = semi[i1].1;
-        let (l1, len1) = (semi[i1].2, semi[i1].3);
-        let mis1 = semi[i1].4.clone();
+        let off1 = semi[i1].offset;
+        let (l1, len1) = (semi[i1].tig_start, semi[i1].len);
+        let mis1 = semi[i1].mismatches.clone();
         for i2 in 0..semi.len() {
-            let t2 = semi[i2].0;
-            let off2 = semi[i2].1;
+            let t2 = semi[i2].ref_id;
+            let off2 = semi[i2].offset;
             if t2 != t1 || off2 != off1 {
                 continue;
             }
-            let (l2, len2) = (semi[i2].2, semi[i2].3);
+            let (l2, len2) = (semi[i2].tig_start, semi[i2].len);
             if l1 + len1 >= l2 {
                 continue;
             }
-            let mis2 = semi[i2].4.clone();
+            let mis2 = semi[i2].mismatches.clone();
             let mut mis3 = Vec::<i32>::new();
             for l in l1 + len1..l2 {
                 if b_seq[l as usize] != refs[t1 as usize].get((l + off1) as usize) {
@@ -742,11 +758,11 @@ pub fn annotate_seq_core(
             if nmis as f64 / ((l2 + len2) - l1) as f64 > MAX_RATE {
                 continue;
             }
-            semi[i1].3 = (l2 + len2) - l1;
-            semi[i1].4.append(&mut mis3);
-            semi[i1].4.append(&mut mis2.clone());
-            unique_sort(&mut semi[i1].4);
-            semi[i2].0 = -1_i32;
+            semi[i1].len = (l2 + len2) - l1;
+            semi[i1].mismatches.append(&mut mis3);
+            semi[i1].mismatches.append(&mut mis2.clone());
+            unique_sort(&mut semi[i1].mismatches);
+            semi[i2].ref_id = -1_i32;
             to_delete[i2] = true;
         }
     }
@@ -768,7 +784,7 @@ pub fn annotate_seq_core(
     while i < semi.len() {
         let mut j = i + 1;
         while j < semi.len() {
-            if semi[j].0 != semi[i].0 || semi[j].1 != semi[i].1 {
+            if semi[j].ref_id != semi[i].ref_id || semi[j].offset != semi[i].offset {
                 break;
             }
             j += 1;
@@ -778,20 +794,20 @@ pub fn annotate_seq_core(
                 if to_delete[k1] || to_delete[k2] {
                     continue;
                 }
-                let start1 = semi[k1].2;
-                let start2 = semi[k2].2;
-                let len1 = semi[k1].3;
-                let len2 = semi[k2].3;
+                let start1 = semi[k1].tig_start;
+                let start2 = semi[k2].tig_start;
+                let len1 = semi[k1].len;
+                let len2 = semi[k2].len;
                 let stop1 = start1 + len1;
                 let stop2 = start2 + len2;
                 let start = min(start1, start2);
                 let stop = max(stop1, stop2);
                 if stop - start <= len1 + len2 {
-                    semi[k1].2 = start;
-                    semi[k1].3 = stop - start;
-                    let mut m2 = semi[k2].4.clone();
-                    semi[k1].4.append(&mut m2);
-                    unique_sort(&mut semi[k1].4);
+                    semi[k1].tig_start = start;
+                    semi[k1].len = stop - start;
+                    let mut m2 = semi[k2].mismatches.clone();
+                    semi[k1].mismatches.append(&mut m2);
+                    unique_sort(&mut semi[k1].mismatches);
                     to_delete[k2] = true;
                 }
             }
@@ -816,7 +832,7 @@ pub fn annotate_seq_core(
     while i < semi.len() {
         let mut j = i + 1;
         while j < semi.len() {
-            if semi[j].0 != semi[i].0 {
+            if semi[j].ref_id != semi[i].ref_id {
                 break;
             }
             j += 1;
@@ -827,18 +843,18 @@ pub fn annotate_seq_core(
             ok = true;
         } else if j - i == 2 {
             ok = true;
-            if semi[i].2 < semi[i + 1].2 {
+            if semi[i].tig_start < semi[i + 1].tig_start {
                 k = i + 1;
             }
         }
         if ok {
-            let offset = semi[k].1;
-            let ref_start = semi[k].1 + semi[k].2;
-            let tig_start = semi[k].2;
-            let t = semi[k].0 as usize;
+            let offset = semi[k].offset;
+            let ref_start = semi[k].offset + semi[k].tig_start;
+            let tig_start = semi[k].tig_start;
+            let t = semi[k].ref_id as usize;
             if !rheaders[t].contains("segment") && refdata.is_v(t) {
                 let r = &refs[t];
-                let len = semi[k].3;
+                let len = semi[k].len;
                 if ref_start + len < r.len() as i32
                     && (ref_start + len) as f64 / r.len() as f64 >= 0.60
                     && len + tig_start < b_seq.len() as i32
@@ -847,10 +863,10 @@ pub fn annotate_seq_core(
                     let stop = min(r.len() as i32, b_seq.len() as i32 + offset);
                     for m in start..stop {
                         if b_seq[(m - offset) as usize] != r.get(m as usize) {
-                            semi[k].4.push(m - offset);
+                            semi[k].mismatches.push(m - offset);
                         }
                     }
-                    semi[k].3 += stop - start;
+                    semi[k].len += stop - start;
                 }
             }
         }
@@ -860,7 +876,7 @@ pub fn annotate_seq_core(
     // Make sure that mismatches are unique sorted.
 
     for s in &mut semi {
-        unique_sort(&mut s.4);
+        unique_sort(&mut s.mismatches);
     }
     report_semis(
         verbose,
@@ -878,15 +894,16 @@ pub fn annotate_seq_core(
     while i < semi.len() {
         let mut j = i + 1;
         while j < semi.len() {
-            if semi[j].0 != semi[i].0 || semi[j].1 != semi[i].1 {
+            if semi[j].ref_id != semi[i].ref_id || semi[j].offset != semi[i].offset {
                 break;
             }
             j += 1;
         }
         for k1 in i..j {
             for k2 in i..j {
-                if semi[k1].1 + semi[k1].2 + semi[k1].3 == semi[k2].1 + semi[k2].2 + semi[k2].3
-                    && semi[k1].3 > semi[k2].3
+                if semi[k1].offset + semi[k1].tig_start + semi[k1].len
+                    == semi[k2].offset + semi[k2].tig_start + semi[k2].len
+                    && semi[k1].len > semi[k2].len
                 {
                     to_delete[k2] = true;
                 }
@@ -910,11 +927,11 @@ pub fn annotate_seq_core(
     let mut annx = Vec::<PreAnnotation>::new();
     for x in &semi {
         annx.push(PreAnnotation {
-            tig_start: x.2,
-            match_len: x.3,
-            ref_id: x.0,
-            ref_start: x.2 + x.1,
-            mismatches: x.4.clone(),
+            tig_start: x.tig_start,
+            match_len: x.len,
+            ref_id: x.ref_id,
+            ref_start: x.tig_start + x.offset,
+            mismatches: x.mismatches.clone(),
         });
     }
     unique_sort(&mut annx);
