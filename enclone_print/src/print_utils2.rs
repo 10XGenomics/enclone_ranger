@@ -172,7 +172,7 @@ pub fn row_fill(
             bch[l].sort();
             let mut m = 0;
             while m < bch[l].len() {
-                let n = next_diff12_4(&bch[l], m as i32) as usize;
+                let n = next_diff12_4(&bch[l], m);
                 for u1 in m..n {
                     for u2 in m..n {
                         if bch[l][u1].2 >= 10 * bch[l][u2].2 {

@@ -97,7 +97,7 @@ pub fn some_filters(
             types.sort();
             let mut i = 0;
             while i < types.len() {
-                let j = next_diff1_2(&types, i as i32) as usize;
+                let j = next_diff1_2(&types, i);
                 let mut mult = 0;
                 for t in &types[i..j] {
                     mult += t.1;

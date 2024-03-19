@@ -41,7 +41,7 @@ fn joiner(
     }
     let mut i = 0;
     while i < seq_chains.len() {
-        let j = next_diff1_3(seq_chains, i as i32) as usize;
+        let j = next_diff1_3(seq_chains, i);
         for k in i + 1..j {
             let (x1, x2) = (&seq_chains[i], &seq_chains[k]);
             let z1 = bin_position(chains, &(x1.1, x1.2));
@@ -66,7 +66,7 @@ pub fn setup_define_mat(orbit: &[i32], info: &[CloneInfo]) -> (Vec<Od>, Vec<usiz
     let mut exacts = Vec::<usize>::new();
     let mut j = 0;
     while j < od.len() {
-        let k = next_diff12_3(&od, j as i32) as usize;
+        let k = next_diff12_3(&od, j);
         exacts.push(od[j].1);
         j = k;
     }
@@ -229,7 +229,7 @@ pub fn define_mat(
     let mut rxir = Vec::<(usize, usize, usize)>::new(); // (heavy orbit, light orbit, info index)
     let mut i = 0;
     while i < rxi.len() {
-        let j = next_diff12_3(&rxi, i as i32) as usize;
+        let j = next_diff12_3(&rxi, i);
         rxir.extend(&rxi[i..j.min(i + MAX_USE)]);
         i = j;
     }

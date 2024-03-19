@@ -631,7 +631,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
                 od.sort();
                 let mut j = 0;
                 while j < od.len() {
-                    let k = next_diff12_3(&od, j as i32) as usize;
+                    let k = next_diff12_3(&od, j);
                     res.1.push(od[j].1);
                     j = k;
                 }

@@ -76,7 +76,7 @@ pub fn finish_join(
     ox.sort_unstable();
     let mut i = 0;
     while i < ox.len() {
-        let j = next_diff1_2(&ox, i as i32) as usize;
+        let j = next_diff1_2(&ox, i);
         for k in i..j - 1 {
             eq.join(ox[k].1, ox[k + 1].1);
         }
