@@ -2091,13 +2091,10 @@ pub fn annotate_seq_core(
                     best_matches = max(best_matches, result.1);
                 }
                 if results[0].1 == best_matches {
-                    let t = results[0].2;
-                    let r = results[0].0 + results[0].1;
-                    let m = results[0].4;
                     annx.push(PreAnnotation {
-                        tig_start: m as i32,
-                        match_len: r as i32,
-                        ref_id: t as i32,
+                        tig_start: results[0].4 as i32,
+                        match_len: (results[0].0 + results[0].1) as i32,
+                        ref_id: results[0].2 as i32,
                         ref_start: 0,
                         mismatches: results[0].5.clone(),
                     });
