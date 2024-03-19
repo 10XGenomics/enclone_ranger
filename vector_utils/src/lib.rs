@@ -333,140 +333,75 @@ pub fn count_instances<T: Ord + ?Sized>(x: &[impl Borrow<T>], d: &T) -> i32 {
 // NEXT DIFFERENCE
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
+pub fn next_diff_any<T>(x: &[T], i: usize, eq: impl Fn(&T, &T) -> bool) -> usize {
+    let mut j = i + 1;
+    loop {
+        if j == x.len() || !eq(&x[j], &x[i]) {
+            return j;
+        }
+        j += 1;
+    }
+}
+
 // Find first element that's different in a sorted vector, or different in
 // first position.
 
 pub fn next_diff<T: Eq>(x: &[T], i: usize) -> usize {
-    let mut j = i + 1;
-    loop {
-        if j == x.len() || x[j] != x[i] {
-            return j;
-        }
-        j += 1;
-    }
+    next_diff_any(x, i, |a, b| a == b)
 }
 
-pub fn next_diff1_2<T: Eq, U: Eq>(x: &[(T, U)], i: i32) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32 || x[j as usize].0 != x[i as usize].0 {
-            return j;
-        }
-        j += 1;
-    }
+pub fn next_diff1_2<T: Eq, U: Eq>(x: &[(T, U)], i: usize) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0)
 }
 
-pub fn next_diff1_3<T: Eq, U: Eq, V: Eq>(x: &[(T, U, V)], i: i32) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32 || x[j as usize].0 != x[i as usize].0 {
-            return j;
-        }
-        j += 1;
-    }
+pub fn next_diff1_3<T: Eq, U: Eq, V: Eq>(x: &[(T, U, V)], i: usize) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0)
 }
 
-pub fn next_diff1_4<T: Eq, U: Eq, V: Eq, W: Eq>(x: &[(T, U, V, W)], i: i32) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32 || x[j as usize].0 != x[i as usize].0 {
-            return j;
-        }
-        j += 1;
-    }
+pub fn next_diff1_4<T: Eq, U: Eq, V: Eq, W: Eq>(x: &[(T, U, V, W)], i: usize) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0)
 }
 
-pub fn next_diff12_3<T: Eq, U: Eq, V: Eq>(x: &[(T, U, V)], i: i32) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32
-            || x[j as usize].0 != x[i as usize].0
-            || x[j as usize].1 != x[i as usize].1
-        {
-            return j;
-        }
-        j += 1;
-    }
+pub fn next_diff12_3<T: Eq, U: Eq, V: Eq>(x: &[(T, U, V)], i: usize) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0 && a.1 == b.1)
 }
 
-pub fn next_diff12_4<T: Eq, U: Eq, V: Eq, W: Eq>(x: &[(T, U, V, W)], i: i32) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32
-            || x[j as usize].0 != x[i as usize].0
-            || x[j as usize].1 != x[i as usize].1
-        {
-            return j;
-        }
-        j += 1;
-    }
+pub fn next_diff12_4<T: Eq, U: Eq, V: Eq, W: Eq>(x: &[(T, U, V, W)], i: usize) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0 && a.1 == b.1)
 }
 
 #[allow(clippy::type_complexity)]
 pub fn next_diff12_8<S: Eq, T: Eq, U: Eq, V: Eq, W: Eq, X: Eq, Y: Eq, Z: Eq>(
     x: &[(S, T, U, V, W, X, Y, Z)],
-    i: i32,
-) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32
-            || x[j as usize].0 != x[i as usize].0
-            || x[j as usize].1 != x[i as usize].1
-        {
-            return j;
-        }
-        j += 1;
-    }
+    i: usize,
+) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0 && a.1 == b.1)
 }
 
-pub fn next_diff1_5<T: Eq, U: Eq, V: Eq, W: Eq, X: Eq>(x: &[(T, U, V, W, X)], i: i32) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32 || x[j as usize].0 != x[i as usize].0 {
-            return j;
-        }
-        j += 1;
-    }
+pub fn next_diff1_5<T: Eq, U: Eq, V: Eq, W: Eq, X: Eq>(x: &[(T, U, V, W, X)], i: usize) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0)
 }
 
 pub fn next_diff1_6<T: Eq, U: Eq, V: Eq, W: Eq, X: Eq, Y: Eq>(
     x: &[(T, U, V, W, X, Y)],
-    i: i32,
-) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32 || x[j as usize].0 != x[i as usize].0 {
-            return j;
-        }
-        j += 1;
-    }
+    i: usize,
+) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0)
 }
 
 pub fn next_diff1_7<T: Eq, U: Eq, V: Eq, W: Eq, X: Eq, Y: Eq, Z: Eq>(
     x: &[(T, U, V, W, X, Y, Z)],
-    i: i32,
-) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32 || x[j as usize].0 != x[i as usize].0 {
-            return j;
-        }
-        j += 1;
-    }
+    i: usize,
+) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0)
 }
 
 #[allow(clippy::type_complexity)]
 pub fn next_diff1_8<S: Eq, T: Eq, U: Eq, V: Eq, W: Eq, X: Eq, Y: Eq, Z: Eq>(
     x: &[(S, T, U, V, W, X, Y, Z)],
-    i: i32,
-) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32 || x[j as usize].0 != x[i as usize].0 {
-            return j;
-        }
-        j += 1;
-    }
+    i: usize,
+) -> usize {
+    next_diff_any(x, i, |a, b| a.0 == b.0)
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓

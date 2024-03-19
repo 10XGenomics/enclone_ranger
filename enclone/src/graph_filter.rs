@@ -97,7 +97,7 @@ pub fn graph_filter(
     let mut edges1 = Vec::<(usize, usize, (usize, usize))>::new();
     let mut i = 0;
     while i < edges0.len() {
-        let j = next_diff12_3(&edges0, i as i32) as usize;
+        let j = next_diff12_3(&edges0, i);
         let mut weight = 0;
         for e in &edges0[i..j] {
             weight += e.2;

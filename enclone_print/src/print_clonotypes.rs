@@ -244,7 +244,7 @@ pub fn print_clonotypes(
         let mut j = 0;
         let loupe_clonotypes = &mut res.6;
         while j < od.len() {
-            let k = next_diff12_3(&od, j as i32) as usize;
+            let k = next_diff12_3(&od, j);
             let mut mult = 0_usize;
             for l in j..k {
                 let x: &CloneInfo = &info[od[l].2 as usize];

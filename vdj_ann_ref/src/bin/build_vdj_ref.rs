@@ -1264,7 +1264,7 @@ fn main() {
     let mut i = 0;
     let mut dnas = Vec::<(Vec<DnaString>, usize, usize)>::new();
     while i < exons.len() {
-        let j = next_diff12_8(&exons, i as i32) as usize;
+        let j = next_diff12_8(&exons, i);
         let mut x = Vec::<DnaString>::new();
         for d in &dna[i..j] {
             x.push(d.clone());
@@ -1320,7 +1320,7 @@ fn main() {
     let mut i = 0;
     let mut record = 0;
     while i < exons.len() {
-        let j = next_diff12_8(&exons, i as i32) as usize;
+        let j = next_diff12_8(&exons, i);
         let mut fws = Vec::<bool>::new();
         for exon in &exons[i..j] {
             fws.push(exon.6);

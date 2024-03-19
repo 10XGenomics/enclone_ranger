@@ -55,7 +55,7 @@ pub fn join_exacts(
         bcx.sort();
         let mut i = 0;
         while i < bcx.len() {
-            let j = next_diff1_2(&bcx, i as i32) as usize;
+            let j = next_diff1_2(&bcx, i);
             for k in i + 1..j {
                 eq.join(bcx[i].1 as i32, bcx[k].1 as i32);
             }

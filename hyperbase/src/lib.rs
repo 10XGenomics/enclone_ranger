@@ -191,8 +191,7 @@ impl HyperBasevector {
         let mut i: i64 = 0;
         let mut dups = 0;
         while i < kmers_plus.len() as i64 {
-            // warning: note truncation to i32
-            let j = next_diff1_3(&kmers_plus, i as i32) as i64;
+            let j = next_diff1_3(&kmers_plus, i as usize) as i64;
             if j - i > 1 {
                 if dups == 0 {
                     println!("\ntest_unique failed");

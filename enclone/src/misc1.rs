@@ -137,7 +137,7 @@ pub fn lookup_heavy_chain_reuse(
                 xcdr3.sort();
                 let mut i = 0;
                 while i < xcdr3.len() {
-                    let j = next_diff1_3(&xcdr3, i as i32) as usize;
+                    let j = next_diff1_3(&xcdr3, i);
                     let mut ids = Vec::<usize>::new();
                     for cdr in &xcdr3[i..j] {
                         ids.push(cdr.2);
@@ -266,7 +266,7 @@ pub fn cross_filter(
     let mut blacklist = Vec::<&[u8]>::new();
     let mut i = 0;
     while i < vjx.len() {
-        let j = next_diff1_3(&vjx, i as i32) as usize;
+        let j = next_diff1_3(&vjx, i);
         if j - i == 1 {
             let dataset_index = vjx[i].1;
             let n = vjx[i].2;

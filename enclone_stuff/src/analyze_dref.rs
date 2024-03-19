@@ -75,7 +75,7 @@ pub fn analyze_donor_ref(
         refs.sort();
         let mut i = 0;
         while i < refs.len() {
-            let j = next_diff1_3(&refs, i as i32) as usize;
+            let j = next_diff1_3(&refs, i);
             let gene = &refs[i].0;
             let mut alleles = Vec::<(&[u8], &str)>::new(); // (sequence, name)
             let mut have_alt = false;
@@ -128,7 +128,7 @@ pub fn analyze_donor_ref(
                 let mut allelesg = Vec::<(Vec<&str>, &[u8])>::new();
                 let mut r = 0;
                 while r < alleles.len() {
-                    let s = next_diff1_2(&alleles, r as i32) as usize;
+                    let s = next_diff1_2(&alleles, r);
                     let mut names = Vec::<&str>::new();
                     for at in &alleles[r..s] {
                         names.push(at.1);

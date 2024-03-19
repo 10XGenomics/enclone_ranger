@@ -26,7 +26,7 @@ use std::{
 use string_utils::{stringme, strme, TextUtils};
 use vdj_types::{VdjChain, VdjRegion};
 use vector_utils::{
-    bin_member, erase_if, lower_bound1_3, next_diff12_4, next_diff1_2, next_diff1_3, reverse_sort,
+    bin_member, erase_if, lower_bound1_3, next_diff1_2, next_diff1_3, next_diff_any, reverse_sort,
     unique_sort, VecUtils,
 };
 
@@ -263,6 +263,18 @@ fn report_semis(
     }
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct Perf {
+    // ref_id
+    pub f0: i32,
+    // ref_start - tig_start: "offset"
+    pub f1: i32,
+    // tig_start
+    pub f2: i32,
+    // len
+    pub f3: i32,
+}
+
 pub fn annotate_seq_core(
     b: &DnaString,
     refdata: &RefData,
@@ -295,7 +307,7 @@ pub fn annotate_seq_core(
     //
     // perf = {(ref_id, ref_start - tig_start, tig_start, len)}
 
-    let mut perf = Vec::<(i32, i32, i32, i32)>::new();
+    let mut perf = Vec::<Perf>::new();
     if b.len() < K {
         return;
     }
@@ -347,7 +359,12 @@ pub fn annotate_seq_core(
                 }
             }
             if ok {
-                perf.push((t as i32, p as i32 - l as i32, l as i32, len as i32));
+                perf.push(Perf {
+                    f0: t as i32,
+                    f1: p as i32 - l as i32,
+                    f2: l as i32,
+                    f3: len as i32,
+                });
             }
         }
     }
@@ -357,11 +374,11 @@ pub fn annotate_seq_core(
             fwriteln!(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}",
-                s.0,
-                s.1,
-                s.2,
-                s.1 + s.2,
-                s.3,
+                s.f0,
+                s.f1,
+                s.f2,
+                s.f1 + s.f2,
+                s.f3,
             );
         }
     }
@@ -372,7 +389,7 @@ pub fn annotate_seq_core(
 
     let mut offsets = Vec::<(i32, i32)>::new();
     for p in &perf {
-        offsets.push((p.0, p.1));
+        offsets.push((p.f0, p.f1));
     }
     unique_sort(&mut offsets);
     const MM_START: i32 = 150;
@@ -381,9 +398,9 @@ pub fn annotate_seq_core(
         let mut tig_starts = Vec::<i32>::new();
         let mut total = 0;
         for pi in &perf {
-            if pi.0 == t && pi.1 == off {
-                tig_starts.push(pi.2);
-                total += pi.3;
+            if pi.f0 == t && pi.f1 == off {
+                tig_starts.push(pi.f2);
+                total += pi.f3;
             }
         }
         if total < MM_START {
@@ -420,7 +437,12 @@ pub fn annotate_seq_core(
                         }
                     }
                     if !known {
-                        perf.push((t, p - l, l, len));
+                        perf.push(Perf {
+                            f0: t,
+                            f1: p - l,
+                            f2: l,
+                            f3: len,
+                        });
                     }
                 }
                 l = lx;
@@ -438,11 +460,11 @@ pub fn annotate_seq_core(
             fwriteln!(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}",
-                s.0,
-                s.1,
-                s.2,
-                s.1 + s.2,
-                s.3,
+                s.f0,
+                s.f1,
+                s.f2,
+                s.f1 + s.f2,
+                s.f3,
             );
         }
     }
@@ -454,13 +476,13 @@ pub fn annotate_seq_core(
     let mut semi = Vec::<(i32, i32, i32, i32, Vec<i32>)>::new();
     let mut i = 0;
     while i < perf.len() {
-        let j = next_diff12_4(&perf, i as i32);
-        let (t, off) = (perf[i].0, perf[i].1);
-        let mut join = vec![false; j as usize - i];
-        let mut mis = vec![Vec::<i32>::new(); j as usize - i];
-        for k in i..j as usize - 1 {
-            let (l1, len1) = (perf[k].2, perf[k].3);
-            let (l2, len2) = (perf[k + 1].2, perf[k + 1].3);
+        let j = next_diff_any(&perf, i, |a, b| a.f0 == b.f0 && a.f1 == b.f1);
+        let (t, off) = (perf[i].f0, perf[i].f1);
+        let mut join = vec![false; j - i];
+        let mut mis = vec![Vec::<i32>::new(); j - i];
+        for k in i..j - 1 {
+            let (l1, len1) = (perf[k].f2, perf[k].f3);
+            let (l2, len2) = (perf[k + 1].f2, perf[k + 1].f3);
             for z in l1 + len1..l2 {
                 if b_seq[z as usize] != refs[t as usize].get((z + off) as usize) {
                     mis[k - i].push(z);
@@ -476,12 +498,12 @@ pub fn annotate_seq_core(
             }
         }
         let mut k1 = i;
-        while k1 < j as usize {
+        while k1 < j {
             // let mut k2 = k1 + 1;
             let mut k2 = k1;
             let mut m = Vec::<i32>::new();
             // m.append( &mut mis[k1-i].clone() );
-            while k2 < j as usize {
+            while k2 < j {
                 // if !join[k2-i-1] { break; }
                 if !join[k2 - i] {
                     break;
@@ -489,10 +511,16 @@ pub fn annotate_seq_core(
                 m.append(&mut mis[k2 - i].clone());
                 k2 += 1;
             }
-            semi.push((t, off, perf[k1].2, perf[k2].2 + perf[k2].3 - perf[k1].2, m));
+            semi.push((
+                t,
+                off,
+                perf[k1].f2,
+                perf[k2].f2 + perf[k2].f3 - perf[k1].f2,
+                m,
+            ));
             k1 = k2 + 1;
         }
-        i = j as usize;
+        i = j;
     }
     report_semis(verbose, "INITIAL SEMI ALIGNMENTS", &semi, &b_seq, refs, log);
 
@@ -989,14 +1017,14 @@ pub fn annotate_seq_core(
     ts.sort_unstable();
     let mut i1 = 0;
     while i1 < ts.len() {
-        let j1 = next_diff1_2(&ts, i1 as i32) as usize;
+        let j1 = next_diff1_2(&ts, i1);
         let mut tlen1 = 0;
         for k in i1..j1 {
             tlen1 += annx[ts[k].1].match_len;
         }
         let mut i2 = 0;
         while i2 < ts.len() {
-            let j2 = next_diff1_2(&ts, i2 as i32) as usize;
+            let j2 = next_diff1_2(&ts, i2);
             let mut tlen2 = 0;
             for k in i2..j2 {
                 tlen2 += annx[ts[k].1].match_len;
@@ -1441,7 +1469,7 @@ pub fn annotate_seq_core(
 
     let mut i = 0;
     while i < combo.len() {
-        let j = next_diff1_3(&combo, i as i32) as usize;
+        let j = next_diff1_3(&combo, i);
         let mut cov = Vec::<(usize, usize)>::new();
         let mut mis = 0;
         let mut mis_nutr = 0;
@@ -2290,7 +2318,7 @@ pub fn annotate_seq_core(
     let max_indel = 27;
     let min_len_gain = 100;
     while j < vs.len() {
-        let k = next_diff1_2(&vs, j as i32) as usize;
+        let k = next_diff1_2(&vs, j);
         if k - j == 1 {
             score.push((annx[j].match_len, k - j, annx[j].mismatches.len(), vs[j].1));
         } else if k - j == 2 {
