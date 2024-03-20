@@ -295,6 +295,10 @@ struct Offset {
 /// Minimum length of sequence we'll try to annotate.
 const K: usize = 12;
 
+// Heuristic constants.
+const MAX_RATE: f64 = 0.15;
+const MIN_PERF_EXT: usize = 5;
+
 pub fn annotate_seq_core(
     b: &DnaString,
     refdata: &RefData,
@@ -314,10 +318,6 @@ pub fn annotate_seq_core(
 
     let refs = &refdata.refs;
     let rheaders = &refdata.rheaders;
-
-    // Heuristic constants.
-    const MIN_PERF_EXT: usize = 5;
-    const MAX_RATE: f64 = 0.15;
 
     if b.len() < K {
         return;
@@ -357,59 +357,7 @@ pub fn annotate_seq_core(
         }
     }
 
-    // Merge perfect matches.  We track the positions on b of mismatches.
-
-    let mut semi = Vec::<SemiPerfectMatch>::new();
-    let mut i = 0;
-    while i < perf.len() {
-        let j = next_diff_any(&perf, i, |a, b| {
-            a.ref_id == b.ref_id && a.offset == b.offset
-        });
-        let (t, off) = (perf[i].ref_id, perf[i].offset);
-        let mut join = vec![false; j - i];
-        let mut mis = vec![Vec::<i32>::new(); j - i];
-        for k in i..j - 1 {
-            let (l1, len1) = (perf[k].tig_start, perf[k].len);
-            let (l2, len2) = (perf[k + 1].tig_start, perf[k + 1].len);
-            for z in l1 + len1..l2 {
-                if b_seq[z as usize] != refs[t as usize].get((z + off) as usize) {
-                    mis[k - i].push(z);
-                }
-            }
-
-            // XXX:
-            // println!( "\ntrying merge" );
-            // printme!( t, l1, l2, len1, len2, mis[k-i].len() );
-
-            if mis[k - i].len() as f64 / (l2 + len2 - l1) as f64 <= MAX_RATE {
-                join[k - i] = true;
-            }
-        }
-        let mut k1 = i;
-        while k1 < j {
-            // let mut k2 = k1 + 1;
-            let mut k2 = k1;
-            let mut m = Vec::<i32>::new();
-            // m.append( &mut mis[k1-i].clone() );
-            while k2 < j {
-                // if !join[k2-i-1] { break; }
-                if !join[k2 - i] {
-                    break;
-                }
-                m.append(&mut mis[k2 - i].clone());
-                k2 += 1;
-            }
-            semi.push(SemiPerfectMatch {
-                ref_id: t,
-                offset: off,
-                tig_start: perf[k1].tig_start,
-                len: perf[k2].tig_start + perf[k2].len - perf[k1].tig_start,
-                mismatches: m,
-            });
-            k1 = k2 + 1;
-        }
-        i = j;
-    }
+    let mut semi = merge_perfect_matches(&b_seq, &refdata.refs, perf);
     report_semis(verbose, "INITIAL SEMI ALIGNMENTS", &semi, &b_seq, refs, log);
 
     // Extend backwards and then forwards.
@@ -2598,6 +2546,66 @@ fn find_additional_perfect_matches(
         }
     }
     new_matches
+}
+
+/// Merge perfect matches.  We track the positions on b of mismatches.
+fn merge_perfect_matches(
+    b_seq: &[u8],
+    refs: &[DnaString],
+    perf: Vec<PerfectMatch>,
+) -> Vec<SemiPerfectMatch> {
+    let mut semi = Vec::<SemiPerfectMatch>::new();
+    let mut i = 0;
+    while i < perf.len() {
+        let j = next_diff_any(&perf, i, |a, b| {
+            a.ref_id == b.ref_id && a.offset == b.offset
+        });
+        let (t, off) = (perf[i].ref_id, perf[i].offset);
+        let mut join = vec![false; j - i];
+        let mut mis = vec![Vec::<i32>::new(); j - i];
+        for k in i..j - 1 {
+            let (l1, len1) = (perf[k].tig_start, perf[k].len);
+            let (l2, len2) = (perf[k + 1].tig_start, perf[k + 1].len);
+            for z in l1 + len1..l2 {
+                if b_seq[z as usize] != refs[t as usize].get((z + off) as usize) {
+                    mis[k - i].push(z);
+                }
+            }
+
+            // XXX:
+            // println!( "\ntrying merge" );
+            // printme!( t, l1, l2, len1, len2, mis[k-i].len() );
+
+            if mis[k - i].len() as f64 / (l2 + len2 - l1) as f64 <= MAX_RATE {
+                join[k - i] = true;
+            }
+        }
+        let mut k1 = i;
+        while k1 < j {
+            // let mut k2 = k1 + 1;
+            let mut k2 = k1;
+            let mut m = Vec::<i32>::new();
+            // m.append( &mut mis[k1-i].clone() );
+            while k2 < j {
+                // if !join[k2-i-1] { break; }
+                if !join[k2 - i] {
+                    break;
+                }
+                m.append(&mut mis[k2 - i].clone());
+                k2 += 1;
+            }
+            semi.push(SemiPerfectMatch {
+                ref_id: t,
+                offset: off,
+                tig_start: perf[k1].tig_start,
+                len: perf[k2].tig_start + perf[k2].len - perf[k1].tig_start,
+                mismatches: m,
+            });
+            k1 = k2 + 1;
+        }
+        i = j;
+    }
+    semi
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
