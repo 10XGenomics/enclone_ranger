@@ -319,13 +319,10 @@ pub fn annotate_seq_core(
     const MIN_PERF_EXT: usize = 5;
     const MAX_RATE: f64 = 0.15;
 
-    // Find maximal perfect matches of length >= 20, or 12 for J regions, so long
-    // as we have extension to a 20-mer with only one mismatch.
-
     if b.len() < K {
         return;
     }
-    let mut perf = annotate_perf_matches_initial(b, refdata, &b_seq, allow_weak);
+    let mut perf = find_perfect_matches_initial(b, refdata, &b_seq, allow_weak);
     if verbose {
         fwriteln!(log, "\nINITIAL PERF ALIGNMENTS\n");
         for s in &perf {
@@ -340,81 +337,7 @@ pub fn annotate_seq_core(
             );
         }
     }
-    // Find maximal perfect matches of length >= 10 that have the same offset as a perfect match
-    // already found and are not equal to one of them.  But only do this if we already have at
-    // least 150 bases aligned.
-
-    let mut offsets = Vec::<Offset>::new();
-    for p in &perf {
-        offsets.push(Offset {
-            ref_id: p.ref_id,
-            offset: p.offset,
-        });
-    }
-    unique_sort(&mut offsets);
-    const MM_START: i32 = 150;
-    const MM: i32 = 10;
-    for Offset {
-        ref_id: t,
-        offset: off,
-    } in offsets
-    {
-        let mut tig_starts = Vec::<i32>::new();
-        let mut total = 0;
-        for pi in &perf {
-            if pi.ref_id == t && pi.offset == off {
-                tig_starts.push(pi.tig_start);
-                total += pi.len;
-            }
-        }
-        if total < MM_START {
-            continue;
-        }
-        let r = refs[t as usize].to_bytes();
-        let (mut l, mut p) = (0, off);
-        while l <= b_seq.len() as i32 - MM {
-            if p + MM > r.len() as i32 {
-                break;
-            }
-            if p < 0 || b_seq[l as usize] != r[p as usize] {
-                l += 1;
-                p += 1;
-            } else {
-                let (mut lx, mut px) = (l + 1, p + 1);
-                loop {
-                    if lx >= b_seq.len() as i32 || px >= r.len() as i32 {
-                        break;
-                    }
-                    if b_seq[lx as usize] != r[px as usize] {
-                        break;
-                    }
-                    lx += 1;
-                    px += 1;
-                }
-                let len = lx - l;
-                if (MM..20).contains(&len) {
-                    let mut known = false;
-                    for tig_start in &tig_starts {
-                        if l == *tig_start {
-                            known = true;
-                            break;
-                        }
-                    }
-                    if !known {
-                        perf.push(PerfectMatch {
-                            ref_id: t,
-                            offset: p - l,
-                            tig_start: l,
-                            len,
-                        });
-                    }
-                }
-                l = lx;
-                p = px;
-            }
-        }
-    }
-
+    find_additional_perfect_matches(&b_seq, &refdata.refs, &mut perf);
     // Sort perfect matches.
 
     perf.sort_unstable();
@@ -2525,7 +2448,9 @@ pub fn annotate_seq_core(
     }
 }
 
-fn annotate_perf_matches_initial(
+/// Find maximal perfect matches of length >= 20, or 12 for J regions, so long
+/// as we have extension to a 20-mer with only one mismatch.
+fn find_perfect_matches_initial(
     b: &DnaString,
     refdata: &RefData,
     b_seq: &[u8],
@@ -2590,6 +2515,82 @@ fn annotate_perf_matches_initial(
         }
     }
     perf
+}
+
+/// Find maximal perfect matches of length >= 10 that have the same offset as a perfect match
+/// already found and are not equal to one of them.  But only do this if we already have at
+/// least 150 bases aligned.
+fn find_additional_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: &mut Vec<PerfectMatch>) {
+    let mut offsets = Vec::<Offset>::new();
+    for p in perf.iter() {
+        offsets.push(Offset {
+            ref_id: p.ref_id,
+            offset: p.offset,
+        });
+    }
+    unique_sort(&mut offsets);
+    const MM_START: i32 = 150;
+    const MM: i32 = 10;
+    for Offset {
+        ref_id: t,
+        offset: off,
+    } in offsets
+    {
+        let mut tig_starts = Vec::<i32>::new();
+        let mut total = 0;
+        for pi in perf.iter() {
+            if pi.ref_id == t && pi.offset == off {
+                tig_starts.push(pi.tig_start);
+                total += pi.len;
+            }
+        }
+        if total < MM_START {
+            continue;
+        }
+        let r = refs[t as usize].to_bytes();
+        let (mut l, mut p) = (0, off);
+        while l <= b_seq.len() as i32 - MM {
+            if p + MM > r.len() as i32 {
+                break;
+            }
+            if p < 0 || b_seq[l as usize] != r[p as usize] {
+                l += 1;
+                p += 1;
+            } else {
+                let (mut lx, mut px) = (l + 1, p + 1);
+                loop {
+                    if lx >= b_seq.len() as i32 || px >= r.len() as i32 {
+                        break;
+                    }
+                    if b_seq[lx as usize] != r[px as usize] {
+                        break;
+                    }
+                    lx += 1;
+                    px += 1;
+                }
+                let len = lx - l;
+                if (MM..20).contains(&len) {
+                    let mut known = false;
+                    for tig_start in &tig_starts {
+                        if l == *tig_start {
+                            known = true;
+                            break;
+                        }
+                    }
+                    if !known {
+                        perf.push(PerfectMatch {
+                            ref_id: t,
+                            offset: p - l,
+                            tig_start: l,
+                            len,
+                        });
+                    }
+                }
+                l = lx;
+                p = px;
+            }
+        }
+    }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
