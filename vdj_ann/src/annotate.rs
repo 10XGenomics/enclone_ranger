@@ -362,67 +362,7 @@ pub fn annotate_seq_core(
 
     extend_matches(&b_seq, &refdata.refs, &mut semi);
 
-    // Add some 40-mers with the same offset having <= 6 mismatches.
-    // semi = {(t, off, pos on b, len, positions on b of mismatches)}
-    // where off = pos on ref - pos on b
-    //
-    // Note that implementation is asymmetric: we don't look to the right of p2, not for
-    // any particularly good reason.
-    //
-    // This was added to get the heavy chain V segment of the mouse A20 cell line to be annotated.
-    // This is dubious because the cell line is ~30 years old and of uncertain ancestry.  Thus
-    // we're not sure if it arose from supported mouse strains or if the V segment might have
-    // been corrupted during the growth of the cell line.  The A20 heavy chain V differs by 20%
-    // from the reference.
-
-    let mut i = 0;
-    while i < semi.len() {
-        let mut j = i + 1;
-        let t = semi[i].ref_id;
-        let off = semi[i].offset;
-        while j < semi.len() {
-            if semi[j].ref_id != t || semi[j].offset != off {
-                break;
-            }
-            j += 1;
-        }
-        const L: i32 = 40;
-        const MAX_DIFFS: usize = 6;
-        let p1 = off + semi[i].tig_start;
-        // let p2 = off + semi[j-1].2 + semi[j-1].3;
-        if -off >= 0 && p1 - off <= b_seq.len() as i32 {
-            for p in 0..p1 - L {
-                let l = p - off;
-                let mut diffs = 0;
-                for m in 0..L {
-                    if b_seq[(l + m) as usize] != refs[t as usize].get((p + m) as usize) {
-                        diffs += 1;
-                        if diffs > MAX_DIFFS {
-                            break;
-                        }
-                    }
-                }
-                if diffs <= MAX_DIFFS {
-                    let mut x = Vec::<i32>::new();
-                    for m in 0..L {
-                        if b_seq[(l + m) as usize] != refs[t as usize].get((p + m) as usize) {
-                            x.push(l + m);
-                        }
-                    }
-                    semi.push(SemiPerfectMatch {
-                        ref_id: t,
-                        offset: off,
-                        tig_start: p - off,
-                        len: L,
-                        mismatches: x,
-                    });
-                    break;
-                }
-            }
-        }
-        i = j;
-    }
-    semi.sort();
+    annotate_40mers_for_mouse_a20(&b_seq, &refdata.refs, &mut semi);
 
     // Allow extension over some mismatches on right if it gets us to the end on
     // the reference.  Ditto for left.
@@ -2609,6 +2549,73 @@ fn extend_matches(b_seq: &[u8], refs: &[DnaString], semi: &mut [SemiPerfectMatch
     for s in semi {
         s.mismatches.sort_unstable();
     }
+}
+
+/// Add some 40-mers with the same offset having <= 6 mismatches.
+/// semi = {(t, off, pos on b, len, positions on b of mismatches)}
+/// where off = pos on ref - pos on b
+///
+/// Note that implementation is asymmetric: we don't look to the right of p2, not for
+/// any particularly good reason.
+///
+/// This was added to get the heavy chain V segment of the mouse A20 cell line to be annotated.
+/// This is dubious because the cell line is ~30 years old and of uncertain ancestry.  Thus
+/// we're not sure if it arose from supported mouse strains or if the V segment might have
+/// been corrupted during the growth of the cell line.  The A20 heavy chain V differs by 20%
+/// from the reference.
+fn annotate_40mers_for_mouse_a20(
+    b_seq: &[u8],
+    refs: &[DnaString],
+    semi: &mut Vec<SemiPerfectMatch>,
+) {
+    let mut i = 0;
+    while i < semi.len() {
+        let mut j = i + 1;
+        let t = semi[i].ref_id;
+        let off = semi[i].offset;
+        while j < semi.len() {
+            if semi[j].ref_id != t || semi[j].offset != off {
+                break;
+            }
+            j += 1;
+        }
+        const L: i32 = 40;
+        const MAX_DIFFS: usize = 6;
+        let p1 = off + semi[i].tig_start;
+        // let p2 = off + semi[j-1].2 + semi[j-1].3;
+        if -off >= 0 && p1 - off <= b_seq.len() as i32 {
+            for p in 0..p1 - L {
+                let l = p - off;
+                let mut diffs = 0;
+                for m in 0..L {
+                    if b_seq[(l + m) as usize] != refs[t as usize].get((p + m) as usize) {
+                        diffs += 1;
+                        if diffs > MAX_DIFFS {
+                            break;
+                        }
+                    }
+                }
+                if diffs <= MAX_DIFFS {
+                    let mut x = Vec::<i32>::new();
+                    for m in 0..L {
+                        if b_seq[(l + m) as usize] != refs[t as usize].get((p + m) as usize) {
+                            x.push(l + m);
+                        }
+                    }
+                    semi.push(SemiPerfectMatch {
+                        ref_id: t,
+                        offset: off,
+                        tig_start: p - off,
+                        len: L,
+                        mismatches: x,
+                    });
+                    break;
+                }
+            }
+        }
+        i = j;
+    }
+    semi.sort();
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
