@@ -292,6 +292,9 @@ struct Offset {
     pub offset: i32,
 }
 
+/// Minimum length of sequence we'll try to annotate.
+const K: usize = 12;
+
 pub fn annotate_seq_core(
     b: &DnaString,
     refdata: &RefData,
@@ -311,80 +314,18 @@ pub fn annotate_seq_core(
 
     let refs = &refdata.refs;
     let rheaders = &refdata.rheaders;
-    let rkmers_plus = &refdata.rkmers_plus;
 
     // Heuristic constants.
-
-    const K: usize = 12;
     const MIN_PERF_EXT: usize = 5;
     const MAX_RATE: f64 = 0.15;
 
     // Find maximal perfect matches of length >= 20, or 12 for J regions, so long
     // as we have extension to a 20-mer with only one mismatch.
-    //
-    // perf = {(ref_id, ref_start - tig_start, tig_start, len)}
 
-    let mut perf = Vec::<PerfectMatch>::new();
     if b.len() < K {
         return;
     }
-    for l in 0..(b.len() - K + 1) {
-        let x: Kmer12 = b.get_kmer(l);
-        let low = lower_bound1_3(rkmers_plus, &x) as usize;
-        for kmer in &rkmers_plus[low..] {
-            if kmer.0 != x {
-                break;
-            }
-            let t = kmer.1 as usize;
-            let p = kmer.2 as usize;
-            if l > 0 && p > 0 && b_seq[l - 1] == refs[t].get(p - 1) {
-                continue;
-            }
-            let mut len = K;
-            while l + len < b.len() && p + len < refs[t].len() {
-                if b_seq[l + len] != refs[t].get(p + len) {
-                    break;
-                }
-                len += 1;
-            }
-            let mut ok = len >= 20;
-            if !ok && allow_weak {
-                let mut ext1 = len + 1;
-                let mut lx = l as i32 - 2;
-                let mut px = p as i32 - 2;
-                while lx >= 0 && px >= 0 {
-                    if b_seq[lx as usize] != refs[t].get(px as usize) {
-                        break;
-                    }
-                    ext1 += 1;
-                    lx -= 1;
-                    px -= 1;
-                }
-                let mut ext2 = len + 1;
-                let mut lx = l + len + 1;
-                let mut px = p + len + 1;
-                while lx < b.len() && px < refs[t].len() {
-                    if b_seq[lx] != refs[t].get(px) {
-                        break;
-                    }
-                    ext2 += 1;
-                    lx += 1;
-                    px += 1;
-                }
-                if ext1 >= 20 || ext2 >= 20 {
-                    ok = true;
-                }
-            }
-            if ok {
-                perf.push(PerfectMatch {
-                    ref_id: t as i32,
-                    offset: p as i32 - l as i32,
-                    tig_start: l as i32,
-                    len: len as i32,
-                });
-            }
-        }
-    }
+    let mut perf = annotate_perf_matches_initial(b, refdata, &b_seq, allow_weak);
     if verbose {
         fwriteln!(log, "\nINITIAL PERF ALIGNMENTS\n");
         for s in &perf {
@@ -399,7 +340,6 @@ pub fn annotate_seq_core(
             );
         }
     }
-
     // Find maximal perfect matches of length >= 10 that have the same offset as a perfect match
     // already found and are not equal to one of them.  But only do this if we already have at
     // least 150 bases aligned.
@@ -2583,6 +2523,73 @@ pub fn annotate_seq_core(
             mismatches: x.mismatches.len() as i32,
         });
     }
+}
+
+fn annotate_perf_matches_initial(
+    b: &DnaString,
+    refdata: &RefData,
+    b_seq: &[u8],
+    allow_weak: bool,
+) -> Vec<PerfectMatch> {
+    let mut perf = Vec::<PerfectMatch>::new();
+    for l in 0..(b.len() - K + 1) {
+        let x: Kmer12 = b.get_kmer(l);
+        let low = lower_bound1_3(&refdata.rkmers_plus, &x) as usize;
+        for kmer in &refdata.rkmers_plus[low..] {
+            if kmer.0 != x {
+                break;
+            }
+            let t = kmer.1 as usize;
+            let p = kmer.2 as usize;
+            if l > 0 && p > 0 && b_seq[l - 1] == refdata.refs[t].get(p - 1) {
+                continue;
+            }
+            let mut len = K;
+            while l + len < b.len() && p + len < refdata.refs[t].len() {
+                if b_seq[l + len] != refdata.refs[t].get(p + len) {
+                    break;
+                }
+                len += 1;
+            }
+            let mut ok = len >= 20;
+            if !ok && allow_weak {
+                let mut ext1 = len + 1;
+                let mut lx = l as i32 - 2;
+                let mut px = p as i32 - 2;
+                while lx >= 0 && px >= 0 {
+                    if b_seq[lx as usize] != refdata.refs[t].get(px as usize) {
+                        break;
+                    }
+                    ext1 += 1;
+                    lx -= 1;
+                    px -= 1;
+                }
+                let mut ext2 = len + 1;
+                let mut lx = l + len + 1;
+                let mut px = p + len + 1;
+                while lx < b.len() && px < refdata.refs[t].len() {
+                    if b_seq[lx] != refdata.refs[t].get(px) {
+                        break;
+                    }
+                    ext2 += 1;
+                    lx += 1;
+                    px += 1;
+                }
+                if ext1 >= 20 || ext2 >= 20 {
+                    ok = true;
+                }
+            }
+            if ok {
+                perf.push(PerfectMatch {
+                    ref_id: t as i32,
+                    offset: p as i32 - l as i32,
+                    tig_start: l as i32,
+                    len: len as i32,
+                });
+            }
+        }
+    }
+    perf
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
