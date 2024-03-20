@@ -244,7 +244,7 @@ pub fn vis_align(s1: &[u8], s2: &[u8], ops: &[AlignmentOperation], width: usize)
     let mut start = 0;
     while start < n {
         let stop = min(start + width, n);
-        for seq in [&d, &t1, &t2].iter() {
+        for seq in &[&d, &t1, &t2] {
             x.append(&mut seq[start..stop].to_vec().clone());
             x.push(b'\n');
         }

@@ -5,7 +5,7 @@ use io_utils::{open_userfile_for_read, path_exists};
 use rayon::prelude::*;
 use std::fmt::Write;
 use std::fs::{remove_file, File};
-use std::{io::BufRead, time::Instant};
+use std::io::BufRead;
 use string_utils::TextUtils;
 use vector_utils::next_diff;
 
@@ -71,12 +71,11 @@ pub fn is_usize_arg(arg: &str, x: &str) -> Result<bool, String> {
         let val = arg.after(&format!("{x}=")).parse::<usize>();
         if val.is_ok() {
             return Ok(true);
-        } else {
-            return Err(format!(
-                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{x}=n\", where n >= 0 is an integer.\n"
-            ));
         }
+        return Err(format!(
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n >= 0 is an integer.\n"
+        ));
     }
     Ok(false)
 }
@@ -93,12 +92,11 @@ pub fn is_i32_arg(arg: &str, x: &str) -> Result<bool, String> {
         let val = arg.after(&format!("{x}=")).parse::<i32>();
         if val.is_ok() {
             return Ok(true);
-        } else {
-            return Err(format!(
-                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{x}=n\", where n is an integer.\n"
-            ));
         }
+        return Err(format!(
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n is an integer.\n"
+        ));
     }
     Ok(false)
 }
@@ -113,12 +111,11 @@ pub fn is_f64_arg(arg: &str, x: &str) -> Result<bool, String> {
         let val = arg.after(&format!("{x}=")).parse::<f64>();
         if val.is_ok() {
             return Ok(true);
-        } else {
-            return Err(format!(
-                "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
-                 Perhaps you meant \"{x}=n\", where n is a floating point number.\n"
-            ));
         }
+        return Err(format!(
+            "\nYour command line includes \"{arg}\", which is not a valid argument.\n\
+                 Perhaps you meant \"{x}=n\", where n is a floating point number.\n"
+        ));
     }
     Ok(false)
 }
@@ -138,7 +135,6 @@ pub fn is_string_arg(arg: &str, x: &str) -> Result<bool, String> {
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String> {
-    let tall = Instant::now();
     let mut lvars_specified = false;
     for arg in args.iter().skip(1) {
         if arg.starts_with("LVARS=") {
@@ -205,7 +201,7 @@ pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), S
 
     if ctl.gen_opt.internal_run || ctl.gen_opt.descrip || ctl.gen_opt.vis_dump {
         ctl.origin_info.descrips.clear();
-        let mut results = vec![(0, "".to_string()); ctl.origin_info.n()];
+        let mut results = vec![(0, String::new()); ctl.origin_info.n()];
         for i in 0..ctl.origin_info.n() {
             results[i].0 = i;
         }

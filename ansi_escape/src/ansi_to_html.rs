@@ -231,7 +231,7 @@ pub fn compress_ansi_escapes(x: &str) -> String {
 
                         // Emit bold, then color, then background.
 
-                        for e in escapes.iter() {
+                        for e in &escapes {
                             if e.solo() && e[0] == 1 {
                                 if reset || new_state.bold != old_state.bold {
                                     out += strme(&pack_ansi_escape(e));
@@ -395,7 +395,7 @@ impl ColorState {
                 write!(s, "background-color:{};", self.background).unwrap();
             }
             if self.bold {
-                s += "font-weight:bold;"
+                s += "font-weight:bold;";
             }
             s += "\">";
             s
@@ -413,7 +413,7 @@ impl ColorState {
                 write!(s, "fill: {};", self.color).unwrap();
             }
             if self.bold {
-                s += "font-weight: bold;"
+                s += "font-weight: bold;";
             }
             s += "\">";
             s

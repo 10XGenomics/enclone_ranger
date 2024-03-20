@@ -11,7 +11,7 @@ use itertools::Itertools;
 use rayon::prelude::*;
 use stats_utils::percent_ratio;
 use std::cmp::{max, min, PartialOrd};
-use std::time::Instant;
+
 use vector_utils::{erase_if, next_diff, next_diff1_2, next_diff1_3, reverse_sort, unique_sort};
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -102,7 +102,7 @@ pub fn find_alleles(
         }
     }
     let mut results = Vec::<(usize, Vec<(usize, usize, DnaString, usize, bool)>)>::new();
-    for v in vs.iter() {
+    for v in &vs {
         results.push((*v, Vec::new()));
     }
     results.par_iter_mut().for_each(|res| {
@@ -372,9 +372,9 @@ pub fn find_alleles(
                 );
                 println!("{id} = |{}| = {}", refdata.id[id], refdata.name[id]);
                 println!("ps = {}", ps.iter().format(","));
-                for x in keep.iter() {
+                for x in &keep {
                     let mut bases = String::new();
-                    for z in x.0.iter() {
+                    for z in &x.0 {
                         bases.push(*z as char);
                     }
                     print!("{bases} [{}] {:.1}", x.1, x.2);
@@ -425,7 +425,7 @@ pub fn find_alleles(
                     }
                 }
                 erase_if(&mut ps, &to_delete);
-                for j in keep.iter_mut() {
+                for j in &mut keep {
                     erase_if(&mut j.0, &to_delete);
                 }
                 let mut keep0 = Vec::<Vec<u8>>::new();
@@ -437,7 +437,7 @@ pub fn find_alleles(
 
                 // Save alternate references.
 
-                for x in keep.iter() {
+                for x in &keep {
                     if !x.3 || analysis_mode {
                         let mut b = refdata.refs[id].clone();
                         for (&x0, &ps) in x.0.iter().zip(ps.iter()) {
@@ -512,7 +512,6 @@ pub fn sub_alts(
     info: &mut Vec<CloneInfo>,
     exact_clonotypes: &mut [ExactClonotype],
 ) {
-    let t = Instant::now();
     for i in 0..info.len() {
         for j in 0..info[i].vs.len() {
             if info[i].vs[j].len() - ctl.heur.ref_v_trim <= info[i].tigs[j].len() {

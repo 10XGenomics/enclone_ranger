@@ -126,9 +126,9 @@ pub fn split_orbits(
             for (l2, eqm) in lists.iter().zip(eqm.into_iter()) {
                 if eqm {
                     let u1 = l1[0];
-                    for &u2 in l2.iter() {
-                        for &i1 in to_infos[u1].iter() {
-                            for &i2 in to_infos[u2].iter() {
+                    for &u2 in l2 {
+                        for &i1 in &to_infos[u1] {
+                            for &i2 in &to_infos[u2] {
                                 eqx.join(i1 as i32, i2 as i32);
                             }
                         }

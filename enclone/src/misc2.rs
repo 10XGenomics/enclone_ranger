@@ -15,7 +15,7 @@ use std::collections::HashMap;
 
 use std::fmt::Write as _;
 use std::io::Write;
-use std::time::Instant;
+
 use string_utils::strme;
 use vdj_ann::refx::RefData;
 use vector_utils::{
@@ -278,7 +278,6 @@ pub fn find_exact_subclonotypes(
     let mut exact_clonotypes = Vec::<ExactClonotype>::new();
     let mut r = 0;
     let mut groups = Vec::<(usize, usize)>::new();
-    let t = Instant::now();
     while r < tig_bc.len() {
         let mut s = r + 1;
         while s < tig_bc.len() {
@@ -322,7 +321,6 @@ pub fn find_exact_subclonotypes(
         r = s;
     }
 
-    let t = Instant::now();
     let mut results = Vec::<(
         usize,
         Vec<ExactClonotype>,
@@ -400,15 +398,8 @@ pub fn find_exact_subclonotypes(
 
         // Explore consensus.
 
-        let mut _count = 0;
-        study_consensus(
-            &mut _count,
-            ctl,
-            &share,
-            &clones,
-            &exact_clonotypes,
-            refdata,
-        );
+        let mut count = 0;
+        study_consensus(&mut count, ctl, &share, &clones, &exact_clonotypes, refdata);
 
         // Filter out putative gel bead contamination.
 
@@ -424,7 +415,6 @@ pub fn find_exact_subclonotypes(
         }
     });
 
-    let t = Instant::now();
     let mut max_exact = 0;
     for i in 0..results.len() {
         if !results[i].1.is_empty() {

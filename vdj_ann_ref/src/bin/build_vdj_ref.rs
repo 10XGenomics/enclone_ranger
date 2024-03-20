@@ -148,7 +148,7 @@ fn header_from_gene(gene: &str, is_utr: bool, record: &mut usize, source: &str) 
     format!("{record}|{gene} {source}|{gene}|{region_type}|{header_tail}")
 }
 
-fn print_fasta<R: Write>(out: &mut R, header: &str, seq: &DnaStringSlice, none: bool) {
+fn print_fasta<R: Write>(out: &mut R, header: &str, seq: &DnaStringSlice<'_>, none: bool) {
     if none {
         return;
     }
@@ -158,7 +158,7 @@ fn print_fasta<R: Write>(out: &mut R, header: &str, seq: &DnaStringSlice, none: 
 fn print_oriented_fasta<R: Write>(
     out: &mut R,
     header: &str,
-    seq: &DnaStringSlice,
+    seq: &DnaStringSlice<'_>,
     fw: bool,
     none: bool,
 ) {
@@ -988,8 +988,8 @@ fn main() {
                 .expect("git commit failed");
         }
         // ◼ Add balbc if we're going ot use it.
-        for species in ["human", "mouse"].iter() {
-            for ftype in ["gff3", "gtf", "fasta"].iter() {
+        for species in &["human", "mouse"] {
+            for ftype in &["gff3", "gtf", "fasta"] {
                 fetch(species, ftype, release);
             }
         }
@@ -1125,7 +1125,7 @@ fn main() {
 
         // More fixing.  Replace e.g. "alpha " by A.
 
-        for x in [
+        for x in &[
             "alpha",
             "beta",
             "gamma",
@@ -1139,9 +1139,7 @@ fn main() {
             "joining",
             "constant",
             "heavy",
-        ]
-        .iter()
-        {
+        ] {
             gene2 = gene2.replace(&format!("{x} "), &x[0..1].to_uppercase());
         }
 
@@ -1229,7 +1227,7 @@ fn main() {
                 using = false;
             }
         } else if using {
-            last += &s
+            last += &s;
         }
     }
     if using {
@@ -1274,7 +1272,7 @@ fn main() {
         if !exons[i].6 {
             x.reverse();
             for k in 0..x.len() {
-                x[k] = x[k].rc().to_owned();
+                x[k] = x[k].rc().clone();
             }
         }
         dnas.push((x, i, j));

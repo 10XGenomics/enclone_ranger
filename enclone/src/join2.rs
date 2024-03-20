@@ -5,7 +5,7 @@
 use enclone_core::defs::{CloneInfo, EncloneControl};
 use equiv::EquivRel;
 use stats_utils::percent_ratio;
-use std::time::Instant;
+
 use vector_utils::next_diff1_2;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -26,7 +26,6 @@ pub fn finish_join(
     // Tally results.
 
     let (mut joins, mut errors) = (0, 0);
-    let timer3 = Instant::now();
     for r in results {
         joins += r.2;
         errors += r.3;

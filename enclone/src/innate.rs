@@ -236,7 +236,7 @@ pub fn mark_innate(refdata: &RefData, ex: &mut Vec<ExactClonotype>) {
                 }
             }
         }
-        for share in e.share.iter_mut() {
+        for share in &mut e.share {
             share.inkt_alpha_chain_gene_match = have_inkt_tra;
             share.inkt_alpha_chain_junction_match = have_inkt_tra_cdr3;
             share.inkt_beta_chain_gene_match = have_inkt_trb;

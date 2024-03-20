@@ -12,7 +12,7 @@ use rayon::prelude::*;
 use std::env;
 use std::thread;
 use std::time;
-use std::time::Instant;
+
 use vector_utils::{bin_position, erase_if};
 
 pub fn filter_by_fcell(
@@ -26,9 +26,8 @@ pub fn filter_by_fcell(
         // Load the GEX and FB data.  This is quite horrible: the code and computation are
         // duplicated verbatim in stop.rs.
 
-        let tdi = Instant::now();
-        let mut d_readers = Vec::<Option<Reader>>::new();
-        let mut ind_readers = Vec::<Option<Reader>>::new();
+        let mut d_readers = Vec::<Option<Reader<'_>>>::new();
+        let mut ind_readers = Vec::<Option<Reader<'_>>>::new();
         for li in 0..ctl.origin_info.n() {
             if !ctl.origin_info.gex_path[li].is_empty() {
                 let x = gex_info.h5_data[li].as_ref();
@@ -73,9 +72,8 @@ pub fn filter_by_fcell(
                             }
                             msg += "Aborting.\n";
                             return Err(msg);
-                        } else {
-                            println!("h5 path exists.");
                         }
+                        println!("h5 path exists.");
                     } else {
                         println!("Path exists.");
                     }
@@ -150,7 +148,7 @@ pub fn filter_by_fcell(
                     let li = clone[0].dataset_index;
                     let bc = &clone[0].barcode;
                     let mut keep = true;
-                    for x in ctl.clono_filt_opt_def.fcell.iter() {
+                    for x in &ctl.clono_filt_opt_def.fcell {
                         let alt = &ctl.origin_info.alt_bc_fields[li];
                         let vars = x.iter_variable_identifiers().collect::<Vec<&str>>();
                         let mut vals = Vec::<String>::new();

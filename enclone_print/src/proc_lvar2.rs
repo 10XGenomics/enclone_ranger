@@ -101,7 +101,7 @@ pub fn proc_lvar2(
     let y0 = y;
     for _ in 1..=2 {
         let suffixes = ["_min", "_max", "_μ", "_Σ", "_cell", "_%"];
-        for s in suffixes.iter() {
+        for s in &suffixes {
             if y.ends_with(s) {
                 y = y.rev_before(s);
                 break;
@@ -121,7 +121,7 @@ pub fn proc_lvar2(
             if p >= 0 {
                 computed = true;
                 let mut raw_count = 0.0;
-                for fid in ux.iter() {
+                for fid in &ux {
                     let raw_counti =
                         get_gex_matrix_entry(ctl, gex_info, *fid, d_all, ind_all, li, l, y);
                     raw_count += raw_counti;
@@ -145,7 +145,7 @@ pub fn proc_lvar2(
     }
     if computed {
         let mut f = Vec::<String>::new();
-        for x in fcounts_sub.iter() {
+        for x in &fcounts_sub {
             f.push(format!("{x}"));
         }
         if !y0.ends_with("_%") {
@@ -201,7 +201,7 @@ pub fn proc_lvar2(
             lvar![i, x, format!("{median}")];
         }
     } else if i < lvars.len() {
-        lvar_stats1![i, x, "".to_string()];
+        lvar_stats1![i, x, String::new()];
     }
     true
 }

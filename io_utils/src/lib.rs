@@ -180,7 +180,7 @@ pub fn write_obj<T: Serialize, P: AsRef<Path> + Debug>(g: &T, filename: P) {
     };
     let mut writer = std::io::BufWriter::new(f);
     serialize_into(&mut writer, &g)
-        .unwrap_or_else(|_| panic!("write_obj of file {:?} failed", filename))
+        .unwrap_or_else(|_| panic!("write_obj of file {:?} failed", filename));
 }
 
 pub fn read_obj<T: DeserializeOwned, P: AsRef<Path> + Debug>(filename: P) -> T {

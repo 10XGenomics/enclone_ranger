@@ -449,14 +449,14 @@ pub fn join_one<'a>(
     // Reject if barcode overlap. (not documented)
 
     let (mut bcs1, mut bcs2) = (Vec::<&'a str>::new(), Vec::<&'a str>::new());
-    for origin in info[k1].origin.iter() {
+    for origin in &info[k1].origin {
         bcs1.extend(
             to_bc[&(*origin, info[k1].clonotype_id)]
                 .iter()
                 .map(String::as_str),
         );
     }
-    for origin in info[k2].origin.iter() {
+    for origin in &info[k2].origin {
         bcs2.extend(
             to_bc[&(*origin, info[k2].clonotype_id)]
                 .iter()
@@ -645,9 +645,8 @@ pub fn join_one<'a>(
                                         }
                                         i += indel.1 as usize;
                                         continue 'seq;
-                                    } else {
-                                        ref_pos += -indel.1 as usize;
                                     }
+                                    ref_pos += -indel.1 as usize;
                                 }
                             }
                             if i >= n || ref_pos >= concat.len() {

@@ -15,7 +15,7 @@ pub fn package_characters_with_escapes(c: &[u8]) -> Vec<Vec<u8>> {
     let mut x = Vec::<Vec<u8>>::new();
     let mut escaped = false;
     let mut package = Vec::<u8>::new();
-    for b in c.iter() {
+    for b in c {
         if escaped && *b != b'm' {
             package.push(*b);
         } else if *b == b'' {
@@ -37,7 +37,7 @@ pub fn package_characters_with_escapes_char(c: &[char]) -> Vec<Vec<char>> {
     let mut x = Vec::<Vec<char>>::new();
     let mut escaped = false;
     let mut package = Vec::<char>::new();
-    for b in c.iter() {
+    for b in c {
         if escaped && *b != 'm' {
             package.push(*b);
         } else if *b == '' {

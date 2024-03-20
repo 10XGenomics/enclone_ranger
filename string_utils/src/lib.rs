@@ -207,7 +207,7 @@ pub fn cap1(s: &str) -> String {
     let mut x = s.as_bytes().to_vec();
     let c = x[0].to_ascii_uppercase();
     x[0] = c;
-    String::from_utf8(x.to_vec()).unwrap()
+    String::from_utf8(x.clone()).unwrap()
 }
 
 // stolen from internet, add commas to number

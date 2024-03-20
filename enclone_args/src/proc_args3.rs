@@ -15,7 +15,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::thread;
 use std::time;
-use std::time::Instant;
+
 use string_utils::TextUtils;
 use vector_utils::unique_sort;
 
@@ -93,11 +93,10 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
                         tokens2.push(id.to_string());
                     }
                     continue;
-                } else {
-                    return Err(format!(
-                        "\nIt looks like you've provided an incorrect analysis set ID {setid}.\n"
-                    ));
                 }
+                return Err(format!(
+                    "\nIt looks like you've provided an incorrect analysis set ID {setid}.\n"
+                ));
             } else if setid.parse::<usize>().is_ok() {
                 let mut set_file = format!("~/enclone/sets/{setid}");
                 tilde_expand_me(&mut set_file);
@@ -129,7 +128,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
 // Functions to find the path to data.
 
 pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<String, String> {
-    for x in ctl.gen_opt.pre.iter() {
+    for x in &ctl.gen_opt.pre {
         let pp = format!("{x}/{p}");
         if path_exists(&pp) {
             return Ok(pp);
@@ -144,35 +143,33 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
                 p,
                 source
             ));
-        } else {
-            let path = std::env::current_dir().unwrap();
-            let mut pre_msg =
-                "Here are the number of entries in your PRE directories:\n".to_string();
-            for x in ctl.gen_opt.pre.iter() {
-                let mut count = "(does not exist)".to_string();
-                if path_exists(x) {
-                    count = dir_list(x).len().to_string();
-                }
-                writeln!(pre_msg, "{x}: {count}").unwrap();
+        }
+        let path = std::env::current_dir().unwrap();
+        let mut pre_msg = "Here are the number of entries in your PRE directories:\n".to_string();
+        for x in &ctl.gen_opt.pre {
+            let mut count = "(does not exist)".to_string();
+            if path_exists(x) {
+                count = dir_list(x).len().to_string();
             }
-            return Err(format!(
-                "\nIn directory {}, unable to find the\npath {},\n\
+            writeln!(pre_msg, "{x}: {count}").unwrap();
+        }
+        return Err(format!(
+            "\nIn directory {}, unable to find the\npath {},\n\
                 even if prepended by any of the directories \
                 in\nPRE={}.\nThis came from the {} argument.\n{}",
-                path.display(),
-                p,
-                ctl.gen_opt.pre.iter().format(","),
-                source,
-                pre_msg
-            ));
-        }
+            path.display(),
+            p,
+            ctl.gen_opt.pre.iter().format(","),
+            source,
+            pre_msg
+        ));
     }
     Ok(p.to_string())
 }
 
 fn get_path(p: &str, ctl: &EncloneControl, ok: &mut bool) -> String {
     *ok = false;
-    for x in ctl.gen_opt.pre.iter() {
+    for x in &ctl.gen_opt.pre {
         let mut pp = format!("{x}/{p}");
         if pp.starts_with('~') {
             tilde_expand_me(&mut pp);
@@ -222,7 +219,7 @@ fn get_path_or_internal_id(
                         msg += "In fact, there are no configuration variables.\n";
                     } else {
                         msg += "Here are the configuration variables that are defined:\n\n";
-                        for (key, value) in ctl.gen_opt.config.iter() {
+                        for (key, value) in &ctl.gen_opt.config {
                             write!(msg, "{key} = {value}").unwrap();
                         }
                         msg += "\n";
@@ -264,14 +261,13 @@ fn get_path_or_internal_id(
                                 if filesystem access blinks in and out of existence,\n\
                                 other more cryptic events are likely to occur.\n"
                             ));
-                        } else {
-                            return Err(format!(
-                                "\nIt looks like you've provided an analysis ID for \
+                        }
+                        return Err(format!(
+                            "\nIt looks like you've provided an analysis ID for \
                                 which the pipeline outs folder\n{p}\nhas not yet been generated.\n\
                                 This path did not exist:\n{pp}\n\n\
                                 Here is the stdout:\n{m}\n"
-                            ));
-                        }
+                        ));
                     }
                 } else {
                     return Err(format!(
@@ -341,8 +337,8 @@ fn parse_bc(mut bc: String, ctl: &mut EncloneControl, call_type: &str) -> Result
                         "\nThe file\n{bc}\n{origin}\nis missing the barcode field.\n",
                     ));
                 }
-                for x in fields.iter() {
-                    fieldnames.push(x.to_string());
+                for x in &fields {
+                    fieldnames.push((*x).to_string());
                 }
                 for i in 0..fields.len() {
                     if fields[i] == "color" {
@@ -449,7 +445,6 @@ pub fn proc_xcr(
     {
         return Err("\nOnly one of TCR, BCR, or TCRGD can be specified.\n".to_string());
     }
-    let t = Instant::now();
     ctl.gen_opt.tcr = f.starts_with("TCR=");
     ctl.gen_opt.tcrgd = f.starts_with("TCRGD=");
     ctl.gen_opt.bcr = f.starts_with("BCR=");
@@ -508,7 +503,6 @@ pub fn proc_xcr(
         ));
     }
 
-    let t = Instant::now();
     for (id, d) in donor_groups.iter().enumerate() {
         let origin_groups = if ctl.gen_opt.cellranger {
             vec![&d[..]]
@@ -551,7 +545,7 @@ pub fn proc_xcr(
             } else {
                 (*s).split(',').collect::<Vec<&str>>()
             };
-            for ds in datasets.iter_mut() {
+            for ds in &mut datasets {
                 if ds.ends_with('/') {
                     *ds = ds.rev_before("/");
                 }
@@ -586,7 +580,7 @@ pub fn proc_xcr(
                 }
             }
             for (ix, x) in datasets.iter().enumerate() {
-                ctl.origin_info.color.push("".to_string());
+                ctl.origin_info.color.push(String::new());
                 ctl.origin_info.tag.push(HashMap::<String, String>::new());
                 let donor_name = format!("d{}", id + 1);
                 let origin_name = format!("s{}", is + 1);
@@ -615,7 +609,6 @@ pub fn proc_xcr(
     // clock time for these can add up.  There should be a way to do this that does not involve
     // multithreading.
 
-    let t = Instant::now();
     let source = if f.contains('=') { f.before("=") } else { f };
     let mut results = Vec::<(String, String, bool, String)>::new();
     for (id, d) in donor_groups.iter().enumerate() {
@@ -641,7 +634,6 @@ pub fn proc_xcr(
         }
     }
 
-    let t = Instant::now();
     let spinlock: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     results.par_iter_mut().for_each(|res| {
         let (p, pg) = (&mut res.0, &mut res.1);
@@ -718,7 +710,7 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
                 "tcrgd".to_string(),
                 "color".to_string(),
             ];
-            for x in fields.iter() {
+            for x in &fields {
                 if !allowed_fields.contains(x) {
                     return Err(format!(
                         "\nThe CSV file that you specified using the META or METAX argument \
@@ -771,8 +763,8 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
             let mut gpath = String::new();
             let mut origin = "s1".to_string();
             let mut donor = "d1".to_string();
-            let mut color = "".to_string();
-            let mut bc = "".to_string();
+            let mut color = String::new();
+            let mut bc = String::new();
             for i in 0..fields.len() {
                 let x = &fields[i];
                 let mut y = val[i].to_string();
@@ -843,8 +835,7 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
             let dp = donors
                 .iter()
                 .enumerate()
-                .filter_map(|(j, dj)| if donor == *dj { Some(j) } else { None })
-                .next();
+                .find_map(|(j, dj)| if donor == *dj { Some(j) } else { None });
             if dp.is_none() {
                 donors.push(donor.clone());
             }
@@ -862,7 +853,7 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
 
 pub fn proc_meta(v: &[String], ctl: &mut EncloneControl) -> Result<(), String> {
     let mut lines_all = Vec::<Vec<String>>::new();
-    for f in v.iter() {
+    for f in v {
         if !path_exists(f) {
             return Err(format!(
                 "\nCan't find the file {f} referenced by your META argument.\n"

@@ -605,7 +605,7 @@ fn read_json(
         LazyJsonReader::with_reader(BufReader::new(open_maybe_compressed(&jsonx)))
             .map_err(|err| format!("{err:#?}"))?;
 
-    for entry in reader.into_iter() {
+    for entry in reader {
         let result = process_json_annotation(
             entry.map_err(|err| err.to_string())?,
             json,

@@ -57,8 +57,8 @@ pub fn row_fill(
     rsi: &ColInfo,
     dref: &[DonorReferenceItem],
     groups: &HashMap<usize, Vec<usize>>,
-    d_readers: &[Option<Reader>],
-    ind_readers: &[Option<Reader>],
+    d_readers: &[Option<Reader<'_>>],
+    ind_readers: &[Option<Reader<'_>>],
     h5_data: &[(usize, Vec<u32>, Vec<u32>)],
     stats: &mut Vec<(String, Vec<String>)>,
     stats_pass1: &[Vec<(String, Vec<String>)>],
@@ -83,7 +83,7 @@ pub fn row_fill(
     let clonotype_id = exacts[u];
     let ex = &exact_clonotypes[clonotype_id];
     let mut pcols_sort = ctl.parseable_opt.pcols_sort.clone();
-    for pcol in pcols_sort.iter_mut() {
+    for pcol in &mut pcols_sort {
         *pcol = pcol.replace("_Σ", "_sum").replace("_μ", "_mean");
     }
     pcols_sort.sort();
@@ -145,10 +145,10 @@ pub fn row_fill(
     }
     unique_sort(&mut dataset_indices);
     let mut lenas = Vec::<String>::new();
-    for l in dataset_indices.iter() {
+    for l in &dataset_indices {
         lenas.push(ctl.origin_info.dataset_id[*l].clone());
     }
-    row.push("".to_string()); // row number (#), filled in below
+    row.push(String::new()); // row number (#), filled in below
     let mut counts = Vec::<usize>::new();
     let mut gex_counts_unsorted = Vec::<usize>::new();
     let mut gex_fcounts_unsorted = Vec::<f64>::new();
@@ -261,7 +261,7 @@ pub fn row_fill(
         }
         gex_counts_unsorted = counts.clone();
         counts.sort_unstable();
-        for n in counts.iter() {
+        for n in &counts {
             if *n < 100 {
                 *gex_low += 1;
             }
@@ -370,7 +370,7 @@ pub fn row_fill(
                     let mut median = String::new();
                     let mut out_valsf = Vec::<f64>::new();
                     let mut all_float = true;
-                    for y in out_vals.iter() {
+                    for y in &out_vals {
                         if y.parse::<f64>().is_err() {
                             all_float = false;
                         } else {
@@ -382,7 +382,7 @@ pub fn row_fill(
                         median = format!("{:.1}", median_f64(&out_valsf));
                     }
                     if i < lvars.len() {
-                        row.push(median.clone())
+                        row.push(median.clone());
                     }
                     if pass == 2 {
                         if ctl.parseable_opt.pbarcode {
@@ -592,12 +592,12 @@ pub fn row_fill(
         speakc!(u, col, "vj_seq_nl".to_string(), stringme(&dna));
         speakc!(u, col, "seq".to_string(), stringme(&xm.full_seq));
         let mut vv = Vec::<usize>::new();
-        for x in vars_amino[col].iter() {
+        for x in &vars_amino[col] {
             vv.push(*x / 3);
         }
         unique_sort(&mut vv);
         let mut varaa = Vec::<u8>::new();
-        for p in vv.iter() {
+        for p in &vv {
             // what does it mean if this fails?
             if 3 * p + 3 <= seq_amino.len() {
                 if seq_amino[3 * p..3 * p + 3].to_vec() == b"---".to_vec() {

@@ -226,7 +226,7 @@ pub fn finish_table(
 
     // Make table.
 
-    for row in rows.iter_mut() {
+    for row in &mut rows {
         for v in row.iter_mut() {
             *v = v.replace("|TRX", "TRB").replace("|TRY", "TRA");
         }

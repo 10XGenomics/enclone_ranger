@@ -37,7 +37,7 @@ use fasta_tools::read_fasta_into_vec_dna_string_plus_headers;
 use std::{collections::HashMap, env};
 use string_utils::TextUtils;
 
-fn print_fasta(header: &str, seq: &DnaStringSlice) {
+fn print_fasta(header: &str, seq: &DnaStringSlice<'_>) {
     println!(">{}\n{}", header, seq.to_string());
 }
 

@@ -11,7 +11,7 @@ use expr_tools::vars_of_node;
 use io_utils::{open_for_read, open_userfile_for_read, path_exists};
 use std::collections::HashMap;
 use std::io::BufRead;
-use std::time::Instant;
+
 use string_utils::{parse_csv, TextUtils};
 use vector_utils::{bin_member, next_diff, sort_sync2, unique_sort};
 
@@ -50,8 +50,8 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
             if !fields.contains(&"barcode") {
                 return Err(format!("\nThe file\n{bc}\nis missing the barcode field.\n",));
             }
-            for x in fields.iter() {
-                fieldnames.push(x.to_string());
+            for x in &fields {
+                fieldnames.push((*x).to_string());
             }
             for (i, field) in fields.into_iter().enumerate() {
                 if field == "color" {
@@ -157,7 +157,6 @@ pub fn proc_args_post(
 ) -> Result<(), String> {
     // Process INFO.
 
-    let t = Instant::now();
     if ctl.gen_opt.info.is_some() {
         let f = open_for_read![&ctl.gen_opt.info.as_ref().unwrap()];
         let mut lines = Vec::<String>::new();
@@ -206,7 +205,7 @@ pub fn proc_args_post(
                     vj2 = vals[i].to_string();
                 } else {
                     other.push(vals[i].to_string());
-                    let mut log10_val = "".to_string();
+                    let mut log10_val = String::new();
                     if vals[i].parse::<f64>().is_ok() {
                         let val = vals[i].force_f64();
                         if val > 0.0 {
@@ -250,7 +249,7 @@ pub fn proc_args_post(
         &mut ctl.gen_opt.dref_file,
         &mut ctl.parseable_opt.pout,
     ];
-    for f in files.iter_mut() {
+    for f in &mut files {
         tilde_expand_me(f);
     }
 
@@ -491,7 +490,6 @@ pub fn proc_args_post(
 
     // Process TCR, BCR and META.
 
-    let t = Instant::now();
     check_cvars(ctl)?;
     if !metas.is_empty() {
         let mut v = Vec::<String>::with_capacity(metas.len());
@@ -528,10 +526,9 @@ pub fn proc_args_post(
 
     // More argument sanity checking.
 
-    let t = Instant::now();
     if ctl.clono_filt_opt.dataset.is_some() {
         let d = &ctl.clono_filt_opt.dataset.as_ref().unwrap();
-        for x in d.iter() {
+        for x in *d {
             if !ctl.origin_info.dataset_id.contains(x) {
                 return Err(format!(
                     "\nDATASET argument has {} in it, which is not a known \
@@ -551,7 +548,7 @@ pub fn proc_args_post(
     ];
     if !ctl.gen_opt.bcr {
         for arg in &args[1..] {
-            for x in bcr_only.iter() {
+            for x in &bcr_only {
                 if arg == x || arg.starts_with(&format!("{x}=")) {
                     return Err(format!("\nThe option {x} does not make sense for TCR.\n"));
                 }
@@ -638,15 +635,15 @@ pub fn proc_args_post(
     let mut origin_for_bc = Vec::<String>::new();
     let mut donor_for_bc = Vec::<String>::new();
     for i in 0..ctl.origin_info.n() {
-        for x in ctl.origin_info.origin_for_bc[i].iter() {
+        for x in &ctl.origin_info.origin_for_bc[i] {
             origins.push(x.1.clone());
             origin_for_bc.push(x.1.clone());
         }
-        for x in ctl.origin_info.donor_for_bc[i].iter() {
+        for x in &ctl.origin_info.donor_for_bc[i] {
             donors.push(x.1.clone());
             donor_for_bc.push(x.1.clone());
         }
-        for x in ctl.origin_info.tag[i].iter() {
+        for x in &ctl.origin_info.tag[i] {
             tags.push((x.1).clone());
         }
         donors.push(ctl.origin_info.donor_id[i].clone());

@@ -6,7 +6,7 @@
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
 use equiv::EquivRel;
 use std::collections::HashMap;
-use std::time::Instant;
+
 use vector_utils::unique_sort;
 
 pub fn disintegrate_onesies(
@@ -19,7 +19,6 @@ pub fn disintegrate_onesies(
     raw_joins: &mut Vec<(i32, i32)>,
 ) {
     if ctl.clono_filt_opt_def.weak_onesies {
-        let t = Instant::now();
         let ncells_total = exact_clonotypes
             .iter()
             .map(enclone_core::defs::ExactClonotype::ncells)
@@ -57,9 +56,9 @@ pub fn disintegrate_onesies(
         let mut join_info2 = Vec::new();
         for ji in join_info.iter() {
             let (u1, u2) = (ji.0, ji.1);
-            for v1 in to_exact_new[u1].iter() {
+            for v1 in &to_exact_new[u1] {
                 join_info2.reserve(to_exact_new[u2].len());
-                for v2 in to_exact_new[u2].iter() {
+                for v2 in &to_exact_new[u2] {
                     let mut x = ji.clone();
                     x.0 = *v1;
                     x.1 = *v2;
@@ -68,7 +67,6 @@ pub fn disintegrate_onesies(
             }
         }
 
-        let t = Instant::now();
         *join_info = join_info2;
         *exact_clonotypes = exacts2;
         let mut info2 = Vec::<CloneInfo>::new();
@@ -92,7 +90,6 @@ pub fn disintegrate_onesies(
             to_info2.push(x);
         }
 
-        let t = Instant::now();
         *info = info2;
         let mut raw_joins2 = Vec::<(i32, i32)>::new();
         for i in 0..raw_joins.len() {

@@ -11,7 +11,7 @@ use enclone_core::test_def::replace_at_test;
 use enclone_core::{require_readable_file, tilde_expand_me};
 use itertools::Itertools;
 use std::fmt::Write;
-use std::{process::Command, time::Instant};
+use std::process::Command;
 use string_utils::{strme, TextUtils};
 
 // Process arguments.
@@ -20,7 +20,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     //
     // Start.
 
-    let targs = Instant::now();
     let evil_eye = ctl.gen_opt.evil_eye;
     if evil_eye {
         println!("processing args");
@@ -261,7 +260,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
                 }
             }
             const F: &str = include_str!["enclone.testdata.bcr.gex"];
-            for n in y.iter() {
+            for n in &y {
                 if *n != "m1" {
                     if n.parse::<usize>().is_err() || n.force_usize() < 1 || n.force_usize() > 47 {
                         return Err(

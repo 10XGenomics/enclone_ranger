@@ -692,7 +692,7 @@ pub fn insert_reference_rows(
                 }
                 row.push(refx);
                 for _ in 1..rsi.cvars[cz].len() {
-                    row.push("".to_string());
+                    row.push(String::new());
                 }
             }
             rows.push(row);
@@ -753,7 +753,7 @@ pub fn get_extra_parseables<'a>(ctl: &'a EncloneControl, pcols_sort: &'a [String
         exclusions.push(v);
     }
     unique_sort(&mut exclusions);
-    for x in pcols_sort.iter() {
+    for x in pcols_sort {
         let chars = x.char_indices().collect::<Vec<_>>();
         let mut trim = 0;
         for c in chars.iter().rev() {

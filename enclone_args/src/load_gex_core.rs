@@ -13,7 +13,7 @@ use io_utils::{dir_list, open_for_read, open_userfile_for_read, path_exists};
 use itertools::Itertools;
 use rayon::prelude::*;
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Write, fs::read_to_string, io::BufRead, time::Instant};
+use std::{collections::HashMap, fmt::Write, fs::read_to_string, io::BufRead};
 use string_utils::{parse_csv, TextUtils};
 use vector_utils::{unique_sort, VecUtils};
 
@@ -56,7 +56,6 @@ pub fn load_gex(
     json_metrics: &mut Vec<HashMap<String, f64>>,
     metrics: &mut Vec<String>,
 ) -> Result<(), String> {
-    let t = Instant::now();
     let mut results = Vec::<(usize, LoadResult)>::new();
     for i in 0..ctl.origin_info.gex_path.len() {
         results.push((i, LoadResult::default()));
@@ -100,7 +99,7 @@ pub fn load_gex(
                 "raw_gene_bc_matrices_h5.h5",
                 "multi/count/raw_feature_bc_matrix.h5",
             ];
-            for x in h5p.iter() {
+            for x in &h5p {
                 let p = format!("{outs}/{x}");
                 if path_exists(&p) {
                     pathlist.push(p.clone());
@@ -128,7 +127,7 @@ pub fn load_gex(
             analysis.push(format!("{outs}/count/analysis"));
             let pso1 = format!("{outs}/per_sample_outs");
             let pso2 = format!("{outs}/../per_sample_outs");
-            for pso in [pso1, pso2].iter() {
+            for pso in &[pso1, pso2] {
                 if path_exists(pso) {
                     let samples = dir_list(pso);
                     if samples.solo() {
@@ -150,7 +149,7 @@ pub fn load_gex(
 
             // Proceed.
 
-            for f in [pca_file.clone(), cluster_file.clone()].iter() {
+            for f in &[pca_file.clone(), cluster_file.clone()] {
                 if !path_exists(f) {
                     r.error = format!(
                         "\nThe file\n{f}\ndoes not exist.  \
@@ -166,9 +165,8 @@ pub fn load_gex(
                         directory.\n"
                     );
                     return;
-                } else {
-                    pathlist.push(f.to_string());
                 }
+                pathlist.push(f.to_string());
             }
 
             // Find metrics summary file.
@@ -240,7 +238,7 @@ pub fn load_gex(
                 let m = std::fs::read_to_string(&json_metrics_file).unwrap();
                 let v: Value = serde_json::from_str(&m).unwrap();
                 let z = v.as_object().unwrap();
-                for (var, value) in z.iter() {
+                for (var, value) in z {
                     if value.as_f64().is_some() {
                         let value = value.as_f64().unwrap();
                         r.json_metrics.insert(var.to_string(), value);
@@ -557,7 +555,6 @@ pub fn load_gex(
 
     // Test for error.
 
-    let t = Instant::now();
     for (_, r) in &results {
         if !r.error.is_empty() {
             return Err(r.error.clone());
@@ -592,7 +589,7 @@ pub fn load_gex(
             "Gene Expression,GRCh38 Median UMI counts per cell (20k raw reads per cell)",
         ),
     ];
-    for x in extras.iter() {
+    for x in &extras {
         let metric_name = x.0.to_string();
         let metric_display_name = x.1.to_string();
         let mut have = false;
@@ -602,7 +599,7 @@ pub fn load_gex(
             }
         }
         if have {
-            for (_, result) in results.iter_mut() {
+            for (_, result) in &mut results {
                 let mut value = String::new();
                 if result.json_metrics.contains_key(&metric_name) {
                     value = format!("{:.3}", result.json_metrics[&metric_name]);
@@ -612,7 +609,7 @@ pub fn load_gex(
         }
     }
 
-    for (_, r) in results.into_iter() {
+    for (_, r) in results {
         gex_features.push(r.gex_features);
         gex_barcodes.push(r.gex_barcodes);
         gex_mults.push(r.gex_mult.unwrap_or(1.0));

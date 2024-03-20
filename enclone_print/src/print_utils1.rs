@@ -508,7 +508,7 @@ pub fn start_gen(
             .collect::<Vec<_>>();
         bc.sort_unstable();
         speak!(u, "barcodes", format!("{}", bc.iter().format(",")));
-        for d in ctl.origin_info.dataset_list.iter() {
+        for d in &ctl.origin_info.dataset_list {
             if !d.is_empty() {
                 let mut bc = Vec::<&str>::new();
                 for q in &exact_clonotypes[eu].clones {
@@ -530,7 +530,7 @@ pub fn start_gen(
                 .map(|x| x[0].barcode.as_str())
                 .collect::<Vec<_>>();
             speak!(u, "barcode", format!("{}", bc.iter().format(POUT_SEP)));
-            for d in ctl.origin_info.dataset_list.iter() {
+            for d in &ctl.origin_info.dataset_list {
                 if !d.is_empty() {
                     let mut bc = Vec::<&str>::new();
                     for i in 0..exact_clonotypes[eu].clones.len() {
@@ -838,7 +838,7 @@ pub fn cdr3_aa_con(
         } else if style == "x" {
             c.push('X');
         } else {
-            for m in classes.iter() {
+            for m in &classes {
                 if meet_size(&vals, m.1) == vals.len() {
                     c.push(m.0);
                     break;
@@ -876,7 +876,7 @@ pub fn extra_args(ctl: &EncloneControl) -> Vec<String> {
     extra_args.append(&mut ctl.plot_opt.sim_mat_plot_vars.clone());
     for i in 0..ctl.gen_opt.var_def.len() {
         let x = &ctl.gen_opt.var_def[i].2;
-        for v in vars_of_node(x).iter() {
+        for v in &vars_of_node(x) {
             extra_args.push(decode_arith(v));
         }
     }

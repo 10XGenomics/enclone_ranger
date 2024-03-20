@@ -43,7 +43,7 @@ pub fn survives_filter(
 
     if ctl.clono_filt_opt.inkt {
         let mut evidence = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             if ex.share[0].inkt_alpha_chain_gene_match
                 || ex.share[0].inkt_alpha_chain_junction_match
@@ -59,7 +59,7 @@ pub fn survives_filter(
     }
     if ctl.clono_filt_opt.mait {
         let mut evidence = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             if ex.share[0].mait_alpha_chain_gene_match
                 || ex.share[0].mait_alpha_chain_junction_match
@@ -78,7 +78,7 @@ pub fn survives_filter(
 
     if ctl.clono_filt_opt.marked {
         let mut marked = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             for i in 0..ex.clones.len() {
                 if ex.clones[i][0].marked {
@@ -95,7 +95,7 @@ pub fn survives_filter(
 
     if ctl.clono_filt_opt_def.marked_b {
         let mut marked_b = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             for i in 0..ex.clones.len() {
                 if ex.clones[i][0].marked {
@@ -119,8 +119,8 @@ pub fn survives_filter(
 
     if ctl.clono_filt_opt.dataset.is_some() {
         let mut ok = false;
-        for d in ctl.clono_filt_opt.dataset.as_ref().unwrap().iter() {
-            for s in exacts.iter() {
+        for d in ctl.clono_filt_opt.dataset.as_ref().unwrap() {
+            for s in exacts {
                 let ex = &exact_clonotypes[*s];
                 for i in 0..ex.clones.len() {
                     if ctl.origin_info.dataset_id[ex.clones[i][0].dataset_index] == *d {
@@ -138,7 +138,7 @@ pub fn survives_filter(
 
     if !ctl.clono_filt_opt.barcode.is_empty() {
         let mut ok = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             for i in 0..ex.clones.len() {
                 for j in 0..ctl.clono_filt_opt.barcode.len() {
@@ -157,7 +157,7 @@ pub fn survives_filter(
 
     if ctl.clono_filt_opt.del {
         let mut ok = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             for m in 0..ex.share.len() {
                 if ex.share[m].seq_del.contains(&b'-') {
@@ -193,7 +193,7 @@ pub fn survives_filter(
 
     if ctl.clono_filt_opt.cdiff {
         let mut cdiff = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             for m in 0..ex.share.len() {
                 let cstart = ex.share[m].j_stop;
@@ -233,7 +233,7 @@ pub fn survives_filter(
 
     if !ctl.clono_filt_opt.vj.is_empty() {
         let mut have_vj = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             for j in 0..ex.share.len() {
                 if ex.share[j].seq == ctl.clono_filt_opt.vj {
@@ -388,7 +388,7 @@ pub fn survives_filter(
         return false;
     }
     let mut lis = Vec::<usize>::new();
-    for s in exacts.iter() {
+    for s in exacts {
         let mut z = exact_clonotypes[*s].dataset_indices();
         lis.append(&mut z);
     }
@@ -403,7 +403,7 @@ pub fn survives_filter(
     // Clonotypes found in at least n origins
 
     let mut origins = Vec::<String>::new();
-    for id in lis.iter() {
+    for id in &lis {
         origins.push(ctl.origin_info.origin_id[*id].clone());
     }
     unique_sort(&mut origins);
@@ -414,7 +414,7 @@ pub fn survives_filter(
     // Clonotypes found in at least n donors
 
     let mut donors = Vec::<String>::new();
-    for id in lis.iter() {
+    for id in &lis {
         donors.push(ctl.origin_info.donor_id[*id].clone());
     }
     unique_sort(&mut donors);
@@ -458,7 +458,7 @@ pub fn survives_filter(
 
     if ctl.clono_filt_opt.cdr3.is_some() {
         let mut ok = false;
-        for s in exacts.iter() {
+        for s in exacts {
             let ex = &exact_clonotypes[*s];
             for j in 0..ex.share.len() {
                 if ctl

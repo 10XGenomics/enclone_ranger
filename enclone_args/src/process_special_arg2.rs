@@ -465,7 +465,7 @@ pub fn process_special_arg2(
             .extend(arg.after("PCOLS_SHOW=").split(',').map(str::to_string));
     } else if arg.starts_with("VJ=") {
         ctl.clono_filt_opt.vj = arg.after("VJ=").as_bytes().to_vec();
-        for &c in ctl.clono_filt_opt.vj.iter() {
+        for &c in &ctl.clono_filt_opt.vj {
             if !(c == b'A' || c == b'C' || c == b'G' || c == b'T') {
                 return Err("\nIllegal value for VJ, must be over alphabet ACGT.\n".to_string());
             }
@@ -477,7 +477,7 @@ pub fn process_special_arg2(
                 ctl.clono_print_opt.amino.push(x.to_string());
             }
         }
-        for x in ctl.clono_print_opt.amino.iter() {
+        for x in &ctl.clono_print_opt.amino {
             let mut ok = false;
             if *x == "cdr1"
                 || *x == "cdr2"
@@ -515,7 +515,7 @@ pub fn process_special_arg2(
                 ctl.clono_print_opt.cvars.push(x.to_string());
             }
         }
-        for x in ctl.clono_print_opt.cvars.iter_mut() {
+        for x in &mut ctl.clono_print_opt.cvars {
             *x = x.replace("_sum", "_Σ");
             *x = x.replace("_mean", "_μ");
         }
@@ -525,7 +525,7 @@ pub fn process_special_arg2(
                 ctl.clono_print_opt.cvars.push(x.to_string());
             }
         }
-        for x in ctl.clono_print_opt.cvars.iter_mut() {
+        for x in &mut ctl.clono_print_opt.cvars {
             *x = x.replace("_sum", "_Σ");
             *x = x.replace("_mean", "_μ");
         }
@@ -534,7 +534,7 @@ pub fn process_special_arg2(
         for x in arg.after("LVARS=").split(',') {
             ctl.clono_print_opt.lvars.push(x.to_string());
         }
-        for x in ctl.clono_print_opt.lvars.iter_mut() {
+        for x in &mut ctl.clono_print_opt.lvars {
             *x = x.replace("_sum", "_Σ");
             *x = x.replace("_mean", "_μ");
         }
@@ -543,7 +543,7 @@ pub fn process_special_arg2(
         for x in lvarsp {
             ctl.clono_print_opt.lvars.push(x.to_string());
         }
-        for x in ctl.clono_print_opt.lvars.iter_mut() {
+        for x in &mut ctl.clono_print_opt.lvars {
             *x = x.replace("_sum", "_Σ");
             *x = x.replace("_mean", "_μ");
         }

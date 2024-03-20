@@ -14,7 +14,7 @@ use qd::Double;
 use rayon::prelude::*;
 use std::cmp::max;
 use std::collections::{HashMap, HashSet};
-use std::time::Instant;
+
 use vdj_ann::refx::RefData;
 use vector_utils::{erase_if, next_diff1_2, unique_sort};
 
@@ -55,7 +55,6 @@ pub fn some_filters(
     //
     // Note duplication of calls to define_mat with other code.  This is expensive.
 
-    let tsig = Instant::now();
     const SIG_MULT: usize = 20;
     let mut results = Vec::<(usize, Vec<(usize, String, BarcodeFate)>, Vec<usize>)>::new();
     for i in 0..orbits.len() {
@@ -123,7 +122,7 @@ pub fn some_filters(
             for j in 0..freq.len() {
                 if j != i && freq[j].1.len() == 2 {
                     let mut share = false;
-                    for x in freq[j].1.iter() {
+                    for x in &freq[j].1 {
                         if freq[i].1.contains(x) {
                             share = true;
                         }
@@ -189,12 +188,10 @@ pub fn some_filters(
 
     // Merge onesies where totally unambiguous.
 
-    let tmerge = Instant::now();
     merge_onesies(orbits, ctl, exact_clonotypes, info, eq, disintegrated);
 
     // Check for disjoint orbits.
 
-    let tsplit = Instant::now();
     split_orbits(
         orbits,
         is_bcr,
@@ -210,7 +207,6 @@ pub fn some_filters(
 
     // Test for weak chains.
 
-    let tweak = Instant::now();
     weak_chains(
         orbits,
         is_bcr,
@@ -227,7 +223,6 @@ pub fn some_filters(
 
     // Check for disjoint orbits (again).
 
-    let tsplit = Instant::now();
     split_orbits(
         orbits,
         is_bcr,
@@ -412,7 +407,7 @@ pub fn some_filters(
         for j in 0..results[i].1.len() {
             fate[results[i].1[j].0].insert(results[i].1[j].1.clone(), results[i].1[j].2.clone());
         }
-        for x in results[i].2.iter() {
+        for x in &results[i].2 {
             to_delete[*x] = true;
         }
     }
@@ -430,7 +425,6 @@ pub fn some_filters(
 
     // Check for disjoint orbits (again again).
 
-    let tsplit = Instant::now();
     split_orbits(
         orbits,
         is_bcr,

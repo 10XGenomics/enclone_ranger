@@ -24,7 +24,7 @@ use rayon::prelude::*;
 use std::cmp::min;
 use std::collections::HashMap;
 use std::io::Write;
-use std::time::Instant;
+
 use vector_utils::{bin_member, erase_if, next_diff1_2};
 
 pub fn join_exacts(
@@ -42,7 +42,6 @@ pub fn join_exacts(
     //
     // Run special option for joining by barcode identity.
 
-    let timer1 = Instant::now();
     if ctl.join_alg_opt.bcjoin {
         let mut eq: EquivRel = EquivRel::new(info.len() as i32);
         let mut bcx = Vec::<(String, usize)>::new(); // {(barcode, info_index)}
@@ -105,8 +104,6 @@ pub fn join_exacts(
         println!("comparing {} simple clonotypes", info.len());
     }
 
-    let timer2 = Instant::now();
-
     let joinf = |r: &mut (
         usize,
         usize,
@@ -119,7 +116,7 @@ pub fn join_exacts(
         let joins = &mut r.2;
         let errors = &mut r.3;
         let logplus = &mut r.4;
-        let mut pot = Vec::<PotentialJoin>::new();
+        let mut pot = Vec::<PotentialJoin<'_>>::new();
 
         // Main join logic.  If you change par_iter_mut to iter_mut above, and run happening,
         // a lot of time shows up on the following line.  If further you manually inline join_core
@@ -186,7 +183,7 @@ pub fn join_exacts(
                 {
                     let (k1, k2) = (x[0] as usize + i, x[1] as usize + i);
                     let k = min(k1, k2);
-                    for pj in to_pot[k - i].iter() {
+                    for pj in &to_pot[k - i] {
                         let cd = pot[*pj].cd;
                         let shares = &pot[*pj].shares;
 
@@ -256,10 +253,10 @@ pub fn join_exacts(
                 fwriteln!(log, "\nJOIN ERROR");
             }
             let (mut lena1, mut lena2) = (Vec::<String>::new(), Vec::<String>::new());
-            for l1 in info[k1].origin.iter() {
+            for l1 in &info[k1].origin {
                 lena1.push(ctl.origin_info.dataset_id[*l1].clone());
             }
-            for l2 in info[k2].origin.iter() {
+            for l2 in &info[k2].origin {
                 lena2.push(ctl.origin_info.dataset_id[*l2].clone());
             }
             fwriteln!(
@@ -287,7 +284,7 @@ pub fn join_exacts(
                 fwrite!(log, "{}={}", t, refdata.transcript[*t]);
             }
             fwriteln!(log, "");
-            for l1 in info[k1].origin.iter() {
+            for l1 in &info[k1].origin {
                 fwriteln!(
                     log,
                     "{} = {}",
@@ -295,7 +292,7 @@ pub fn join_exacts(
                     ctl.origin_info.descrips[*l1]
                 );
             }
-            for l2 in info[k2].origin.iter() {
+            for l2 in &info[k2].origin {
                 fwriteln!(
                     log,
                     "{} = {}",

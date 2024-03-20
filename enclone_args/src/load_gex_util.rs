@@ -11,7 +11,7 @@ pub fn find_pca_file(
     pathlist: &mut Vec<String>,
 ) -> String {
     let mut pca_file = String::new();
-    for x in analysis.iter() {
+    for x in analysis {
         pca_file = format!("{x}/pca/10_components/projection.csv");
         if path_exists(&pca_file) {
             pathlist.push(pca_file.clone());
@@ -34,7 +34,7 @@ pub fn find_json_metrics_file(
 ) -> String {
     let mut json_metrics_file = String::new();
     if !ctl.gen_opt.cellranger {
-        for x in analysis.iter() {
+        for x in analysis {
             let f = format!("{x}/metrics_summary_json.json");
             if path_exists(&f) {
                 json_metrics_file = f.clone();
@@ -54,7 +54,7 @@ pub fn find_feature_metrics_file(
 ) -> String {
     let mut feature_metrics_file = String::new();
     if !ctl.gen_opt.cellranger {
-        for x in analysis.iter() {
+        for x in analysis {
             let f = format!("{x}/per_feature_metrics.csv");
             if path_exists(&f) {
                 feature_metrics_file = f.clone();
@@ -94,7 +94,7 @@ pub fn find_cluster_file(
     pathlist: &mut Vec<String>,
 ) -> String {
     let mut cluster_file = String::new();
-    for x in analysis.iter() {
+    for x in analysis {
         cluster_file = format!("{x}/clustering/graphclust/clusters.csv");
         if path_exists(&cluster_file) {
             pathlist.push(cluster_file.clone());

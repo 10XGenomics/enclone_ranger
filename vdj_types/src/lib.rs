@@ -254,7 +254,7 @@ mod tests {
             assert_eq!(
                 chain.to_string().parse::<VdjContigChain>().unwrap(),
                 contig_chain
-            )
+            );
         }
         assert_eq!(VdjContigChain::Multi.to_string(), "Multi");
         assert_eq!(

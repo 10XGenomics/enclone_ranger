@@ -203,7 +203,7 @@ mod tests {
             let mut seeds = Vec::<[u8; 32]>::with_capacity(group);
             for _ in 0..group {
                 let mut x = [0_u8; 32];
-                for xj in x.iter_mut() {
+                for xj in &mut x {
                     *xj = rng.gen_range(0..255);
                 }
                 seeds.push(x);

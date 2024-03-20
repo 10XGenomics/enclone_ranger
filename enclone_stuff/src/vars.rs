@@ -3,14 +3,13 @@
 use enclone_core::defs::{EncloneControl, GexInfo};
 use regex::Regex;
 use std::collections::HashMap;
-use std::time::Instant;
+
 use string_utils::TextUtils;
 use vector_utils::unique_sort;
 
 pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), String> {
     // Find matching features for <regular expression>_g etc.
 
-    let tstar = Instant::now();
     ctl.clono_print_opt.regex_match =
         vec![HashMap::<String, Vec<usize>>::new(); ctl.origin_info.n()];
     let ends0 = [
@@ -23,22 +22,21 @@ pub fn match_vars(ctl: &mut EncloneControl, gex_info: &GexInfo) -> Result<(), St
     let mut ends = Vec::<String>::new();
     let mut endsz = Vec::<String>::new();
     for (ix, x) in ends0.iter().enumerate() {
-        for y in suffixes.iter() {
+        for y in &suffixes {
             ends.push(format!("{x}{y}"));
             endsz.push(ends1[ix].to_string());
         }
     }
     let mut vars = ctl.clono_print_opt.lvars.clone();
     vars.append(&mut ctl.parseable_opt.pcols.clone());
-    for con in ctl.clono_filt_opt_def.fcell.iter() {
+    for con in &ctl.clono_filt_opt_def.fcell {
         for var in con.iter_variable_identifiers() {
             vars.push(var.to_string());
         }
     }
     unique_sort(&mut vars);
 
-    let tomega = Instant::now();
-    for x in vars.iter() {
+    for x in &vars {
         for (iy, y) in ends.iter().enumerate() {
             let mut xc = x.clone();
             if x.ends_with("_cell") {

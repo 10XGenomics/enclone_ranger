@@ -232,18 +232,17 @@ pub fn filter_umi(
                     if nbads == 0 {
                         orbits2.push(o.clone());
                         continue 'orbit;
-                    } else {
-                        let p = 0.1;
-                        let bound = 0.01;
+                    }
+                    let p = 0.1;
+                    let bound = 0.01;
 
-                        // Find probability of observing nbads or more events of probability
-                        // p in a sample of size ncells, and if that is at least bound,
-                        // don't delete any cells.
+                    // Find probability of observing nbads or more events of probability
+                    // p in a sample of size ncells, and if that is at least bound,
+                    // don't delete any cells.
 
-                        if binomial_sum(ncells, ncells - nbads, 1.0 - p) >= bound {
-                            orbits2.push(o.clone());
-                            continue 'orbit;
-                        }
+                    if binomial_sum(ncells, ncells - nbads, 1.0 - p) >= bound {
+                        orbits2.push(o.clone());
+                        continue 'orbit;
                     }
                 }
                 let mut to_deletex = vec![false; o.len()];

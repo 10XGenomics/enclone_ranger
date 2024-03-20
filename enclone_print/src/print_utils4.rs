@@ -62,7 +62,7 @@ pub fn build_show_aa(
     let cols = rsi.vids.len();
     let mut show_aa = vec![Vec::<usize>::new(); cols];
     for cx in 0..cols {
-        for x in ctl.clono_print_opt.amino.iter() {
+        for x in &ctl.clono_print_opt.amino {
             if x.contains('-') {
                 let (start, stop) = (x.before("-").force_usize(), x.after("-").force_usize());
                 for p in start..=stop {
@@ -278,7 +278,7 @@ pub fn compute_some_stats(
                         let mut creds = 0;
                         let mut z = Vec::<(f64, String)>::new();
                         let x = &gex_info.pca[li][&bc.clone()];
-                        for y in gex_info.pca[li].iter() {
+                        for y in &gex_info.pca[li] {
                             let dist2 = x
                                 .iter()
                                 .zip(y.1.iter())
@@ -296,7 +296,7 @@ pub fn compute_some_stats(
                         let pc = 100.0 * creds as f64 / top as f64;
                         cred.push(format!("{pc:.1}"));
                     } else {
-                        cred.push("".to_string());
+                        cred.push(String::new());
                     }
                 }
             }
@@ -386,12 +386,12 @@ pub fn compute_some_stats(
             let mat = bcs
                 .iter()
                 .zip(lis.iter())
-                .map(|(bc, &li)| gex_info.pca[li][&bc.to_string()].clone())
+                .map(|(bc, &li)| gex_info.pca[li][&(*bc).to_string()].clone())
                 .collect::<Vec<_>>();
             let mut matg = Vec::<Vec<f64>>::new();
             for li in 0..ctl.origin_info.n() {
-                for i in gex_info.pca[li].iter() {
-                    matg.push(i.1.to_vec());
+                for i in &gex_info.pca[li] {
+                    matg.push(i.1.clone());
                 }
             }
             let mut x = vec![0; bcs.len()];
@@ -518,7 +518,7 @@ pub fn compute_bu(
     let cols = mat.len();
     *subrows = Vec::<Vec<String>>::new();
     if ctl.clono_print_opt.bu {
-        for bcl in bli.iter() {
+        for bcl in bli {
             let mut row = Vec::<String>::new();
             let bc = &bcl.0;
             let li = bcl.1;
@@ -711,7 +711,7 @@ pub fn compute_bu(
                         }
                         let y0 = y;
                         let suffixes = ["_min", "_max", "_μ", "_Σ", "_cell", "_%"];
-                        for &s in suffixes.iter() {
+                        for &s in &suffixes {
                             if y.ends_with(s) {
                                 y = y.rev_before(s);
                                 break;
@@ -728,7 +728,7 @@ pub fn compute_bu(
                                 .unwrap_or_default();
                             if !ux.is_empty() {
                                 computed = true;
-                                for fid in ux.iter() {
+                                for fid in &ux {
                                     let counti = get_gex_matrix_entry(
                                         ctl, gex_info, *fid, d_all, ind_all, li, l, y,
                                     );
@@ -758,14 +758,14 @@ pub fn compute_bu(
                     }
                 }
                 if row.len() == nr {
-                    row.push("".to_string());
+                    row.push(String::new());
                 }
             }
             let mut ncall = 0;
             for k in 0..cols {
                 ncall += rsi.cvars[k].len();
             }
-            let mut cx = vec!["".to_string(); ncall];
+            let mut cx = vec![String::new(); ncall];
             let mut cp = 0;
             for (m, cvars) in mat.iter().take(cols).zip(rsi.cvars.iter()) {
                 if let Some(m) = m[u] {
@@ -870,5 +870,5 @@ pub fn compute_bu(
             subrows.push(row);
         }
     }
-    sr.push((row.to_vec(), subrows.to_vec(), varmat[u].clone(), u));
+    sr.push((row.to_vec(), subrows.clone(), varmat[u].clone(), u));
 }
