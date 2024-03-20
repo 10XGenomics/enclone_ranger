@@ -337,9 +337,10 @@ pub fn annotate_seq_core(
             );
         }
     }
-    find_additional_perfect_matches(&b_seq, &refdata.refs, &mut perf);
-    // Sort perfect matches.
+    let new_matches = find_additional_perfect_matches(&b_seq, &refdata.refs, &perf);
+    perf.extend(new_matches);
 
+    // Sort perfect matches.
     perf.sort_unstable();
     if verbose {
         fwriteln!(log, "\nPERF ALIGNMENTS\n");
@@ -2520,9 +2521,13 @@ fn find_perfect_matches_initial(
 /// Find maximal perfect matches of length >= 10 that have the same offset as a perfect match
 /// already found and are not equal to one of them.  But only do this if we already have at
 /// least 150 bases aligned.
-fn find_additional_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: &mut Vec<PerfectMatch>) {
+fn find_additional_perfect_matches(
+    b_seq: &[u8],
+    refs: &[DnaString],
+    perf: &[PerfectMatch],
+) -> Vec<PerfectMatch> {
     let mut offsets = Vec::<Offset>::new();
-    for p in perf.iter() {
+    for p in perf {
         offsets.push(Offset {
             ref_id: p.ref_id,
             offset: p.offset,
@@ -2531,6 +2536,7 @@ fn find_additional_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: &mut 
     unique_sort(&mut offsets);
     const MM_START: i32 = 150;
     const MM: i32 = 10;
+    let mut new_matches = Vec::new();
     for Offset {
         ref_id: t,
         offset: off,
@@ -2538,7 +2544,7 @@ fn find_additional_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: &mut 
     {
         let mut tig_starts = Vec::<i32>::new();
         let mut total = 0;
-        for pi in perf.iter() {
+        for pi in perf {
             if pi.ref_id == t && pi.offset == off {
                 tig_starts.push(pi.tig_start);
                 total += pi.len;
@@ -2578,7 +2584,7 @@ fn find_additional_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: &mut 
                         }
                     }
                     if !known {
-                        perf.push(PerfectMatch {
+                        new_matches.push(PerfectMatch {
                             ref_id: t,
                             offset: p - l,
                             tig_start: l,
@@ -2591,6 +2597,7 @@ fn find_additional_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: &mut 
             }
         }
     }
+    new_matches
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
