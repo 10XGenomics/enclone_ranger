@@ -360,67 +360,7 @@ pub fn annotate_seq_core(
     let mut semi = merge_perfect_matches(&b_seq, &refdata.refs, perf);
     report_semis(verbose, "INITIAL SEMI ALIGNMENTS", &semi, &b_seq, refs, log);
 
-    // Extend backwards and then forwards.
-
-    for s in &mut semi {
-        let t = s.ref_id;
-        let off = s.offset;
-        let mut l = s.tig_start;
-        let mut len = s.len;
-        let mut mis = s.mismatches.clone();
-        while l > MIN_PERF_EXT as i32 && l + off > MIN_PERF_EXT as i32 {
-            let mut ok = true;
-            for j in 0..MIN_PERF_EXT {
-                if b_seq[(l - j as i32 - 2) as usize]
-                    != refs[t as usize].get((l + off - j as i32 - 2) as usize)
-                {
-                    ok = false;
-                }
-            }
-            if !ok {
-                break;
-            }
-            mis.push(l - 1);
-            l -= MIN_PERF_EXT as i32 + 1;
-            len += MIN_PERF_EXT as i32 + 1;
-            while l > 0 && l + off > 0 {
-                if b_seq[l as usize - 1] != refs[t as usize].get((l + off - 1) as usize) {
-                    break;
-                }
-                l -= 1;
-                len += 1;
-            }
-        }
-        while l + len < (b.len() - MIN_PERF_EXT) as i32
-            && l + len + off < (refs[t as usize].len() - MIN_PERF_EXT) as i32
-        {
-            let mut ok = true;
-            for j in 0..MIN_PERF_EXT {
-                if b_seq[(l + len + j as i32 + 1) as usize]
-                    != refs[t as usize].get((l + off + len + j as i32 + 1) as usize)
-                {
-                    ok = false;
-                }
-            }
-            if !ok {
-                break;
-            }
-            mis.push(l + len);
-            len += MIN_PERF_EXT as i32 + 1;
-            while l + len < b.len() as i32 && l + off + len < refs[t as usize].len() as i32 {
-                if b_seq[(l + len) as usize] != refs[t as usize].get((l + off + len) as usize) {
-                    break;
-                }
-                len += 1;
-            }
-        }
-        s.tig_start = l;
-        s.len = len;
-        s.mismatches = mis;
-    }
-    for s in &mut semi {
-        s.mismatches.sort_unstable();
-    }
+    extend_matches(&b_seq, &refdata.refs, &mut semi);
 
     // Add some 40-mers with the same offset having <= 6 mismatches.
     // semi = {(t, off, pos on b, len, positions on b of mismatches)}
@@ -2606,6 +2546,69 @@ fn merge_perfect_matches(
         i = j;
     }
     semi
+}
+
+/// Extend matches backwards and then forwards.
+fn extend_matches(b_seq: &[u8], refs: &[DnaString], semi: &mut [SemiPerfectMatch]) {
+    for s in &mut *semi {
+        let t = s.ref_id;
+        let off = s.offset;
+        let mut l = s.tig_start;
+        let mut len = s.len;
+        let mut mis = s.mismatches.clone();
+        while l > MIN_PERF_EXT as i32 && l + off > MIN_PERF_EXT as i32 {
+            let mut ok = true;
+            for j in 0..MIN_PERF_EXT {
+                if b_seq[(l - j as i32 - 2) as usize]
+                    != refs[t as usize].get((l + off - j as i32 - 2) as usize)
+                {
+                    ok = false;
+                }
+            }
+            if !ok {
+                break;
+            }
+            mis.push(l - 1);
+            l -= MIN_PERF_EXT as i32 + 1;
+            len += MIN_PERF_EXT as i32 + 1;
+            while l > 0 && l + off > 0 {
+                if b_seq[l as usize - 1] != refs[t as usize].get((l + off - 1) as usize) {
+                    break;
+                }
+                l -= 1;
+                len += 1;
+            }
+        }
+        while l + len < (b_seq.len() - MIN_PERF_EXT) as i32
+            && l + len + off < (refs[t as usize].len() - MIN_PERF_EXT) as i32
+        {
+            let mut ok = true;
+            for j in 0..MIN_PERF_EXT {
+                if b_seq[(l + len + j as i32 + 1) as usize]
+                    != refs[t as usize].get((l + off + len + j as i32 + 1) as usize)
+                {
+                    ok = false;
+                }
+            }
+            if !ok {
+                break;
+            }
+            mis.push(l + len);
+            len += MIN_PERF_EXT as i32 + 1;
+            while l + len < b_seq.len() as i32 && l + off + len < refs[t as usize].len() as i32 {
+                if b_seq[(l + len) as usize] != refs[t as usize].get((l + off + len) as usize) {
+                    break;
+                }
+                len += 1;
+            }
+        }
+        s.tig_start = l;
+        s.len = len;
+        s.mismatches = mis;
+    }
+    for s in semi {
+        s.mismatches.sort_unstable();
+    }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
