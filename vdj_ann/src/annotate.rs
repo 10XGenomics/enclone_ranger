@@ -500,50 +500,9 @@ pub fn annotate_seq_core(
 
     retain_much_better_aligned_v_segment(&refdata.rheaders, &mut annx);
 
-    // Remove certain subsumed alignments.
+    remove_subsumed_alignments_2(&mut annx);
 
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    for i1 in 0..annx.len() {
-        for i2 in 0..annx.len() {
-            if i2 == i1 || annx[i1].ref_id != annx[i2].ref_id {
-                continue;
-            }
-            let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
-            let (len1, len2) = (annx[i1].match_len, annx[i2].match_len);
-            let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
-            if l1 != l2 || p1 != p2 {
-                continue;
-            }
-            if len1 > len2 {
-                to_delete[i2] = true;
-            }
-        }
-    }
-    erase_if(&mut annx, &to_delete);
-
-    // If we see TRBJ1 and not TRBJ2, delete any TRBC2.  And conversely.
-
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    let (mut j1, mut j2) = (false, false);
-    for a in &annx {
-        let t = a.ref_id as usize;
-        if rheaders[t].contains("TRBJ1") {
-            j1 = true;
-        }
-        if rheaders[t].contains("TRBJ2") {
-            j2 = true;
-        }
-    }
-    for (i, a) in annx.iter().enumerate() {
-        let t = a.ref_id as usize;
-        if j1 && !j2 && rheaders[t].contains("TRBC2") {
-            to_delete[i] = true;
-        }
-        if !j1 && j2 && rheaders[t].contains("TRBC1") {
-            to_delete[i] = true;
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    remove_unmatched_trbc(&refdata.rheaders, &mut annx);
 
     // Pick between equally performant Js and likewise for Cs.
 
@@ -2720,6 +2679,54 @@ fn retain_much_better_aligned_v_segment(rheaders: &[String], annx: &mut Vec<PreA
         reverse_sort(&mut score);
         if score[0].0 >= score[1].0 + min_len_gain && score[1].1 == 1 {
             to_delete[score[1].3] = true;
+        }
+    }
+    erase_if(annx, &to_delete);
+}
+
+/// Remove certain subsumed alignments.
+// FIXME: collapse this and the other remove subsumed alignments functions.
+fn remove_subsumed_alignments_2(annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    for i1 in 0..annx.len() {
+        for i2 in 0..annx.len() {
+            if i2 == i1 || annx[i1].ref_id != annx[i2].ref_id {
+                continue;
+            }
+            let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
+            let (len1, len2) = (annx[i1].match_len, annx[i2].match_len);
+            let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
+            if l1 != l2 || p1 != p2 {
+                continue;
+            }
+            if len1 > len2 {
+                to_delete[i2] = true;
+            }
+        }
+    }
+    erase_if(annx, &to_delete);
+}
+
+/// If we see TRBJ1 and not TRBJ2, delete any TRBC2.  And conversely.
+fn remove_unmatched_trbc(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    let (mut j1, mut j2) = (false, false);
+    for a in annx.iter() {
+        let t = a.ref_id as usize;
+        if rheaders[t].contains("TRBJ1") {
+            j1 = true;
+        }
+        if rheaders[t].contains("TRBJ2") {
+            j2 = true;
+        }
+    }
+    for (i, a) in annx.iter().enumerate() {
+        let t = a.ref_id as usize;
+        if j1 && !j2 && rheaders[t].contains("TRBC2") {
+            to_delete[i] = true;
+        }
+        if !j1 && j2 && rheaders[t].contains("TRBC1") {
+            to_delete[i] = true;
         }
     }
     erase_if(annx, &to_delete);
