@@ -271,12 +271,6 @@ struct Alignment {
     pub mismatches: Vec<i32>,
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct Offset {
-    pub ref_id: i32,
-    pub offset: i32,
-}
-
 /// Minimum length of sequence we'll try to annotate.
 const K: usize = 12;
 
@@ -598,6 +592,12 @@ fn find_additional_perfect_matches(
     refs: &[DnaString],
     perf: &[Alignment],
 ) -> Vec<Alignment> {
+    #[derive(PartialEq, Eq, PartialOrd, Ord)]
+    struct Offset {
+        pub ref_id: i32,
+        pub offset: i32,
+    }
+
     let mut offsets = Vec::<Offset>::new();
     for p in perf {
         offsets.push(Offset {
