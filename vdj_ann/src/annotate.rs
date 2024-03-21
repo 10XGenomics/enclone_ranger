@@ -504,54 +504,7 @@ pub fn annotate_seq_core(
 
     remove_unmatched_trbc(&refdata.rheaders, &mut annx);
 
-    // Pick between equally performant Js and likewise for Cs.
-
-    let mut to_delete = vec![false; annx.len()];
-    for pass in 0..2 {
-        for i1 in 0..annx.len() {
-            let t1 = annx[i1].ref_id;
-            if pass == 1 {
-                if !rheaders[t1 as usize].contains("J-REGION") {
-                    continue;
-                }
-            } else if !rheaders[t1 as usize].contains("C-REGION") {
-                continue;
-            }
-            for i2 in 0..annx.len() {
-                let t2 = annx[i2].ref_id;
-                if pass == 1 {
-                    if !rheaders[t2 as usize].contains("J-REGION") {
-                        continue;
-                    }
-                } else if !rheaders[t2 as usize].contains("C-REGION") {
-                    continue;
-                }
-                let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
-                let (len1, len2) = (annx[i1].match_len, annx[i2].match_len);
-                if l1 != l2 || len1 != len2 {
-                    continue;
-                }
-                let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
-                if pass == 1 {
-                    if p1 + len1 != refs[t1 as usize].len() as i32 {
-                        continue;
-                    }
-                    if p2 + len2 != refs[t2 as usize].len() as i32 {
-                        continue;
-                    }
-                } else if p1 > 0 || p2 > 0 {
-                    continue;
-                }
-                if annx[i1].mismatches.len() != annx[i2].mismatches.len() {
-                    continue;
-                }
-                if t1 < t2 {
-                    to_delete[i2] = true;
-                }
-            }
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    downselect_equally_performant_j_and_c(refdata, &mut annx);
 
     // Pick between Cs.
 
@@ -2727,6 +2680,56 @@ fn remove_unmatched_trbc(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
         }
         if !j1 && j2 && rheaders[t].contains("TRBC1") {
             to_delete[i] = true;
+        }
+    }
+    erase_if(annx, &to_delete);
+}
+
+/// Pick between equally performant Js and likewise for Cs.
+fn downselect_equally_performant_j_and_c(refdata: &RefData, annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete = vec![false; annx.len()];
+    for pass in 0..2 {
+        for i1 in 0..annx.len() {
+            let t1 = annx[i1].ref_id;
+            if pass == 1 {
+                if !refdata.rheaders[t1 as usize].contains("J-REGION") {
+                    continue;
+                }
+            } else if !refdata.rheaders[t1 as usize].contains("C-REGION") {
+                continue;
+            }
+            for i2 in 0..annx.len() {
+                let t2 = annx[i2].ref_id;
+                if pass == 1 {
+                    if !refdata.rheaders[t2 as usize].contains("J-REGION") {
+                        continue;
+                    }
+                } else if !refdata.rheaders[t2 as usize].contains("C-REGION") {
+                    continue;
+                }
+                let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
+                let (len1, len2) = (annx[i1].match_len, annx[i2].match_len);
+                if l1 != l2 || len1 != len2 {
+                    continue;
+                }
+                let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
+                if pass == 1 {
+                    if p1 + len1 != refdata.refs[t1 as usize].len() as i32 {
+                        continue;
+                    }
+                    if p2 + len2 != refdata.refs[t2 as usize].len() as i32 {
+                        continue;
+                    }
+                } else if p1 > 0 || p2 > 0 {
+                    continue;
+                }
+                if annx[i1].mismatches.len() != annx[i2].mismatches.len() {
+                    continue;
+                }
+                if t1 < t2 {
+                    to_delete[i2] = true;
+                }
+            }
         }
     }
     erase_if(annx, &to_delete);
