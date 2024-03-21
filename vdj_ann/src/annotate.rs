@@ -140,8 +140,8 @@ pub fn chain_type(b: &DnaString, rkmers_plus_full_20: &[(Kmer20, i32, i32)], rty
 // The structure of the output is:
 // { ( start on sequence, match length, ref tig, start on ref tig, mismatches on sequence ) }.
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 /// Annotation object denotes matches of a DnaString sequence to a reference sequence
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Annotation {
     /// Start position on sequence (contig)
     pub tig_start: i32,
@@ -155,13 +155,25 @@ pub struct Annotation {
     pub mismatches: i32,
 }
 
-/// Used prior to creation of Annotation object, includes a vector of mismatches.
+impl From<Alignment> for Annotation {
+    fn from(a: Alignment) -> Self {
+        Self {
+            tig_start: a.tig_start,
+            match_len: a.len,
+            ref_id: a.ref_id,
+            ref_start: a.ref_start,
+            mismatches: a.mismatches.len() as i32,
+        }
+    }
+}
+
+/// Represents an alignment between the a reference and the contig.
 #[derive(PartialEq, Eq)]
-struct PreAnnotation {
+struct Alignment {
     /// Start position on sequence (contig)
     tig_start: i32,
     /// Match length
-    match_len: i32,
+    len: i32,
     /// Reference id (that this contig matches)
     ref_id: i32,
     /// Start position on reference
@@ -170,18 +182,23 @@ struct PreAnnotation {
     mismatches: Vec<i32>,
 }
 
-impl PreAnnotation {
+impl Alignment {
+    /// Get the offset between the position on the contig and the position on the ref.
+    fn offset(&self) -> i32 {
+        self.ref_start - self.tig_start
+    }
+
     /// Sort alignments by (tig_start, match_len, ref_id, ref_start, mismatches).
     fn cmp_by_pos_and_len(a: &Self, b: &Self) -> std::cmp::Ordering {
-        let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) = |x: &Self| {
-            (
-                x.tig_start,
-                x.match_len,
-                x.ref_id,
-                x.ref_start,
-                &x.mismatches,
-            )
-        };
+        let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) =
+            |x: &Self| (x.tig_start, x.len, x.ref_id, x.ref_start, &x.mismatches);
+        key(a).cmp(&key(b))
+    }
+
+    /// Sort alignments by (ref_id, offset, tig_start, len, mismatches).
+    fn cmp_by_ref_id(a: &Self, b: &Self) -> std::cmp::Ordering {
+        let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) =
+            |x: &Self| (x.ref_id, x.offset(), x.tig_start, x.len, &x.mismatches);
         key(a).cmp(&key(b))
     }
 }
@@ -189,28 +206,26 @@ impl PreAnnotation {
 pub fn annotate_seq(
     b: &DnaString,
     refdata: &RefData,
-    ann: &mut Vec<Annotation>,
     allow_weak: bool,
     allow_improper: bool,
     abut: bool,
-) {
+) -> Vec<Annotation> {
     let mut log = Vec::<u8>::new();
     annotate_seq_core(
         b,
         refdata,
-        ann,
         allow_weak,
         allow_improper,
         abut,
         &mut log,
         false,
-    );
+    )
 }
 
-fn print_alignx(log: &mut Vec<u8>, a: &PreAnnotation, refdata: &RefData) {
+fn print_alignx(log: &mut Vec<u8>, a: &Alignment, refdata: &RefData) {
     let t = a.ref_id as usize;
     let l = a.tig_start;
-    let len = a.match_len;
+    let len = a.len;
     let p = a.ref_start;
     let mis = a.mismatches.len();
     fwriteln!(
@@ -265,36 +280,6 @@ fn report_semis(
     }
 }
 
-// TODO: combine this and the PreAnnotation type above?
-// This is tricky, though, as both types derive sorting, and the order of fields
-// implies different sort ordering. Probably the best way to address this is to
-// remove the derivation of eq/ord, provide key-generating methods with
-// explicit names, and use those. This forces the caller to be explicit about
-// which sort order they're using.
-struct Alignment {
-    pub ref_id: i32,
-    pub ref_start: i32,
-    /// pos on b
-    pub tig_start: i32,
-    pub len: i32,
-    /// positions on b of mismatches
-    pub mismatches: Vec<i32>,
-}
-
-impl Alignment {
-    /// Get the offset between the position on the contig and the position on the ref.
-    fn offset(&self) -> i32 {
-        self.ref_start - self.tig_start
-    }
-
-    /// Sort alignments by (ref_id, offset, tig_start, len, mismatches).
-    fn cmp_by_ref_id(a: &Self, b: &Self) -> std::cmp::Ordering {
-        let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) =
-            |x: &Self| (x.ref_id, x.offset(), x.tig_start, x.len, &x.mismatches);
-        key(a).cmp(&key(b))
-    }
-}
-
 /// Minimum length of sequence we'll try to annotate.
 const K: usize = 12;
 
@@ -305,13 +290,12 @@ const MIN_PERF_EXT: usize = 5;
 pub fn annotate_seq_core(
     b: &DnaString,
     refdata: &RefData,
-    ann: &mut Vec<Annotation>,
     allow_weak: bool,
     allow_improper: bool,
     abut: bool,
     log: &mut Vec<u8>,
     verbose: bool,
-) {
+) -> Vec<Annotation> {
     // The DNA string representation is inefficient because it stores bases as packed k-mers
     // which requires a lot of array bounds checks when unpacking which was a hot path
     // we found when profiling the CI job.  To avoid those in the inner
@@ -319,7 +303,7 @@ pub fn annotate_seq_core(
     let b_seq = b.to_bytes();
 
     if b.len() < K {
-        return;
+        return Vec::new();
     }
     let mut perf = find_perfect_matches_initial(b, refdata, &b_seq, allow_weak);
     if verbose {
@@ -424,15 +408,15 @@ pub fn annotate_seq_core(
 
     let mut annx: Vec<_> = semi
         .into_iter()
-        .map(|x| PreAnnotation {
+        .map(|x| Alignment {
             tig_start: x.tig_start,
-            match_len: x.len,
+            len: x.len,
             ref_id: x.ref_id,
             ref_start: x.ref_start,
             mismatches: x.mismatches,
         })
         .collect();
-    annx.sort_by(PreAnnotation::cmp_by_pos_and_len);
+    annx.sort_by(Alignment::cmp_by_pos_and_len);
     annx.dedup();
 
     if !allow_improper {
@@ -525,18 +509,7 @@ pub fn annotate_seq_core(
 
     remove_subsumed_extended_alignments(&refdata.rheaders, &mut annx);
 
-    // Transform.
-
-    ann.clear();
-    for x in &annx {
-        ann.push(Annotation {
-            tig_start: x.tig_start,
-            match_len: x.match_len,
-            ref_id: x.ref_id,
-            ref_start: x.ref_start,
-            mismatches: x.mismatches.len() as i32,
-        });
-    }
+    annx.into_iter().map(Into::into).collect()
 }
 
 /// Find maximal perfect matches of length >= 20, or 12 for J regions, so long
@@ -1100,19 +1073,12 @@ fn remove_subsumed_matches(semi: &mut Vec<Alignment>) {
 }
 
 /// Delete matches that are 'too improper'.
-fn delete_improper_matches(annx: &mut Vec<PreAnnotation>) {
+fn delete_improper_matches(annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     // Re-sort the annotations by ref_id
     annx.sort_by(|a, b| {
-        let key: for<'a> fn(&'a PreAnnotation) -> (_, _, _, _, &'a Vec<_>) = |x: &PreAnnotation| {
-            (
-                x.ref_id,
-                x.ref_start,
-                x.tig_start,
-                x.match_len,
-                &x.mismatches,
-            )
-        };
+        let key: for<'a> fn(&'a Alignment) -> (_, _, _, _, &'a Vec<_>) =
+            |x: &Alignment| (x.ref_id, x.ref_start, x.tig_start, x.len, &x.mismatches);
         key(a).cmp(&key(b))
     });
     let mut i1 = 0;
@@ -1136,7 +1102,7 @@ fn delete_improper_matches(annx: &mut Vec<PreAnnotation>) {
     }
     erase_if(annx, &to_delete);
     // Re-sort using standard sort order.
-    annx.sort_by(PreAnnotation::cmp_by_pos_and_len);
+    annx.sort_by(Alignment::cmp_by_pos_and_len);
 }
 
 /// Amongst V segments starting at zero on the V segment, if some start with
@@ -1144,7 +1110,7 @@ fn delete_improper_matches(annx: &mut Vec<PreAnnotation>) {
 fn retain_head_v_segments_with_start_codon(
     b_seq: &[u8],
     refdata: &RefData,
-    annx: &mut Vec<PreAnnotation>,
+    annx: &mut Vec<Alignment>,
 ) {
     let mut have_starter = false;
     for annxi in annx.iter() {
@@ -1199,7 +1165,7 @@ fn remove_inferior_matches(
     rheaders: &[String],
     verbose: bool,
     log: &mut Vec<u8>,
-    annx: &mut Vec<PreAnnotation>,
+    annx: &mut Vec<Alignment>,
 ) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let mut ts: Vec<(usize, usize)> = annx
@@ -1213,14 +1179,14 @@ fn remove_inferior_matches(
         let j1 = next_diff1_2(&ts, i1);
         let mut tlen1 = 0;
         for k in i1..j1 {
-            tlen1 += annx[ts[k].1].match_len;
+            tlen1 += annx[ts[k].1].len;
         }
         let mut i2 = 0;
         while i2 < ts.len() {
             let j2 = next_diff1_2(&ts, i2);
             let mut tlen2 = 0;
             for k in i2..j2 {
-                tlen2 += annx[ts[k].1].match_len;
+                tlen2 += annx[ts[k].1].len;
             }
             let (mut m1, mut m2) = (0, 0);
             let mut over = 0_i64;
@@ -1241,11 +1207,11 @@ fn remove_inferior_matches(
             for k1 in i1..j1 {
                 let u1 = ts[k1].1;
                 let l1 = annx[u1].tig_start;
-                let len1 = annx[u1].match_len;
+                let len1 = annx[u1].len;
                 for t in &ts[i2..j2] {
                     let u2 = t.1;
                     let l2 = annx[u2].tig_start;
-                    let len2 = annx[u2].match_len;
+                    let len2 = annx[u2].len;
                     let start = max(l1, l2);
                     let stop = min(l1 + len1, l2 + len2);
                     if start >= stop {
@@ -1296,7 +1262,7 @@ fn remove_inferior_matches(
                             let t = item.0;
                             let u = item.1;
                             let l = annx[u].tig_start;
-                            let len = annx[u].match_len;
+                            let len = annx[u].len;
                             let p = annx[u].ref_start;
                             let mis = annx[u].mismatches.len();
                             fwriteln!(
@@ -1315,7 +1281,7 @@ fn remove_inferior_matches(
                             let t = item.0;
                             let u = item.1;
                             let l = annx[u].tig_start;
-                            let len = annx[u].match_len;
+                            let len = annx[u].len;
                             let p = annx[u].ref_start;
                             let mis = annx[u].mismatches.len();
                             fwriteln!(
@@ -1355,7 +1321,7 @@ fn find_indels_in_v_or_utr(
     refdata: &RefData,
     verbose: bool,
     log: &mut Vec<u8>,
-    annx: &mut Vec<PreAnnotation>,
+    annx: &mut Vec<Alignment>,
 ) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let mut aligns = vec![0; refdata.refs.len()];
@@ -1382,7 +1348,7 @@ fn find_indels_in_v_or_utr(
             if l1 >= l2 {
                 continue;
             }
-            let (mut len1, mut len2) = (annx[i1].match_len as usize, annx[i2].match_len as usize);
+            let (mut len1, mut len2) = (annx[i1].len as usize, annx[i2].len as usize);
             if l1 + len1 > l2 + len2 {
                 continue;
             }
@@ -1407,7 +1373,7 @@ fn find_indels_in_v_or_utr(
                     }
                 }
                 mis.append(&mut annx[i2].mismatches.clone());
-                annx[i1].match_len = tot1 as i32;
+                annx[i1].len = tot1 as i32;
                 annx[i1].mismatches = mis;
                 to_delete[i2] = true;
                 continue;
@@ -1444,9 +1410,9 @@ fn find_indels_in_v_or_utr(
                         best_ipos = ipos;
                     }
                 }
-                annx[i1].match_len = best_ipos - start1;
+                annx[i1].len = best_ipos - start1;
                 annx[i1].mismatches = best_mis1;
-                annx[i2].match_len = stop1 - best_ipos - ins;
+                annx[i2].len = stop1 - best_ipos - ins;
                 annx[i2].tig_start = best_ipos + ins;
                 annx[i2].ref_start = best_ipos + ins + off2;
                 annx[i2].mismatches = best_mis2;
@@ -1486,10 +1452,10 @@ fn find_indels_in_v_or_utr(
                         best_dpos = dpos;
                     }
                 }
-                annx[i1].match_len = best_dpos - start2;
+                annx[i1].len = best_dpos - start2;
                 annx[i1].mismatches = best_mis1;
                 annx[i2].tig_start = best_dpos + del - off2;
-                annx[i2].match_len = stop2 - best_dpos - del;
+                annx[i2].len = stop2 - best_dpos - del;
                 annx[i2].ref_start = best_dpos + del;
                 annx[i2].mismatches = best_mis2;
                 continue;
@@ -1592,8 +1558,8 @@ fn find_indels_in_v_or_utr(
             }
             if del.len() + ins.len() == 0 {
                 to_delete[i2] = true;
-                len1 = (annx[i2].tig_start + annx[i2].match_len - annx[i1].tig_start) as usize;
-                annx[i1].match_len = len1 as i32;
+                len1 = (annx[i2].tig_start + annx[i2].len - annx[i1].tig_start) as usize;
+                annx[i1].len = len1 as i32;
                 annx[i1].mismatches.truncate(0);
                 for j in 0..len1 {
                     if b_seq[l1 + j] != refdata.refs[t].get(p1 + j) {
@@ -1603,8 +1569,8 @@ fn find_indels_in_v_or_utr(
             }
             if del.len() + ins.len() == 1 {
                 annx[i2].tig_start = l2 as i32;
-                annx[i1].match_len = len1 as i32;
-                annx[i2].match_len = len2 as i32;
+                annx[i1].len = len1 as i32;
+                annx[i2].len = len2 as i32;
                 annx[i2].ref_start = p2 as i32;
                 annx[i1].mismatches.truncate(0);
                 annx[i2].mismatches.truncate(0);
@@ -1642,7 +1608,7 @@ fn retain_best_alignment(
     refdata: &RefData,
     verbose: bool,
     log: &mut Vec<u8>,
-    annx: &mut Vec<PreAnnotation>,
+    annx: &mut Vec<Alignment>,
 ) {
     let mut combo = Vec::<(String, i32, usize)>::new();
     for (i, a) in annx.iter().enumerate() {
@@ -1671,7 +1637,7 @@ fn retain_best_alignment(
             locs.push(combo[k].2);
             let a = &annx[combo[k].2];
             rstarts.push(a.ref_start as usize);
-            cov.push((a.tig_start as usize, (a.tig_start + a.match_len) as usize));
+            cov.push((a.tig_start as usize, (a.tig_start + a.len) as usize));
             mis += a.mismatches.len();
             if !refdata.is_u(a.ref_id as usize) {
                 mis_nutr += a.mismatches.len();
@@ -1981,7 +1947,7 @@ fn retain_best_alignment(
 /// Delete some subsumed alignments.
 // FIXME: collapse this and remove_subsumed_matches once the match types are
 // collapsed. They have slightly different behavior.
-fn remove_subsumed_alignments(annx: &mut Vec<PreAnnotation>) {
+fn remove_subsumed_alignments(annx: &mut Vec<Alignment>) {
     let mut to_delete = vec![false; annx.len()];
     let mut i = 0;
     while i < annx.len() {
@@ -1996,7 +1962,7 @@ fn remove_subsumed_alignments(annx: &mut Vec<PreAnnotation>) {
             for k2 in i..j {
                 if annx[k1].ref_id == annx[k2].ref_id
                     && annx[k1].ref_start == annx[k2].ref_start
-                    && annx[k1].match_len > annx[k2].match_len
+                    && annx[k1].len > annx[k2].len
                 {
                     to_delete[k2] = true;
                 }
@@ -2009,14 +1975,14 @@ fn remove_subsumed_alignments(annx: &mut Vec<PreAnnotation>) {
 }
 
 /// Extend some alignments.
-fn extend_alignments(b_seq: &[u8], refs: &[DnaString], annx: &mut [PreAnnotation]) {
+fn extend_alignments(b_seq: &[u8], refs: &[DnaString], annx: &mut [Alignment]) {
     let mut aligns = vec![0; refs.len()];
     for a in annx.iter() {
         aligns[a.ref_id as usize] += 1;
     }
     for a in annx {
         let t = a.ref_id as usize;
-        let len = a.match_len as usize;
+        let len = a.len as usize;
         if aligns[t] == 1
             && a.ref_start == 0
             && len < refs[t].len()
@@ -2029,7 +1995,7 @@ fn extend_alignments(b_seq: &[u8], refs: &[DnaString], annx: &mut [PreAnnotation
                     a.mismatches.push(q);
                 }
             }
-            a.match_len = refs[t].len() as i32;
+            a.len = refs[t].len() as i32;
         }
     }
 }
@@ -2040,12 +2006,12 @@ fn retain_longer_v_alignments(
     refdata: &RefData,
     verbose: bool,
     log: &mut Vec<u8>,
-    annx: &mut Vec<PreAnnotation>,
+    annx: &mut Vec<Alignment>,
 ) {
     let mut lens = vec![0; refdata.refs.len()];
     for a in annx.iter() {
         let t = a.ref_id as usize;
-        lens[t] += a.ref_start + a.match_len;
+        lens[t] += a.ref_start + a.len;
     }
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
@@ -2085,7 +2051,7 @@ fn retain_longer_v_alignments(
 /// assume that the J aligns up to exactly the point where the C starts, or to
 /// one base after.  We require that the last 20 bases of the J match with at
 /// most 5 mismatches.
-fn annotate_j_for_ig_with_c_and_v(b_seq: &[u8], refdata: &RefData, annx: &mut Vec<PreAnnotation>) {
+fn annotate_j_for_ig_with_c_and_v(b_seq: &[u8], refdata: &RefData, annx: &mut Vec<Alignment>) {
     let (mut igv, mut igj) = (false, false);
     let mut igc = -1_i32;
     const J_TOT: i32 = 20;
@@ -2149,21 +2115,21 @@ fn annotate_j_for_ig_with_c_and_v(b_seq: &[u8], refdata: &RefData, annx: &mut Ve
                     mis.push(i + j);
                 }
             }
-            annx.push(PreAnnotation {
+            annx.push(Alignment {
                 tig_start: i,
-                match_len: n,
+                len: n,
                 ref_id: best_t,
                 ref_start: 0,
                 mismatches: mis,
             });
-            annx.sort_by(PreAnnotation::cmp_by_pos_and_len);
+            annx.sort_by(Alignment::cmp_by_pos_and_len);
         }
     }
 }
 
 /// If there is a D gene alignment that is from a different chain type than the V gene
 /// alignment, delete it.
-fn delete_d_if_chain_doesnt_match_v(refdata: &RefData, annx: &mut Vec<PreAnnotation>) {
+fn delete_d_if_chain_doesnt_match_v(refdata: &RefData, annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
         let t1 = annx[i1].ref_id as usize;
@@ -2197,7 +2163,7 @@ fn annotate_d_between_v_j(
     b_seq: &[u8],
     b: &DnaString,
     refdata: &RefData,
-    annx: &mut Vec<PreAnnotation>,
+    annx: &mut Vec<Alignment>,
 ) {
     let (mut v, mut d, mut j) = (false, false, false);
     let (mut vstop, mut jstart) = (0, 0);
@@ -2211,7 +2177,7 @@ fn annotate_d_between_v_j(
             if rt == 0 || rt == 4 || rt == 5 {
                 if refdata.segtype[t] == "V" {
                     v = true;
-                    vstop = ann.tig_start + ann.match_len;
+                    vstop = ann.tig_start + ann.len;
                     v_rtype = rt;
                 } else if refdata.segtype[t] == "D" {
                     d = true;
@@ -2261,14 +2227,14 @@ fn annotate_d_between_v_j(
                     best_matches = max(best_matches, result.1);
                 }
                 if results[0].1 == best_matches {
-                    annx.push(PreAnnotation {
+                    annx.push(Alignment {
                         tig_start: results[0].4 as i32,
-                        match_len: (results[0].0 + results[0].1) as i32,
+                        len: (results[0].0 + results[0].1) as i32,
                         ref_id: results[0].2 as i32,
                         ref_start: 0,
                         mismatches: results[0].5.clone(),
                     });
-                    annx.sort_by(PreAnnotation::cmp_by_pos_and_len);
+                    annx.sort_by(Alignment::cmp_by_pos_and_len);
                 }
             }
         }
@@ -2277,7 +2243,7 @@ fn annotate_d_between_v_j(
 
 /// A J segment that goes up to its end beats any J segment that doesn't.
 /// If they both go up to the end, choose.
-fn retain_longer_j_segment(b_seq: &[u8], refdata: &RefData, annx: &mut Vec<PreAnnotation>) {
+fn retain_longer_j_segment(b_seq: &[u8], refdata: &RefData, annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
         for i2 in 0..annx.len() {
@@ -2289,7 +2255,7 @@ fn retain_longer_j_segment(b_seq: &[u8], refdata: &RefData, annx: &mut Vec<PreAn
             if !refdata.is_j(t1) || !refdata.is_j(t2) {
                 continue;
             }
-            let (len1, len2) = (annx[i1].match_len, annx[i2].match_len);
+            let (len1, len2) = (annx[i1].len, annx[i2].len);
             let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
             let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
             if len1 + p1 == refdata.refs[t1].len() as i32
@@ -2333,7 +2299,7 @@ fn retain_better_c_segment(
     b_seq: &[u8],
     b: &DnaString,
     refdata: &RefData,
-    annx: &mut Vec<PreAnnotation>,
+    annx: &mut Vec<Alignment>,
 ) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
@@ -2400,7 +2366,7 @@ fn retain_better_v_segment(
     b_seq: &[u8],
     b: &DnaString,
     refdata: &RefData,
-    annx: &mut Vec<PreAnnotation>,
+    annx: &mut Vec<Alignment>,
 ) {
     let mut nv = 0;
     for a in annx.iter() {
@@ -2467,7 +2433,7 @@ fn retain_better_v_segment(
 }
 
 // Remove UTR annotations that have no matching V annotation.
-fn remove_utr_without_matching_v(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+fn remove_utr_without_matching_v(rheaders: &[String], annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let (mut u, mut v) = (Vec::<String>::new(), Vec::<String>::new());
     for a in annx.iter() {
@@ -2502,7 +2468,7 @@ fn remove_utr_without_matching_v(rheaders: &[String], annx: &mut Vec<PreAnnotati
 /// In light of the previous calculation, see if one V is aligned much better
 /// than another V.  This is done by looking for simple indel events.
 /// Probably will have to be generalized.
-fn retain_much_better_aligned_v_segment(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+fn retain_much_better_aligned_v_segment(rheaders: &[String], annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let mut vs = Vec::<(usize, usize)>::new();
     for (i, a) in annx.iter().enumerate() {
@@ -2523,13 +2489,13 @@ fn retain_much_better_aligned_v_segment(rheaders: &[String], annx: &mut Vec<PreA
     while j < vs.len() {
         let k = next_diff1_2(&vs, j);
         if k - j == 1 {
-            score.push((annx[j].match_len, k - j, annx[j].mismatches.len(), vs[j].1));
+            score.push((annx[j].len, k - j, annx[j].mismatches.len(), vs[j].1));
         } else if k - j == 2 {
             let (i1, i2) = (vs[j].1, vs[j + 1].1);
             let (a1, a2) = (&annx[i1], &annx[i2]);
             let mut simple = false;
-            let (l1, p1, len1) = (a1.tig_start, a1.ref_start, a1.match_len);
-            let (l2, p2, len2) = (a2.tig_start, a2.ref_start, a2.match_len);
+            let (l1, p1, len1) = (a1.tig_start, a1.ref_start, a1.len);
+            let (l2, p2, len2) = (a2.tig_start, a2.ref_start, a2.len);
             if l1 + len1 == l2
                 && p1 + len1 < p2
                 && (p2 - p1 - len1) % 3 == 0
@@ -2571,7 +2537,7 @@ fn retain_much_better_aligned_v_segment(rheaders: &[String], annx: &mut Vec<PreA
 
 /// Remove certain subsumed alignments.
 // FIXME: collapse this and the other remove subsumed alignments functions.
-fn remove_subsumed_alignments_2(annx: &mut Vec<PreAnnotation>) {
+fn remove_subsumed_alignments_2(annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
         for i2 in 0..annx.len() {
@@ -2579,7 +2545,7 @@ fn remove_subsumed_alignments_2(annx: &mut Vec<PreAnnotation>) {
                 continue;
             }
             let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
-            let (len1, len2) = (annx[i1].match_len, annx[i2].match_len);
+            let (len1, len2) = (annx[i1].len, annx[i2].len);
             let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
             if l1 != l2 || p1 != p2 {
                 continue;
@@ -2593,7 +2559,7 @@ fn remove_subsumed_alignments_2(annx: &mut Vec<PreAnnotation>) {
 }
 
 /// If we see TRBJ1 and not TRBJ2, delete any TRBC2.  And conversely.
-fn remove_unmatched_trbc(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+fn remove_unmatched_trbc(rheaders: &[String], annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     let (mut j1, mut j2) = (false, false);
     for a in annx.iter() {
@@ -2618,7 +2584,7 @@ fn remove_unmatched_trbc(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
 }
 
 /// Pick between equally performant Js and likewise for Cs.
-fn downselect_equally_performant_j_and_c(refdata: &RefData, annx: &mut Vec<PreAnnotation>) {
+fn downselect_equally_performant_j_and_c(refdata: &RefData, annx: &mut Vec<Alignment>) {
     let mut to_delete = vec![false; annx.len()];
     for pass in 0..2 {
         for i1 in 0..annx.len() {
@@ -2640,7 +2606,7 @@ fn downselect_equally_performant_j_and_c(refdata: &RefData, annx: &mut Vec<PreAn
                     continue;
                 }
                 let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
-                let (len1, len2) = (annx[i1].match_len, annx[i2].match_len);
+                let (len1, len2) = (annx[i1].len, annx[i2].len);
                 if l1 != l2 || len1 != len2 {
                     continue;
                 }
@@ -2668,7 +2634,7 @@ fn downselect_equally_performant_j_and_c(refdata: &RefData, annx: &mut Vec<PreAn
 }
 
 /// Pick between Cs.
-fn downselect_to_best_c(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+fn downselect_to_best_c(rheaders: &[String], annx: &mut Vec<Alignment>) {
     let mut to_delete = vec![false; annx.len()];
     for i1 in 0..annx.len() {
         let t1 = annx[i1].ref_id;
@@ -2681,7 +2647,7 @@ fn downselect_to_best_c(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
                 continue;
             }
             let (l1, l2) = (annx[i1].tig_start as usize, annx[i2].tig_start as usize);
-            let (len1, len2) = (annx[i1].match_len as usize, annx[i2].match_len as usize);
+            let (len1, len2) = (annx[i1].len as usize, annx[i2].len as usize);
             // let (p1,p2) = (annx[i1].3,annx[i2].3);
             if l1 + len1 != l2 + len2 {
                 continue;
@@ -2697,15 +2663,15 @@ fn downselect_to_best_c(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
 
 /// Remove some subsumed extended annotations.
 // FIXME: collapse this and the other remove subsumed alignments functions.
-fn remove_subsumed_extended_alignments(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+fn remove_subsumed_extended_alignments(rheaders: &[String], annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     for i1 in 0..annx.len() {
         let l1 = annx[i1].tig_start as usize;
-        let len1 = annx[i1].match_len as usize;
+        let len1 = annx[i1].len as usize;
         for i2 in 0..annx.len() {
             let t2 = annx[i2].ref_id as usize;
             let l2 = annx[i2].tig_start as usize;
-            let len2 = annx[i2].match_len as usize;
+            let len2 = annx[i2].len as usize;
             if len2 >= len1 {
                 continue;
             }
@@ -2780,17 +2746,7 @@ pub fn print_annotations(
     abut: bool,
     verbose: bool,
 ) {
-    let mut ann = Vec::<Annotation>::new();
-    annotate_seq_core(
-        b,
-        refdata,
-        &mut ann,
-        true,
-        allow_improper,
-        abut,
-        log,
-        verbose,
-    );
+    let ann = annotate_seq_core(b, refdata, true, allow_improper, abut, log, verbose);
     print_some_annotations(refdata, &ann, log, verbose);
 }
 
@@ -3472,8 +3428,7 @@ impl ContigAnnotation {
         is_cell: bool,                           // was the barcode declared a cell?
         jsupp: Option<JunctionSupport>,          // num reads, umis supporting junction
     ) -> ContigAnnotation {
-        let mut ann = Vec::<Annotation>::new();
-        annotate_seq(b, refdata, &mut ann, true, false, true);
+        let ann = annotate_seq(b, refdata, true, false, true);
         let (is_productive, productive_criteria) = is_productive_contig(b, refdata, &ann);
         ContigAnnotation::from_annotate_seq(
             b,
