@@ -399,31 +399,7 @@ pub fn annotate_seq_core(
         log,
     );
 
-    // Delete some subsumed alignments.
-
-    let mut to_delete = vec![false; semi.len()];
-    let mut i = 0;
-    while i < semi.len() {
-        let mut j = i + 1;
-        while j < semi.len() {
-            if semi[j].ref_id != semi[i].ref_id || semi[j].offset != semi[i].offset {
-                break;
-            }
-            j += 1;
-        }
-        for k1 in i..j {
-            for k2 in i..j {
-                if semi[k1].offset + semi[k1].tig_start + semi[k1].len
-                    == semi[k2].offset + semi[k2].tig_start + semi[k2].len
-                    && semi[k1].len > semi[k2].len
-                {
-                    to_delete[k2] = true;
-                }
-            }
-        }
-        i = j;
-    }
-    erase_if(&mut semi, &to_delete);
+    remove_subsumed_alignments(&mut semi);
     report_semis(
         verbose,
         "SEMI ALIGNMENTS AFTER SUBSUMPTION",
@@ -2629,6 +2605,33 @@ fn extend_long_v_gene_alignments(b_seq: &[u8], refdata: &RefData, semi: &mut [Se
     for s in semi {
         unique_sort(&mut s.mismatches);
     }
+}
+
+/// Delete some subsumed alignments.
+fn remove_subsumed_alignments(semi: &mut Vec<SemiPerfectMatch>) {
+    let mut to_delete = vec![false; semi.len()];
+    let mut i = 0;
+    while i < semi.len() {
+        let mut j = i + 1;
+        while j < semi.len() {
+            if semi[j].ref_id != semi[i].ref_id || semi[j].offset != semi[i].offset {
+                break;
+            }
+            j += 1;
+        }
+        for k1 in i..j {
+            for k2 in i..j {
+                if semi[k1].offset + semi[k1].tig_start + semi[k1].len
+                    == semi[k2].offset + semi[k2].tig_start + semi[k2].len
+                    && semi[k1].len > semi[k2].len
+                {
+                    to_delete[k2] = true;
+                }
+            }
+        }
+        i = j;
+    }
+    erase_if(semi, &to_delete);
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
