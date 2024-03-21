@@ -318,7 +318,6 @@ pub fn annotate_seq_core(
     // Unpack refdata.
 
     let refs = &refdata.refs;
-    let rheaders = &refdata.rheaders;
 
     if b.len() < K {
         return;
@@ -510,28 +509,7 @@ pub fn annotate_seq_core(
 
     remove_utr_without_matching_v(&refdata.rheaders, &mut annx);
 
-    // Remove some subsumed extended annotations.
-
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    for i1 in 0..annx.len() {
-        let l1 = annx[i1].tig_start as usize;
-        let len1 = annx[i1].match_len as usize;
-        for i2 in 0..annx.len() {
-            let t2 = annx[i2].ref_id as usize;
-            let l2 = annx[i2].tig_start as usize;
-            let len2 = annx[i2].match_len as usize;
-            if len2 >= len1 {
-                continue;
-            }
-            if !rheaders[t2].contains("before") && !rheaders[t2].contains("after") {
-                continue;
-            }
-            if l1 <= l2 && l1 + len1 >= l2 + len2 {
-                to_delete[i2] = true;
-            }
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    remove_subsumed_extended_alignments(&refdata.rheaders, &mut annx);
 
     // Transform.
 
@@ -2701,6 +2679,31 @@ fn downselect_to_best_c(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
                 continue;
             }
             to_delete[i2] = true;
+        }
+    }
+    erase_if(annx, &to_delete);
+}
+
+/// Remove some subsumed extended annotations.
+// FIXME: collapse this and the other remove subsumed alignments functions.
+fn remove_subsumed_extended_alignments(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    for i1 in 0..annx.len() {
+        let l1 = annx[i1].tig_start as usize;
+        let len1 = annx[i1].match_len as usize;
+        for i2 in 0..annx.len() {
+            let t2 = annx[i2].ref_id as usize;
+            let l2 = annx[i2].tig_start as usize;
+            let len2 = annx[i2].match_len as usize;
+            if len2 >= len1 {
+                continue;
+            }
+            if !rheaders[t2].contains("before") && !rheaders[t2].contains("after") {
+                continue;
+            }
+            if l1 <= l2 && l1 + len1 >= l2 + len2 {
+                to_delete[i2] = true;
+            }
         }
     }
     erase_if(annx, &to_delete);
