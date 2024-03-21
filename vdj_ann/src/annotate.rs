@@ -425,9 +425,6 @@ pub fn annotate_seq_core(
     if !allow_improper {
         delete_improper_matches(&mut annx);
     }
-
-    // Log alignments.
-
     if verbose {
         fwriteln!(log, "\nINITIAL ALIGNMENTS\n");
         for annxi in &annx {
@@ -435,43 +432,7 @@ pub fn annotate_seq_core(
         }
     }
 
-    // Amongst V segments starting at zero on the V segment, if some start with
-    // a start codon, delete the others.
-
-    let mut have_starter = false;
-    for annxi in &annx {
-        let t = annxi.ref_id as usize;
-        if !rheaders[t].contains("segment") && refdata.is_v(t) && annxi.ref_start == 0 {
-            let p = annxi.tig_start as usize;
-            if b_seq[p] == 0 // A
-                && b_seq[p+1] == 3 // T
-                && b_seq[p+2] == 2
-            {
-                // G
-                have_starter = true;
-                break;
-            }
-        }
-    }
-    if have_starter {
-        let to_delete: Vec<bool> = annx
-            .iter()
-            .map(|annxi| {
-                let t = annxi.ref_id as usize;
-                if !rheaders[t].contains("segment") && refdata.is_v(t) && annxi.ref_start == 0 {
-                    let p = annxi.tig_start as usize;
-                    if !(b_seq[p] == 0 && b_seq[p + 1] == 3 && b_seq[p + 2] == 2) {
-                        return true;
-                    }
-                }
-                false
-            })
-            .collect();
-        erase_if(&mut annx, &to_delete);
-    }
-
-    // Log alignments.
-
+    retain_head_v_segments_with_start_codon(&b_seq, refdata, &mut annx);
     if verbose {
         fwriteln!(log, "\nALIGNMENTS ONE\n");
         for a in &annx {
@@ -479,162 +440,7 @@ pub fn annotate_seq_core(
         }
     }
 
-    // Remove inferior matches of the edge.  Two alignments are compared if the
-    // length of their overlap on the contig is at least 85% of one of the alignment
-    // lengths len1 and len2.  We compute the mismatch rates r1 and r2 between the
-    // overlap interval and the respective references.  The first alignment wins if
-    // at least one of the following happens:
-    // 1. len1  > len2 and r1 <= r2
-    // 2. len1 >= len2 and r2 <  r2
-    // 3. len1 >= 1.5 * len2.
-    //
-    // Modified: multiple aligns of the same V segment are now group together in
-    // the calculation.   And add indel penalty.
-    //
-    // ◼ For efficiency, inner loop should check to see if already deleted.
-
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    let mut ts: Vec<(usize, usize)> = annx
-        .iter()
-        .enumerate()
-        .map(|(i, annxi)| (annxi.ref_id as usize, i))
-        .collect(); // { ( contig index, annx index ) }
-    ts.sort_unstable();
-    let mut i1 = 0;
-    while i1 < ts.len() {
-        let j1 = next_diff1_2(&ts, i1);
-        let mut tlen1 = 0;
-        for k in i1..j1 {
-            tlen1 += annx[ts[k].1].match_len;
-        }
-        let mut i2 = 0;
-        while i2 < ts.len() {
-            let j2 = next_diff1_2(&ts, i2);
-            let mut tlen2 = 0;
-            for k in i2..j2 {
-                tlen2 += annx[ts[k].1].match_len;
-            }
-            let (mut m1, mut m2) = (0, 0);
-            let mut over = 0_i64;
-            let mut offsets1 = Vec::<i32>::new();
-            let mut offsets2 = Vec::<i32>::new();
-            for t in &ts[i1..j1] {
-                let u1 = t.1;
-                offsets1.push(annx[u1].tig_start - annx[u1].ref_start);
-            }
-            for t in &ts[i2..j2] {
-                let u2 = t.1;
-                offsets2.push(annx[u2].tig_start - annx[u2].ref_start);
-            }
-            offsets1.sort_unstable();
-            offsets2.sort_unstable();
-            m1 += offsets1[offsets1.len() - 1] - offsets1[0];
-            m2 += offsets2[offsets2.len() - 1] - offsets2[0];
-            for k1 in i1..j1 {
-                let u1 = ts[k1].1;
-                let l1 = annx[u1].tig_start;
-                let len1 = annx[u1].match_len;
-                for t in &ts[i2..j2] {
-                    let u2 = t.1;
-                    let l2 = annx[u2].tig_start;
-                    let len2 = annx[u2].match_len;
-                    let start = max(l1, l2);
-                    let stop = min(l1 + len1, l2 + len2);
-                    if start >= stop {
-                        continue;
-                    }
-                    over += stop as i64;
-                    over -= start as i64;
-                    for x in &annx[u1].mismatches {
-                        if *x >= start && *x < stop {
-                            m1 += 1;
-                        }
-                    }
-                    for x in &annx[u2].mismatches {
-                        if *x >= start && *x < stop {
-                            m2 += 1;
-                        }
-                    }
-                }
-            }
-
-            // Get mismatch rates.
-
-            let (r1, r2) = (m1 as f64 / tlen1 as f64, m2 as f64 / tlen2 as f64);
-
-            // Require that one of the intervals is at least 85% overlapped.
-
-            const MIN_OVERLAP_FRAC: f64 = 0.85;
-            if over as f64 / (min(tlen1, tlen2) as f64) >= MIN_OVERLAP_FRAC {
-                // Decide if the second match is inferior.
-
-                if (tlen1 > tlen2 && r1 <= r2)
-                    || (tlen1 >= tlen2 && r1 < r2)
-                    || tlen1 as f64 >= 1.5 * tlen2 as f64
-                {
-                    if verbose {
-                        fwriteln!(
-                            log,
-                            "\nsee tlen1 = {}, tlen2 = {}, m1 = {}, m2 = {}, \
-                             r1 = {:.3}, r2 = {:.3}\nthis alignment",
-                            tlen1,
-                            tlen2,
-                            m1,
-                            m2,
-                            r1,
-                            r2
-                        );
-                        for item in &ts[i1..j1] {
-                            let t = item.0;
-                            let u = item.1;
-                            let l = annx[u].tig_start;
-                            let len = annx[u].match_len;
-                            let p = annx[u].ref_start;
-                            let mis = annx[u].mismatches.len();
-                            fwriteln!(
-                                log,
-                                "{}-{} ==> {}-{} on {}(mis={})",
-                                l,
-                                l + len,
-                                p,
-                                p + len,
-                                rheaders[t],
-                                mis
-                            );
-                        }
-                        fwriteln!(log, "beats this alignment");
-                        for item in &ts[i2..j2] {
-                            let t = item.0;
-                            let u = item.1;
-                            let l = annx[u].tig_start;
-                            let len = annx[u].match_len;
-                            let p = annx[u].ref_start;
-                            let mis = annx[u].mismatches.len();
-                            fwriteln!(
-                                log,
-                                "{}-{} ==> {}-{} on {}(mis={})",
-                                l,
-                                l + len,
-                                p,
-                                p + len,
-                                rheaders[t],
-                                mis
-                            );
-                        }
-                    }
-                    for k in i2..j2 {
-                        to_delete[ts[k].1] = true;
-                    }
-                }
-            }
-            i2 = j2;
-        }
-        i1 = j1;
-    }
-    erase_if(&mut annx, &to_delete);
-
-    // Log alignments.
-
+    remove_inferior_matches(&refdata.rheaders, verbose, log, &mut annx);
     if verbose {
         fwriteln!(log, "\nALIGNMENTS TWO\n");
         for a in &annx {
@@ -2638,6 +2444,209 @@ fn delete_improper_matches(annx: &mut Vec<PreAnnotation>) {
     erase_if(annx, &to_delete);
     // Re-sort using standard sort order.
     annx.sort();
+}
+
+/// Amongst V segments starting at zero on the V segment, if some start with
+/// a start codon, delete the others.
+fn retain_head_v_segments_with_start_codon(
+    b_seq: &[u8],
+    refdata: &RefData,
+    annx: &mut Vec<PreAnnotation>,
+) {
+    let mut have_starter = false;
+    for annxi in annx.iter() {
+        let t = annxi.ref_id as usize;
+        if !refdata.rheaders[t].contains("segment") && refdata.is_v(t) && annxi.ref_start == 0 {
+            let p = annxi.tig_start as usize;
+            if b_seq[p] == 0 // A
+                && b_seq[p+1] == 3 // T
+                && b_seq[p+2] == 2
+            {
+                // G
+                have_starter = true;
+                break;
+            }
+        }
+    }
+    if have_starter {
+        let to_delete: Vec<bool> = annx
+            .iter()
+            .map(|annxi| {
+                let t = annxi.ref_id as usize;
+                if !refdata.rheaders[t].contains("segment")
+                    && refdata.is_v(t)
+                    && annxi.ref_start == 0
+                {
+                    let p = annxi.tig_start as usize;
+                    if !(b_seq[p] == 0 && b_seq[p + 1] == 3 && b_seq[p + 2] == 2) {
+                        return true;
+                    }
+                }
+                false
+            })
+            .collect();
+        erase_if(annx, &to_delete);
+    }
+}
+
+/// Remove inferior matches of the edge.  Two alignments are compared if the
+/// length of their overlap on the contig is at least 85% of one of the alignment
+/// lengths len1 and len2.  We compute the mismatch rates r1 and r2 between the
+/// overlap interval and the respective references.  The first alignment wins if
+/// at least one of the following happens:
+/// 1. len1  > len2 and r1 <= r2
+/// 2. len1 >= len2 and r2 <  r2
+/// 3. len1 >= 1.5 * len2.
+///
+/// Modified: multiple aligns of the same V segment are now group together in
+/// the calculation.   And add indel penalty.
+///
+/// For efficiency, inner loop should check to see if already deleted.
+fn remove_inferior_matches(
+    rheaders: &[String],
+    verbose: bool,
+    log: &mut Vec<u8>,
+    annx: &mut Vec<PreAnnotation>,
+) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    let mut ts: Vec<(usize, usize)> = annx
+        .iter()
+        .enumerate()
+        .map(|(i, annxi)| (annxi.ref_id as usize, i))
+        .collect(); // { ( contig index, annx index ) }
+    ts.sort_unstable();
+    let mut i1 = 0;
+    while i1 < ts.len() {
+        let j1 = next_diff1_2(&ts, i1);
+        let mut tlen1 = 0;
+        for k in i1..j1 {
+            tlen1 += annx[ts[k].1].match_len;
+        }
+        let mut i2 = 0;
+        while i2 < ts.len() {
+            let j2 = next_diff1_2(&ts, i2);
+            let mut tlen2 = 0;
+            for k in i2..j2 {
+                tlen2 += annx[ts[k].1].match_len;
+            }
+            let (mut m1, mut m2) = (0, 0);
+            let mut over = 0_i64;
+            let mut offsets1 = Vec::<i32>::new();
+            let mut offsets2 = Vec::<i32>::new();
+            for t in &ts[i1..j1] {
+                let u1 = t.1;
+                offsets1.push(annx[u1].tig_start - annx[u1].ref_start);
+            }
+            for t in &ts[i2..j2] {
+                let u2 = t.1;
+                offsets2.push(annx[u2].tig_start - annx[u2].ref_start);
+            }
+            offsets1.sort_unstable();
+            offsets2.sort_unstable();
+            m1 += offsets1[offsets1.len() - 1] - offsets1[0];
+            m2 += offsets2[offsets2.len() - 1] - offsets2[0];
+            for k1 in i1..j1 {
+                let u1 = ts[k1].1;
+                let l1 = annx[u1].tig_start;
+                let len1 = annx[u1].match_len;
+                for t in &ts[i2..j2] {
+                    let u2 = t.1;
+                    let l2 = annx[u2].tig_start;
+                    let len2 = annx[u2].match_len;
+                    let start = max(l1, l2);
+                    let stop = min(l1 + len1, l2 + len2);
+                    if start >= stop {
+                        continue;
+                    }
+                    over += stop as i64;
+                    over -= start as i64;
+                    for x in &annx[u1].mismatches {
+                        if *x >= start && *x < stop {
+                            m1 += 1;
+                        }
+                    }
+                    for x in &annx[u2].mismatches {
+                        if *x >= start && *x < stop {
+                            m2 += 1;
+                        }
+                    }
+                }
+            }
+
+            // Get mismatch rates.
+
+            let (r1, r2) = (m1 as f64 / tlen1 as f64, m2 as f64 / tlen2 as f64);
+
+            // Require that one of the intervals is at least 85% overlapped.
+
+            const MIN_OVERLAP_FRAC: f64 = 0.85;
+            if over as f64 / (min(tlen1, tlen2) as f64) >= MIN_OVERLAP_FRAC {
+                // Decide if the second match is inferior.
+
+                if (tlen1 > tlen2 && r1 <= r2)
+                    || (tlen1 >= tlen2 && r1 < r2)
+                    || tlen1 as f64 >= 1.5 * tlen2 as f64
+                {
+                    if verbose {
+                        fwriteln!(
+                            log,
+                            "\nsee tlen1 = {}, tlen2 = {}, m1 = {}, m2 = {}, \
+                             r1 = {:.3}, r2 = {:.3}\nthis alignment",
+                            tlen1,
+                            tlen2,
+                            m1,
+                            m2,
+                            r1,
+                            r2
+                        );
+                        for item in &ts[i1..j1] {
+                            let t = item.0;
+                            let u = item.1;
+                            let l = annx[u].tig_start;
+                            let len = annx[u].match_len;
+                            let p = annx[u].ref_start;
+                            let mis = annx[u].mismatches.len();
+                            fwriteln!(
+                                log,
+                                "{}-{} ==> {}-{} on {}(mis={})",
+                                l,
+                                l + len,
+                                p,
+                                p + len,
+                                rheaders[t],
+                                mis
+                            );
+                        }
+                        fwriteln!(log, "beats this alignment");
+                        for item in &ts[i2..j2] {
+                            let t = item.0;
+                            let u = item.1;
+                            let l = annx[u].tig_start;
+                            let len = annx[u].match_len;
+                            let p = annx[u].ref_start;
+                            let mis = annx[u].mismatches.len();
+                            fwriteln!(
+                                log,
+                                "{}-{} ==> {}-{} on {}(mis={})",
+                                l,
+                                l + len,
+                                p,
+                                p + len,
+                                rheaders[t],
+                                mis
+                            );
+                        }
+                    }
+                    for k in i2..j2 {
+                        to_delete[ts[k].1] = true;
+                    }
+                }
+            }
+            i2 = j2;
+        }
+        i1 = j1;
+    }
+    erase_if(annx, &to_delete);
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
