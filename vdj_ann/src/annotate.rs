@@ -472,85 +472,7 @@ pub fn annotate_seq_core(
 
     retain_longer_v_alignments(refdata, verbose, log, &mut annx);
 
-    // For IG, if we have a C segment that aligns starting at zero, and a V segment
-    // that aligns, but no J segment, try to find a J segment alignment.  For now we
-    // assume that the J aligns up to exactly the point where the C starts, or to
-    // one base after.  We require that the last 20 bases of the J match with at
-    // most 5 mismatches.
-
-    let (mut igv, mut igj) = (false, false);
-    let mut igc = -1_i32;
-    const J_TOT: i32 = 20;
-    const J_MIS: i32 = 5;
-    for a in &annx {
-        let t = a.ref_id as usize;
-        if rheaders[t].contains("segment") {
-            continue;
-        }
-        let rt = refdata.rtype[t];
-        if (0..3).contains(&rt) {
-            if refdata.segtype[t] == "V" {
-                igv = true;
-            } else if refdata.segtype[t] == "J" {
-                igj = true;
-            } else if refdata.segtype[t] == "C"
-                && a.ref_start == 0
-                && a.tig_start >= J_TOT
-                && refs[t].len() >= J_TOT as usize
-            {
-                igc = a.tig_start;
-            }
-        }
-    }
-    if igc >= 0 && igv && !igj {
-        let mut best_t = -1_i32;
-        let mut best_mis = 1000000;
-        let mut best_z = -1_i32;
-        for z in 0..2 {
-            for l in 0..refdata.igjs.len() {
-                let t = refdata.igjs[l];
-                let n = refs[t].len();
-                if n > igc as usize + z {
-                    continue;
-                }
-                let i = igc as usize + z - n; // start of J on contig
-                let (mut total, mut mis) = (0, 0);
-                for j in (0..n).rev() {
-                    total += 1;
-                    if b_seq[i + j] != refs[t].get(j) {
-                        mis += 1;
-                        if total <= J_TOT && mis > J_MIS {
-                            break;
-                        }
-                    }
-                }
-                if total == n as i32 && mis < best_mis {
-                    best_t = t as i32;
-                    best_mis = mis;
-                    best_z = z as i32;
-                }
-            }
-        }
-        if best_t >= 0 {
-            let t = best_t as usize;
-            let n = refs[t].len() as i32;
-            let i = igc + best_z - n;
-            let mut mis = Vec::<i32>::new();
-            for j in 0..n {
-                if b_seq[(i + j) as usize] != refs[t].get(j as usize) {
-                    mis.push(i + j);
-                }
-            }
-            annx.push(PreAnnotation {
-                tig_start: i,
-                match_len: n,
-                ref_id: best_t,
-                ref_start: 0,
-                mismatches: mis,
-            });
-            annx.sort();
-        }
-    }
+    annotate_j_for_ig_with_c_and_v(&b_seq, refdata, &mut annx);
 
     // If there is a D gene alignment that is from a different chain type than the V gene
     // alignment, delete it.
@@ -2682,6 +2604,87 @@ fn retain_longer_v_alignments(
         }
     }
     erase_if(annx, &to_delete);
+}
+
+/// For IG, if we have a C segment that aligns starting at zero, and a V segment
+/// that aligns, but no J segment, try to find a J segment alignment.  For now we
+/// assume that the J aligns up to exactly the point where the C starts, or to
+/// one base after.  We require that the last 20 bases of the J match with at
+/// most 5 mismatches.
+fn annotate_j_for_ig_with_c_and_v(b_seq: &[u8], refdata: &RefData, annx: &mut Vec<PreAnnotation>) {
+    let (mut igv, mut igj) = (false, false);
+    let mut igc = -1_i32;
+    const J_TOT: i32 = 20;
+    const J_MIS: i32 = 5;
+    for a in annx.iter() {
+        let t = a.ref_id as usize;
+        if refdata.rheaders[t].contains("segment") {
+            continue;
+        }
+        let rt = refdata.rtype[t];
+        if (0..3).contains(&rt) {
+            if refdata.segtype[t] == "V" {
+                igv = true;
+            } else if refdata.segtype[t] == "J" {
+                igj = true;
+            } else if refdata.segtype[t] == "C"
+                && a.ref_start == 0
+                && a.tig_start >= J_TOT
+                && refdata.refs[t].len() >= J_TOT as usize
+            {
+                igc = a.tig_start;
+            }
+        }
+    }
+    if igc >= 0 && igv && !igj {
+        let mut best_t = -1_i32;
+        let mut best_mis = 1000000;
+        let mut best_z = -1_i32;
+        for z in 0..2 {
+            for l in 0..refdata.igjs.len() {
+                let t = refdata.igjs[l];
+                let n = refdata.refs[t].len();
+                if n > igc as usize + z {
+                    continue;
+                }
+                let i = igc as usize + z - n; // start of J on contig
+                let (mut total, mut mis) = (0, 0);
+                for j in (0..n).rev() {
+                    total += 1;
+                    if b_seq[i + j] != refdata.refs[t].get(j) {
+                        mis += 1;
+                        if total <= J_TOT && mis > J_MIS {
+                            break;
+                        }
+                    }
+                }
+                if total == n as i32 && mis < best_mis {
+                    best_t = t as i32;
+                    best_mis = mis;
+                    best_z = z as i32;
+                }
+            }
+        }
+        if best_t >= 0 {
+            let t = best_t as usize;
+            let n = refdata.refs[t].len() as i32;
+            let i = igc + best_z - n;
+            let mut mis = Vec::<i32>::new();
+            for j in 0..n {
+                if b_seq[(i + j) as usize] != refdata.refs[t].get(j as usize) {
+                    mis.push(i + j);
+                }
+            }
+            annx.push(PreAnnotation {
+                tig_start: i,
+                match_len: n,
+                ref_id: best_t,
+                ref_start: 0,
+                mismatches: mis,
+            });
+            annx.sort();
+        }
+    }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
