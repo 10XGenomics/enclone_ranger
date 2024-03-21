@@ -315,9 +315,6 @@ pub fn annotate_seq_core(
     // we found when profiling the CI job.  To avoid those in the inner
     // loop, we unpack it once here:
     let b_seq = b.to_bytes();
-    // Unpack refdata.
-
-    let refs = &refdata.refs;
 
     if b.len() < K {
         return;
@@ -358,7 +355,14 @@ pub fn annotate_seq_core(
     }
 
     let mut semi = merge_perfect_matches(&b_seq, &refdata.refs, perf);
-    report_semis(verbose, "INITIAL SEMI ALIGNMENTS", &semi, &b_seq, refs, log);
+    report_semis(
+        verbose,
+        "INITIAL SEMI ALIGNMENTS",
+        &semi,
+        &b_seq,
+        &refdata.refs,
+        log,
+    );
 
     extend_matches(&b_seq, &refdata.refs, &mut semi);
 
@@ -367,15 +371,22 @@ pub fn annotate_seq_core(
     if allow_weak {
         extend_matches_to_end_of_reference(&b_seq, &refdata.refs, &mut semi);
     }
-    report_semis(verbose, "SEMI ALIGNMENTS", &semi, &b_seq, refs, log);
+    report_semis(
+        verbose,
+        "SEMI ALIGNMENTS",
+        &semi,
+        &b_seq,
+        &refdata.refs,
+        log,
+    );
 
-    extend_between_match_blocks(&b_seq, refs, &mut semi);
+    extend_between_match_blocks(&b_seq, &refdata.refs, &mut semi);
     report_semis(
         verbose,
         "SEMI ALIGNMENTS AFTER EXTENSION",
         &semi,
         &b_seq,
-        refs,
+        &refdata.refs,
         log,
     );
 
@@ -385,7 +396,7 @@ pub fn annotate_seq_core(
         "SEMI ALIGNMENTS AFTER MERGER",
         &semi,
         &b_seq,
-        refs,
+        &refdata.refs,
         log,
     );
 
@@ -395,7 +406,7 @@ pub fn annotate_seq_core(
         "SEMI ALIGNMENTS AFTER SECOND EXTENSION",
         &semi,
         &b_seq,
-        refs,
+        &refdata.refs,
         log,
     );
 
@@ -405,7 +416,7 @@ pub fn annotate_seq_core(
         "SEMI ALIGNMENTS AFTER SUBSUMPTION",
         &semi,
         &b_seq,
-        refs,
+        &refdata.refs,
         log,
     );
 
