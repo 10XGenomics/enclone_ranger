@@ -188,17 +188,24 @@ impl Alignment {
         self.ref_start - self.tig_start
     }
 
-    /// Sort alignments by (tig_start, match_len, ref_id, ref_start, mismatches).
-    fn cmp_by_pos_and_len(a: &Self, b: &Self) -> std::cmp::Ordering {
+    /// Sort alignments by (tig_start, len, ref_id, ref_start, mismatches).
+    fn cmp_by_tig_start_len(a: &Self, b: &Self) -> std::cmp::Ordering {
         let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) =
             |x: &Self| (x.tig_start, x.len, x.ref_id, x.ref_start, &x.mismatches);
         key(a).cmp(&key(b))
     }
 
     /// Sort alignments by (ref_id, offset, tig_start, len, mismatches).
-    fn cmp_by_ref_id(a: &Self, b: &Self) -> std::cmp::Ordering {
+    fn cmp_by_ref_id_offset(a: &Self, b: &Self) -> std::cmp::Ordering {
         let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) =
             |x: &Self| (x.ref_id, x.offset(), x.tig_start, x.len, &x.mismatches);
+        key(a).cmp(&key(b))
+    }
+
+    /// Sort alignments by (ref_id, ref_start, tig_start, len, mismatches).
+    fn cmp_by_ref_id_ref_start(a: &Self, b: &Self) -> std::cmp::Ordering {
+        let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) =
+            |x: &Self| (x.ref_id, x.ref_start, x.tig_start, x.len, &x.mismatches);
         key(a).cmp(&key(b))
     }
 }
@@ -324,7 +331,7 @@ pub fn annotate_seq_core(
     perf.extend(new_matches);
 
     // Sort perfect matches.
-    perf.sort_unstable_by(Alignment::cmp_by_ref_id);
+    perf.sort_unstable_by(Alignment::cmp_by_ref_id_offset);
     if verbose {
         fwriteln!(log, "\nPERF ALIGNMENTS\n");
         for s in &perf {
@@ -416,7 +423,7 @@ pub fn annotate_seq_core(
             mismatches: x.mismatches,
         })
         .collect();
-    annx.sort_by(Alignment::cmp_by_pos_and_len);
+    annx.sort_by(Alignment::cmp_by_tig_start_len);
     annx.dedup();
 
     if !allow_improper {
@@ -851,7 +858,7 @@ fn annotate_40mers_for_mouse_a20(b_seq: &[u8], refs: &[DnaString], semi: &mut Ve
         }
         i = j;
     }
-    semi.sort_by(Alignment::cmp_by_ref_id);
+    semi.sort_by(Alignment::cmp_by_ref_id_offset);
 }
 
 /// Allow extension over some mismatches on right if it gets us to the end on
@@ -1076,11 +1083,7 @@ fn remove_subsumed_matches(semi: &mut Vec<Alignment>) {
 fn delete_improper_matches(annx: &mut Vec<Alignment>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
     // Re-sort the annotations by ref_id
-    annx.sort_by(|a, b| {
-        let key: for<'a> fn(&'a Alignment) -> (_, _, _, _, &'a Vec<_>) =
-            |x: &Alignment| (x.ref_id, x.ref_start, x.tig_start, x.len, &x.mismatches);
-        key(a).cmp(&key(b))
-    });
+    annx.sort_by(Alignment::cmp_by_ref_id_ref_start);
     let mut i1 = 0;
     loop {
         if i1 == annx.len() {
@@ -1102,7 +1105,7 @@ fn delete_improper_matches(annx: &mut Vec<Alignment>) {
     }
     erase_if(annx, &to_delete);
     // Re-sort using standard sort order.
-    annx.sort_by(Alignment::cmp_by_pos_and_len);
+    annx.sort_by(Alignment::cmp_by_tig_start_len);
 }
 
 /// Amongst V segments starting at zero on the V segment, if some start with
@@ -2122,7 +2125,7 @@ fn annotate_j_for_ig_with_c_and_v(b_seq: &[u8], refdata: &RefData, annx: &mut Ve
                 ref_start: 0,
                 mismatches: mis,
             });
-            annx.sort_by(Alignment::cmp_by_pos_and_len);
+            annx.sort_by(Alignment::cmp_by_tig_start_len);
         }
     }
 }
@@ -2234,7 +2237,7 @@ fn annotate_d_between_v_j(
                         ref_start: 0,
                         mismatches: results[0].5.clone(),
                     });
-                    annx.sort_by(Alignment::cmp_by_pos_and_len);
+                    annx.sort_by(Alignment::cmp_by_tig_start_len);
                 }
             }
         }
