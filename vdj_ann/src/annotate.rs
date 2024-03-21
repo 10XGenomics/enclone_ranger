@@ -448,280 +448,9 @@ pub fn annotate_seq_core(
         }
     }
 
-    // If there are two alignments to a particular V region, or a UTR, try to edit
-    // them so that their start/stop position abut perfect on one side (either the
-    // contig or the reference), and do not overlap on the other side, thus
-    // exhibiting an indel.
-    // ◼ The approach to answering this seems very inefficient.
-    // ◼ When this was moved here, some UTR alignments disappeared.
-
-    // { ( sequence start, match length, ref tig, ref tig start, {mismatches} ) }.
     if abut {
-        let mut to_delete: Vec<bool> = vec![false; annx.len()];
-        let mut aligns = vec![0; refs.len()];
-        for i in 0..annx.len() {
-            aligns[annx[i].ref_id as usize] += 1;
-        }
-        for i1 in 0..annx.len() {
-            let t = annx[i1].ref_id as usize;
-            if rheaders[t].contains("segment") {
-                continue;
-            }
-            if !rheaders[t].contains("segment") && !refdata.is_u(t) && !refdata.is_v(t) {
-                continue;
-            }
-            let off1 = annx[i1].ref_start - annx[i1].tig_start;
-            for i2 in 0..annx.len() {
-                if to_delete[i1] || to_delete[i2] {
-                    continue;
-                }
-                if i2 == i1 || annx[i2].ref_id as usize != t {
-                    continue;
-                }
-                let (l1, mut l2) = (annx[i1].tig_start as usize, annx[i2].tig_start as usize);
-                if l1 >= l2 {
-                    continue;
-                }
-                let (mut len1, mut len2) =
-                    (annx[i1].match_len as usize, annx[i2].match_len as usize);
-                if l1 + len1 > l2 + len2 {
-                    continue;
-                }
-                let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
-                let (start1, stop1) = (l1, (l2 + len2)); // extent on contig
-                let (start2, stop2) = (p1 as usize, (p2 as usize + len2)); // extent on ref
-                if !(start1 < stop1 && start2 < stop2) {
-                    continue;
-                }
-                let tot1 = stop1 - start1;
-                let tot2 = stop2 - start2;
-                let off2 = annx[i2].ref_start - annx[i2].tig_start;
-
-                // Case where there is no indel.
-
-                if tot1 == tot2 && aligns[t] == 2 {
-                    let mut mis = annx[i1].mismatches.clone();
-                    #[allow(clippy::needless_range_loop)]
-                    for p in l1 + len1..l2 {
-                        if b_seq[p] != refs[t].get((p as i32 + off1) as usize) {
-                            mis.push(p as i32);
-                        }
-                    }
-                    mis.append(&mut annx[i2].mismatches.clone());
-                    annx[i1].match_len = tot1 as i32;
-                    annx[i1].mismatches = mis;
-                    to_delete[i2] = true;
-                    continue;
-                }
-
-                // Case of insertion.
-
-                if tot1 > tot2 && aligns[t] == 2 {
-                    let start1 = start1 as i32;
-                    let stop1 = stop1 as i32;
-                    let ins = (tot1 - tot2) as i32;
-                    let mut best_ipos = 0;
-                    let mut best_mis = 1000000;
-                    let mut best_mis1 = Vec::<i32>::new();
-                    let mut best_mis2 = Vec::<i32>::new();
-                    for ipos in start1..=stop1 - ins {
-                        let mut mis1 = Vec::<i32>::new();
-                        let mut mis2 = Vec::<i32>::new();
-                        for p in start1..ipos {
-                            if b_seq[p as usize] != refs[t].get((p + off1) as usize) {
-                                mis1.push(p);
-                            }
-                        }
-                        for p in ipos + ins..stop1 {
-                            if b_seq[p as usize] != refs[t].get((p + off2) as usize) {
-                                mis2.push(p);
-                            }
-                        }
-                        let mis = (mis1.len() + mis2.len()) as i32;
-                        if mis < best_mis {
-                            best_mis = mis;
-                            best_mis1 = mis1;
-                            best_mis2 = mis2;
-                            best_ipos = ipos;
-                        }
-                    }
-                    annx[i1].match_len = best_ipos - start1;
-                    annx[i1].mismatches = best_mis1;
-                    annx[i2].match_len = stop1 - best_ipos - ins;
-                    annx[i2].tig_start = best_ipos + ins;
-                    annx[i2].ref_start = best_ipos + ins + off2;
-                    annx[i2].mismatches = best_mis2;
-                    continue;
-                }
-
-                // Case of deletion.
-
-                if tot1 < tot2 && aligns[t] == 2 {
-                    let start2 = start2 as i32;
-                    let stop2 = stop2 as i32;
-                    let del = (tot2 - tot1) as i32;
-                    let mut best_dpos = 0;
-                    let mut best_mis = 1000000;
-                    let mut best_mis1 = Vec::<i32>::new();
-                    let mut best_mis2 = Vec::<i32>::new();
-                    for dpos in start2..=stop2 - del {
-                        let mut mis1 = Vec::<i32>::new();
-                        let mut mis2 = Vec::<i32>::new();
-                        for q in start2..dpos {
-                            let p = q - off1;
-                            if b_seq[p as usize] != refs[t].get(q as usize) {
-                                mis1.push(p);
-                            }
-                        }
-                        for q in dpos + del..stop2 {
-                            let p = q - off2;
-                            if b_seq[p as usize] != refs[t].get(q as usize) {
-                                mis2.push(p);
-                            }
-                        }
-                        let mis = (mis1.len() + mis2.len()) as i32;
-                        if mis < best_mis {
-                            best_mis = mis;
-                            best_mis1 = mis1;
-                            best_mis2 = mis2;
-                            best_dpos = dpos;
-                        }
-                    }
-                    annx[i1].match_len = best_dpos - start2;
-                    annx[i1].mismatches = best_mis1;
-                    annx[i2].tig_start = best_dpos + del - off2;
-                    annx[i2].match_len = stop2 - best_dpos - del;
-                    annx[i2].ref_start = best_dpos + del;
-                    annx[i2].mismatches = best_mis2;
-                    continue;
-                }
-
-                // It's not clear why the rest of this code helps, but it does.
-
-                let p1 = p1 as usize;
-                let mut p2 = p2 as usize;
-
-                let b1 = b.slice(start1, stop1).to_owned();
-                let b2 = refs[t].slice(start2, stop2).to_owned();
-
-                let a = affine_align(&b1, &b2);
-                let mut del = Vec::<(usize, usize, usize)>::new();
-                let mut ins = Vec::<(usize, usize, usize)>::new();
-                let ops = &a.operations;
-                let mut i = 0;
-                let (mut z1, mut z2) = (l1 + a.xstart, p1 + a.ystart);
-                if a.ystart > 0 {
-                    continue;
-                }
-                let mut matches = 0;
-                while i < ops.len() {
-                    let mut opcount = 1;
-                    while i + opcount < ops.len()
-                        && (ops[i] == Del || ops[i] == Ins)
-                        && ops[i] == ops[i + opcount]
-                    {
-                        opcount += 1;
-                    }
-                    match ops[i] {
-                        Match => {
-                            matches += 1;
-                            z1 += 1;
-                            z2 += 1;
-                        }
-                        Subst => {
-                            z1 += 1;
-                            z2 += 1;
-                        }
-                        Del => {
-                            del.push((z1, z2, opcount));
-                            if verbose {
-                                fwriteln!(log, "\nsee del[{}]", opcount);
-                            }
-                            z2 += opcount;
-                        }
-                        Ins => {
-                            ins.push((z1, z2, opcount));
-                            if verbose {
-                                fwriteln!(log, "\nsee ins[{}]", opcount);
-                            }
-                            z1 += opcount;
-                        }
-                        Xclip(d) => {
-                            z1 += d;
-                        }
-                        Yclip(d) => {
-                            z2 += d;
-                        }
-                    }
-                    i += opcount;
-                }
-                if verbose {
-                    fwriteln!(log, "\ntrying to merge\n{}\n{}", rheaders[t], rheaders[t]);
-                    fwriteln!(log, "|del| = {}, |ins| = {}", del.len(), ins.len());
-                }
-                if del.solo() && ins.is_empty() {
-                    let (l, p, n) = (del[0].0, del[0].1, del[0].2);
-                    if n != (p2 + len2 - p1) - (l2 + len2 - l1) {
-                        continue;
-                    }
-                    len1 = l - l1;
-                    if len1 >= matches {
-                        continue;
-                    }
-                    len2 = l2 + len2 - l1 - len1;
-                    l2 = l;
-                    p2 = p + n;
-                }
-                if del.is_empty() && ins.solo() {
-                    let (l, p, n) = (ins[0].0, ins[0].1, ins[0].2);
-                    // ◼ This is buggy.  It fails if overflow detection is on.
-                    if n + l1 + p2 != l2 + p1 {
-                        continue;
-                    }
-                    len1 = l - l1;
-                    if len1 >= matches {
-                        continue;
-                    }
-                    len2 = p2 + len2 - p1 - len1;
-                    l2 = l + n;
-                    p2 = p;
-                }
-                if del.len() + ins.len() == 0 {
-                    to_delete[i2] = true;
-                    len1 = (annx[i2].tig_start + annx[i2].match_len - annx[i1].tig_start) as usize;
-                    annx[i1].match_len = len1 as i32;
-                    annx[i1].mismatches.truncate(0);
-                    for j in 0..len1 {
-                        if b_seq[l1 + j] != refs[t].get(p1 + j) {
-                            annx[i1].mismatches.push((l1 + j) as i32);
-                        }
-                    }
-                }
-                if del.len() + ins.len() == 1 {
-                    annx[i2].tig_start = l2 as i32;
-                    annx[i1].match_len = len1 as i32;
-                    annx[i2].match_len = len2 as i32;
-                    annx[i2].ref_start = p2 as i32;
-                    annx[i1].mismatches.truncate(0);
-                    annx[i2].mismatches.truncate(0);
-                    for j in 0..len1 {
-                        if b_seq[l1 + j] != refs[t].get(p1 + j) {
-                            annx[i1].mismatches.push((l1 + j) as i32);
-                        }
-                    }
-                    for j in 0..len2 {
-                        if b_seq[l2 + j] != refs[t].get(p2 + j) {
-                            annx[i2].mismatches.push((l2 + j) as i32);
-                        }
-                    }
-                }
-            }
-        }
-        erase_if(&mut annx, &to_delete);
+        find_indels_in_v_or_utr(&b_seq, b, refdata, verbose, log, &mut annx);
     }
-
-    // Log alignments.
-
     if verbose {
         fwriteln!(log, "\nALIGNMENTS THREE\n");
         for a in &annx {
@@ -2645,6 +2374,288 @@ fn remove_inferior_matches(
             i2 = j2;
         }
         i1 = j1;
+    }
+    erase_if(annx, &to_delete);
+}
+
+/// If there are two alignments to a particular V region, or a UTR, try to edit
+/// them so that their start/stop position abut perfect on one side (either the
+/// contig or the reference), and do not overlap on the other side, thus
+/// exhibiting an indel.
+///
+/// The approach to answering this seems very inefficient.
+/// When this was moved here, some UTR alignments disappeared.
+fn find_indels_in_v_or_utr(
+    b_seq: &[u8],
+    b: &DnaString,
+    refdata: &RefData,
+    verbose: bool,
+    log: &mut Vec<u8>,
+    annx: &mut Vec<PreAnnotation>,
+) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    let mut aligns = vec![0; refdata.refs.len()];
+    for i in 0..annx.len() {
+        aligns[annx[i].ref_id as usize] += 1;
+    }
+    for i1 in 0..annx.len() {
+        let t = annx[i1].ref_id as usize;
+        if refdata.rheaders[t].contains("segment") {
+            continue;
+        }
+        if !refdata.rheaders[t].contains("segment") && !refdata.is_u(t) && !refdata.is_v(t) {
+            continue;
+        }
+        let off1 = annx[i1].ref_start - annx[i1].tig_start;
+        for i2 in 0..annx.len() {
+            if to_delete[i1] || to_delete[i2] {
+                continue;
+            }
+            if i2 == i1 || annx[i2].ref_id as usize != t {
+                continue;
+            }
+            let (l1, mut l2) = (annx[i1].tig_start as usize, annx[i2].tig_start as usize);
+            if l1 >= l2 {
+                continue;
+            }
+            let (mut len1, mut len2) = (annx[i1].match_len as usize, annx[i2].match_len as usize);
+            if l1 + len1 > l2 + len2 {
+                continue;
+            }
+            let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
+            let (start1, stop1) = (l1, (l2 + len2)); // extent on contig
+            let (start2, stop2) = (p1 as usize, (p2 as usize + len2)); // extent on ref
+            if !(start1 < stop1 && start2 < stop2) {
+                continue;
+            }
+            let tot1 = stop1 - start1;
+            let tot2 = stop2 - start2;
+            let off2 = annx[i2].ref_start - annx[i2].tig_start;
+
+            // Case where there is no indel.
+
+            if tot1 == tot2 && aligns[t] == 2 {
+                let mut mis = annx[i1].mismatches.clone();
+                #[allow(clippy::needless_range_loop)]
+                for p in l1 + len1..l2 {
+                    if b_seq[p] != refdata.refs[t].get((p as i32 + off1) as usize) {
+                        mis.push(p as i32);
+                    }
+                }
+                mis.append(&mut annx[i2].mismatches.clone());
+                annx[i1].match_len = tot1 as i32;
+                annx[i1].mismatches = mis;
+                to_delete[i2] = true;
+                continue;
+            }
+
+            // Case of insertion.
+
+            if tot1 > tot2 && aligns[t] == 2 {
+                let start1 = start1 as i32;
+                let stop1 = stop1 as i32;
+                let ins = (tot1 - tot2) as i32;
+                let mut best_ipos = 0;
+                let mut best_mis = 1000000;
+                let mut best_mis1 = Vec::<i32>::new();
+                let mut best_mis2 = Vec::<i32>::new();
+                for ipos in start1..=stop1 - ins {
+                    let mut mis1 = Vec::<i32>::new();
+                    let mut mis2 = Vec::<i32>::new();
+                    for p in start1..ipos {
+                        if b_seq[p as usize] != refdata.refs[t].get((p + off1) as usize) {
+                            mis1.push(p);
+                        }
+                    }
+                    for p in ipos + ins..stop1 {
+                        if b_seq[p as usize] != refdata.refs[t].get((p + off2) as usize) {
+                            mis2.push(p);
+                        }
+                    }
+                    let mis = (mis1.len() + mis2.len()) as i32;
+                    if mis < best_mis {
+                        best_mis = mis;
+                        best_mis1 = mis1;
+                        best_mis2 = mis2;
+                        best_ipos = ipos;
+                    }
+                }
+                annx[i1].match_len = best_ipos - start1;
+                annx[i1].mismatches = best_mis1;
+                annx[i2].match_len = stop1 - best_ipos - ins;
+                annx[i2].tig_start = best_ipos + ins;
+                annx[i2].ref_start = best_ipos + ins + off2;
+                annx[i2].mismatches = best_mis2;
+                continue;
+            }
+
+            // Case of deletion.
+
+            if tot1 < tot2 && aligns[t] == 2 {
+                let start2 = start2 as i32;
+                let stop2 = stop2 as i32;
+                let del = (tot2 - tot1) as i32;
+                let mut best_dpos = 0;
+                let mut best_mis = 1000000;
+                let mut best_mis1 = Vec::<i32>::new();
+                let mut best_mis2 = Vec::<i32>::new();
+                for dpos in start2..=stop2 - del {
+                    let mut mis1 = Vec::<i32>::new();
+                    let mut mis2 = Vec::<i32>::new();
+                    for q in start2..dpos {
+                        let p = q - off1;
+                        if b_seq[p as usize] != refdata.refs[t].get(q as usize) {
+                            mis1.push(p);
+                        }
+                    }
+                    for q in dpos + del..stop2 {
+                        let p = q - off2;
+                        if b_seq[p as usize] != refdata.refs[t].get(q as usize) {
+                            mis2.push(p);
+                        }
+                    }
+                    let mis = (mis1.len() + mis2.len()) as i32;
+                    if mis < best_mis {
+                        best_mis = mis;
+                        best_mis1 = mis1;
+                        best_mis2 = mis2;
+                        best_dpos = dpos;
+                    }
+                }
+                annx[i1].match_len = best_dpos - start2;
+                annx[i1].mismatches = best_mis1;
+                annx[i2].tig_start = best_dpos + del - off2;
+                annx[i2].match_len = stop2 - best_dpos - del;
+                annx[i2].ref_start = best_dpos + del;
+                annx[i2].mismatches = best_mis2;
+                continue;
+            }
+
+            // It's not clear why the rest of this code helps, but it does.
+
+            let p1 = p1 as usize;
+            let mut p2 = p2 as usize;
+
+            let b1 = b.slice(start1, stop1).to_owned();
+            let b2 = refdata.refs[t].slice(start2, stop2).to_owned();
+
+            let a = affine_align(&b1, &b2);
+            let mut del = Vec::<(usize, usize, usize)>::new();
+            let mut ins = Vec::<(usize, usize, usize)>::new();
+            let ops = &a.operations;
+            let mut i = 0;
+            let (mut z1, mut z2) = (l1 + a.xstart, p1 + a.ystart);
+            if a.ystart > 0 {
+                continue;
+            }
+            let mut matches = 0;
+            while i < ops.len() {
+                let mut opcount = 1;
+                while i + opcount < ops.len()
+                    && (ops[i] == Del || ops[i] == Ins)
+                    && ops[i] == ops[i + opcount]
+                {
+                    opcount += 1;
+                }
+                match ops[i] {
+                    Match => {
+                        matches += 1;
+                        z1 += 1;
+                        z2 += 1;
+                    }
+                    Subst => {
+                        z1 += 1;
+                        z2 += 1;
+                    }
+                    Del => {
+                        del.push((z1, z2, opcount));
+                        if verbose {
+                            fwriteln!(log, "\nsee del[{}]", opcount);
+                        }
+                        z2 += opcount;
+                    }
+                    Ins => {
+                        ins.push((z1, z2, opcount));
+                        if verbose {
+                            fwriteln!(log, "\nsee ins[{}]", opcount);
+                        }
+                        z1 += opcount;
+                    }
+                    Xclip(d) => {
+                        z1 += d;
+                    }
+                    Yclip(d) => {
+                        z2 += d;
+                    }
+                }
+                i += opcount;
+            }
+            if verbose {
+                fwriteln!(
+                    log,
+                    "\ntrying to merge\n{}\n{}",
+                    refdata.rheaders[t],
+                    refdata.rheaders[t]
+                );
+                fwriteln!(log, "|del| = {}, |ins| = {}", del.len(), ins.len());
+            }
+            if del.solo() && ins.is_empty() {
+                let (l, p, n) = (del[0].0, del[0].1, del[0].2);
+                if n != (p2 + len2 - p1) - (l2 + len2 - l1) {
+                    continue;
+                }
+                len1 = l - l1;
+                if len1 >= matches {
+                    continue;
+                }
+                len2 = l2 + len2 - l1 - len1;
+                l2 = l;
+                p2 = p + n;
+            }
+            if del.is_empty() && ins.solo() {
+                let (l, p, n) = (ins[0].0, ins[0].1, ins[0].2);
+                // ◼ This is buggy.  It fails if overflow detection is on.
+                if n + l1 + p2 != l2 + p1 {
+                    continue;
+                }
+                len1 = l - l1;
+                if len1 >= matches {
+                    continue;
+                }
+                len2 = p2 + len2 - p1 - len1;
+                l2 = l + n;
+                p2 = p;
+            }
+            if del.len() + ins.len() == 0 {
+                to_delete[i2] = true;
+                len1 = (annx[i2].tig_start + annx[i2].match_len - annx[i1].tig_start) as usize;
+                annx[i1].match_len = len1 as i32;
+                annx[i1].mismatches.truncate(0);
+                for j in 0..len1 {
+                    if b_seq[l1 + j] != refdata.refs[t].get(p1 + j) {
+                        annx[i1].mismatches.push((l1 + j) as i32);
+                    }
+                }
+            }
+            if del.len() + ins.len() == 1 {
+                annx[i2].tig_start = l2 as i32;
+                annx[i1].match_len = len1 as i32;
+                annx[i2].match_len = len2 as i32;
+                annx[i2].ref_start = p2 as i32;
+                annx[i1].mismatches.truncate(0);
+                annx[i2].mismatches.truncate(0);
+                for j in 0..len1 {
+                    if b_seq[l1 + j] != refdata.refs[t].get(p1 + j) {
+                        annx[i1].mismatches.push((l1 + j) as i32);
+                    }
+                }
+                for j in 0..len2 {
+                    if b_seq[l2 + j] != refdata.refs[t].get(p2 + j) {
+                        annx[i2].mismatches.push((l2 + j) as i32);
+                    }
+                }
+            }
+        }
     }
     erase_if(annx, &to_delete);
 }
