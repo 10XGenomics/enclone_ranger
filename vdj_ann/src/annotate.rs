@@ -476,88 +476,7 @@ pub fn annotate_seq_core(
 
     delete_d_if_chain_doesnt_match_v(refdata, &mut annx);
 
-    // For IGH and TRB (and TRD in Gamma/delta mode), if there is a V and J, but no D, look for a D that matches nearly perfectly
-    // between them.  We consider only alignments having no indels.  The following conditions
-    // are required:
-    // 1. At most three mismatches.
-    // 2. Excluding genes having the same name:
-    //    (a) all others have more mismatches
-    //    (b) all others have no more matches.
-
-    let (mut v, mut d, mut j) = (false, false, false);
-    let (mut vstop, mut jstart) = (0, 0);
-    const VJTRIM: i32 = 10;
-    let mut v_rtype = -2_i32;
-    for ann in &annx {
-        let t = ann.ref_id as usize;
-        if !rheaders[t].contains("segment") {
-            let rt = refdata.rtype[t];
-            // IGH or TRB (or TRD in Gamma/delta mode)
-            if rt == 0 || rt == 4 || rt == 5 {
-                if refdata.segtype[t] == "V" {
-                    v = true;
-                    vstop = ann.tig_start + ann.match_len;
-                    v_rtype = rt;
-                } else if refdata.segtype[t] == "D" {
-                    d = true;
-                } else if refdata.segtype[t] == "J" {
-                    j = true;
-                    jstart = ann.tig_start;
-                }
-            }
-        }
-    }
-    if v && !d && j {
-        let mut results = Vec::<(usize, usize, usize, String, usize, Vec<i32>)>::new();
-        let start = max(0, vstop - VJTRIM);
-        let stop = min(b.len() as i32, jstart + VJTRIM);
-        const MAX_MISMATCHES: usize = 3;
-        for t in &refdata.ds {
-            if refdata.rtype[*t] == v_rtype {
-                let r = &refdata.refs[*t];
-                for m in start..=stop - (r.len() as i32) {
-                    let mut mismatches = Vec::<i32>::new();
-                    for x in 0..r.len() {
-                        if r.get(x) != b_seq[(m + x as i32) as usize] {
-                            mismatches.push(x as i32);
-                        }
-                    }
-                    let matches = r.len() - mismatches.len();
-                    let mut gene = refdata.name[*t].clone();
-                    if gene.contains('*') {
-                        gene = gene.before("*").to_string();
-                    }
-                    results.push((mismatches.len(), matches, *t, gene, m as usize, mismatches));
-                }
-            }
-        }
-        results.sort();
-        if !results.is_empty() && results[0].0 <= MAX_MISMATCHES {
-            let mut to_delete = vec![false; results.len()];
-            for i in 1..results.len() {
-                if results[i].3 == results[0].3 {
-                    to_delete[i] = true;
-                }
-            }
-            erase_if(&mut results, &to_delete);
-            if results.solo() || results[0].0 < results[1].0 {
-                let mut best_matches = 0;
-                for result in &results {
-                    best_matches = max(best_matches, result.1);
-                }
-                if results[0].1 == best_matches {
-                    annx.push(PreAnnotation {
-                        tig_start: results[0].4 as i32,
-                        match_len: (results[0].0 + results[0].1) as i32,
-                        ref_id: results[0].2 as i32,
-                        ref_start: 0,
-                        mismatches: results[0].5.clone(),
-                    });
-                    annx.sort();
-                }
-            }
-        }
-    }
+    annotate_d_between_v_j(&b_seq, b, refdata, &mut annx);
 
     // Log alignments.
 
@@ -2688,6 +2607,95 @@ fn delete_d_if_chain_doesnt_match_v(refdata: &RefData, annx: &mut Vec<PreAnnotat
         }
     }
     erase_if(annx, &to_delete);
+}
+
+/// For IGH and TRB (and TRD in Gamma/delta mode), if there is a V and J, but no D, look for a D that matches nearly perfectly
+/// between them.  We consider only alignments having no indels.  The following conditions
+/// are required:
+/// 1. At most three mismatches.
+/// 2. Excluding genes having the same name:
+///    (a) all others have more mismatches
+///    (b) all others have no more matches.
+fn annotate_d_between_v_j(
+    b_seq: &[u8],
+    b: &DnaString,
+    refdata: &RefData,
+    annx: &mut Vec<PreAnnotation>,
+) {
+    let (mut v, mut d, mut j) = (false, false, false);
+    let (mut vstop, mut jstart) = (0, 0);
+    const VJTRIM: i32 = 10;
+    let mut v_rtype = -2_i32;
+    for ann in annx.iter() {
+        let t = ann.ref_id as usize;
+        if !refdata.rheaders[t].contains("segment") {
+            let rt = refdata.rtype[t];
+            // IGH or TRB (or TRD in Gamma/delta mode)
+            if rt == 0 || rt == 4 || rt == 5 {
+                if refdata.segtype[t] == "V" {
+                    v = true;
+                    vstop = ann.tig_start + ann.match_len;
+                    v_rtype = rt;
+                } else if refdata.segtype[t] == "D" {
+                    d = true;
+                } else if refdata.segtype[t] == "J" {
+                    j = true;
+                    jstart = ann.tig_start;
+                }
+            }
+        }
+    }
+    if v && !d && j {
+        let mut results = Vec::<(usize, usize, usize, String, usize, Vec<i32>)>::new();
+        let start = max(0, vstop - VJTRIM);
+        let stop = min(b.len() as i32, jstart + VJTRIM);
+        const MAX_MISMATCHES: usize = 3;
+        for t in &refdata.ds {
+            if refdata.rtype[*t] == v_rtype {
+                let r = &refdata.refs[*t];
+                for m in start..=stop - (r.len() as i32) {
+                    let mut mismatches = Vec::<i32>::new();
+                    for x in 0..r.len() {
+                        if r.get(x) != b_seq[(m + x as i32) as usize] {
+                            mismatches.push(x as i32);
+                        }
+                    }
+                    let matches = r.len() - mismatches.len();
+                    let mut gene = refdata.name[*t].clone();
+                    if gene.contains('*') {
+                        gene = gene.before("*").to_string();
+                    }
+                    results.push((mismatches.len(), matches, *t, gene, m as usize, mismatches));
+                }
+            }
+        }
+        results.sort();
+        if !results.is_empty() && results[0].0 <= MAX_MISMATCHES {
+            let mut to_delete = vec![false; results.len()];
+            for i in 1..results.len() {
+                if results[i].3 == results[0].3 {
+                    to_delete[i] = true;
+                }
+            }
+            erase_if(&mut results, &to_delete);
+            if results.solo() || results[0].0 < results[1].0 {
+                let mut best_matches = 0;
+                for result in &results {
+                    best_matches = max(best_matches, result.1);
+                }
+                if results[0].1 == best_matches {
+                    annx.push(PreAnnotation {
+                        tig_start: results[0].4 as i32,
+                        match_len: (results[0].0 + results[0].1) as i32,
+                        ref_id: results[0].2 as i32,
+                        ref_start: 0,
+                        mismatches: results[0].5.clone(),
+                    });
+                    annx.sort();
+                }
+            }
+        }
+    }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
