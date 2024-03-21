@@ -212,7 +212,7 @@ fn print_alignx(log: &mut Vec<u8>, a: &PreAnnotation, refdata: &RefData) {
 fn report_semis(
     verbose: bool,
     title: &str,
-    semi: &[SemiPerfectMatch],
+    semi: &[Alignment],
     b_seq: &[u8],
     refs: &[DnaString],
     log: &mut Vec<u8>,
@@ -260,23 +260,7 @@ fn report_semis(
 // explicit names, and use those. This forces the caller to be explicit about
 // which sort order they're using.
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct PerfectMatch {
-    pub ref_id: i32,
-    /// ref_start - tig_start
-    pub offset: i32,
-    pub tig_start: i32,
-    // len
-    pub len: i32,
-}
-
-// TODO: combine this and the PreAnnotation type above?
-// This is tricky, though, as both types derive sorting, and the order of fields
-// implies different sort ordering. Probably the best way to address this is to
-// remove the derivation of eq/ord, provide key-generating methods with
-// explicit names, and use those. This forces the caller to be explicit about
-// which sort order they're using.
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
-struct SemiPerfectMatch {
+struct Alignment {
     pub ref_id: i32,
     /// off = pos on ref - pos on b
     pub offset: i32,
@@ -543,8 +527,8 @@ fn find_perfect_matches_initial(
     refdata: &RefData,
     b_seq: &[u8],
     allow_weak: bool,
-) -> Vec<PerfectMatch> {
-    let mut perf = Vec::<PerfectMatch>::new();
+) -> Vec<Alignment> {
+    let mut perf = Vec::<Alignment>::new();
     for l in 0..(b.len() - K + 1) {
         let x: Kmer12 = b.get_kmer(l);
         let low = lower_bound1_3(&refdata.rkmers_plus, &x) as usize;
@@ -593,11 +577,12 @@ fn find_perfect_matches_initial(
                 }
             }
             if ok {
-                perf.push(PerfectMatch {
+                perf.push(Alignment {
                     ref_id: t as i32,
                     offset: p as i32 - l as i32,
                     tig_start: l as i32,
                     len: len as i32,
+                    mismatches: Vec::new(),
                 });
             }
         }
@@ -611,8 +596,8 @@ fn find_perfect_matches_initial(
 fn find_additional_perfect_matches(
     b_seq: &[u8],
     refs: &[DnaString],
-    perf: &[PerfectMatch],
-) -> Vec<PerfectMatch> {
+    perf: &[Alignment],
+) -> Vec<Alignment> {
     let mut offsets = Vec::<Offset>::new();
     for p in perf {
         offsets.push(Offset {
@@ -671,11 +656,12 @@ fn find_additional_perfect_matches(
                         }
                     }
                     if !known {
-                        new_matches.push(PerfectMatch {
+                        new_matches.push(Alignment {
                             ref_id: t,
                             offset: p - l,
                             tig_start: l,
                             len,
+                            mismatches: Vec::new(),
                         });
                     }
                 }
@@ -688,14 +674,11 @@ fn find_additional_perfect_matches(
 }
 
 /// Merge perfect matches.  We track the positions on b of mismatches.
-fn merge_perfect_matches(
-    b_seq: &[u8],
-    refs: &[DnaString],
-    perf: Vec<PerfectMatch>,
-) -> Vec<SemiPerfectMatch> {
-    let mut semi = Vec::<SemiPerfectMatch>::new();
+fn merge_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: Vec<Alignment>) -> Vec<Alignment> {
+    let mut semi = Vec::<Alignment>::new();
     let mut i = 0;
     while i < perf.len() {
+        assert!(perf[i].mismatches.is_empty());
         let j = next_diff_any(&perf, i, |a, b| {
             a.ref_id == b.ref_id && a.offset == b.offset
         });
@@ -733,7 +716,7 @@ fn merge_perfect_matches(
                 m.append(&mut mis[k2 - i].clone());
                 k2 += 1;
             }
-            semi.push(SemiPerfectMatch {
+            semi.push(Alignment {
                 ref_id: t,
                 offset: off,
                 tig_start: perf[k1].tig_start,
@@ -748,7 +731,7 @@ fn merge_perfect_matches(
 }
 
 /// Extend matches backwards and then forwards.
-fn extend_matches(b_seq: &[u8], refs: &[DnaString], semi: &mut [SemiPerfectMatch]) {
+fn extend_matches(b_seq: &[u8], refs: &[DnaString], semi: &mut [Alignment]) {
     for s in &mut *semi {
         let t = s.ref_id;
         let off = s.offset;
@@ -822,11 +805,7 @@ fn extend_matches(b_seq: &[u8], refs: &[DnaString], semi: &mut [SemiPerfectMatch
 /// we're not sure if it arose from supported mouse strains or if the V segment might have
 /// been corrupted during the growth of the cell line.  The A20 heavy chain V differs by 20%
 /// from the reference.
-fn annotate_40mers_for_mouse_a20(
-    b_seq: &[u8],
-    refs: &[DnaString],
-    semi: &mut Vec<SemiPerfectMatch>,
-) {
+fn annotate_40mers_for_mouse_a20(b_seq: &[u8], refs: &[DnaString], semi: &mut Vec<Alignment>) {
     let mut i = 0;
     while i < semi.len() {
         let mut j = i + 1;
@@ -861,7 +840,7 @@ fn annotate_40mers_for_mouse_a20(
                             x.push(l + m);
                         }
                     }
-                    semi.push(SemiPerfectMatch {
+                    semi.push(Alignment {
                         ref_id: t,
                         offset: off,
                         tig_start: p - off,
@@ -880,11 +859,7 @@ fn annotate_40mers_for_mouse_a20(
 /// Allow extension over some mismatches on right if it gets us to the end on
 /// the reference.  Ditto for left.
 /// ◼ Not documented in main function docstring.
-fn extend_matches_to_end_of_reference(
-    b_seq: &[u8],
-    refs: &[DnaString],
-    semi: &mut [SemiPerfectMatch],
-) {
+fn extend_matches_to_end_of_reference(b_seq: &[u8], refs: &[DnaString], semi: &mut [Alignment]) {
     let max_mis = 5;
     for s in &mut *semi {
         let t = s.ref_id;
@@ -935,7 +910,7 @@ fn extend_matches_to_end_of_reference(
 ///
 /// This is pretty crappy.  What we should do instead is arrange the initial
 /// extension between match blocks so it can be iterated.
-fn extend_between_match_blocks(b_seq: &[u8], refs: &[DnaString], semi: &mut Vec<SemiPerfectMatch>) {
+fn extend_between_match_blocks(b_seq: &[u8], refs: &[DnaString], semi: &mut Vec<Alignment>) {
     let mut to_delete = vec![false; semi.len()];
     for i1 in 0..semi.len() {
         let t1 = semi[i1].ref_id;
@@ -978,7 +953,7 @@ fn extend_between_match_blocks(b_seq: &[u8], refs: &[DnaString], semi: &mut Vec<
 }
 
 /// Merge overlapping alignments.
-fn merge_overlapping_alignments(semi: &mut Vec<SemiPerfectMatch>) {
+fn merge_overlapping_alignments(semi: &mut Vec<Alignment>) {
     let mut to_delete = vec![false; semi.len()];
     let mut i = 0;
     while i < semi.len() {
@@ -1020,7 +995,7 @@ fn merge_overlapping_alignments(semi: &mut Vec<SemiPerfectMatch>) {
 /// If a V gene aligns starting at 0, and goes at least 60% of the way to the end, and there
 /// is only one alignment of the V gene, extend it to the end.
 /// (Only one requirement ameliorated.)
-fn extend_long_v_gene_alignments(b_seq: &[u8], refdata: &RefData, semi: &mut [SemiPerfectMatch]) {
+fn extend_long_v_gene_alignments(b_seq: &[u8], refdata: &RefData, semi: &mut [Alignment]) {
     let mut i = 0;
     while i < semi.len() {
         let mut j = i + 1;
@@ -1073,7 +1048,7 @@ fn extend_long_v_gene_alignments(b_seq: &[u8], refdata: &RefData, semi: &mut [Se
 /// Delete some subsumed matches.
 // FIXME: collapse this and remove_subsumed_alignments below once the match
 // types are collapsed. They have slightly different behavior.
-fn remove_subsumed_matches(semi: &mut Vec<SemiPerfectMatch>) {
+fn remove_subsumed_matches(semi: &mut Vec<Alignment>) {
     let mut to_delete = vec![false; semi.len()];
     let mut i = 0;
     while i < semi.len() {
