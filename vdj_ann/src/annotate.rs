@@ -254,6 +254,11 @@ fn report_semis(
 }
 
 // TODO: combine this and the PreAnnotation type above?
+// This is tricky, though, as both types derive sorting, and the order of fields
+// implies different sort ordering. Probably the best way to address this is to
+// remove the derivation of eq/ord, provide key-generating methods with
+// explicit names, and use those. This forces the caller to be explicit about
+// which sort order they're using.
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 struct PerfectMatch {
     pub ref_id: i32,
@@ -264,6 +269,12 @@ struct PerfectMatch {
     pub len: i32,
 }
 
+// TODO: combine this and the PreAnnotation type above?
+// This is tricky, though, as both types derive sorting, and the order of fields
+// implies different sort ordering. Probably the best way to address this is to
+// remove the derivation of eq/ord, provide key-generating methods with
+// explicit names, and use those. This forces the caller to be explicit about
+// which sort order they're using.
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 struct SemiPerfectMatch {
     pub ref_id: i32,
