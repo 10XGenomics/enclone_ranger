@@ -389,60 +389,7 @@ pub fn annotate_seq_core(
         log,
     );
 
-    // If a V gene aligns starting at 0, and goes at least 60% of the way to the end, and there
-    // is only one alignment of the V gene, extend it to the end.
-    // (Only one requirement ameliorated.)
-
-    let mut i = 0;
-    while i < semi.len() {
-        let mut j = i + 1;
-        while j < semi.len() {
-            if semi[j].ref_id != semi[i].ref_id {
-                break;
-            }
-            j += 1;
-        }
-        let mut k = i;
-        let mut ok = false;
-        if j - i == 1 {
-            ok = true;
-        } else if j - i == 2 {
-            ok = true;
-            if semi[i].tig_start < semi[i + 1].tig_start {
-                k = i + 1;
-            }
-        }
-        if ok {
-            let offset = semi[k].offset;
-            let ref_start = semi[k].offset + semi[k].tig_start;
-            let tig_start = semi[k].tig_start;
-            let t = semi[k].ref_id as usize;
-            if !rheaders[t].contains("segment") && refdata.is_v(t) {
-                let r = &refs[t];
-                let len = semi[k].len;
-                if ref_start + len < r.len() as i32
-                    && (ref_start + len) as f64 / r.len() as f64 >= 0.60
-                    && len + tig_start < b_seq.len() as i32
-                {
-                    let start = ref_start + len;
-                    let stop = min(r.len() as i32, b_seq.len() as i32 + offset);
-                    for m in start..stop {
-                        if b_seq[(m - offset) as usize] != r.get(m as usize) {
-                            semi[k].mismatches.push(m - offset);
-                        }
-                    }
-                    semi[k].len += stop - start;
-                }
-            }
-        }
-        i = j;
-    }
-
-    // Make sure that mismatches are unique sorted.
-
-    for s in &mut semi {
-        unique_sort(&mut s.mismatches);
-    }
+    extend_long_v_gene_alignments(&b_seq, refdata, &mut semi);
     report_semis(
         verbose,
         "SEMI ALIGNMENTS AFTER SECOND EXTENSION",
@@ -2629,6 +2576,59 @@ fn merge_overlapping_alignments(semi: &mut Vec<SemiPerfectMatch>) {
         i = j;
     }
     erase_if(semi, &to_delete);
+}
+
+/// If a V gene aligns starting at 0, and goes at least 60% of the way to the end, and there
+/// is only one alignment of the V gene, extend it to the end.
+/// (Only one requirement ameliorated.)
+fn extend_long_v_gene_alignments(b_seq: &[u8], refdata: &RefData, semi: &mut [SemiPerfectMatch]) {
+    let mut i = 0;
+    while i < semi.len() {
+        let mut j = i + 1;
+        while j < semi.len() {
+            if semi[j].ref_id != semi[i].ref_id {
+                break;
+            }
+            j += 1;
+        }
+        let mut k = i;
+        let mut ok = false;
+        if j - i == 1 {
+            ok = true;
+        } else if j - i == 2 {
+            ok = true;
+            if semi[i].tig_start < semi[i + 1].tig_start {
+                k = i + 1;
+            }
+        }
+        if ok {
+            let offset = semi[k].offset;
+            let ref_start = semi[k].offset + semi[k].tig_start;
+            let tig_start = semi[k].tig_start;
+            let t = semi[k].ref_id as usize;
+            if !refdata.rheaders[t].contains("segment") && refdata.is_v(t) {
+                let r = &refdata.refs[t];
+                let len = semi[k].len;
+                if ref_start + len < r.len() as i32
+                    && (ref_start + len) as f64 / r.len() as f64 >= 0.60
+                    && len + tig_start < b_seq.len() as i32
+                {
+                    let start = ref_start + len;
+                    let stop = min(r.len() as i32, b_seq.len() as i32 + offset);
+                    for m in start..stop {
+                        if b_seq[(m - offset) as usize] != r.get(m as usize) {
+                            semi[k].mismatches.push(m - offset);
+                        }
+                    }
+                    semi[k].len += stop - start;
+                }
+            }
+        }
+        i = j;
+    }
+    for s in semi {
+        unique_sort(&mut s.mismatches);
+    }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
