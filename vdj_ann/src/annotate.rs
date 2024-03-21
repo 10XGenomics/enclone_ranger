@@ -259,7 +259,6 @@ fn report_semis(
 // remove the derivation of eq/ord, provide key-generating methods with
 // explicit names, and use those. This forces the caller to be explicit about
 // which sort order they're using.
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
 struct Alignment {
     pub ref_id: i32,
     /// off = pos on ref - pos on b
@@ -269,6 +268,15 @@ struct Alignment {
     pub len: i32,
     /// positions on b of mismatches
     pub mismatches: Vec<i32>,
+}
+
+impl Alignment {
+    /// Sort alignments by (ref_id, offset, tig_start, len, mismatches).
+    fn cmp_by_ref_id(a: &Self, b: &Self) -> std::cmp::Ordering {
+        let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) =
+            |x: &Self| (x.ref_id, x.offset, x.tig_start, x.len, &x.mismatches);
+        key(a).cmp(&key(b))
+    }
 }
 
 /// Minimum length of sequence we'll try to annotate.
@@ -316,7 +324,7 @@ pub fn annotate_seq_core(
     perf.extend(new_matches);
 
     // Sort perfect matches.
-    perf.sort_unstable();
+    perf.sort_unstable_by(Alignment::cmp_by_ref_id);
     if verbose {
         fwriteln!(log, "\nPERF ALIGNMENTS\n");
         for s in &perf {
@@ -853,7 +861,7 @@ fn annotate_40mers_for_mouse_a20(b_seq: &[u8], refs: &[DnaString], semi: &mut Ve
         }
         i = j;
     }
-    semi.sort();
+    semi.sort_by(Alignment::cmp_by_ref_id);
 }
 
 /// Allow extension over some mismatches on right if it gets us to the end on
