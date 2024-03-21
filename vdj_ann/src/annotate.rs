@@ -170,16 +170,6 @@ struct PreAnnotation {
     mismatches: Vec<i32>,
 }
 
-fn next_diff_pre_annotation(x: &[PreAnnotation], i: i32) -> i32 {
-    let mut j: i32 = i + 1;
-    loop {
-        if j == x.len() as i32 || x[j as usize].tig_start != x[i as usize].tig_start {
-            return j;
-        }
-        j += 1;
-    }
-}
-
 pub fn annotate_seq(
     b: &DnaString,
     refdata: &RefData,
@@ -2602,35 +2592,40 @@ fn remove_subsumed_alignments(semi: &mut Vec<SemiPerfectMatch>) {
 /// Delete matches that are 'too improper'.
 fn delete_improper_matches(annx: &mut Vec<PreAnnotation>) {
     let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    for annxi in annx.iter_mut() {
-        std::mem::swap(&mut annxi.tig_start, &mut annxi.ref_id);
-        std::mem::swap(&mut annxi.match_len, &mut annxi.ref_start);
-    }
-    annx.sort();
+    // Re-sort the annotations by ref_id
+    annx.sort_by(|a, b| {
+        let key: for<'a> fn(&'a PreAnnotation) -> (_, _, _, _, &'a Vec<_>) = |x: &PreAnnotation| {
+            (
+                x.ref_id,
+                x.ref_start,
+                x.tig_start,
+                x.match_len,
+                &x.mismatches,
+            )
+        };
+        key(a).cmp(&key(b))
+    });
     let mut i1 = 0;
     loop {
         if i1 == annx.len() {
             break;
         }
-        let j1 = next_diff_pre_annotation(annx, i1 as i32);
-        let mut min_imp = 1000000000;
-        for a in &annx[i1..j1 as usize] {
-            let imp = min(a.match_len, a.ref_id);
+        let j1 = next_diff_any(annx, i1, |a, b| a.ref_id == b.ref_id);
+        let mut min_imp = i32::MAX;
+        for a in &annx[i1..j1] {
+            let imp = min(a.ref_start, a.tig_start);
             min_imp = min(imp, min_imp);
         }
         const MAX_IMP: i32 = 60;
         if min_imp > MAX_IMP {
-            for d in &mut to_delete[i1..j1 as usize] {
+            for d in &mut to_delete[i1..j1] {
                 *d = true;
             }
         }
-        i1 = j1 as usize;
+        i1 = j1;
     }
     erase_if(annx, &to_delete);
-    for annxi in annx.iter_mut() {
-        std::mem::swap(&mut annxi.tig_start, &mut annxi.ref_id);
-        std::mem::swap(&mut annxi.match_len, &mut annxi.ref_start);
-    }
+    // Re-sort using standard sort order.
     annx.sort();
 }
 
