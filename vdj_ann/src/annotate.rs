@@ -490,40 +490,7 @@ pub fn annotate_seq_core(
 
     retain_better_v_segment(&b_seq, b, refdata, &mut annx);
 
-    // Remove UTR annotations that have no matching V annotation.
-
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    let (mut u, mut v) = (Vec::<String>::new(), Vec::<String>::new());
-    for a in &annx {
-        let t = a.ref_id as usize;
-        if !rheaders[t].contains("segment") {
-            let name = rheaders[t].after("|").between("|", "|");
-            if rheaders[t].contains("UTR") {
-                u.push(name.to_string());
-            }
-            if rheaders[t].contains("V-REGION") {
-                v.push(name.to_string());
-            }
-        }
-    }
-    v.sort();
-    for item in &u {
-        if !bin_member(&v, item) {
-            for j in 0..annx.len() {
-                let t = annx[j].ref_id as usize;
-                if !rheaders[t].contains("segment") {
-                    let name = rheaders[t].after("|").between("|", "|");
-                    if rheaders[t].contains("UTR") && item == name {
-                        to_delete[j] = true;
-                    }
-                }
-            }
-        }
-    }
-    erase_if(&mut annx, &to_delete);
-
-    // Log alignments.
-
+    remove_utr_without_matching_v(&refdata.rheaders, &mut annx);
     if verbose {
         fwriteln!(log, "\nALIGNMENTS SIX\n");
         for a in &annx {
@@ -531,74 +498,7 @@ pub fn annotate_seq_core(
         }
     }
 
-    // In light of the previous calculation, see if one V is aligned much better
-    // than another V.  This is done by looking for simple indel events.
-    // Probably will have to be generalized.
-
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    let mut vs = Vec::<(usize, usize)>::new();
-    for (i, a) in annx.iter().enumerate() {
-        let t = a.ref_id as usize;
-        if !rheaders[t].contains("V-REGION") {
-            continue;
-        }
-        vs.push((t, i));
-    }
-    vs.sort_unstable();
-    //                     len parts errs  index
-    let mut score = Vec::<(i32, usize, usize, usize)>::new();
-    let mut j = 0;
-    let mut nonsimple = false;
-    let mut have_split = false;
-    let max_indel = 27;
-    let min_len_gain = 100;
-    while j < vs.len() {
-        let k = next_diff1_2(&vs, j);
-        if k - j == 1 {
-            score.push((annx[j].match_len, k - j, annx[j].mismatches.len(), vs[j].1));
-        } else if k - j == 2 {
-            let (i1, i2) = (vs[j].1, vs[j + 1].1);
-            let (a1, a2) = (&annx[i1], &annx[i2]);
-            let mut simple = false;
-            let (l1, p1, len1) = (a1.tig_start, a1.ref_start, a1.match_len);
-            let (l2, p2, len2) = (a2.tig_start, a2.ref_start, a2.match_len);
-            if l1 + len1 == l2
-                && p1 + len1 < p2
-                && (p2 - p1 - len1) % 3 == 0
-                && p2 - p1 - len1 <= max_indel
-            {
-                simple = true;
-            }
-            if l1 + len1 < l2
-                && p1 + len1 == p2
-                && (l2 - l1 - len1) % 3 == 0
-                && l2 - l1 - len1 <= max_indel
-            {
-                simple = true;
-            }
-            if simple {
-                have_split = true;
-                score.push((
-                    len1 + len2,
-                    k - j,
-                    a1.mismatches.len() + a2.mismatches.len(),
-                    vs[j].1,
-                ));
-            } else {
-                nonsimple = true;
-            }
-        } else {
-            nonsimple = true;
-        }
-        j = k;
-    }
-    if !nonsimple && score.duo() && have_split {
-        reverse_sort(&mut score);
-        if score[0].0 >= score[1].0 + min_len_gain && score[1].1 == 1 {
-            to_delete[score[1].3] = true;
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    retain_much_better_aligned_v_segment(&refdata.rheaders, &mut annx);
 
     // Remove certain subsumed alignments.
 
@@ -2720,6 +2620,109 @@ fn retain_better_v_segment(
         }
         erase_if(annx, &to_delete);
     }
+}
+
+// Remove UTR annotations that have no matching V annotation.
+fn remove_utr_without_matching_v(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    let (mut u, mut v) = (Vec::<String>::new(), Vec::<String>::new());
+    for a in annx.iter() {
+        let t = a.ref_id as usize;
+        if !rheaders[t].contains("segment") {
+            let name = rheaders[t].after("|").between("|", "|");
+            if rheaders[t].contains("UTR") {
+                u.push(name.to_string());
+            }
+            if rheaders[t].contains("V-REGION") {
+                v.push(name.to_string());
+            }
+        }
+    }
+    v.sort();
+    for item in &u {
+        if !bin_member(&v, item) {
+            for j in 0..annx.len() {
+                let t = annx[j].ref_id as usize;
+                if !rheaders[t].contains("segment") {
+                    let name = rheaders[t].after("|").between("|", "|");
+                    if rheaders[t].contains("UTR") && item == name {
+                        to_delete[j] = true;
+                    }
+                }
+            }
+        }
+    }
+    erase_if(annx, &to_delete);
+}
+
+/// In light of the previous calculation, see if one V is aligned much better
+/// than another V.  This is done by looking for simple indel events.
+/// Probably will have to be generalized.
+fn retain_much_better_aligned_v_segment(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    let mut vs = Vec::<(usize, usize)>::new();
+    for (i, a) in annx.iter().enumerate() {
+        let t = a.ref_id as usize;
+        if !rheaders[t].contains("V-REGION") {
+            continue;
+        }
+        vs.push((t, i));
+    }
+    vs.sort_unstable();
+    //                     len parts errs  index
+    let mut score = Vec::<(i32, usize, usize, usize)>::new();
+    let mut j = 0;
+    let mut nonsimple = false;
+    let mut have_split = false;
+    let max_indel = 27;
+    let min_len_gain = 100;
+    while j < vs.len() {
+        let k = next_diff1_2(&vs, j);
+        if k - j == 1 {
+            score.push((annx[j].match_len, k - j, annx[j].mismatches.len(), vs[j].1));
+        } else if k - j == 2 {
+            let (i1, i2) = (vs[j].1, vs[j + 1].1);
+            let (a1, a2) = (&annx[i1], &annx[i2]);
+            let mut simple = false;
+            let (l1, p1, len1) = (a1.tig_start, a1.ref_start, a1.match_len);
+            let (l2, p2, len2) = (a2.tig_start, a2.ref_start, a2.match_len);
+            if l1 + len1 == l2
+                && p1 + len1 < p2
+                && (p2 - p1 - len1) % 3 == 0
+                && p2 - p1 - len1 <= max_indel
+            {
+                simple = true;
+            }
+            if l1 + len1 < l2
+                && p1 + len1 == p2
+                && (l2 - l1 - len1) % 3 == 0
+                && l2 - l1 - len1 <= max_indel
+            {
+                simple = true;
+            }
+            if simple {
+                have_split = true;
+                score.push((
+                    len1 + len2,
+                    k - j,
+                    a1.mismatches.len() + a2.mismatches.len(),
+                    vs[j].1,
+                ));
+            } else {
+                nonsimple = true;
+            }
+        } else {
+            nonsimple = true;
+        }
+        j = k;
+    }
+    if !nonsimple && score.duo() && have_split {
+        reverse_sort(&mut score);
+        if score[0].0 >= score[1].0 + min_len_gain && score[1].1 == 1 {
+            to_delete[score[1].3] = true;
+        }
+    }
+    erase_if(annx, &to_delete);
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
