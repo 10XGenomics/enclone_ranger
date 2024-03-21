@@ -458,352 +458,7 @@ pub fn annotate_seq_core(
         }
     }
 
-    // Choose between segments if one clearly wins.  For this calculation, we
-    // put UTR and V segments together.  The way the choice is made could be refined.
-    //
-    // ◼ At least in some cases, a better way of comparing errors would be to first
-    // ◼ extend the alignments so that their endpoints on the contigs agree, to the
-    // ◼ extent that this is possible.
-    //
-    // ◼ This code has not really been adequately tested to see if the right
-    // ◼ choices are being made.
-    //
-    // ◼ Note danger with nonstandard references.
-    //
-    // ◼ Really should have ho_interval here.
-
-    let mut combo = Vec::<(String, i32, usize)>::new();
-    for (i, a) in annx.iter().enumerate() {
-        let t = a.ref_id as usize;
-        if !rheaders[t].contains("segment") {
-            combo.push((
-                refdata.name[t].clone() + "." + &refdata.transcript[t],
-                refdata.id[t],
-                i,
-            ));
-        }
-    }
-    combo.sort();
-    //                     cov                 mis    locs        rstarts     mis_nutr
-    let mut data = Vec::<(Vec<(usize, usize)>, usize, Vec<usize>, Vec<usize>, usize)>::new();
-
-    let mut i = 0;
-    while i < combo.len() {
-        let j = next_diff1_3(&combo, i);
-        let mut cov = Vec::<(usize, usize)>::new();
-        let mut mis = 0;
-        let mut mis_nutr = 0;
-        let mut locs = Vec::<usize>::new();
-        let mut rstarts = Vec::<usize>::new();
-        for k in i..j {
-            locs.push(combo[k].2);
-            let a = &annx[combo[k].2];
-            rstarts.push(a.ref_start as usize);
-            cov.push((a.tig_start as usize, (a.tig_start + a.match_len) as usize));
-            mis += a.mismatches.len();
-            if !refdata.is_u(a.ref_id as usize) {
-                mis_nutr += a.mismatches.len();
-            }
-        }
-        data.push((cov, mis, locs, rstarts, mis_nutr));
-        i = j;
-    }
-
-    let mut to_delete = vec![false; annx.len()];
-    let mut deleted = vec![false; data.len()];
-    for i1 in 0..data.len() {
-        if deleted[i1] {
-            continue;
-        }
-        for i2 in 0..data.len() {
-            if i2 == i1 {
-                continue;
-            }
-            let t1 = annx[data[i1].2[0]].ref_id as usize;
-            let t2 = annx[data[i2].2[0]].ref_id as usize;
-
-            let same_class = (refdata.segtype[t1] == refdata.segtype[t2])
-                || (refdata.is_v(t1) && refdata.is_u(t2))
-                || (refdata.is_u(t1) && refdata.is_v(t2));
-            if !same_class {
-                continue;
-            }
-
-            // At this point we have two alignments, for which the reference sequence names
-            // are the same, and for which either they both have the same segment type
-            // (U, V, J, C), or else one is U and one is V.  Next we compare them, first
-            // gathering information about UTRs.
-
-            let name1 = &refdata.name[t1];
-            let name2 = &refdata.name[t2];
-            let (mut utr1, mut utr2) = (false, false);
-            if refdata.is_v(t1) || refdata.is_u(t1) {
-                utr1 = refdata.has_utr[name1];
-                utr2 = refdata.has_utr[name2];
-            }
-            let (mut have_utr_align1, mut have_utr_align2) = (false, false);
-            for j in &data[i1].2 {
-                if refdata.is_u(annx[*j].ref_id as usize) {
-                    have_utr_align1 = true;
-                }
-            }
-            for j in &data[i2].2 {
-                if refdata.is_u(annx[*j].ref_id as usize) {
-                    have_utr_align2 = true;
-                }
-            }
-
-            // Now find their mismatch positions.
-
-            let n = b_seq.len();
-            let (mut mis1, mut mis2) = (vec![false; n], vec![false; n]);
-            for j in &data[i1].2 {
-                for p in &annx[*j].mismatches {
-                    mis1[*p as usize] = true;
-                }
-            }
-            for j in &data[i2].2 {
-                for p in &annx[*j].mismatches {
-                    mis2[*p as usize] = true;
-                }
-            }
-
-            // Compute the fraction of i2 coverage that's outside i1 coverage.
-            // ◼ This is horrendously inefficient.  Use ho intervals.
-
-            let (mut cov1, mut cov2) = (vec![false; n], vec![false; n]);
-            for j in 0..data[i1].0.len() {
-                let t = annx[data[i1].2[j]].ref_id;
-                if utr2 || !refdata.is_u(t as usize) {
-                    let x = &data[i1].0[j];
-                    for c in &mut cov1[x.0..x.1] {
-                        *c = true;
-                    }
-                }
-            }
-            for j in 0..data[i2].0.len() {
-                let t = annx[data[i2].2[j]].ref_id;
-                if utr1 || !refdata.is_u(t as usize) {
-                    let x = &data[i2].0[j];
-                    for c in &mut cov2[x.0..x.1] {
-                        *c = true;
-                    }
-                }
-            }
-            let count_true = |bools: &[bool]| bools.iter().filter(|c| **c).count();
-
-            let total1 = count_true(&cov1[0..n]);
-            let total2 = count_true(&cov2[0..n]);
-
-            // Same as above but always exclude UTRs.
-
-            let (mut cov1_nu, mut cov2_nu) = (vec![false; n], vec![false; n]);
-            for j in 0..data[i1].0.len() {
-                let t = annx[data[i1].2[j]].ref_id;
-                if !refdata.is_u(t as usize) {
-                    let x = &data[i1].0[j];
-                    for c in &mut cov1_nu[x.0..x.1] {
-                        *c = true;
-                    }
-                }
-            }
-            for j in 0..data[i2].0.len() {
-                let t = annx[data[i2].2[j]].ref_id;
-                if !refdata.is_u(t as usize) {
-                    let x = &data[i2].0[j];
-                    for c in &mut cov2_nu[x.0..x.1] {
-                        *c = true;
-                    }
-                }
-            }
-
-            let total1_nu = count_true(&cov1_nu[0..n]);
-            let total2_nu = count_true(&cov2_nu[0..n]);
-
-            // Compute amount shared.
-
-            let mut share = 0;
-            for l in 0..n {
-                if cov1[l] && cov2[l] {
-                    share += 1;
-                }
-            }
-            let outside1 = percent_ratio(total1 - share, total1);
-            let outside2 = percent_ratio(total2 - share, total2);
-
-            // Find the number of mismatches in the overlap region.
-
-            let (mut m1, mut m2) = (0, 0);
-            for l in 0..n {
-                if cov1[l] && cov2[l] {
-                    if mis1[l] {
-                        m1 += 1;
-                    }
-                    if mis2[l] {
-                        m2 += 1;
-                    }
-                }
-            }
-
-            // Compute error rates.
-            // ◼ This is incorrect in the case where the UTR has been excluded.
-            // Added separate estimates with UTRs excluded.
-
-            let err1 = percent_ratio(data[i1].1, total1);
-            let err2 = percent_ratio(data[i2].1, total2);
-            let err1_nu = percent_ratio(data[i1].4, total1_nu);
-            let err2_nu = percent_ratio(data[i2].4, total2_nu);
-
-            // Compute zstops.
-
-            let (mut zstop1, mut zstop2) = (0, 0);
-            for l in 0..data[i1].2.len() {
-                let t = annx[data[i1].2[l]].ref_id as usize;
-                if refdata.is_v(t) && (data[i1].3[l] == 0 || data[i1].0[l].0 == 0) {
-                    zstop1 = max(zstop1, data[i1].0[l].1);
-                }
-            }
-            for l in 0..data[i2].2.len() {
-                let t = annx[data[i2].2[l]].ref_id as usize;
-                if refdata.is_v(t) && (data[i2].3[l] == 0 || data[i2].0[l].0 == 0) {
-                    zstop2 = max(zstop2, data[i2].0[l].1);
-                }
-            }
-
-            // Decide if the first wins.  And symmetrize to prevent double
-            // deletion.  Be very careful to respect this if editing!
-
-            let (mut win1, mut win2) = (false, false);
-            let c1 = m1 == m2 && !have_utr_align2 && err1_nu == err2_nu && outside1 > outside2;
-            let c2 = m2 == m1 && !have_utr_align1 && err2_nu == err1_nu && outside2 > outside1;
-            if (zstop1 > zstop2 + 20 && (outside2 <= 10.0 || total2 - share <= 10))
-                || (outside1 >= 10.0 && outside2 <= 1.0 && err1 - err2 <= 2.5)
-            {
-                win1 = true;
-            } else if zstop1 == 0 && zstop2 > 0 {
-            } else if (outside2 <= 10.0 || total2 - share <= 10)
-                && (m1 < m2
-                    || (m1 == m2 && err1 < err2 && !c2)
-                    || (m1 == m2 && err1 == err2 && outside1 > outside2)
-                    || (m1 == m2 && err1 == err2 && outside1 == outside2 && t1 < t2)
-                    || c1)
-            {
-                win1 = true;
-            }
-
-            // Symmetrization.
-
-            if (zstop2 > zstop1 + 20 && (outside1 <= 10.0 || total1 - share <= 10))
-                || (outside2 >= 10.0 && outside1 <= 1.0 && err2 - err1 <= 2.5)
-            {
-                win2 = true;
-            } else if zstop2 == 0 && zstop1 > 0 {
-            } else if (outside1 <= 10.0 || total1 - share <= 10)
-                && (m2 < m1
-                    || (m2 == m1 && err2 < err1 && !c1)
-                    || (m2 == m1 && err2 == err1 && outside2 > outside1)
-                    || (m2 == m1 && err2 == err1 && outside2 == outside1 && t2 < t1)
-                    || c2)
-            {
-                win2 = true;
-            }
-            if win2 {
-                win1 = false;
-            }
-
-            // Verbose logging.
-
-            if verbose {
-                fwriteln!(log, "\nCOMPARING");
-                for l in 0..data[i1].2.len() {
-                    let t = annx[data[i1].2[l]].ref_id as usize;
-                    let cov = &data[i1].0[l];
-                    let mis = data[i1].1;
-                    fwriteln!(
-                        log,
-                        "{}, cov = {}-{}, mis = {}",
-                        rheaders[t],
-                        cov.0,
-                        cov.1,
-                        mis
-                    );
-                }
-                fwriteln!(log, "TO");
-                for l in 0..data[i2].2.len() {
-                    let t = annx[data[i2].2[l]].ref_id as usize;
-                    let cov = &data[i2].0[l];
-                    let mis = data[i2].1;
-                    fwriteln!(
-                        log,
-                        "{}, cov = {}-{}, mis = {}",
-                        rheaders[t],
-                        cov.0,
-                        cov.1,
-                        mis
-                    );
-                }
-                fwriteln!(log, "zstop1 = {}, zstop2 = {}", zstop1, zstop2);
-                fwriteln!(log, "m1 = {}, m2 = {}", m1, m2);
-                fwriteln!(log, "err1 = {}, err2 = {}", err1, err2);
-                fwriteln!(log, "err1_nu = {}, err2_nu = {}", err1_nu, err2_nu);
-                fwriteln!(log, "utr1 = {}, utr2 = {}", utr1, utr2);
-                fwriteln!(
-                    log,
-                    "have_utr_align1 = {}, have_utr_align2 = {}",
-                    have_utr_align1,
-                    have_utr_align2
-                );
-                fwriteln!(
-                    log,
-                    "total1 = {}, total2 = {}, share = {}",
-                    total1,
-                    total2,
-                    share
-                );
-                fwriteln!(
-                    log,
-                    "outside1 = {:.1}%, outside2 = {:.1}%, \
-                     total2 - share = {}, err1 = {:.1}%, err2 = {:.1}%",
-                    outside1,
-                    outside2,
-                    total2 - share,
-                    err1,
-                    err2
-                );
-                fwriteln!(log, "win1 = {}, win2 = {}", win1, win2);
-            }
-
-            // Pick "randomly" in case of tie.  Unless we're comparing TRBC1 to TRBC2, and in
-            // that case, do nothing.  This is needed because of the handling below of these
-            // segments.
-
-            if outside1 == 0.0
-                && outside2 == 0.0
-                && zstop1 == zstop2
-                && m1 == m2
-                && err1 == err2
-                && t1 < t2
-            {
-                if refdata.name[t1] == *"TRBC1" && refdata.name[t2] == *"TRBC2" {
-                    continue;
-                }
-                if refdata.name[t2] == *"TRBC1" && refdata.name[t1] == *"TRBC2" {
-                    continue;
-                }
-                win1 = true;
-            }
-
-            // Make decision.
-
-            if win1 {
-                for l in &data[i2].2 {
-                    to_delete[*l] = true;
-                }
-                deleted[i2] = true;
-            }
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    retain_best_alignment(&b_seq, refdata, verbose, log, &mut annx);
 
     // Delete some subsumed alignments.
 
@@ -2654,6 +2309,360 @@ fn find_indels_in_v_or_utr(
                         annx[i2].mismatches.push((l2 + j) as i32);
                     }
                 }
+            }
+        }
+    }
+    erase_if(annx, &to_delete);
+}
+
+/// Choose between segments if one clearly wins.  For this calculation, we
+/// put UTR and V segments together.  The way the choice is made could be refined.
+///
+/// At least in some cases, a better way of comparing errors would be to first
+/// extend the alignments so that their endpoints on the contigs agree, to the
+/// extent that this is possible.
+///
+/// This code has not really been adequately tested to see if the right
+/// choices are being made.
+///
+/// Note danger with nonstandard references.
+///
+/// Really should have ho_interval here.
+fn retain_best_alignment(
+    b_seq: &[u8],
+    refdata: &RefData,
+    verbose: bool,
+    log: &mut Vec<u8>,
+    annx: &mut Vec<PreAnnotation>,
+) {
+    let mut combo = Vec::<(String, i32, usize)>::new();
+    for (i, a) in annx.iter().enumerate() {
+        let t = a.ref_id as usize;
+        if !refdata.rheaders[t].contains("segment") {
+            combo.push((
+                refdata.name[t].clone() + "." + &refdata.transcript[t],
+                refdata.id[t],
+                i,
+            ));
+        }
+    }
+    combo.sort();
+    //                     cov                 mis    locs        rstarts     mis_nutr
+    let mut data = Vec::<(Vec<(usize, usize)>, usize, Vec<usize>, Vec<usize>, usize)>::new();
+
+    let mut i = 0;
+    while i < combo.len() {
+        let j = next_diff1_3(&combo, i);
+        let mut cov = Vec::<(usize, usize)>::new();
+        let mut mis = 0;
+        let mut mis_nutr = 0;
+        let mut locs = Vec::<usize>::new();
+        let mut rstarts = Vec::<usize>::new();
+        for k in i..j {
+            locs.push(combo[k].2);
+            let a = &annx[combo[k].2];
+            rstarts.push(a.ref_start as usize);
+            cov.push((a.tig_start as usize, (a.tig_start + a.match_len) as usize));
+            mis += a.mismatches.len();
+            if !refdata.is_u(a.ref_id as usize) {
+                mis_nutr += a.mismatches.len();
+            }
+        }
+        data.push((cov, mis, locs, rstarts, mis_nutr));
+        i = j;
+    }
+
+    let mut to_delete = vec![false; annx.len()];
+    let mut deleted = vec![false; data.len()];
+    for i1 in 0..data.len() {
+        if deleted[i1] {
+            continue;
+        }
+        for i2 in 0..data.len() {
+            if i2 == i1 {
+                continue;
+            }
+            let t1 = annx[data[i1].2[0]].ref_id as usize;
+            let t2 = annx[data[i2].2[0]].ref_id as usize;
+
+            let same_class = (refdata.segtype[t1] == refdata.segtype[t2])
+                || (refdata.is_v(t1) && refdata.is_u(t2))
+                || (refdata.is_u(t1) && refdata.is_v(t2));
+            if !same_class {
+                continue;
+            }
+
+            // At this point we have two alignments, for which the reference sequence names
+            // are the same, and for which either they both have the same segment type
+            // (U, V, J, C), or else one is U and one is V.  Next we compare them, first
+            // gathering information about UTRs.
+
+            let name1 = &refdata.name[t1];
+            let name2 = &refdata.name[t2];
+            let (mut utr1, mut utr2) = (false, false);
+            if refdata.is_v(t1) || refdata.is_u(t1) {
+                utr1 = refdata.has_utr[name1];
+                utr2 = refdata.has_utr[name2];
+            }
+            let (mut have_utr_align1, mut have_utr_align2) = (false, false);
+            for j in &data[i1].2 {
+                if refdata.is_u(annx[*j].ref_id as usize) {
+                    have_utr_align1 = true;
+                }
+            }
+            for j in &data[i2].2 {
+                if refdata.is_u(annx[*j].ref_id as usize) {
+                    have_utr_align2 = true;
+                }
+            }
+
+            // Now find their mismatch positions.
+
+            let n = b_seq.len();
+            let (mut mis1, mut mis2) = (vec![false; n], vec![false; n]);
+            for j in &data[i1].2 {
+                for p in &annx[*j].mismatches {
+                    mis1[*p as usize] = true;
+                }
+            }
+            for j in &data[i2].2 {
+                for p in &annx[*j].mismatches {
+                    mis2[*p as usize] = true;
+                }
+            }
+
+            // Compute the fraction of i2 coverage that's outside i1 coverage.
+            // ◼ This is horrendously inefficient.  Use ho intervals.
+
+            let (mut cov1, mut cov2) = (vec![false; n], vec![false; n]);
+            for j in 0..data[i1].0.len() {
+                let t = annx[data[i1].2[j]].ref_id;
+                if utr2 || !refdata.is_u(t as usize) {
+                    let x = &data[i1].0[j];
+                    for c in &mut cov1[x.0..x.1] {
+                        *c = true;
+                    }
+                }
+            }
+            for j in 0..data[i2].0.len() {
+                let t = annx[data[i2].2[j]].ref_id;
+                if utr1 || !refdata.is_u(t as usize) {
+                    let x = &data[i2].0[j];
+                    for c in &mut cov2[x.0..x.1] {
+                        *c = true;
+                    }
+                }
+            }
+            let count_true = |bools: &[bool]| bools.iter().filter(|c| **c).count();
+
+            let total1 = count_true(&cov1[0..n]);
+            let total2 = count_true(&cov2[0..n]);
+
+            // Same as above but always exclude UTRs.
+
+            let (mut cov1_nu, mut cov2_nu) = (vec![false; n], vec![false; n]);
+            for j in 0..data[i1].0.len() {
+                let t = annx[data[i1].2[j]].ref_id;
+                if !refdata.is_u(t as usize) {
+                    let x = &data[i1].0[j];
+                    for c in &mut cov1_nu[x.0..x.1] {
+                        *c = true;
+                    }
+                }
+            }
+            for j in 0..data[i2].0.len() {
+                let t = annx[data[i2].2[j]].ref_id;
+                if !refdata.is_u(t as usize) {
+                    let x = &data[i2].0[j];
+                    for c in &mut cov2_nu[x.0..x.1] {
+                        *c = true;
+                    }
+                }
+            }
+
+            let total1_nu = count_true(&cov1_nu[0..n]);
+            let total2_nu = count_true(&cov2_nu[0..n]);
+
+            // Compute amount shared.
+
+            let mut share = 0;
+            for l in 0..n {
+                if cov1[l] && cov2[l] {
+                    share += 1;
+                }
+            }
+            let outside1 = percent_ratio(total1 - share, total1);
+            let outside2 = percent_ratio(total2 - share, total2);
+
+            // Find the number of mismatches in the overlap region.
+
+            let (mut m1, mut m2) = (0, 0);
+            for l in 0..n {
+                if cov1[l] && cov2[l] {
+                    if mis1[l] {
+                        m1 += 1;
+                    }
+                    if mis2[l] {
+                        m2 += 1;
+                    }
+                }
+            }
+
+            // Compute error rates.
+            // ◼ This is incorrect in the case where the UTR has been excluded.
+            // Added separate estimates with UTRs excluded.
+
+            let err1 = percent_ratio(data[i1].1, total1);
+            let err2 = percent_ratio(data[i2].1, total2);
+            let err1_nu = percent_ratio(data[i1].4, total1_nu);
+            let err2_nu = percent_ratio(data[i2].4, total2_nu);
+
+            // Compute zstops.
+
+            let (mut zstop1, mut zstop2) = (0, 0);
+            for l in 0..data[i1].2.len() {
+                let t = annx[data[i1].2[l]].ref_id as usize;
+                if refdata.is_v(t) && (data[i1].3[l] == 0 || data[i1].0[l].0 == 0) {
+                    zstop1 = max(zstop1, data[i1].0[l].1);
+                }
+            }
+            for l in 0..data[i2].2.len() {
+                let t = annx[data[i2].2[l]].ref_id as usize;
+                if refdata.is_v(t) && (data[i2].3[l] == 0 || data[i2].0[l].0 == 0) {
+                    zstop2 = max(zstop2, data[i2].0[l].1);
+                }
+            }
+
+            // Decide if the first wins.  And symmetrize to prevent double
+            // deletion.  Be very careful to respect this if editing!
+
+            let (mut win1, mut win2) = (false, false);
+            let c1 = m1 == m2 && !have_utr_align2 && err1_nu == err2_nu && outside1 > outside2;
+            let c2 = m2 == m1 && !have_utr_align1 && err2_nu == err1_nu && outside2 > outside1;
+            if (zstop1 > zstop2 + 20 && (outside2 <= 10.0 || total2 - share <= 10))
+                || (outside1 >= 10.0 && outside2 <= 1.0 && err1 - err2 <= 2.5)
+            {
+                win1 = true;
+            } else if zstop1 == 0 && zstop2 > 0 {
+            } else if (outside2 <= 10.0 || total2 - share <= 10)
+                && (m1 < m2
+                    || (m1 == m2 && err1 < err2 && !c2)
+                    || (m1 == m2 && err1 == err2 && outside1 > outside2)
+                    || (m1 == m2 && err1 == err2 && outside1 == outside2 && t1 < t2)
+                    || c1)
+            {
+                win1 = true;
+            }
+
+            // Symmetrization.
+
+            if (zstop2 > zstop1 + 20 && (outside1 <= 10.0 || total1 - share <= 10))
+                || (outside2 >= 10.0 && outside1 <= 1.0 && err2 - err1 <= 2.5)
+            {
+                win2 = true;
+            } else if zstop2 == 0 && zstop1 > 0 {
+            } else if (outside1 <= 10.0 || total1 - share <= 10)
+                && (m2 < m1
+                    || (m2 == m1 && err2 < err1 && !c1)
+                    || (m2 == m1 && err2 == err1 && outside2 > outside1)
+                    || (m2 == m1 && err2 == err1 && outside2 == outside1 && t2 < t1)
+                    || c2)
+            {
+                win2 = true;
+            }
+            if win2 {
+                win1 = false;
+            }
+
+            // Verbose logging.
+
+            if verbose {
+                fwriteln!(log, "\nCOMPARING");
+                for l in 0..data[i1].2.len() {
+                    let t = annx[data[i1].2[l]].ref_id as usize;
+                    let cov = &data[i1].0[l];
+                    let mis = data[i1].1;
+                    fwriteln!(
+                        log,
+                        "{}, cov = {}-{}, mis = {}",
+                        refdata.rheaders[t],
+                        cov.0,
+                        cov.1,
+                        mis
+                    );
+                }
+                fwriteln!(log, "TO");
+                for l in 0..data[i2].2.len() {
+                    let t = annx[data[i2].2[l]].ref_id as usize;
+                    let cov = &data[i2].0[l];
+                    let mis = data[i2].1;
+                    fwriteln!(
+                        log,
+                        "{}, cov = {}-{}, mis = {}",
+                        refdata.rheaders[t],
+                        cov.0,
+                        cov.1,
+                        mis
+                    );
+                }
+                fwriteln!(log, "zstop1 = {}, zstop2 = {}", zstop1, zstop2);
+                fwriteln!(log, "m1 = {}, m2 = {}", m1, m2);
+                fwriteln!(log, "err1 = {}, err2 = {}", err1, err2);
+                fwriteln!(log, "err1_nu = {}, err2_nu = {}", err1_nu, err2_nu);
+                fwriteln!(log, "utr1 = {}, utr2 = {}", utr1, utr2);
+                fwriteln!(
+                    log,
+                    "have_utr_align1 = {}, have_utr_align2 = {}",
+                    have_utr_align1,
+                    have_utr_align2
+                );
+                fwriteln!(
+                    log,
+                    "total1 = {}, total2 = {}, share = {}",
+                    total1,
+                    total2,
+                    share
+                );
+                fwriteln!(
+                    log,
+                    "outside1 = {:.1}%, outside2 = {:.1}%, \
+                     total2 - share = {}, err1 = {:.1}%, err2 = {:.1}%",
+                    outside1,
+                    outside2,
+                    total2 - share,
+                    err1,
+                    err2
+                );
+                fwriteln!(log, "win1 = {}, win2 = {}", win1, win2);
+            }
+
+            // Pick "randomly" in case of tie.  Unless we're comparing TRBC1 to TRBC2, and in
+            // that case, do nothing.  This is needed because of the handling below of these
+            // segments.
+
+            if outside1 == 0.0
+                && outside2 == 0.0
+                && zstop1 == zstop2
+                && m1 == m2
+                && err1 == err2
+                && t1 < t2
+            {
+                if refdata.name[t1] == *"TRBC1" && refdata.name[t2] == *"TRBC2" {
+                    continue;
+                }
+                if refdata.name[t2] == *"TRBC1" && refdata.name[t1] == *"TRBC2" {
+                    continue;
+                }
+                win1 = true;
+            }
+
+            // Make decision.
+
+            if win1 {
+                for l in &data[i2].2 {
+                    to_delete[*l] = true;
+                }
+                deleted[i2] = true;
             }
         }
     }
