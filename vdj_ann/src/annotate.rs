@@ -364,55 +364,8 @@ pub fn annotate_seq_core(
 
     annotate_40mers_for_mouse_a20(&b_seq, &refdata.refs, &mut semi);
 
-    // Allow extension over some mismatches on right if it gets us to the end on
-    // the reference.  Ditto for left.
-    // ◼ Not documented above.
-
     if allow_weak {
-        let max_mis = 5;
-        for s in &mut semi {
-            let t = s.ref_id;
-            let off = s.offset;
-            let l = s.tig_start;
-            let mut len = s.len;
-            let mut mis = s.mismatches.clone();
-            let mut mis_count = 0;
-            while l + len < b_seq.len() as i32 && l + len + off < refs[t as usize].len() as i32 {
-                if b_seq[(l + len) as usize] != refs[t as usize].get((l + off + len) as usize) {
-                    mis.push(l + len);
-                    mis_count += 1;
-                }
-                len += 1;
-            }
-            if mis_count <= max_mis && l + len + off == refs[t as usize].len() as i32 {
-                s.len = len;
-                s.mismatches = mis;
-            }
-        }
-        for s in &mut semi {
-            let t = s.ref_id;
-            let off = s.offset;
-            let mut l = s.tig_start;
-            let mut len = s.len;
-            let mut mis = s.mismatches.clone();
-            let mut mis_count = 0;
-            while l > 0 && l + off > 0 {
-                if b_seq[(l - 1_i32) as usize] != refs[t as usize].get((l + off - 1_i32) as usize) {
-                    mis.push(l - 1);
-                    mis_count += 1;
-                }
-                l -= 1;
-                len += 1;
-            }
-            if mis_count <= max_mis && l + off == 0 {
-                s.tig_start = l;
-                s.len = len;
-                s.mismatches = mis;
-            }
-        }
-        for s in &mut semi {
-            s.mismatches.sort_unstable();
-        }
+        extend_matches_to_end_of_reference(&b_seq, &refdata.refs, &mut semi);
     }
     report_semis(verbose, "SEMI ALIGNMENTS", &semi, &b_seq, refs, log);
 
@@ -2616,6 +2569,60 @@ fn annotate_40mers_for_mouse_a20(
         i = j;
     }
     semi.sort();
+}
+
+/// Allow extension over some mismatches on right if it gets us to the end on
+/// the reference.  Ditto for left.
+/// ◼ Not documented in main function docstring.
+fn extend_matches_to_end_of_reference(
+    b_seq: &[u8],
+    refs: &[DnaString],
+    semi: &mut [SemiPerfectMatch],
+) {
+    let max_mis = 5;
+    for s in &mut *semi {
+        let t = s.ref_id;
+        let off = s.offset;
+        let l = s.tig_start;
+        let mut len = s.len;
+        let mut mis = s.mismatches.clone();
+        let mut mis_count = 0;
+        while l + len < b_seq.len() as i32 && l + len + off < refs[t as usize].len() as i32 {
+            if b_seq[(l + len) as usize] != refs[t as usize].get((l + off + len) as usize) {
+                mis.push(l + len);
+                mis_count += 1;
+            }
+            len += 1;
+        }
+        if mis_count <= max_mis && l + len + off == refs[t as usize].len() as i32 {
+            s.len = len;
+            s.mismatches = mis;
+        }
+    }
+    for s in &mut *semi {
+        let t = s.ref_id;
+        let off = s.offset;
+        let mut l = s.tig_start;
+        let mut len = s.len;
+        let mut mis = s.mismatches.clone();
+        let mut mis_count = 0;
+        while l > 0 && l + off > 0 {
+            if b_seq[(l - 1_i32) as usize] != refs[t as usize].get((l + off - 1_i32) as usize) {
+                mis.push(l - 1);
+                mis_count += 1;
+            }
+            l -= 1;
+            len += 1;
+        }
+        if mis_count <= max_mis && l + off == 0 {
+            s.tig_start = l;
+            s.len = len;
+            s.mismatches = mis;
+        }
+    }
+    for s in semi {
+        s.mismatches.sort_unstable();
+    }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
