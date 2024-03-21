@@ -379,45 +379,7 @@ pub fn annotate_seq_core(
         log,
     );
 
-    // Merge overlapping alignments.
-    // semi = {(t, off, pos on b, len, positions on b of mismatches)}
-
-    let mut to_delete = vec![false; semi.len()];
-    let mut i = 0;
-    while i < semi.len() {
-        let mut j = i + 1;
-        while j < semi.len() {
-            if semi[j].ref_id != semi[i].ref_id || semi[j].offset != semi[i].offset {
-                break;
-            }
-            j += 1;
-        }
-        for k1 in i..j {
-            for k2 in k1 + 1..j {
-                if to_delete[k1] || to_delete[k2] {
-                    continue;
-                }
-                let start1 = semi[k1].tig_start;
-                let start2 = semi[k2].tig_start;
-                let len1 = semi[k1].len;
-                let len2 = semi[k2].len;
-                let stop1 = start1 + len1;
-                let stop2 = start2 + len2;
-                let start = min(start1, start2);
-                let stop = max(stop1, stop2);
-                if stop - start <= len1 + len2 {
-                    semi[k1].tig_start = start;
-                    semi[k1].len = stop - start;
-                    let mut m2 = semi[k2].mismatches.clone();
-                    semi[k1].mismatches.append(&mut m2);
-                    unique_sort(&mut semi[k1].mismatches);
-                    to_delete[k2] = true;
-                }
-            }
-        }
-        i = j;
-    }
-    erase_if(&mut semi, &to_delete);
+    merge_overlapping_alignments(&mut semi);
     report_semis(
         verbose,
         "SEMI ALIGNMENTS AFTER MERGER",
@@ -2625,6 +2587,46 @@ fn extend_between_match_blocks(b_seq: &[u8], refs: &[DnaString], semi: &mut Vec<
             semi[i2].ref_id = -1_i32;
             to_delete[i2] = true;
         }
+    }
+    erase_if(semi, &to_delete);
+}
+
+/// Merge overlapping alignments.
+fn merge_overlapping_alignments(semi: &mut Vec<SemiPerfectMatch>) {
+    let mut to_delete = vec![false; semi.len()];
+    let mut i = 0;
+    while i < semi.len() {
+        let mut j = i + 1;
+        while j < semi.len() {
+            if semi[j].ref_id != semi[i].ref_id || semi[j].offset != semi[i].offset {
+                break;
+            }
+            j += 1;
+        }
+        for k1 in i..j {
+            for k2 in k1 + 1..j {
+                if to_delete[k1] || to_delete[k2] {
+                    continue;
+                }
+                let start1 = semi[k1].tig_start;
+                let start2 = semi[k2].tig_start;
+                let len1 = semi[k1].len;
+                let len2 = semi[k2].len;
+                let stop1 = start1 + len1;
+                let stop2 = start2 + len2;
+                let start = min(start1, start2);
+                let stop = max(stop1, stop2);
+                if stop - start <= len1 + len2 {
+                    semi[k1].tig_start = start;
+                    semi[k1].len = stop - start;
+                    let mut m2 = semi[k2].mismatches.clone();
+                    semi[k1].mismatches.append(&mut m2);
+                    unique_sort(&mut semi[k1].mismatches);
+                    to_delete[k2] = true;
+                }
+            }
+        }
+        i = j;
     }
     erase_if(semi, &to_delete);
 }
