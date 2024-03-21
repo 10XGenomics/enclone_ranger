@@ -240,27 +240,23 @@ fn report_semis(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}, mis = {}",
                 s.ref_id,
-                s.offset,
+                s.offset(),
                 s.tig_start,
-                s.offset + s.tig_start,
+                s.ref_start,
                 s.len,
                 s.mismatches.len(),
             );
-            let t = s.ref_id as usize;
-            let off = s.offset;
-            let tig_start = s.tig_start;
-            let ref_start = off + tig_start;
-            let len = s.len;
-            let mis = &s.mismatches;
             let mut new_mis = Vec::<i32>::new();
-            for j in 0..len {
-                if b_seq[(tig_start + j) as usize] != refs[t].get((ref_start + j) as usize) {
-                    new_mis.push(tig_start + j);
+            for j in 0..s.len {
+                if b_seq[(s.tig_start + j) as usize]
+                    != refs[s.ref_id as usize].get((s.ref_start + j) as usize)
+                {
+                    new_mis.push(s.tig_start + j);
                 }
             }
-            if new_mis != *mis {
+            if new_mis != s.mismatches {
                 fwriteln!(log, " [INVALID]");
-                fwriteln!(log, "computed = {}", mis.iter().format(","));
+                fwriteln!(log, "computed = {}", s.mismatches.iter().format(","));
                 fwriteln!(log, "correct  = {}", new_mis.iter().format(","));
             } else {
                 fwriteln!(log, "");
@@ -277,8 +273,7 @@ fn report_semis(
 // which sort order they're using.
 struct Alignment {
     pub ref_id: i32,
-    /// off = pos on ref - pos on b
-    pub offset: i32,
+    pub ref_start: i32,
     /// pos on b
     pub tig_start: i32,
     pub len: i32,
@@ -287,10 +282,15 @@ struct Alignment {
 }
 
 impl Alignment {
+    /// Get the offset between the position on the contig and the position on the ref.
+    fn offset(&self) -> i32 {
+        self.ref_start - self.tig_start
+    }
+
     /// Sort alignments by (ref_id, offset, tig_start, len, mismatches).
     fn cmp_by_ref_id(a: &Self, b: &Self) -> std::cmp::Ordering {
         let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) =
-            |x: &Self| (x.ref_id, x.offset, x.tig_start, x.len, &x.mismatches);
+            |x: &Self| (x.ref_id, x.offset(), x.tig_start, x.len, &x.mismatches);
         key(a).cmp(&key(b))
     }
 }
@@ -329,9 +329,9 @@ pub fn annotate_seq_core(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}",
                 s.ref_id,
-                s.offset,
+                s.offset(),
                 s.tig_start,
-                s.offset + s.tig_start,
+                s.ref_start,
                 s.len,
             );
         }
@@ -348,9 +348,9 @@ pub fn annotate_seq_core(
                 log,
                 "t = {}, offset = {}, tig start = {}, ref start = {}, len = {}",
                 s.ref_id,
-                s.offset,
+                s.offset(),
                 s.tig_start,
-                s.offset + s.tig_start,
+                s.ref_start,
                 s.len,
             );
         }
@@ -428,7 +428,7 @@ pub fn annotate_seq_core(
             tig_start: x.tig_start,
             match_len: x.len,
             ref_id: x.ref_id,
-            ref_start: x.tig_start + x.offset,
+            ref_start: x.ref_start,
             mismatches: x.mismatches,
         })
         .collect();
@@ -598,7 +598,7 @@ fn find_perfect_matches_initial(
             if ok {
                 perf.push(Alignment {
                     ref_id: t as i32,
-                    offset: p as i32 - l as i32,
+                    ref_start: p as i32,
                     tig_start: l as i32,
                     len: len as i32,
                     mismatches: Vec::new(),
@@ -627,7 +627,7 @@ fn find_additional_perfect_matches(
     for p in perf {
         offsets.push(Offset {
             ref_id: p.ref_id,
-            offset: p.offset,
+            offset: p.offset(),
         });
     }
     unique_sort(&mut offsets);
@@ -642,7 +642,7 @@ fn find_additional_perfect_matches(
         let mut tig_starts = Vec::<i32>::new();
         let mut total = 0;
         for pi in perf {
-            if pi.ref_id == t && pi.offset == off {
+            if pi.ref_id == t && pi.offset() == off {
                 tig_starts.push(pi.tig_start);
                 total += pi.len;
             }
@@ -683,7 +683,7 @@ fn find_additional_perfect_matches(
                     if !known {
                         new_matches.push(Alignment {
                             ref_id: t,
-                            offset: p - l,
+                            ref_start: p,
                             tig_start: l,
                             len,
                             mismatches: Vec::new(),
@@ -705,9 +705,9 @@ fn merge_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: Vec<Alignment>)
     while i < perf.len() {
         assert!(perf[i].mismatches.is_empty());
         let j = next_diff_any(&perf, i, |a, b| {
-            a.ref_id == b.ref_id && a.offset == b.offset
+            a.ref_id == b.ref_id && a.offset() == b.offset()
         });
-        let (t, off) = (perf[i].ref_id, perf[i].offset);
+        let (t, off) = (perf[i].ref_id, perf[i].offset());
         let mut join = vec![false; j - i];
         let mut mis = vec![Vec::<i32>::new(); j - i];
         for k in i..j - 1 {
@@ -743,7 +743,7 @@ fn merge_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: Vec<Alignment>)
             }
             semi.push(Alignment {
                 ref_id: t,
-                offset: off,
+                ref_start: off + perf[k1].tig_start,
                 tig_start: perf[k1].tig_start,
                 len: perf[k2].tig_start + perf[k2].len - perf[k1].tig_start,
                 mismatches: m,
@@ -759,7 +759,7 @@ fn merge_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: Vec<Alignment>)
 fn extend_matches(b_seq: &[u8], refs: &[DnaString], semi: &mut [Alignment]) {
     for s in &mut *semi {
         let t = s.ref_id;
-        let off = s.offset;
+        let off = s.offset();
         let mut l = s.tig_start;
         let mut len = s.len;
         let mut mis = s.mismatches.clone();
@@ -835,9 +835,9 @@ fn annotate_40mers_for_mouse_a20(b_seq: &[u8], refs: &[DnaString], semi: &mut Ve
     while i < semi.len() {
         let mut j = i + 1;
         let t = semi[i].ref_id;
-        let off = semi[i].offset;
+        let off = semi[i].offset();
         while j < semi.len() {
-            if semi[j].ref_id != t || semi[j].offset != off {
+            if semi[j].ref_id != t || semi[j].offset() != off {
                 break;
             }
             j += 1;
@@ -867,7 +867,7 @@ fn annotate_40mers_for_mouse_a20(b_seq: &[u8], refs: &[DnaString], semi: &mut Ve
                     }
                     semi.push(Alignment {
                         ref_id: t,
-                        offset: off,
+                        ref_start: p,
                         tig_start: p - off,
                         len: L,
                         mismatches: x,
@@ -888,7 +888,7 @@ fn extend_matches_to_end_of_reference(b_seq: &[u8], refs: &[DnaString], semi: &m
     let max_mis = 5;
     for s in &mut *semi {
         let t = s.ref_id;
-        let off = s.offset;
+        let off = s.offset();
         let l = s.tig_start;
         let mut len = s.len;
         let mut mis = s.mismatches.clone();
@@ -907,7 +907,7 @@ fn extend_matches_to_end_of_reference(b_seq: &[u8], refs: &[DnaString], semi: &m
     }
     for s in &mut *semi {
         let t = s.ref_id;
-        let off = s.offset;
+        let off = s.offset();
         let mut l = s.tig_start;
         let mut len = s.len;
         let mut mis = s.mismatches.clone();
@@ -942,12 +942,12 @@ fn extend_between_match_blocks(b_seq: &[u8], refs: &[DnaString], semi: &mut Vec<
         if t1 < 0 {
             continue;
         }
-        let off1 = semi[i1].offset;
+        let off1 = semi[i1].offset();
         let (l1, len1) = (semi[i1].tig_start, semi[i1].len);
         let mis1 = semi[i1].mismatches.clone();
         for i2 in 0..semi.len() {
             let t2 = semi[i2].ref_id;
-            let off2 = semi[i2].offset;
+            let off2 = semi[i2].offset();
             if t2 != t1 || off2 != off1 {
                 continue;
             }
@@ -984,7 +984,7 @@ fn merge_overlapping_alignments(semi: &mut Vec<Alignment>) {
     while i < semi.len() {
         let mut j = i + 1;
         while j < semi.len() {
-            if semi[j].ref_id != semi[i].ref_id || semi[j].offset != semi[i].offset {
+            if semi[j].ref_id != semi[i].ref_id || semi[j].offset() != semi[i].offset() {
                 break;
             }
             j += 1;
@@ -1041,8 +1041,8 @@ fn extend_long_v_gene_alignments(b_seq: &[u8], refdata: &RefData, semi: &mut [Al
             }
         }
         if ok {
-            let offset = semi[k].offset;
-            let ref_start = semi[k].offset + semi[k].tig_start;
+            let offset = semi[k].offset();
+            let ref_start = semi[k].offset() + semi[k].tig_start;
             let tig_start = semi[k].tig_start;
             let t = semi[k].ref_id as usize;
             if !refdata.rheaders[t].contains("segment") && refdata.is_v(t) {
@@ -1079,15 +1079,15 @@ fn remove_subsumed_matches(semi: &mut Vec<Alignment>) {
     while i < semi.len() {
         let mut j = i + 1;
         while j < semi.len() {
-            if semi[j].ref_id != semi[i].ref_id || semi[j].offset != semi[i].offset {
+            if semi[j].ref_id != semi[i].ref_id || semi[j].offset() != semi[i].offset() {
                 break;
             }
             j += 1;
         }
         for k1 in i..j {
             for k2 in i..j {
-                if semi[k1].offset + semi[k1].tig_start + semi[k1].len
-                    == semi[k2].offset + semi[k2].tig_start + semi[k2].len
+                if semi[k1].offset() + semi[k1].tig_start + semi[k1].len
+                    == semi[k2].offset() + semi[k2].tig_start + semi[k2].len
                     && semi[k1].len > semi[k2].len
                 {
                     to_delete[k2] = true;
