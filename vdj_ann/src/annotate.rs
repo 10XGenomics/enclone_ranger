@@ -400,7 +400,7 @@ pub fn annotate_seq_core(
         log,
     );
 
-    remove_subsumed_alignments(&mut semi);
+    remove_subsumed_matches(&mut semi);
     report_semis(
         verbose,
         "SEMI ALIGNMENTS AFTER SUBSUMPTION",
@@ -460,32 +460,7 @@ pub fn annotate_seq_core(
 
     retain_best_alignment(&b_seq, refdata, verbose, log, &mut annx);
 
-    // Delete some subsumed alignments.
-
-    let mut to_delete = vec![false; annx.len()];
-    let mut i = 0;
-    while i < annx.len() {
-        let mut j = i + 1;
-        while j < annx.len() {
-            if annx[j].tig_start != annx[i].tig_start {
-                break;
-            }
-            j += 1;
-        }
-        for k1 in i..j {
-            for k2 in i..j {
-                if annx[k1].ref_id == annx[k2].ref_id
-                    && annx[k1].ref_start == annx[k2].ref_start
-                    && annx[k1].match_len > annx[k2].match_len
-                {
-                    to_delete[k2] = true;
-                }
-            }
-        }
-        i = j;
-    }
-
-    erase_if(&mut annx, &to_delete);
+    remove_subsumed_alignments(&mut annx);
 
     // Extend some alignments.
     // { ( sequence start, match length, ref tig, ref tig start, {mismatches} ) }.
@@ -1763,8 +1738,10 @@ fn extend_long_v_gene_alignments(b_seq: &[u8], refdata: &RefData, semi: &mut [Se
     }
 }
 
-/// Delete some subsumed alignments.
-fn remove_subsumed_alignments(semi: &mut Vec<SemiPerfectMatch>) {
+/// Delete some subsumed matches.
+// FIXME: collapse this and remove_subsumed_alignments below once the match
+// types are collapsed. They have slightly different behavior.
+fn remove_subsumed_matches(semi: &mut Vec<SemiPerfectMatch>) {
     let mut to_delete = vec![false; semi.len()];
     let mut i = 0;
     while i < semi.len() {
@@ -2666,6 +2643,36 @@ fn retain_best_alignment(
             }
         }
     }
+    erase_if(annx, &to_delete);
+}
+
+/// Delete some subsumed alignments.
+// FIXME: collapse this and remove_subsumed_matches once the match types are
+// collapsed. They have slightly different behavior.
+fn remove_subsumed_alignments(annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete = vec![false; annx.len()];
+    let mut i = 0;
+    while i < annx.len() {
+        let mut j = i + 1;
+        while j < annx.len() {
+            if annx[j].tig_start != annx[i].tig_start {
+                break;
+            }
+            j += 1;
+        }
+        for k1 in i..j {
+            for k2 in i..j {
+                if annx[k1].ref_id == annx[k2].ref_id
+                    && annx[k1].ref_start == annx[k2].ref_start
+                    && annx[k1].match_len > annx[k2].match_len
+                {
+                    to_delete[k2] = true;
+                }
+            }
+        }
+        i = j;
+    }
+
     erase_if(annx, &to_delete);
 }
 
