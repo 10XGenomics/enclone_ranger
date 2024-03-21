@@ -488,68 +488,7 @@ pub fn annotate_seq_core(
 
     retain_better_c_segment(&b_seq, b, refdata, &mut annx);
 
-    // Pick between V segments starting at zero.  And favor zero.
-
-    let mut nv = 0;
-    for a in &annx {
-        let t = a.ref_id as usize;
-        if rheaders[t].contains("segment") {
-            continue;
-        }
-        if refdata.is_v(t) {
-            nv += 1;
-        }
-    }
-    if nv == 2 {
-        let mut to_delete: Vec<bool> = vec![false; annx.len()];
-        for i1 in 0..annx.len() {
-            for i2 in 0..annx.len() {
-                let (t1, t2) = (annx[i1].ref_id as usize, annx[i2].ref_id as usize);
-                if t2 == t1 {
-                    continue;
-                }
-                if rheaders[t1].contains("segment") || rheaders[t2].contains("segment") {
-                    continue;
-                }
-                if !refdata.is_v(t1) || !refdata.is_v(t2) {
-                    continue;
-                }
-                let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
-                let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
-                if p1 > 0 {
-                    continue;
-                }
-                if p2 > 0 {
-                    to_delete[i2] = true;
-                }
-                let (mut mis1, mut mis2) = (0, 0);
-                let (mut y1, mut y2) = (p1, p2);
-                let (mut x1, mut x2) = (l1, l2);
-                loop {
-                    if b_seq[x1 as usize] != refs[t1].get(y1 as usize) {
-                        mis1 += 1;
-                    }
-                    if b_seq[x2 as usize] != refs[t2].get(y2 as usize) {
-                        mis2 += 1;
-                    }
-                    x1 += 1;
-                    y1 += 1;
-                    x2 += 1;
-                    y2 += 1;
-                    if x1 == b.len() as i32 || y1 == refs[t1].len() as i32 {
-                        break;
-                    }
-                    if x2 == b.len() as i32 || y2 == refs[t2].len() as i32 {
-                        break;
-                    }
-                }
-                if mis1 < mis2 {
-                    to_delete[i2] = true;
-                }
-            }
-        }
-        erase_if(&mut annx, &to_delete);
-    }
+    retain_better_v_segment(&b_seq, b, refdata, &mut annx);
 
     // Remove UTR annotations that have no matching V annotation.
 
@@ -2710,6 +2649,77 @@ fn retain_better_c_segment(
         }
     }
     erase_if(annx, &to_delete);
+}
+
+/// Pick between V segments starting at zero.  And favor zero.
+fn retain_better_v_segment(
+    b_seq: &[u8],
+    b: &DnaString,
+    refdata: &RefData,
+    annx: &mut Vec<PreAnnotation>,
+) {
+    let mut nv = 0;
+    for a in annx.iter() {
+        let t = a.ref_id as usize;
+        if refdata.rheaders[t].contains("segment") {
+            continue;
+        }
+        if refdata.is_v(t) {
+            nv += 1;
+        }
+    }
+    if nv == 2 {
+        let mut to_delete: Vec<bool> = vec![false; annx.len()];
+        for i1 in 0..annx.len() {
+            for i2 in 0..annx.len() {
+                let (t1, t2) = (annx[i1].ref_id as usize, annx[i2].ref_id as usize);
+                if t2 == t1 {
+                    continue;
+                }
+                if refdata.rheaders[t1].contains("segment")
+                    || refdata.rheaders[t2].contains("segment")
+                {
+                    continue;
+                }
+                if !refdata.is_v(t1) || !refdata.is_v(t2) {
+                    continue;
+                }
+                let (l1, l2) = (annx[i1].tig_start, annx[i2].tig_start);
+                let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
+                if p1 > 0 {
+                    continue;
+                }
+                if p2 > 0 {
+                    to_delete[i2] = true;
+                }
+                let (mut mis1, mut mis2) = (0, 0);
+                let (mut y1, mut y2) = (p1, p2);
+                let (mut x1, mut x2) = (l1, l2);
+                loop {
+                    if b_seq[x1 as usize] != refdata.refs[t1].get(y1 as usize) {
+                        mis1 += 1;
+                    }
+                    if b_seq[x2 as usize] != refdata.refs[t2].get(y2 as usize) {
+                        mis2 += 1;
+                    }
+                    x1 += 1;
+                    y1 += 1;
+                    x2 += 1;
+                    y2 += 1;
+                    if x1 == b.len() as i32 || y1 == refdata.refs[t1].len() as i32 {
+                        break;
+                    }
+                    if x2 == b.len() as i32 || y2 == refdata.refs[t2].len() as i32 {
+                        break;
+                    }
+                }
+                if mis1 < mis2 {
+                    to_delete[i2] = true;
+                }
+            }
+        }
+        erase_if(annx, &to_delete);
+    }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
