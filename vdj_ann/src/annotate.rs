@@ -506,32 +506,7 @@ pub fn annotate_seq_core(
 
     downselect_equally_performant_j_and_c(refdata, &mut annx);
 
-    // Pick between Cs.
-
-    let mut to_delete = vec![false; annx.len()];
-    for i1 in 0..annx.len() {
-        let t1 = annx[i1].ref_id;
-        if !rheaders[t1 as usize].contains("C-REGION") {
-            continue;
-        }
-        for i2 in 0..annx.len() {
-            let t2 = annx[i2].ref_id;
-            if !rheaders[t2 as usize].contains("C-REGION") {
-                continue;
-            }
-            let (l1, l2) = (annx[i1].tig_start as usize, annx[i2].tig_start as usize);
-            let (len1, len2) = (annx[i1].match_len as usize, annx[i2].match_len as usize);
-            // let (p1,p2) = (annx[i1].3,annx[i2].3);
-            if l1 + len1 != l2 + len2 {
-                continue;
-            }
-            if l1 + annx[i1].mismatches.len() >= l2 + annx[i2].mismatches.len() {
-                continue;
-            }
-            to_delete[i2] = true;
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    downselect_to_best_c(&refdata.rheaders, &mut annx);
 
     // Again remove UTR annotations that have no matching V annotation.
     // ◼ DANGER with nonstandard references.
@@ -2730,6 +2705,34 @@ fn downselect_equally_performant_j_and_c(refdata: &RefData, annx: &mut Vec<PreAn
                     to_delete[i2] = true;
                 }
             }
+        }
+    }
+    erase_if(annx, &to_delete);
+}
+
+/// Pick between Cs.
+fn downselect_to_best_c(rheaders: &[String], annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete = vec![false; annx.len()];
+    for i1 in 0..annx.len() {
+        let t1 = annx[i1].ref_id;
+        if !rheaders[t1 as usize].contains("C-REGION") {
+            continue;
+        }
+        for i2 in 0..annx.len() {
+            let t2 = annx[i2].ref_id;
+            if !rheaders[t2 as usize].contains("C-REGION") {
+                continue;
+            }
+            let (l1, l2) = (annx[i1].tig_start as usize, annx[i2].tig_start as usize);
+            let (len1, len2) = (annx[i1].match_len as usize, annx[i2].match_len as usize);
+            // let (p1,p2) = (annx[i1].3,annx[i2].3);
+            if l1 + len1 != l2 + len2 {
+                continue;
+            }
+            if l1 + annx[i1].mismatches.len() >= l2 + annx[i2].mismatches.len() {
+                continue;
+            }
+            to_delete[i2] = true;
         }
     }
     erase_if(annx, &to_delete);
