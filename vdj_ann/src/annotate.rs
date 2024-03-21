@@ -462,32 +462,7 @@ pub fn annotate_seq_core(
 
     remove_subsumed_alignments(&mut annx);
 
-    // Extend some alignments.
-    // { ( sequence start, match length, ref tig, ref tig start, {mismatches} ) }.
-
-    let mut aligns = vec![0; refs.len()];
-    for a in &annx {
-        aligns[a.ref_id as usize] += 1;
-    }
-    for a in &mut annx {
-        let t = a.ref_id as usize;
-        let len = a.match_len as usize;
-        if aligns[t] == 1
-            && a.ref_start == 0
-            && len < refs[t].len()
-            && len as f64 / refs[t].len() as f64 >= 0.75
-            && (refs[t].len() as i32 + a.tig_start - a.ref_start) as usize <= b_seq.len()
-        {
-            for p in len..refs[t].len() {
-                let q = p as i32 + a.tig_start - a.ref_start;
-                if b_seq[q as usize] != refs[t].get(p) {
-                    a.mismatches.push(q);
-                }
-            }
-            a.match_len = refs[t].len() as i32;
-        }
-    }
-
+    extend_alignments(&b_seq, &refdata.refs, &mut annx);
     // Log alignments.
 
     if verbose {
@@ -2674,6 +2649,32 @@ fn remove_subsumed_alignments(annx: &mut Vec<PreAnnotation>) {
     }
 
     erase_if(annx, &to_delete);
+}
+
+/// Extend some alignments.
+fn extend_alignments(b_seq: &[u8], refs: &[DnaString], annx: &mut [PreAnnotation]) {
+    let mut aligns = vec![0; refs.len()];
+    for a in annx.iter() {
+        aligns[a.ref_id as usize] += 1;
+    }
+    for a in annx {
+        let t = a.ref_id as usize;
+        let len = a.match_len as usize;
+        if aligns[t] == 1
+            && a.ref_start == 0
+            && len < refs[t].len()
+            && len as f64 / refs[t].len() as f64 >= 0.75
+            && (refs[t].len() as i32 + a.tig_start - a.ref_start) as usize <= b_seq.len()
+        {
+            for p in len..refs[t].len() {
+                let q = p as i32 + a.tig_start - a.ref_start;
+                if b_seq[q as usize] != refs[t].get(p) {
+                    a.mismatches.push(q);
+                }
+            }
+            a.match_len = refs[t].len() as i32;
+        }
+    }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
