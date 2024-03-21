@@ -409,55 +409,20 @@ pub fn annotate_seq_core(
         log,
     );
 
-    // Transform to create annx, having structure:
-    // { ( sequence start, match length, ref tig, ref tig start, {mismatches} ) }.
-
-    let mut annx = Vec::<PreAnnotation>::new();
-    for x in &semi {
-        annx.push(PreAnnotation {
+    let mut annx: Vec<_> = semi
+        .into_iter()
+        .map(|x| PreAnnotation {
             tig_start: x.tig_start,
             match_len: x.len,
             ref_id: x.ref_id,
             ref_start: x.tig_start + x.offset,
-            mismatches: x.mismatches.clone(),
-        });
-    }
+            mismatches: x.mismatches,
+        })
+        .collect();
     unique_sort(&mut annx);
 
-    // Delete matches that are 'too improper'.
-
     if !allow_improper {
-        let mut to_delete: Vec<bool> = vec![false; annx.len()];
-        for annxi in &mut annx {
-            std::mem::swap(&mut annxi.tig_start, &mut annxi.ref_id);
-            std::mem::swap(&mut annxi.match_len, &mut annxi.ref_start);
-        }
-        annx.sort();
-        let mut i1 = 0;
-        loop {
-            if i1 == annx.len() {
-                break;
-            }
-            let j1 = next_diff_pre_annotation(&annx, i1 as i32);
-            let mut min_imp = 1000000000;
-            for a in &annx[i1..j1 as usize] {
-                let imp = min(a.match_len, a.ref_id);
-                min_imp = min(imp, min_imp);
-            }
-            const MAX_IMP: i32 = 60;
-            if min_imp > MAX_IMP {
-                for d in &mut to_delete[i1..j1 as usize] {
-                    *d = true;
-                }
-            }
-            i1 = j1 as usize;
-        }
-        erase_if(&mut annx, &to_delete);
-        for annxi in &mut annx {
-            std::mem::swap(&mut annxi.tig_start, &mut annxi.ref_id);
-            std::mem::swap(&mut annxi.match_len, &mut annxi.ref_start);
-        }
-        annx.sort();
+        delete_improper_matches(&mut annx);
     }
 
     // Log alignments.
@@ -2632,6 +2597,41 @@ fn remove_subsumed_alignments(semi: &mut Vec<SemiPerfectMatch>) {
         i = j;
     }
     erase_if(semi, &to_delete);
+}
+
+/// Delete matches that are 'too improper'.
+fn delete_improper_matches(annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    for annxi in annx.iter_mut() {
+        std::mem::swap(&mut annxi.tig_start, &mut annxi.ref_id);
+        std::mem::swap(&mut annxi.match_len, &mut annxi.ref_start);
+    }
+    annx.sort();
+    let mut i1 = 0;
+    loop {
+        if i1 == annx.len() {
+            break;
+        }
+        let j1 = next_diff_pre_annotation(annx, i1 as i32);
+        let mut min_imp = 1000000000;
+        for a in &annx[i1..j1 as usize] {
+            let imp = min(a.match_len, a.ref_id);
+            min_imp = min(imp, min_imp);
+        }
+        const MAX_IMP: i32 = 60;
+        if min_imp > MAX_IMP {
+            for d in &mut to_delete[i1..j1 as usize] {
+                *d = true;
+            }
+        }
+        i1 = j1 as usize;
+    }
+    erase_if(annx, &to_delete);
+    for annxi in annx.iter_mut() {
+        std::mem::swap(&mut annxi.tig_start, &mut annxi.ref_id);
+        std::mem::swap(&mut annxi.match_len, &mut annxi.ref_start);
+    }
+    annx.sort();
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
