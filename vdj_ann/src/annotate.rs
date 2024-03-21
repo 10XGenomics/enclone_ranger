@@ -474,29 +474,7 @@ pub fn annotate_seq_core(
 
     annotate_j_for_ig_with_c_and_v(&b_seq, refdata, &mut annx);
 
-    // If there is a D gene alignment that is from a different chain type than the V gene
-    // alignment, delete it.
-
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    for i1 in 0..annx.len() {
-        let t1 = annx[i1].ref_id as usize;
-        if !rheaders[t1].contains("segment") && refdata.segtype[t1] == "D" {
-            let mut have_v = false;
-            for a in &annx {
-                let t2 = a.ref_id as usize;
-                if !rheaders[t2].contains("segment")
-                    && refdata.segtype[t2] == "V"
-                    && refdata.rtype[t1] == refdata.rtype[t2]
-                {
-                    have_v = true;
-                }
-            }
-            if !have_v {
-                to_delete[i1] = true;
-            }
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    delete_d_if_chain_doesnt_match_v(refdata, &mut annx);
 
     // For IGH and TRB (and TRD in Gamma/delta mode), if there is a V and J, but no D, look for a D that matches nearly perfectly
     // between them.  We consider only alignments having no indels.  The following conditions
@@ -2685,6 +2663,31 @@ fn annotate_j_for_ig_with_c_and_v(b_seq: &[u8], refdata: &RefData, annx: &mut Ve
             annx.sort();
         }
     }
+}
+
+/// If there is a D gene alignment that is from a different chain type than the V gene
+/// alignment, delete it.
+fn delete_d_if_chain_doesnt_match_v(refdata: &RefData, annx: &mut Vec<PreAnnotation>) {
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    for i1 in 0..annx.len() {
+        let t1 = annx[i1].ref_id as usize;
+        if !refdata.rheaders[t1].contains("segment") && refdata.segtype[t1] == "D" {
+            let mut have_v = false;
+            for a in annx.iter() {
+                let t2 = a.ref_id as usize;
+                if !refdata.rheaders[t2].contains("segment")
+                    && refdata.segtype[t2] == "V"
+                    && refdata.rtype[t1] == refdata.rtype[t2]
+                {
+                    have_v = true;
+                }
+            }
+            if !have_v {
+                to_delete[i1] = true;
+            }
+        }
+    }
+    erase_if(annx, &to_delete);
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
