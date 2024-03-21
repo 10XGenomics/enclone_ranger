@@ -463,8 +463,6 @@ pub fn annotate_seq_core(
     remove_subsumed_alignments(&mut annx);
 
     extend_alignments(&b_seq, &refdata.refs, &mut annx);
-    // Log alignments.
-
     if verbose {
         fwriteln!(log, "\nALIGNMENTS FOUR\n");
         for a in &annx {
@@ -472,44 +470,7 @@ pub fn annotate_seq_core(
         }
     }
 
-    // If two V segments are aligned starting at 0 on the reference and one
-    // is aligned a lot further, it wins.
-
-    let mut lens = vec![0; refdata.refs.len()];
-    for a in &annx {
-        let t = a.ref_id as usize;
-        lens[t] += a.ref_start + a.match_len;
-    }
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    for i1 in 0..annx.len() {
-        for i2 in 0..annx.len() {
-            let (t1, t2) = (annx[i1].ref_id as usize, annx[i2].ref_id as usize);
-            if rheaders[t1].contains("segment") || rheaders[t2].contains("segment") {
-                continue;
-            }
-            if !refdata.is_v(t1) || !refdata.is_v(t2) {
-                continue;
-            }
-            if t1 == t2 {
-                continue;
-            }
-            let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
-            if p1 > 0 {
-                continue;
-            }
-            const MIN_EXT: i32 = 50;
-            if (p2 > 0 && lens[t1] >= lens[t2]) || (p2 == 0 && lens[t1] >= lens[t2] + MIN_EXT) {
-                if verbose {
-                    fwriteln!(log, "");
-                    print_alignx(log, &annx[i1], refdata);
-                    fwriteln!(log, "beats");
-                    print_alignx(log, &annx[i2], refdata);
-                }
-                to_delete[i2] = true;
-            }
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    retain_longer_v_alignments(refdata, verbose, log, &mut annx);
 
     // For IG, if we have a C segment that aligns starting at zero, and a V segment
     // that aligns, but no J segment, try to find a J segment alignment.  For now we
@@ -2675,6 +2636,52 @@ fn extend_alignments(b_seq: &[u8], refs: &[DnaString], annx: &mut [PreAnnotation
             a.match_len = refs[t].len() as i32;
         }
     }
+}
+
+/// If two V segments are aligned starting at 0 on the reference and one
+/// is aligned a lot further, it wins.
+fn retain_longer_v_alignments(
+    refdata: &RefData,
+    verbose: bool,
+    log: &mut Vec<u8>,
+    annx: &mut Vec<PreAnnotation>,
+) {
+    let mut lens = vec![0; refdata.refs.len()];
+    for a in annx.iter() {
+        let t = a.ref_id as usize;
+        lens[t] += a.ref_start + a.match_len;
+    }
+    let mut to_delete: Vec<bool> = vec![false; annx.len()];
+    for i1 in 0..annx.len() {
+        for i2 in 0..annx.len() {
+            let (t1, t2) = (annx[i1].ref_id as usize, annx[i2].ref_id as usize);
+            if refdata.rheaders[t1].contains("segment") || refdata.rheaders[t2].contains("segment")
+            {
+                continue;
+            }
+            if !refdata.is_v(t1) || !refdata.is_v(t2) {
+                continue;
+            }
+            if t1 == t2 {
+                continue;
+            }
+            let (p1, p2) = (annx[i1].ref_start, annx[i2].ref_start);
+            if p1 > 0 {
+                continue;
+            }
+            const MIN_EXT: i32 = 50;
+            if (p2 > 0 && lens[t1] >= lens[t2]) || (p2 == 0 && lens[t1] >= lens[t2] + MIN_EXT) {
+                if verbose {
+                    fwriteln!(log, "");
+                    print_alignx(log, &annx[i1], refdata);
+                    fwriteln!(log, "beats");
+                    print_alignx(log, &annx[i2], refdata);
+                }
+                to_delete[i2] = true;
+            }
+        }
+    }
+    erase_if(annx, &to_delete);
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
