@@ -369,49 +369,7 @@ pub fn annotate_seq_core(
     }
     report_semis(verbose, "SEMI ALIGNMENTS", &semi, &b_seq, refs, log);
 
-    // Extend between match blocks.
-    // ◼ This is pretty crappy.  What we should do instead is arrange the initial
-    // ◼ extension between match blocks so it can be iterated.
-
-    let mut to_delete = vec![false; semi.len()];
-    for i1 in 0..semi.len() {
-        let t1 = semi[i1].ref_id;
-        if t1 < 0 {
-            continue;
-        }
-        let off1 = semi[i1].offset;
-        let (l1, len1) = (semi[i1].tig_start, semi[i1].len);
-        let mis1 = semi[i1].mismatches.clone();
-        for i2 in 0..semi.len() {
-            let t2 = semi[i2].ref_id;
-            let off2 = semi[i2].offset;
-            if t2 != t1 || off2 != off1 {
-                continue;
-            }
-            let (l2, len2) = (semi[i2].tig_start, semi[i2].len);
-            if l1 + len1 >= l2 {
-                continue;
-            }
-            let mis2 = semi[i2].mismatches.clone();
-            let mut mis3 = Vec::<i32>::new();
-            for l in l1 + len1..l2 {
-                if b_seq[l as usize] != refs[t1 as usize].get((l + off1) as usize) {
-                    mis3.push(l);
-                }
-            }
-            let nmis = mis1.len() + mis2.len() + mis3.len();
-            if nmis as f64 / ((l2 + len2) - l1) as f64 > MAX_RATE {
-                continue;
-            }
-            semi[i1].len = (l2 + len2) - l1;
-            semi[i1].mismatches.append(&mut mis3);
-            semi[i1].mismatches.append(&mut mis2.clone());
-            unique_sort(&mut semi[i1].mismatches);
-            semi[i2].ref_id = -1_i32;
-            to_delete[i2] = true;
-        }
-    }
-    erase_if(&mut semi, &to_delete);
+    extend_between_match_blocks(&b_seq, refs, &mut semi);
     report_semis(
         verbose,
         "SEMI ALIGNMENTS AFTER EXTENSION",
@@ -2623,6 +2581,52 @@ fn extend_matches_to_end_of_reference(
     for s in semi {
         s.mismatches.sort_unstable();
     }
+}
+
+/// Extend between match blocks.
+///
+/// This is pretty crappy.  What we should do instead is arrange the initial
+/// extension between match blocks so it can be iterated.
+fn extend_between_match_blocks(b_seq: &[u8], refs: &[DnaString], semi: &mut Vec<SemiPerfectMatch>) {
+    let mut to_delete = vec![false; semi.len()];
+    for i1 in 0..semi.len() {
+        let t1 = semi[i1].ref_id;
+        if t1 < 0 {
+            continue;
+        }
+        let off1 = semi[i1].offset;
+        let (l1, len1) = (semi[i1].tig_start, semi[i1].len);
+        let mis1 = semi[i1].mismatches.clone();
+        for i2 in 0..semi.len() {
+            let t2 = semi[i2].ref_id;
+            let off2 = semi[i2].offset;
+            if t2 != t1 || off2 != off1 {
+                continue;
+            }
+            let (l2, len2) = (semi[i2].tig_start, semi[i2].len);
+            if l1 + len1 >= l2 {
+                continue;
+            }
+            let mis2 = semi[i2].mismatches.clone();
+            let mut mis3 = Vec::<i32>::new();
+            for l in l1 + len1..l2 {
+                if b_seq[l as usize] != refs[t1 as usize].get((l + off1) as usize) {
+                    mis3.push(l);
+                }
+            }
+            let nmis = mis1.len() + mis2.len() + mis3.len();
+            if nmis as f64 / ((l2 + len2) - l1) as f64 > MAX_RATE {
+                continue;
+            }
+            semi[i1].len = (l2 + len2) - l1;
+            semi[i1].mismatches.append(&mut mis3);
+            semi[i1].mismatches.append(&mut mis2.clone());
+            unique_sort(&mut semi[i1].mismatches);
+            semi[i2].ref_id = -1_i32;
+            to_delete[i2] = true;
+        }
+    }
+    erase_if(semi, &to_delete);
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
