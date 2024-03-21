@@ -508,39 +508,7 @@ pub fn annotate_seq_core(
 
     downselect_to_best_c(&refdata.rheaders, &mut annx);
 
-    // Again remove UTR annotations that have no matching V annotation.
-    // ◼ DANGER with nonstandard references.
-    // ◼ Note repetition.
-
-    let mut to_delete: Vec<bool> = vec![false; annx.len()];
-    let (mut u, mut v) = (Vec::<String>::new(), Vec::<String>::new());
-    for a in &annx {
-        let t = a.ref_id as usize;
-        if !rheaders[t].contains("segment") {
-            let name = rheaders[t].after("|").between("|", "|");
-            if rheaders[t].contains("UTR") {
-                u.push(name.to_string());
-            }
-            if rheaders[t].contains("V-REGION") {
-                v.push(name.to_string());
-            }
-        }
-    }
-    v.sort();
-    for item in &u {
-        if !bin_member(&v, item) {
-            for j in 0..annx.len() {
-                let t = annx[j].ref_id as usize;
-                if !rheaders[t].contains("segment") {
-                    let name = rheaders[t].after("|").between("|", "|");
-                    if rheaders[t].contains("UTR") && item == name {
-                        to_delete[j] = true;
-                    }
-                }
-            }
-        }
-    }
-    erase_if(&mut annx, &to_delete);
+    remove_utr_without_matching_v(&refdata.rheaders, &mut annx);
 
     // Remove some subsumed extended annotations.
 
