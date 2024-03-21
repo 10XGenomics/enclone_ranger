@@ -155,8 +155,8 @@ pub struct Annotation {
     pub mismatches: i32,
 }
 
-#[derive(Ord, PartialOrd, PartialEq, Eq)]
-/// Used prior to creatrion of Annotation object, includes a vector of mismatches
+/// Used prior to creation of Annotation object, includes a vector of mismatches.
+#[derive(PartialEq, Eq)]
 struct PreAnnotation {
     /// Start position on sequence (contig)
     tig_start: i32,
@@ -168,6 +168,22 @@ struct PreAnnotation {
     ref_start: i32,
     /// Vector mismatches on the sequence (contig)
     mismatches: Vec<i32>,
+}
+
+impl PreAnnotation {
+    /// Sort alignments by (tig_start, match_len, ref_id, ref_start, mismatches).
+    fn cmp_by_pos_and_len(a: &Self, b: &Self) -> std::cmp::Ordering {
+        let key: for<'a> fn(&'a Self) -> (_, _, _, _, &'a Vec<_>) = |x: &Self| {
+            (
+                x.tig_start,
+                x.match_len,
+                x.ref_id,
+                x.ref_start,
+                &x.mismatches,
+            )
+        };
+        key(a).cmp(&key(b))
+    }
 }
 
 pub fn annotate_seq(
@@ -416,7 +432,8 @@ pub fn annotate_seq_core(
             mismatches: x.mismatches,
         })
         .collect();
-    unique_sort(&mut annx);
+    annx.sort_by(PreAnnotation::cmp_by_pos_and_len);
+    annx.dedup();
 
     if !allow_improper {
         delete_improper_matches(&mut annx);
@@ -1119,7 +1136,7 @@ fn delete_improper_matches(annx: &mut Vec<PreAnnotation>) {
     }
     erase_if(annx, &to_delete);
     // Re-sort using standard sort order.
-    annx.sort();
+    annx.sort_by(PreAnnotation::cmp_by_pos_and_len);
 }
 
 /// Amongst V segments starting at zero on the V segment, if some start with
@@ -2139,7 +2156,7 @@ fn annotate_j_for_ig_with_c_and_v(b_seq: &[u8], refdata: &RefData, annx: &mut Ve
                 ref_start: 0,
                 mismatches: mis,
             });
-            annx.sort();
+            annx.sort_by(PreAnnotation::cmp_by_pos_and_len);
         }
     }
 }
@@ -2251,7 +2268,7 @@ fn annotate_d_between_v_j(
                         ref_start: 0,
                         mismatches: results[0].5.clone(),
                     });
-                    annx.sort();
+                    annx.sort_by(PreAnnotation::cmp_by_pos_and_len);
                 }
             }
         }
