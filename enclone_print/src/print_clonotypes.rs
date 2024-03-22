@@ -191,9 +191,8 @@ pub fn print_clonotypes(
         loupe_clonotypes: Vec<Clonotype>,
         out_data: Vec<HashMap<String, String>>,
         num_cells: isize,
-        f9: Vec<bool>,
-        f10: Vec<bool>,
-        f11: Vec<(usize, String, BarcodeFate)>,
+        in_gene_scan_test: Vec<bool>,
+        in_gene_scan_control: Vec<bool>,
         in_center: Vec<bool>,
     }
 
@@ -835,8 +834,8 @@ pub fn print_clonotypes(
                             &stats_orig,
                             nexacts,
                             n,
-                            &mut res.f9,
-                            &mut res.f10,
+                            &mut res.in_gene_scan_test,
+                            &mut res.in_gene_scan_control,
                         );
                     }
 
@@ -882,12 +881,6 @@ pub fn print_clonotypes(
         })
         .collect::<Result<Vec<TraverseResult>, String>>()?;
 
-    for ri in &results {
-        for vj in &ri.f11 {
-            fate[vj.0].insert(vj.1.clone(), vj.2.clone());
-        }
-    }
-
     // Sort results in descending order by number of cells.
 
     results.sort_by_key(|x| -x.num_cells);
@@ -929,7 +922,11 @@ pub fn print_clonotypes(
     if ctl.gen_opt.gene_scan.is_some() {
         if !ctl.gen_opt.gene_scan_exact {
             for (i, r) in results.iter().take(orbits.len()).enumerate() {
-                for (&v9, &v10) in r.f9.iter().zip(r.f10.iter()) {
+                for (&v9, &v10) in r
+                    .in_gene_scan_test
+                    .iter()
+                    .zip(r.in_gene_scan_control.iter())
+                {
                     if v9 {
                         out.tests.push(i);
                     }
@@ -940,7 +937,11 @@ pub fn print_clonotypes(
             }
         } else {
             for (r, e) in results.iter().zip(out.exacts.iter()) {
-                for (&ej, (&v9, &v10)) in e.iter().zip(r.f9.iter().zip(r.f10.iter())) {
+                for (&ej, (&v9, &v10)) in e.iter().zip(
+                    r.in_gene_scan_test
+                        .iter()
+                        .zip(r.in_gene_scan_control.iter()),
+                ) {
                     if v9 {
                         out.tests.push(ej);
                     }
