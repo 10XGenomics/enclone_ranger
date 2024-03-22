@@ -271,7 +271,7 @@ pub fn filter_umi(
                 reverse_sort(&mut z);
                 let mut j = 0;
                 while j < z.len() {
-                    let k = next_diff1_5(&z, j as i32) as usize;
+                    let k = next_diff1_5(&z, j);
                     for l in j..k {
                         if z[j].1 >= MIN_UMI_RATIO * z[l].4 {
                             to_delete[z[l].2][z[l].3] = true;

@@ -209,11 +209,11 @@ pub fn fetch_secmem(ctl: &mut EncloneControl) -> Result<(), String> {
         data.sort();
         let mut i = 0;
         while i < data.len() {
-            let j = next_diff1_3(&data, i as i32) as usize;
+            let j = next_diff1_3(&data, i);
             let (mut sec, mut mem) = (0, 0);
             let mut k = i;
             while k < j {
-                // let l = next_diff12_3(&data, k as i32) as usize; // crashed loader
+                // let l = next_diff12_3(&data, k); // crashed loader
                 let mut l = k;
                 while l < j {
                     if data[l].1 != data[k].1 {

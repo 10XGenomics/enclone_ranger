@@ -115,7 +115,7 @@ pub fn find_alleles(
         let mut alls = Vec::<Vec<(usize, Vec<u8>, Vec<usize>, usize, usize, String)>>::new();
         let mut i = 0;
         while i < allx.len() {
-            // let j = next_diff1_6(&allx, i as i32) as usize;
+            // let j = next_diff1_6(&allx, i);
             let mut j = i + 1;
             while j < allx.len() {
                 if allx[j].0 != allx[i].0 {
@@ -188,7 +188,7 @@ pub fn find_alleles(
                 trace.sort_unstable();
                 let mut i = 0;
                 while i < trace.len() {
-                    let j = next_diff1_2(&trace, i as i32) as usize;
+                    let j = next_diff1_2(&trace, i);
                     for k in i..j {
                         if !to_delete[trace[k].1] {
                             for l in i..j {
@@ -223,7 +223,7 @@ pub fn find_alleles(
                 let mut freqs = Vec::<(usize, Vec<usize>, Vec<Vec<usize>>, u8)>::new();
                 let mut i = 0;
                 while i < bases.len() {
-                    let j = next_diff1_3(&bases, i as i32) as usize;
+                    let j = next_diff1_3(&bases, i);
                     let mut x = Vec::<usize>::new();
                     let mut y = Vec::<Vec<usize>>::new();
                     for base in &bases[i..j] {
@@ -297,7 +297,7 @@ pub fn find_alleles(
             let mut i = 0;
             let mut have_ref = false;
             while i < types.len() {
-                let j = next_diff1_2(&types, i as i32) as usize;
+                let j = next_diff1_2(&types, i);
 
                 // Determine if the contigs equal reference at the positions in ps.
 

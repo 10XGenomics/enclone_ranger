@@ -113,7 +113,7 @@ pub fn delete_doublets(
 
             let mut j = 0;
             while j < content.len() {
-                let k = next_diff1_2(&content, j as i32) as usize;
+                let k = next_diff1_2(&content, j);
                 for l1 in j..k {
                     for l2 in l1 + 1..k {
                         shares.push((content[l1].1, content[l2].1));
