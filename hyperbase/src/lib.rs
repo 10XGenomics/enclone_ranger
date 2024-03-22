@@ -116,9 +116,7 @@ pub fn debruijn_to_petgraph_hyperbasevector<K: Kmer>(
     // the natural equivalence relation.
 
     let mut eq: EquivRel = EquivRel::new(2 * edges.len() as i32);
-    for i in 0..adj.len() {
-        let left = adj[i].0;
-        let right = adj[i].1;
+    for (left, right) in adj {
         eq.join(2 * left + 1, 2 * right);
     }
     let mut reps = Vec::<i32>::new();
@@ -132,13 +130,13 @@ pub fn debruijn_to_petgraph_hyperbasevector<K: Kmer>(
     for i in 0..reps.len() {
         g_out.add_node(i as u32);
     }
-    for e in 0..edges.len() {
+    for (e, edge) in edges.into_iter().enumerate() {
         let v = bin_position(&reps, &eq.class_id((2 * e) as i32));
         let w = bin_position(&reps, &eq.class_id((2 * e + 1) as i32));
         g_out.add_edge(
             NodeIndex::<u32>::new(v as usize),
             NodeIndex::<u32>::new(w as usize),
-            edges[e].2.clone(),
+            edge.2,
         );
     }
 }
@@ -273,10 +271,9 @@ impl Hyper {
     pub fn print(&self) {
         let mut comp = Vec::<Vec<u32>>::new();
         self.h.g.components_e(&mut comp);
-        for j in 0..comp.len() {
+        for (j, comp_j) in comp.into_iter().enumerate() {
             println!("\nCOMPONENT {}", j + 1);
-            for i in 0..comp[j].len() {
-                let e = comp[j][i];
+            for e in comp_j {
                 let v = self.h.g.to_left(e);
                 let w = self.h.g.to_right(e);
                 let b: DnaString = self.h.g[EdgeIndex::<u32>::new(e as usize)].clone();
@@ -304,11 +301,10 @@ impl Hyper {
         let mut comp = Vec::<Vec<u32>>::new();
         self.h.g.components_e(&mut comp);
         let mut n = 0;
-        for j in 0..comp.len() {
+        for comp_j in comp {
             let mut have_ann = false;
-            for i in 0..comp[j].len() {
-                let e = comp[j][i] as usize;
-                if !ann[e].is_empty() {
+            for e in &comp_j {
+                if !ann[*e as usize].is_empty() {
                     have_ann = true;
                 }
             }
@@ -317,8 +313,8 @@ impl Hyper {
             }
             n += 1;
             println!("\nCOMPONENT {n}");
-            for i in 0..comp[j].len() {
-                let e = comp[j][i] as usize;
+            for e in comp_j {
+                let e = e as usize;
                 let v = self.h.g.to_left(e as u32);
                 let w = self.h.g.to_right(e as u32);
                 let b: DnaString = self.h.g[EdgeIndex::<u32>::new(e)].clone();
@@ -422,22 +418,22 @@ impl Hyper {
         make_kmer_lookup_20_single(&edges, &mut kmers_plus);
         drop(edges);
         let mut maxread = 0;
-        for id in 0..reads.len() {
-            maxread = max(maxread, reads[id].len());
+        for read in reads {
+            maxread = max(maxread, read.len());
         }
         if maxread < k as usize {
             return;
         }
         let mut next_rpos: Vec<i32> = vec![0; reads.len()];
         for pos in 0..maxread - (k as usize) + 1 {
-            for id in 0..reads.len() {
-                if pos + k as usize > reads[id].len() {
+            for (id, read) in reads.iter().enumerate() {
+                if pos + k as usize > read.len() {
                     continue;
                 }
                 if pos < next_rpos[id] as usize {
                     continue;
                 }
-                let x: Kmer20 = reads[id].get_kmer(pos);
+                let x: Kmer20 = read.get_kmer(pos);
                 let p = bin_position1_3(&kmers_plus, &x);
                 if p < 0 {
                     continue;
@@ -448,7 +444,7 @@ impl Hyper {
                 let mut epos = kmers_plus[p as usize].2 + k;
                 self.ids[e as usize].push(id as u32);
                 loop {
-                    if rpos == reads[id].len() {
+                    if rpos == read.len() {
                         break;
                     }
                     let mut next = false;
@@ -456,9 +452,7 @@ impl Hyper {
                         let v = self.h.g.to_right(e as u32);
                         for j in 0..self.h.g.n_from(v as usize) {
                             let f = self.h.g.e_from(v as usize, j);
-                            if self.h.g.edge_obj(f as u32).get((k - 1) as usize)
-                                == reads[id].get(rpos)
-                            {
+                            if self.h.g.edge_obj(f as u32).get((k - 1) as usize) == read.get(rpos) {
                                 e = f as i32;
                                 self.ids[e as usize].push(id as u32);
                                 epos = k - 1;
@@ -472,7 +466,7 @@ impl Hyper {
                         }
                     }
                     if !next {
-                        if reads[id].get(rpos) != self.h.g.edge_obj(e as u32).get(epos as usize) {
+                        if read.get(rpos) != self.h.g.edge_obj(e as u32).get(epos as usize) {
                             break;
                         }
                         rpos += 1;
@@ -893,8 +887,8 @@ impl Hyper {
         let mut comp = Vec::<Vec<u32>>::new();
         self.h.g.components_e(&mut comp);
         let mut sizes = Vec::<usize>::new();
-        for j in 0..comp.len() {
-            sizes.push(comp[j].len());
+        for c in comp {
+            sizes.push(c.len());
         }
         reverse_sort(&mut sizes);
         print!("component sizes = [");

@@ -174,8 +174,8 @@ where
     fn get_predecessors(&self, v: &[i32], x: &mut Vec<u32>) {
         let mut check: Vec<u32> = Vec::new();
         let mut tov: HashSet<u32> = HashSet::new();
-        for j in 0..v.len() {
-            let s: u32 = v[j] as u32;
+        for v_i in v {
+            let s: u32 = *v_i as u32;
             check.push(s);
             tov.insert(s);
         }
@@ -205,8 +205,8 @@ where
     fn get_successors(&self, v: &[i32], x: &mut Vec<u32>) {
         let mut check: Vec<u32> = Vec::new();
         let mut fromv: HashSet<u32> = HashSet::new();
-        for j in 0..v.len() {
-            let s: u32 = v[j] as u32;
+        for v_i in v {
+            let s: u32 = *v_i as u32;
             check.push(s);
             fromv.insert(s);
         }
@@ -275,23 +275,23 @@ where
 
     fn components_e(&self, comp: &mut Vec<Vec<u32>>) {
         self.components(comp);
-        for j in 0..comp.len() {
+        for comp_i in comp {
             let mut c = Vec::<u32>::new();
-            for i in 0..comp[j].len() {
-                let v = comp[j][i];
+            for comp_i_j in comp_i.iter() {
+                let v = *comp_i_j;
                 let n = self.n_from(v as usize);
                 for l in 0..n {
                     c.push(self.e_from(v as usize, l) as u32);
                 }
             }
-            comp[j] = c;
+            *comp_i = c;
         }
     }
 
     fn components_e_pos_sorted(&self, comp: &mut Vec<Vec<u32>>) {
         self.components_e(comp);
-        for u in 0..comp.len() {
-            comp[u].sort_by(|a, b| {
+        for comp_i in comp {
+            comp_i.sort_by(|a, b| {
                 if a == b {
                     return std::cmp::Ordering::Equal;
                 }
