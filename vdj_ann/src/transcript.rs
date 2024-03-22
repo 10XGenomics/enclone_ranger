@@ -233,42 +233,24 @@ pub fn is_productive_contig(
 // Given a valid contig, find the junction sequence, which we define to be the 100
 // bases ending where the right end of a J region aligns to the contig.
 
-pub fn junction_seq(
-    tig: &DnaString,
-    refdata: &RefData,
-    ann: &[Annotation],
-    jseq: &mut DnaString,
-    is_gd: Option<bool>,
-) {
-    // Unwrap gamma/delta mode flag
-    let gd_mode = is_gd.unwrap_or(false);
+pub fn junction_seq(tig: &DnaString, refdata: &RefData, ann: &[Annotation], jseq: &mut DnaString) {
     let refs = &refdata.refs;
-    let rheaders = &refdata.rheaders;
+    let segtype = &refdata.segtype;
     const TAG: i32 = 100;
-    let mut jstops = Vec::<i32>::new();
-    for j in 0..ann.len() {
-        let l = ann[j].tig_start as usize;
-        let len = ann[j].match_len as usize;
-        let t = ann[j].ref_id as usize;
-        let p = ann[j].ref_start as usize;
-        if (rheaders[t].contains("TRAJ")
-            || rheaders[t].contains("IGHJ")
-            || rheaders[t].contains("TRBJ")
-            || rheaders[t].contains("IGLJ")
-            || rheaders[t].contains("IGKJ")
-            || (rheaders[t].contains("TRGJ") && gd_mode)
-            || (rheaders[t].contains("TRDJ") && gd_mode))
-            && p + len == refs[t].len()
-            && l + len >= TAG as usize
-        {
-            jstops.push((l + len) as i32);
-        }
-    }
-    unique_sort(&mut jstops);
-    // note: if called on a valid contig, jstops will not be empty
-    assert!(!jstops.is_empty());
-    // note: at this point is presumably a rare event for jstops to have > 1 element
-    let jstop = jstops[0];
+    let jstop = ann
+        .iter()
+        .filter_map(|a| {
+            if segtype[a.ref_id as usize] == "J"
+                && (a.ref_start + a.match_len) as usize == refs[a.ref_id as usize].len()
+                && a.tig_start + a.match_len >= TAG
+            {
+                Some(a.tig_start + a.match_len)
+            } else {
+                None
+            }
+        })
+        .min()
+        .unwrap_or_else(|| panic!("Could not find jstop for a valid contig!"));
     let jstart = jstop - TAG;
     *jseq = tig.slice(jstart as usize, jstop as usize).to_owned();
 }
@@ -291,10 +273,9 @@ pub fn junction_supp(
     refdata: &RefData,
     ann: &[Annotation],
     jsupp: &mut (i32, i32),
-    is_gd: Option<bool>,
 ) {
     let mut jseq = DnaString::new();
-    junction_seq(tig, refdata, ann, &mut jseq, is_gd);
+    junction_seq(tig, refdata, ann, &mut jseq);
     junction_supp_core(reads, x, umi_id, &jseq, jsupp);
 }
 
