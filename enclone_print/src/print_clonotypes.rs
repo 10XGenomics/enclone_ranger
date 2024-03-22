@@ -186,16 +186,16 @@ pub fn print_clonotypes(
 
     #[derive(Default)]
     struct TraverseResult {
-        f1: Vec<String>,
-        f2: Vec<(Vec<usize>, ColInfo)>,
+        pics: Vec<String>,
+        exacts: Vec<(Vec<usize>, ColInfo)>,
         f5: usize,
         loupe_clonotypes: Vec<Clonotype>,
-        f7: Vec<Vec<HashMap<String, String>>>,
-        f8: isize,
+        out_data: Vec<HashMap<String, String>>,
+        num_cells: isize,
         f9: Vec<bool>,
         f10: Vec<bool>,
         f11: Vec<(usize, String, BarcodeFate)>,
-        f12: Vec<bool>,
+        in_center: Vec<bool>,
     }
 
     // 0: index in reps
@@ -245,7 +245,8 @@ pub fn print_clonotypes(
 
             let mut bads = vec![false; exacts.len()];
             let mut stats_pass1 = Vec::<Vec<(String, Vec<String>)>>::new();
-            for pass in 1..=2 {
+
+            for pass in [1, 2] {
                 // Delete weak exact subclonotypes.
 
                 if pass == 2 && !ctl.clono_filt_opt.protect_bads {
@@ -355,8 +356,6 @@ pub fn print_clonotypes(
 
                 // Set up for parseable output.
 
-                let mut out_data = Vec::<HashMap<String, String>>::new();
-
                 // Print the orbit.
                 // ◼ An assumption of this code is that a productive pair does not have two contigs
                 // ◼ having identical CDR3_AA sequences.  At present this is not enforced by the
@@ -374,7 +373,7 @@ pub fn print_clonotypes(
                             ctl,
                             &exacts,
                             exact_clonotypes,
-                            &mut out_data,
+                            &mut res.out_data,
                             &mut mlog,
                             &extra_args,
                         );
@@ -398,7 +397,7 @@ pub fn print_clonotypes(
                         &mut vars_amino,
                         &mut shares_amino,
                         &mut ref_diff_pos,
-                        &mut out_data,
+                        &mut res.out_data,
                     );
 
                     // Mark some weak exact subclonotypes for deletion.
@@ -624,7 +623,7 @@ pub fn print_clonotypes(
                             &mut bads,
                             &mut gex_low,
                             &mut row,
-                            &mut out_data,
+                            &mut res.out_data,
                             &mut cx,
                             &mut d_all,
                             &mut ind_all,
@@ -865,7 +864,7 @@ pub fn print_clonotypes(
                         sr,
                         &extra_args,
                         pcols_sort,
-                        &mut out_data,
+                        &mut res.out_data,
                         &rord,
                         pass,
                         &cdr3_con,
@@ -873,15 +872,12 @@ pub fn print_clonotypes(
 
                     // Save.
 
-                    res.f1.push(logz);
-                    res.f2.push((exacts.clone(), rsi.clone()));
-                    res.f12.push(in_center);
+                    res.pics.push(logz);
+                    res.exacts.push((exacts.clone(), rsi.clone()));
+                    res.in_center.push(in_center);
                     for u in 0..exacts.len() {
-                        res.f8 += exact_clonotypes[exacts[u]].ncells() as isize;
+                        res.num_cells += exact_clonotypes[exacts[u]].ncells() as isize;
                     }
-                }
-                if pass == 2 {
-                    res.f7.push(out_data);
                 }
             }
             Ok(res)
@@ -896,7 +892,7 @@ pub fn print_clonotypes(
 
     // Sort results in descending order by number of cells.
 
-    results.sort_by_key(|x| -x.f8);
+    results.sort_by_key(|x| -x.num_cells);
 
     // Write loupe output.
 
@@ -918,13 +914,17 @@ pub fn print_clonotypes(
     let mut out = PrintClonotypesResult::default();
 
     for ri in results.iter_mut().take(orbits.len()) {
-        for (v1, (v2, &v12)) in ri.f1.iter().zip(ri.f2.iter().zip(ri.f12.iter())) {
-            out.pics.push(v1.clone());
-            out.exacts.push(v2.0.clone());
-            out.rsi.push(v2.1.clone());
-            out.in_center.push(v12);
+        for (pics, (exacts, &in_center)) in ri
+            .pics
+            .iter()
+            .zip(ri.exacts.iter().zip(ri.in_center.iter()))
+        {
+            out.pics.push(pics.clone());
+            out.exacts.push(exacts.0.clone());
+            out.rsi.push(exacts.1.clone());
+            out.in_center.push(in_center);
         }
-        out.out_datas.append(&mut ri.f7);
+        out.out_datas.push(ri.out_data.clone());
     }
 
     // Gather some data for gene scan.

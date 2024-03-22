@@ -26,12 +26,11 @@ use vdj_ann::refx::RefData;
 use vector_utils::next_diff12_4;
 use vector_utils::{bin_member, bin_position, unique_sort};
 
-// The following code creates a row in the enclone output table for a clonotype.  Simultaneously
-// it generates a row of parseable output.  And it does some other things that are not described
-// here.
-//
-// TODO: Awful interface, should work to improve.
-
+/// The following code creates a row in the enclone output table for a clonotype.  Simultaneously
+/// it generates a row of parseable output.  And it does some other things that are not described
+/// here.
+///
+/// TODO: Awful interface, should work to improve.
 pub fn row_fill(
     pass: usize,
     u: usize,
