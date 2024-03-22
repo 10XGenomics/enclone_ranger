@@ -57,10 +57,18 @@ pub struct EncloneExacts {
     pub info: Vec<CloneInfo>,
     pub orbits: Vec<Vec<i32>>,
     pub vdj_cells: Vec<Vec<String>>,
-    pub join_info: Vec<(usize, usize, bool, Vec<u8>)>,
+    pub join_info: Vec<JoinInfo>,
     pub drefs: Vec<DonorReferenceItem>,
     pub sr: Vec<Vec<Double>>,
     pub fate: Vec<HashMap<String, BarcodeFate>>, // GETS MODIFIED SUBSEQUENTLY
     pub is_bcr: bool,
     pub allele_data: AlleleData,
+}
+
+#[derive(Clone)]
+pub struct JoinInfo {
+    pub index1: usize,
+    pub index2: usize,
+    pub err: bool,
+    pub log: Vec<u8>,
 }

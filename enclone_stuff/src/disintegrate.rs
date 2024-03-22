@@ -3,7 +3,10 @@
 // If NWEAK_ONESIES is not specified, disintegrate certain onesie clonotypes into single cell
 // clonotypes.  This requires editing of exact_clonotypes, info, eq, join_info and raw_joins.
 
-use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
+use enclone_core::{
+    defs::{CloneInfo, EncloneControl, ExactClonotype},
+    enclone_structs::JoinInfo,
+};
 use equiv::EquivRel;
 use std::collections::HashMap;
 
@@ -15,7 +18,7 @@ pub fn disintegrate_onesies(
     eq: &mut EquivRel,
     exact_clonotypes: &mut Vec<ExactClonotype>,
     info: &mut Vec<CloneInfo>,
-    join_info: &mut Vec<(usize, usize, bool, Vec<u8>)>,
+    join_info: &mut Vec<JoinInfo>,
     raw_joins: &mut Vec<(i32, i32)>,
 ) {
     if ctl.clono_filt_opt_def.weak_onesies {
@@ -55,13 +58,13 @@ pub fn disintegrate_onesies(
         }
         let mut join_info2 = Vec::new();
         for ji in join_info.iter() {
-            let (u1, u2) = (ji.0, ji.1);
+            let (u1, u2) = (ji.index1, ji.index2);
             for v1 in &to_exact_new[u1] {
                 join_info2.reserve(to_exact_new[u2].len());
                 for v2 in &to_exact_new[u2] {
                     let mut x = ji.clone();
-                    x.0 = *v1;
-                    x.1 = *v2;
+                    x.index1 = *v1;
+                    x.index2 = *v2;
                     join_info2.push(x);
                 }
             }

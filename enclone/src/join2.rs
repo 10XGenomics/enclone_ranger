@@ -2,39 +2,54 @@
 
 // This file provides the tail end code for join.rs, plus a small function used there.
 
-use enclone_core::defs::{CloneInfo, EncloneControl};
+use enclone_core::{
+    defs::{CloneInfo, EncloneControl},
+    enclone_structs::JoinInfo,
+};
 use equiv::EquivRel;
 use stats_utils::percent_ratio;
 
 use vector_utils::next_diff1_2;
 
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+pub struct JoinResult {
+    pub i: usize,
+    pub j: usize,
+    pub joins: usize,
+    pub errors: usize,
+    pub join_info: Vec<JoinInfo>,
+    pub join_list: Vec<(usize, usize)>,
+}
+
+impl JoinResult {
+    pub fn new(i: usize, j: usize) -> Self {
+        Self {
+            i,
+            j,
+            joins: 0,
+            errors: 0,
+            join_info: Default::default(),
+            join_list: Default::default(),
+        }
+    }
+}
 
 pub fn finish_join(
     ctl: &EncloneControl,
     info: &[CloneInfo],
-    results: &[(
-        usize,
-        usize,
-        usize,
-        usize,
-        Vec<(usize, usize, bool, Vec<u8>)>,
-        Vec<(usize, usize)>,
-    )],
-    join_info: &mut Vec<(usize, usize, bool, Vec<u8>)>,
+    results: Vec<JoinResult>,
+    join_info: &mut Vec<JoinInfo>,
 ) -> EquivRel {
     // Tally results.
-
+    // Make equivalence relation.
     let (mut joins, mut errors) = (0, 0);
+    let mut eq: EquivRel = EquivRel::new(info.len() as i32);
+
     for r in results {
-        joins += r.2;
-        errors += r.3;
-        for i in &r.4 {
-            let u1 = i.0;
-            let u2 = i.1;
-            let err = i.2;
-            let log = i.3.clone();
-            join_info.push((u1, u2, err, log));
+        joins += r.joins;
+        errors += r.errors;
+        join_info.extend(r.join_info.into_iter());
+        for j in &r.join_list {
+            eq.join(j.0 as i32, j.1 as i32);
         }
     }
     if !ctl.silent {
@@ -43,14 +58,12 @@ pub fn finish_join(
             println!("{errors} errors");
         }
     }
-
-    // Make equivalence relation.
-
-    let mut eq: EquivRel = EquivRel::new(info.len() as i32);
-    for r in results {
-        for j in &r.5 {
-            eq.join(j.0 as i32, j.1 as i32);
-        }
+    // Report whitelist contamination.
+    // WARNING: THIS ONLY WORKS IF YOU RUN WITH CLONES=1 AND NO OTHER FILTERS.
+    // TODO: we should actually make an assertion that this is true.
+    if ctl.clono_filt_opt_def.whitef || ctl.clono_print_opt.cvars.iter().any(|var| var == "white") {
+        let bad_rate = percent_ratio(joins, errors);
+        println!("whitelist contamination rate = {bad_rate:.2}%");
     }
 
     // Join orbits that cross subclones of a clone.  This arose because we split up multi-chain
@@ -68,26 +81,6 @@ pub fn finish_join(
             eq.join(ox[k].1, ox[k + 1].1);
         }
         i = j;
-    }
-
-    // Tally whitelist contamination.
-    // WARNING: THIS ONLY WORKS IF YOU RUN WITH CLONES=1 AND NO OTHER FILTERS.
-
-    let mut white = ctl.clono_filt_opt_def.whitef;
-    for j in 0..ctl.clono_print_opt.cvars.len() {
-        if ctl.clono_print_opt.cvars[j] == "white" {
-            white = true;
-        }
-    }
-    if white {
-        let mut bads = 0;
-        let mut denom = 0;
-        for r in results {
-            bads += r.2;
-            denom += r.3;
-        }
-        let bad_rate = percent_ratio(bads, denom);
-        println!("whitelist contamination rate = {bad_rate:.2}%");
     }
 
     eq

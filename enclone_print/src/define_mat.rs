@@ -53,11 +53,11 @@ fn joiner(
     e
 }
 
-pub fn setup_define_mat(
-    orbit: &[i32],
-    info: &[CloneInfo],
-) -> (Vec<(Vec<usize>, usize, i32)>, Vec<usize>) {
-    let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
+// TOOD: refactor this into a struct
+pub type Od = (Vec<usize>, usize, i32);
+
+pub fn setup_define_mat(orbit: &[i32], info: &[CloneInfo]) -> (Vec<Od>, Vec<usize>) {
+    let mut od = Vec::<Od>::new();
     for id in orbit {
         let x: &CloneInfo = &info[*id as usize];
         od.push((x.origin.clone(), x.clonotype_id, *id));
@@ -83,7 +83,7 @@ pub fn define_mat(
     ctl: &EncloneControl,
     exact_clonotypes: &[ExactClonotype],
     exacts: &[usize],
-    od: &[(Vec<usize>, usize, i32)],
+    od: &[Od],
     info: &[CloneInfo],
     raw_joins: &[Vec<usize>],
     refdata: &RefData,

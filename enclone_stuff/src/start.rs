@@ -21,9 +21,9 @@ use enclone::misc3::sort_tig_bc;
 use enclone_args::read_json::{parse_json_annotations_files, Annotations};
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, CloneInfo};
-use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup};
+use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup, JoinInfo};
 use enclone_core::hcomp::heavy_complexity;
-use enclone_print::define_mat::{define_mat, setup_define_mat};
+use enclone_print::define_mat::{define_mat, setup_define_mat, Od};
 use enclone_print::loupe::make_donor_refs;
 use equiv::EquivRel;
 use io_utils::{fwriteln, open_for_read};
@@ -360,7 +360,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
     // Form equivalence relation on exact subclonotypes.  We also keep the raw joins, consisting
     // of pairs of info indices, that were originally joined.
 
-    let mut join_info = Vec::<(usize, usize, bool, Vec<u8>)>::new();
+    let mut join_info = Vec::<JoinInfo>::new();
     let mut raw_joins = Vec::<(i32, i32)>::new();
     let mut eq: EquivRel = join_exacts(
         is_bcr,
@@ -623,7 +623,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             results.par_iter_mut().for_each(|res| {
                 let i = res.0;
                 let o = &orbits[i];
-                let mut od = Vec::<(Vec<usize>, usize, i32)>::new();
+                let mut od = Vec::<Od>::new();
                 for id in o {
                     let x: &CloneInfo = &info[*id as usize];
                     od.push((x.origin.clone(), x.clonotype_id, *id));
