@@ -15,7 +15,7 @@ use crate::print_utils2::row_fill;
 use crate::print_utils3::{
     consensus_codon_cdr3, define_column_info, get_extra_parseables, process_complete,
 };
-use crate::print_utils4::{build_show_aa, compute_bu, compute_some_stats};
+use crate::print_utils4::{build_show_aa, compute_bu, compute_some_stats, SomeStats};
 use crate::print_utils5::{delete_weaks, vars_and_shares};
 use enclone_args::proc_args_check::involves_gex_fb;
 use enclone_core::allowed_vars::{CVARS_ALLOWED, CVARS_ALLOWED_PCELL, LVARS_ALLOWED};
@@ -38,13 +38,13 @@ use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sor
 
 #[derive(Default)]
 pub struct PrintClonotypesResult {
-    pics: Vec<String>,
-    exacts: Vec<Vec<usize>>,
-    in_center: Vec<bool>,
-    rsi: Vec<ColInfo>,
-    out_datas: Vec<Vec<HashMap<String, String>>>,
-    tests: Vec<usize>,
-    controls: Vec<usize>,
+    pub pics: Vec<String>,
+    pub exacts: Vec<Vec<usize>>,
+    pub in_center: Vec<bool>,
+    pub rsi: Vec<ColInfo>,
+    pub out_datas: Vec<Vec<HashMap<String, String>>>,
+    pub tests: Vec<usize>,
+    pub controls: Vec<usize>,
 }
 
 /// Print clonotypes.  A key challenge here is to define the columns that represent shared
@@ -577,11 +577,7 @@ pub fn print_clonotypes(
 
                 // Compute some stats;
 
-                let mut cred = Vec::<Vec<String>>::new();
-                let mut pe = Vec::<Vec<String>>::new();
-                let mut ppe = Vec::<Vec<String>>::new();
-                let mut npe = Vec::<Vec<String>>::new();
-                compute_some_stats(
+                let SomeStats { cred, pe, ppe, npe } = compute_some_stats(
                     ctl,
                     &lvars,
                     &exacts,
@@ -589,10 +585,6 @@ pub fn print_clonotypes(
                     gex_info,
                     vdj_cells,
                     &n_vdj_gex,
-                    &mut cred,
-                    &mut pe,
-                    &mut ppe,
-                    &mut npe,
                 );
 
                 // Precompute for near and far.
