@@ -780,6 +780,7 @@ fn extend_matches(b_seq: &[u8], refs: &[DnaString], semi: &mut [Alignment]) {
                 len += 1;
             }
         }
+        s.ref_start = l + off;
         s.tig_start = l;
         s.len = len;
         s.mismatches = mis;
@@ -892,6 +893,7 @@ fn extend_matches_to_end_of_reference(b_seq: &[u8], refs: &[DnaString], semi: &m
             len += 1;
         }
         if mis_count <= max_mis && l + off == 0 {
+            s.ref_start = l + off;
             s.tig_start = l;
             s.len = len;
             s.mismatches = mis;
@@ -965,6 +967,7 @@ fn merge_overlapping_alignments(semi: &mut Vec<Alignment>) {
                 if to_delete[k1] || to_delete[k2] {
                     continue;
                 }
+                let offset = semi[k1].offset();
                 let start1 = semi[k1].tig_start;
                 let start2 = semi[k2].tig_start;
                 let len1 = semi[k1].len;
@@ -974,6 +977,7 @@ fn merge_overlapping_alignments(semi: &mut Vec<Alignment>) {
                 let start = min(start1, start2);
                 let stop = max(stop1, stop2);
                 if stop - start <= len1 + len2 {
+                    semi[k1].ref_start = start + offset;
                     semi[k1].tig_start = start;
                     semi[k1].len = stop - start;
                     let mut m2 = semi[k2].mismatches.clone();
