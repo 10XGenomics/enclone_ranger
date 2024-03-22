@@ -714,7 +714,7 @@ fn merge_perfect_matches(b_seq: &[u8], refs: &[DnaString], perf: Vec<Alignment>)
             }
             semi.push(Alignment {
                 ref_id: t,
-                ref_start: off + perf[k1].tig_start,
+                ref_start: perf[k1].ref_start,
                 tig_start: perf[k1].tig_start,
                 len: perf[k2].tig_start + perf[k2].len - perf[k1].tig_start,
                 mismatches: m,
