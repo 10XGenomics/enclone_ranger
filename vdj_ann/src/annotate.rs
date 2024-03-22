@@ -413,16 +413,7 @@ pub fn annotate_seq_core(
         log,
     );
 
-    let mut annx: Vec<_> = semi
-        .into_iter()
-        .map(|x| Alignment {
-            tig_start: x.tig_start,
-            len: x.len,
-            ref_id: x.ref_id,
-            ref_start: x.ref_start,
-            mismatches: x.mismatches,
-        })
-        .collect();
+    let mut annx = semi;
     annx.sort_by(Alignment::cmp_by_tig_start_len);
     annx.dedup();
 
