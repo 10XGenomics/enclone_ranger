@@ -8,7 +8,7 @@
 use crate::define_mat::{define_mat, Od};
 use crate::filter::survives_filter;
 use crate::finish_table::{finish_table, Sr};
-use crate::gene_scan::gene_scan_test;
+use crate::gene_scan::{gene_scan_test, InSet};
 use crate::loupe::{loupe_out, make_loupe_clonotype};
 use crate::print_utils1::{compute_field_types, extra_args, start_gen};
 use crate::print_utils2::row_fill;
@@ -43,8 +43,7 @@ pub struct PrintClonotypesResult {
     pub in_center: Vec<bool>,
     pub rsi: Vec<ColInfo>,
     pub out_datas: Vec<Vec<HashMap<String, String>>>,
-    pub tests: Vec<usize>,
-    pub controls: Vec<usize>,
+    pub gene_scan_result: Vec<Vec<InSet>>,
 }
 
 /// Print clonotypes.  A key challenge here is to define the columns that represent shared
@@ -191,8 +190,7 @@ pub fn print_clonotypes(
         loupe_clonotypes: Vec<Clonotype>,
         out_data: Vec<HashMap<String, String>>,
         num_cells: isize,
-        in_gene_scan_test: Vec<bool>,
-        in_gene_scan_control: Vec<bool>,
+        gene_scan_membership: Vec<InSet>,
         in_center: Vec<bool>,
     }
 
@@ -827,15 +825,13 @@ pub fn print_clonotypes(
 
                     // See if we're in the test and control sets for gene scan.
                     if let Some(gene_scan_opts) = &ctl.gen_opt.gene_scan {
-                        gene_scan_test(
+                        res.gene_scan_membership = gene_scan_test(
                             gene_scan_opts,
                             ctl.gen_opt.gene_scan_exact,
                             &stats,
                             &stats_orig,
                             nexacts,
                             n,
-                            &mut res.in_gene_scan_test,
-                            &mut res.in_gene_scan_control,
                         );
                     }
 
@@ -904,7 +900,7 @@ pub fn print_clonotypes(
     // Set up to group and print clonotypes.
     let mut out = PrintClonotypesResult::default();
 
-    for ri in results.iter_mut().take(orbits.len()) {
+    for ri in results {
         for (pics, (exacts, &in_center)) in ri
             .pics
             .iter()
@@ -916,41 +912,7 @@ pub fn print_clonotypes(
             out.in_center.push(in_center);
         }
         out.out_datas.push(ri.out_data.clone());
-    }
-
-    // Gather some data for gene scan.
-    if ctl.gen_opt.gene_scan.is_some() {
-        if !ctl.gen_opt.gene_scan_exact {
-            for (i, r) in results.iter().take(orbits.len()).enumerate() {
-                for (&v9, &v10) in r
-                    .in_gene_scan_test
-                    .iter()
-                    .zip(r.in_gene_scan_control.iter())
-                {
-                    if v9 {
-                        out.tests.push(i);
-                    }
-                    if v10 {
-                        out.controls.push(i);
-                    }
-                }
-            }
-        } else {
-            for (r, e) in results.iter().zip(out.exacts.iter()) {
-                for (&ej, (&v9, &v10)) in e.iter().zip(
-                    r.in_gene_scan_test
-                        .iter()
-                        .zip(r.in_gene_scan_control.iter()),
-                ) {
-                    if v9 {
-                        out.tests.push(ej);
-                    }
-                    if v10 {
-                        out.controls.push(ej);
-                    }
-                }
-            }
-        }
+        out.gene_scan_result.push(ri.gene_scan_membership);
     }
     Ok(out)
 }
