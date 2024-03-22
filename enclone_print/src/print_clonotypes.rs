@@ -29,7 +29,6 @@ use hdf5::Reader;
 use itertools::izip;
 use qd::Double;
 use rayon::prelude::*;
-use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::BufWriter;
@@ -37,19 +36,29 @@ use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
 
-// Print clonotypes.  A key challenge here is to define the columns that represent shared
-// chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
-//
-// This code carries out a second function, which is to filter out exact subclonotypes in orbits
-// that appear to be junk.  Exactly how these should be reflected in files is TBD.
-//
-// Some inputs for this section:
-// refdata                = reference sequence data
-// ctl                    = control parameters
-// exact_clonotypes       = the vector of all exact subclonotypes
-// info                   = vector of clonotype info
-// eq                     = equivalence relation on info
+#[derive(Default)]
+pub struct PrintClonotypesResult {
+    pics: Vec<String>,
+    exacts: Vec<Vec<usize>>,
+    in_center: Vec<bool>,
+    rsi: Vec<ColInfo>,
+    out_datas: Vec<Vec<HashMap<String, String>>>,
+    tests: Vec<usize>,
+    controls: Vec<usize>,
+}
 
+/// Print clonotypes.  A key challenge here is to define the columns that represent shared
+/// chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
+///
+/// This code carries out a second function, which is to filter out exact subclonotypes in orbits
+/// that appear to be junk.  Exactly how these should be reflected in files is TBD.
+///
+/// Some inputs for this section:
+/// refdata                = reference sequence data
+/// ctl                    = control parameters
+/// exact_clonotypes       = the vector of all exact subclonotypes
+/// info                   = vector of clonotype info
+/// eq                     = equivalence relation on info
 pub fn print_clonotypes(
     is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
@@ -66,16 +75,9 @@ pub fn print_clonotypes(
     d_readers: &[Option<Reader<'_>>],
     ind_readers: &[Option<Reader<'_>>],
     h5_data: &[(usize, Vec<u32>, Vec<u32>)],
-    pics: &mut Vec<String>,
-    exacts: &mut Vec<Vec<usize>>,
-    in_center: &mut Vec<bool>,
-    rsi: &mut Vec<ColInfo>,
-    out_datas: &mut Vec<Vec<HashMap<String, String>>>,
-    tests: &mut Vec<usize>,
-    controls: &mut Vec<usize>,
     fate: &mut [HashMap<String, BarcodeFate>],
     allele_data: &AlleleData,
-) -> Result<(), String> {
+) -> Result<PrintClonotypesResult, String> {
     let lvars = &ctl.clono_print_opt.lvars;
 
     // Compute extra args.
@@ -105,11 +107,11 @@ pub fn print_clonotypes(
     // Define parseable output columns.  The entire machinery for parseable output is controlled
     // by macros that begin with "speak".
 
-    let mut max_chains = 4;
+    let max_chains = 4;
     // This seems like a bug, since rsi is uninitialized upon entry to print_clonotypes.
-    for r in rsi.iter() {
-        max_chains = max(max_chains, r.mat.len());
-    }
+    // for r in rsi.iter() {
+    //     max_chains = max(max_chains, r.mat.len());
+    // }
     let mut parseable_fields = Vec::<String>::new();
     set_speakers(ctl, &mut parseable_fields, max_chains);
     let pcols_sort = &ctl.parseable_opt.pcols_sort;
@@ -938,15 +940,16 @@ pub fn print_clonotypes(
     }
 
     // Set up to group and print clonotypes.
+    let mut out = PrintClonotypesResult::default();
 
     for ri in results.iter_mut().take(orbits.len()) {
         for (v1, (v2, &v12)) in ri.1.iter().zip(ri.2.iter().zip(ri.12.iter())) {
-            pics.push(v1.clone());
-            exacts.push(v2.0.clone());
-            rsi.push(v2.1.clone());
-            in_center.push(v12);
+            out.pics.push(v1.clone());
+            out.exacts.push(v2.0.clone());
+            out.rsi.push(v2.1.clone());
+            out.in_center.push(v12);
         }
-        out_datas.append(&mut ri.7);
+        out.out_datas.append(&mut ri.7);
     }
 
     // Gather some data for gene scan.
@@ -955,25 +958,25 @@ pub fn print_clonotypes(
         for (i, r) in results.iter().take(orbits.len()).enumerate() {
             for (&v9, &v10) in r.9.iter().zip(r.10.iter()) {
                 if v9 {
-                    tests.push(i);
+                    out.tests.push(i);
                 }
                 if v10 {
-                    controls.push(i);
+                    out.controls.push(i);
                 }
             }
         }
     }
     if ctl.gen_opt.gene_scan_test.is_some() && ctl.gen_opt.gene_scan_exact {
-        for (r, e) in results.iter().zip(exacts.iter()) {
+        for (r, e) in results.iter().zip(out.exacts.iter()) {
             for (&ej, (&v9, &v10)) in e.iter().zip(r.9.iter().zip(r.10.iter())) {
                 if v9 {
-                    tests.push(ej);
+                    out.tests.push(ej);
                 }
                 if v10 {
-                    controls.push(ej);
+                    out.controls.push(ej);
                 }
             }
         }
     }
-    Ok(())
+    Ok(out)
 }

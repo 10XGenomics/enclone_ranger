@@ -1,11 +1,9 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
-use enclone_core::defs::ColInfo;
 use enclone_core::enclone_structs::EncloneIntermediates;
 use enclone_print::print_clonotypes::print_clonotypes;
 use hdf5::Reader;
 use rayon::prelude::*;
-use std::collections::HashMap;
 
 pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), String> {
     // Unpack inputs.
@@ -53,14 +51,6 @@ pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), S
     });
 
     // Find and print clonotypes.  (But we don't actually print them here.)
-
-    let mut pics = Vec::<String>::new();
-    let mut exacts = Vec::<Vec<usize>>::new(); // ugly reuse of name
-    let mut in_center = Vec::<bool>::new();
-    let mut rsi = Vec::<ColInfo>::new(); // ditto
-    let mut out_datas = Vec::<Vec<HashMap<String, String>>>::new();
-    let mut tests = Vec::<usize>::new();
-    let mut controls = Vec::<usize>::new();
     print_clonotypes(
         is_bcr,
         to_bc,
@@ -77,13 +67,6 @@ pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), S
         &d_readers,
         &ind_readers,
         &h5_data,
-        &mut pics,
-        &mut exacts,
-        &mut in_center,
-        &mut rsi,
-        &mut out_datas,
-        &mut tests,
-        &mut controls,
         fate,
         allele_data,
     )?;
