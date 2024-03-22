@@ -47,7 +47,6 @@ pub fn row_fill(
     ref_diff_pos: &[Vec<Vec<usize>>],
     field_types: &[Vec<u8>],
     bads: &mut [bool],
-    gex_low: &mut usize,
     row: &mut Vec<String>,                    // row of human-readable output
     out_data: &mut [HashMap<String, String>], // row of parseable output
     cx: &mut [Vec<String>],
@@ -260,11 +259,6 @@ pub fn row_fill(
         }
         gex_counts_unsorted = counts.clone();
         counts.sort_unstable();
-        for n in &counts {
-            if *n < 100 {
-                *gex_low += 1;
-            }
-        }
         if !counts.is_empty() {
             gex_sum = gex_fcounts_unsorted.iter().sum::<f64>();
             gex_mean = gex_sum / gex_fcounts_unsorted.len() as f64;

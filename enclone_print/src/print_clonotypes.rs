@@ -188,7 +188,6 @@ pub fn print_clonotypes(
     struct TraverseResult {
         pics: Vec<String>,
         exacts: Vec<(Vec<usize>, ColInfo)>,
-        f5: usize,
         loupe_clonotypes: Vec<Clonotype>,
         out_data: Vec<HashMap<String, String>>,
         num_cells: isize,
@@ -595,7 +594,6 @@ pub fn print_clonotypes(
                     for u in 0..nexacts {
                         let mut typex = vec![false; cols];
                         let mut row = Vec::<String>::new();
-                        let mut gex_low = 0;
                         let mut cx = Vec::<Vec<String>>::new();
                         for col in 0..cols {
                             cx.push(vec![String::new(); rsi.cvars[col].len()]);
@@ -621,7 +619,6 @@ pub fn print_clonotypes(
                             &ref_diff_pos,
                             &field_types,
                             &mut bads,
-                            &mut gex_low,
                             &mut row,
                             &mut res.out_data,
                             &mut cx,
@@ -669,7 +666,6 @@ pub fn print_clonotypes(
                         for mut cxr in cx {
                             row.append(&mut cxr);
                         }
-                        res.f5 = gex_low;
 
                         // Compute per-cell entries.
 
