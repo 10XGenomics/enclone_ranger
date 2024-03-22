@@ -827,16 +827,18 @@ pub fn print_clonotypes(
                     }
 
                     // See if we're in the test and control sets for gene scan.
-
-                    gene_scan_test(
-                        ctl,
-                        &stats,
-                        &stats_orig,
-                        nexacts,
-                        n,
-                        &mut res.f9,
-                        &mut res.f10,
-                    );
+                    if let Some(gene_scan_opts) = &ctl.gen_opt.gene_scan {
+                        gene_scan_test(
+                            gene_scan_opts,
+                            ctl.gen_opt.gene_scan_exact,
+                            &stats,
+                            &stats_orig,
+                            nexacts,
+                            n,
+                            &mut res.f9,
+                            &mut res.f10,
+                        );
+                    }
 
                     // Make the table.
 
@@ -924,27 +926,27 @@ pub fn print_clonotypes(
     }
 
     // Gather some data for gene scan.
-
-    if ctl.gen_opt.gene_scan_test.is_some() && !ctl.gen_opt.gene_scan_exact {
-        for (i, r) in results.iter().take(orbits.len()).enumerate() {
-            for (&v9, &v10) in r.f9.iter().zip(r.f10.iter()) {
-                if v9 {
-                    out.tests.push(i);
-                }
-                if v10 {
-                    out.controls.push(i);
+    if ctl.gen_opt.gene_scan.is_some() {
+        if !ctl.gen_opt.gene_scan_exact {
+            for (i, r) in results.iter().take(orbits.len()).enumerate() {
+                for (&v9, &v10) in r.f9.iter().zip(r.f10.iter()) {
+                    if v9 {
+                        out.tests.push(i);
+                    }
+                    if v10 {
+                        out.controls.push(i);
+                    }
                 }
             }
-        }
-    }
-    if ctl.gen_opt.gene_scan_test.is_some() && ctl.gen_opt.gene_scan_exact {
-        for (r, e) in results.iter().zip(out.exacts.iter()) {
-            for (&ej, (&v9, &v10)) in e.iter().zip(r.f9.iter().zip(r.f10.iter())) {
-                if v9 {
-                    out.tests.push(ej);
-                }
-                if v10 {
-                    out.controls.push(ej);
+        } else {
+            for (r, e) in results.iter().zip(out.exacts.iter()) {
+                for (&ej, (&v9, &v10)) in e.iter().zip(r.f9.iter().zip(r.f10.iter())) {
+                    if v9 {
+                        out.tests.push(ej);
+                    }
+                    if v10 {
+                        out.controls.push(ej);
+                    }
                 }
             }
         }

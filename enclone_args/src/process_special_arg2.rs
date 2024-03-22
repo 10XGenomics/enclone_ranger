@@ -3,7 +3,7 @@
 // Process a special argument, i.e. one that does not fit into a neat bucket.
 
 use crate::proc_args2::{is_f64_arg, is_usize_arg};
-use enclone_core::defs::EncloneControl;
+use enclone_core::defs::{EncloneControl, GeneScanOpts};
 use enclone_core::linear_condition::LinearCondition;
 use enclone_core::{require_readable_file, tilde_expand_me};
 use evalexpr::build_operator_tree;
@@ -363,15 +363,17 @@ pub fn process_special_arg2(
         if x.len() != 3 {
             return Err("\nArgument to SCAN must have three components.\n".to_string());
         }
-        ctl.gen_opt.gene_scan_test = Some(LinearCondition::new(x[0])?);
-        ctl.gen_opt.gene_scan_control = Some(LinearCondition::new(x[1])?);
         let threshold = LinearCondition::new(x[2])?;
         for i in 0..threshold.var.len() {
             if threshold.var[i] != *"t" && threshold.var[i] != *"c" {
                 return Err("\nIllegal variable in threshold for scan.\n".to_string());
             }
         }
-        ctl.gen_opt.gene_scan_threshold = Some(threshold);
+        ctl.gen_opt.gene_scan = Some(GeneScanOpts {
+            test: LinearCondition::new(x[0])?,
+            control: LinearCondition::new(x[1])?,
+            threshold,
+        });
     } else if arg.starts_with("PLOT=") {
         *using_plot = true;
         let x = arg.after("PLOT=").split(',').collect::<Vec<&str>>();
