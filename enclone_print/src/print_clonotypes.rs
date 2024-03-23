@@ -185,13 +185,19 @@ pub fn print_clonotypes(
 
     #[derive(Default)]
     struct TraverseResult {
-        pics: Vec<String>,
-        exacts: Vec<(Vec<usize>, ColInfo)>,
+        subdata: Option<TraverseResultSubdata>,
         loupe_clonotypes: Vec<Clonotype>,
         out_data: Vec<HashMap<String, String>>,
         num_cells: isize,
         gene_scan_membership: Vec<InSet>,
-        in_center: Vec<bool>,
+    }
+
+    /// All of the fields appear or do not, together.
+    struct TraverseResultSubdata {
+        pic: String,
+        exacts: Vec<usize>,
+        rsi: ColInfo,
+        in_center: bool,
     }
 
     // 0: index in reps
@@ -222,7 +228,6 @@ pub fn print_clonotypes(
             let mut exacts = Vec::<usize>::new();
             let mut mults = Vec::<usize>::new();
             let mut j = 0;
-            let mut loupe_clonotypes = Vec::new();
             while j < od.len() {
                 let k = next_diff12_3(&od, j as i32) as usize;
                 let mut mult = 0_usize;
@@ -340,7 +345,7 @@ pub fn print_clonotypes(
                 // Generate Loupe data.
 
                 if (!ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty()) && pass == 2 {
-                    loupe_clonotypes.push(make_loupe_clonotype(
+                    res.loupe_clonotypes.push(make_loupe_clonotype(
                         exact_clonotypes,
                         &exacts,
                         &rsi,
@@ -359,8 +364,11 @@ pub fn print_clonotypes(
                 // ◼ some unsavory workarounds below.
 
                 let mut mlog = Vec::<u8>::new();
-                if n >= ctl.clono_filt_opt.ncells_low
-                    || ctl.clono_group_opt.asymmetric_center == "from_filters"
+                if !(n >= ctl.clono_filt_opt.ncells_low
+                    || ctl.clono_group_opt.asymmetric_center == "from_filters")
+                {
+                    continue;
+                }
                 {
                     // Start to generate parseable output.
 
@@ -837,8 +845,7 @@ pub fn print_clonotypes(
 
                     // Make the table.
 
-                    let mut logz = String::new();
-                    finish_table(
+                    let clonotype_pic = finish_table(
                         n,
                         ctl,
                         &exacts,
@@ -852,7 +859,6 @@ pub fn print_clonotypes(
                         dref,
                         &peer_groups,
                         &mut mlog,
-                        &mut logz,
                         &stats,
                         sr,
                         &extra_args,
@@ -864,10 +870,12 @@ pub fn print_clonotypes(
                     );
 
                     // Save.
-
-                    res.pics.push(logz);
-                    res.exacts.push((exacts.clone(), rsi.clone()));
-                    res.in_center.push(in_center);
+                    res.subdata = Some(TraverseResultSubdata {
+                        pic: clonotype_pic,
+                        exacts: exacts.clone(),
+                        rsi: rsi.clone(),
+                        in_center,
+                    });
                     for u in 0..exacts.len() {
                         res.num_cells += exact_clonotypes[exacts[u]].ncells() as isize;
                     }
@@ -901,17 +909,13 @@ pub fn print_clonotypes(
     let mut out = PrintClonotypesResult::default();
 
     for ri in results {
-        for (pics, (exacts, &in_center)) in ri
-            .pics
-            .iter()
-            .zip(ri.exacts.iter().zip(ri.in_center.iter()))
-        {
-            out.pics.push(pics.clone());
-            out.exacts.push(exacts.0.clone());
-            out.rsi.push(exacts.1.clone());
-            out.in_center.push(in_center);
+        if let Some(subdata) = ri.subdata {
+            out.pics.push(subdata.pic);
+            out.exacts.push(subdata.exacts);
+            out.rsi.push(subdata.rsi);
+            out.in_center.push(subdata.in_center);
         }
-        out.out_datas.push(ri.out_data.clone());
+        out.out_datas.push(ri.out_data);
         out.gene_scan_result.push(ri.gene_scan_membership);
     }
     Ok(out)

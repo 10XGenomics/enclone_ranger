@@ -17,6 +17,8 @@ pub struct Sr {
     pub subrows: Vec<Vec<String>>,
 }
 
+/// Return the string "picture" of this clonotype.
+/// Also mutates out_data in some unclear way.
 pub fn finish_table(
     n: usize,
     ctl: &EncloneControl,
@@ -31,7 +33,6 @@ pub fn finish_table(
     dref: &[DonorReferenceItem],
     peer_groups: &[Vec<(usize, u8, u32)>],
     mlog: &mut Vec<u8>,
-    logz: &mut String,
     stats: &[(String, Vec<String>)],
     sr: Vec<Sr>,
     extra_args: &[String],
@@ -40,7 +41,7 @@ pub fn finish_table(
     rord: &[usize],
     pass: usize,
     cdr3_con: &[Vec<u8>],
-) {
+) -> String {
     // Fill in exact_subclonotype_id, reorder.
 
     let nexacts = exacts.len();
@@ -242,7 +243,8 @@ pub fn finish_table(
             justify.push(justification(&rsi.cvars[cx][m]));
         }
     }
-    make_table(ctl, &mut rows, &justify, mlog, logz);
+    let mut logz = String::new();
+    make_table(ctl, &mut rows, &justify, mlog, &mut logz);
 
     // Add phylogeny.
 
@@ -304,9 +306,9 @@ pub fn finish_table(
                 }
                 if (d1 == 0) ^ (d2 == 0) {
                     if d1 == 0 {
-                        write!(*logz, "{} ==> {}", u1 + 1, u2 + 1).unwrap();
+                        write!(logz, "{} ==> {}", u1 + 1, u2 + 1).unwrap();
                     } else {
-                        write!(*logz, "{} ==> {}", u2 + 1, u1 + 1).unwrap();
+                        write!(logz, "{} ==> {}", u2 + 1, u1 + 1).unwrap();
                     }
                     let s = format!(
                         "; u1 = {}, u2 = {}, d1 = {}, d2 = {}, d = {}\n",
@@ -316,9 +318,10 @@ pub fn finish_table(
                         d2,
                         d
                     );
-                    *logz += &s;
+                    logz += &s;
                 }
             }
         }
     }
+    logz
 }
