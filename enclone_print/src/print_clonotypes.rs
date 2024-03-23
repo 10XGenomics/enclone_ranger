@@ -5,7 +5,7 @@
 //
 // Problem: stack traces from this file consistently do not go back to the main program.
 
-use crate::define_mat::{define_mat, Od};
+use crate::define_mat::define_mat;
 use crate::filter::survives_filter;
 use crate::finish_table::{finish_table, Sr};
 use crate::gene_scan::{gene_scan_test, InSet};
@@ -26,7 +26,7 @@ use enclone_core::set_speakers::set_speakers;
 use enclone_proto::types::{Clonotype, DonorReferenceItem};
 use equiv::EquivRel;
 use hdf5::Reader;
-use itertools::izip;
+use itertools::{izip, Itertools};
 use qd::Double;
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
@@ -211,12 +211,14 @@ pub fn print_clonotypes(
         .map(|o| {
             let mut res = TraverseResult::default();
 
-            let mut od = Vec::<Od>::new();
-            for id in o {
-                let x: &CloneInfo = &info[*id as usize];
-                od.push((x.origin.clone(), x.clonotype_id, *id));
-            }
-            od.sort();
+            let od: Vec<_> = o
+                .iter()
+                .map(|id| {
+                    let x: &CloneInfo = &info[*id as usize];
+                    (x.origin.clone(), x.clonotype_id, *id)
+                })
+                .sorted()
+                .collect();
 
             // Reconstruct the participating clones.  This is needed because most exact subclonotypes
             // having more than two chains have been split up.
