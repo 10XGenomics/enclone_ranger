@@ -186,7 +186,7 @@ pub fn print_clonotypes(
     #[derive(Default)]
     struct TraverseResult {
         subdata: Option<TraverseResultSubdata>,
-        loupe_clonotypes: Vec<Clonotype>,
+        loupe_clonotype: Option<Clonotype>,
         out_data: Vec<HashMap<String, String>>,
         num_cells: isize,
         gene_scan_membership: Vec<InSet>,
@@ -345,7 +345,7 @@ pub fn print_clonotypes(
             // Generate Loupe data.
 
             if (!ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty()) && pass == 2 {
-                res.loupe_clonotypes.push(make_loupe_clonotype(
+                res.loupe_clonotype = Some(make_loupe_clonotype(
                     exact_clonotypes,
                     &exacts,
                     &rsi,
@@ -901,7 +901,7 @@ pub fn print_clonotypes(
         }
         out.out_datas.push(ri.out_data);
         out.gene_scan_result.push(ri.gene_scan_membership);
-        all_loupe_clonotypes.extend(ri.loupe_clonotypes);
+        all_loupe_clonotypes.extend(ri.loupe_clonotype);
     }
 
     // Write loupe output.
