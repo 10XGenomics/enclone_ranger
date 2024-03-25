@@ -76,8 +76,8 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
         }
     }
     let setup = main_enclone_setup_ranger(args)?;
-    let (inter, fate) = main_enclone_start(setup)?;
-    main_enclone_stop_ranger(inter, fate)
+    let (exacts, fate) = main_enclone_start(&setup)?;
+    main_enclone_stop_ranger(&setup, &exacts, fate)
 }
 
 pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String> {

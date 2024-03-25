@@ -21,9 +21,7 @@ use enclone::misc3::sort_tig_bc;
 use enclone_args::read_json::{parse_json_annotations_files, Annotations};
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, CloneInfo};
-use enclone_core::enclone_structs::{
-    BarcodeFates, EncloneExacts, EncloneIntermediates, EncloneSetup, JoinInfo,
-};
+use enclone_core::enclone_structs::{BarcodeFates, EncloneExacts, EncloneSetup, JoinInfo};
 use enclone_core::hcomp::heavy_complexity;
 use enclone_print::define_mat::{define_mat, setup_define_mat, Od};
 use enclone_print::loupe::make_donor_refs;
@@ -103,8 +101,8 @@ pub fn stirling2_ratio_table_double(n_max: usize) -> Vec<Vec<Double>> {
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn main_enclone_start(
-    setup: EncloneSetup,
-) -> Result<(EncloneIntermediates, Vec<BarcodeFates>), String> {
+    setup: &EncloneSetup,
+) -> Result<(EncloneExacts, Vec<BarcodeFates>), String> {
     let ctl = &setup.ctl;
     let gex_info = &setup.gex_info;
     let refdata = &setup.refdata;
@@ -877,23 +875,20 @@ pub fn main_enclone_start(
         }
     }
     Ok((
-        EncloneIntermediates {
-            setup,
-            ex: EncloneExacts {
-                to_bc,
-                exact_clonotypes,
-                raw_joins,
-                info: info.clone(),
-                orbits,
-                vdj_cells,
-                join_info,
-                drefs,
-                sr,
-                allele_data: AlleleData {
-                    alt_refs,
-                    var_pos: Vec::new(),
-                    var_bases: Vec::new(),
-                },
+        EncloneExacts {
+            to_bc,
+            exact_clonotypes,
+            raw_joins,
+            info: info.clone(),
+            orbits,
+            vdj_cells,
+            join_info,
+            drefs,
+            sr,
+            allele_data: AlleleData {
+                alt_refs,
+                var_pos: Vec::new(),
+                var_bases: Vec::new(),
             },
         },
         fate,

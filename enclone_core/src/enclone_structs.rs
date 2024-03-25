@@ -27,12 +27,6 @@ pub struct MainEncloneOutput {
 }
 
 #[derive(Default)]
-pub struct EncloneState {
-    pub inter: EncloneIntermediates,
-    pub outs: MainEncloneOutput,
-}
-
-#[derive(Default)]
 pub struct EncloneSetup {
     pub ctl: EncloneControl,
     pub ann: String,
@@ -41,12 +35,6 @@ pub struct EncloneSetup {
     pub refdata: RefData,
     pub is_bcr: bool,
     pub to_ref_index: HashMap<usize, usize>,
-}
-
-#[derive(Default)]
-pub struct EncloneIntermediates {
-    pub setup: EncloneSetup,
-    pub ex: EncloneExacts,
 }
 
 pub type BarcodeFates = HashMap<String, BarcodeFate>;
