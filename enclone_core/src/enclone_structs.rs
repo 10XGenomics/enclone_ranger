@@ -49,6 +49,8 @@ pub struct EncloneIntermediates {
     pub ex: EncloneExacts,
 }
 
+pub type BarcodeFates = HashMap<String, BarcodeFate>;
+
 #[derive(Default, Clone)]
 pub struct EncloneExacts {
     pub to_bc: HashMap<(usize, usize), Vec<String>>,
@@ -60,7 +62,6 @@ pub struct EncloneExacts {
     pub join_info: Vec<JoinInfo>,
     pub drefs: Vec<DonorReferenceItem>,
     pub sr: Vec<Vec<Double>>,
-    pub fate: Vec<HashMap<String, BarcodeFate>>, // GETS MODIFIED SUBSEQUENTLY
     pub is_bcr: bool,
     pub allele_data: AlleleData,
 }

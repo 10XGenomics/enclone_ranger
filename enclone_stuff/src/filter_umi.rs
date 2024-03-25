@@ -5,11 +5,12 @@
 use enclone_core::{
     barcode_fate::BarcodeFate,
     defs::{CloneInfo, EncloneControl, ExactClonotype},
+    enclone_structs::BarcodeFates,
 };
 use equiv::EquivRel;
 use stats_utils::binomial_sum;
 use std::cmp::max;
-use std::collections::HashMap;
+
 use vector_utils::{erase_if, next_diff1_5, reverse_sort, VecUtils};
 
 pub fn filter_umi(
@@ -18,7 +19,7 @@ pub fn filter_umi(
     ctl: &EncloneControl,
     exact_clonotypes: &mut [ExactClonotype],
     info: &[CloneInfo],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
 ) {
     let (mut is_tcr, mut is_bcr) = (true, true);
     if ctl.gen_opt.tcr {

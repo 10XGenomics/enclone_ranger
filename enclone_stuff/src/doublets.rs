@@ -7,6 +7,7 @@
 use enclone_core::{
     barcode_fate::BarcodeFate,
     defs::{CloneInfo, EncloneControl, ExactClonotype},
+    enclone_structs::BarcodeFates,
 };
 use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_proto::types::DonorReferenceItem;
@@ -29,7 +30,7 @@ pub fn delete_doublets(
     raw_joins: &[Vec<usize>],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
 ) {
     if ctl.clono_filt_opt_def.doublet {
         // Define pure subclonotypes.  To do this we break each clonotype up by chain signature.

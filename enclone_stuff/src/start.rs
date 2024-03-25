@@ -21,7 +21,9 @@ use enclone::misc3::sort_tig_bc;
 use enclone_args::read_json::{parse_json_annotations_files, Annotations};
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, CloneInfo};
-use enclone_core::enclone_structs::{EncloneExacts, EncloneIntermediates, EncloneSetup, JoinInfo};
+use enclone_core::enclone_structs::{
+    BarcodeFates, EncloneExacts, EncloneIntermediates, EncloneSetup, JoinInfo,
+};
 use enclone_core::hcomp::heavy_complexity;
 use enclone_print::define_mat::{define_mat, setup_define_mat, Od};
 use enclone_print::loupe::make_donor_refs;
@@ -100,7 +102,9 @@ pub fn stirling2_ratio_table_double(n_max: usize) -> Vec<Vec<Double>> {
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, String> {
+pub fn main_enclone_start(
+    setup: EncloneSetup,
+) -> Result<(EncloneIntermediates, Vec<BarcodeFates>), String> {
     let ctl = &setup.ctl;
     let gex_info = &setup.gex_info;
     let refdata = &setup.refdata;
@@ -144,7 +148,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
         &mut log,
     )?;
     if ctl.gen_opt.require_unbroken_ok {
-        return Ok(EncloneIntermediates::default());
+        return Ok(Default::default());
     }
     for tigi in &mut tig_bc {
         for x in tigi {
@@ -166,7 +170,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     search_for_shm_indels(ctl, &tig_bc);
     if ctl.gen_opt.indels {
-        return Ok(EncloneIntermediates::default());
+        return Ok(Default::default());
     }
 
     // Record fate of non-cells.
@@ -201,7 +205,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     let mut exact_clonotypes = find_exact_subclonotypes(ctl, &tig_bc, refdata, &mut fate);
     if ctl.gen_opt.utr_con || ctl.gen_opt.con_con {
-        return Ok(EncloneIntermediates::default());
+        return Ok(Default::default());
     }
     if !ctl.gen_opt.trace_barcode.is_empty() {
         for ex in &exact_clonotypes {
@@ -422,7 +426,7 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
 
     lookup_heavy_chain_reuse(ctl, &exact_clonotypes, info, &eq);
     if ctl.gen_opt.heavy_chain_reuse {
-        return Ok(EncloneIntermediates::default());
+        return Ok(Default::default());
     }
     if !ctl.gen_opt.trace_barcode.is_empty() {
         for ex in &exact_clonotypes {
@@ -872,25 +876,27 @@ pub fn main_enclone_start(setup: EncloneSetup) -> Result<EncloneIntermediates, S
             }
         }
     }
-    Ok(EncloneIntermediates {
-        setup,
-        ex: EncloneExacts {
-            to_bc,
-            exact_clonotypes,
-            raw_joins,
-            info: info.clone(),
-            orbits,
-            vdj_cells,
-            join_info,
-            drefs,
-            sr,
-            fate,
-            is_bcr,
-            allele_data: AlleleData {
-                alt_refs,
-                var_pos: Vec::new(),
-                var_bases: Vec::new(),
+    Ok((
+        EncloneIntermediates {
+            setup,
+            ex: EncloneExacts {
+                to_bc,
+                exact_clonotypes,
+                raw_joins,
+                info: info.clone(),
+                orbits,
+                vdj_cells,
+                join_info,
+                drefs,
+                sr,
+                is_bcr,
+                allele_data: AlleleData {
+                    alt_refs,
+                    var_pos: Vec::new(),
+                    var_bases: Vec::new(),
+                },
             },
         },
-    })
+        fate,
+    ))
 }

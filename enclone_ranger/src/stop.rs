@@ -1,11 +1,14 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
-use enclone_core::enclone_structs::EncloneIntermediates;
+use enclone_core::enclone_structs::{BarcodeFates, EncloneIntermediates};
 use enclone_print::print_clonotypes::print_clonotypes;
 use hdf5::Reader;
 use rayon::prelude::*;
 
-pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), String> {
+pub fn main_enclone_stop_ranger(
+    inter: EncloneIntermediates,
+    fate: Vec<BarcodeFates>,
+) -> Result<(), String> {
     // Unpack inputs.
 
     let to_bc = &inter.ex.to_bc;
@@ -18,7 +21,6 @@ pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), S
     let drefs = &inter.ex.drefs;
     let gex_info = &inter.setup.gex_info;
     let sr = &inter.ex.sr;
-    let fate = &mut inter.ex.fate;
     let ctl = &inter.setup.ctl;
     let is_bcr = inter.ex.is_bcr;
     let allele_data = &inter.ex.allele_data;
@@ -67,7 +69,7 @@ pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), S
         &d_readers,
         &ind_readers,
         &h5_data,
-        fate,
+        &fate,
         allele_data,
     )?;
     Ok(())

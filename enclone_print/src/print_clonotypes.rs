@@ -19,8 +19,8 @@ use crate::print_utils4::{build_show_aa, compute_bu, compute_some_stats, SomeSta
 use crate::print_utils5::{delete_weaks, vars_and_shares};
 use enclone_args::proc_args_check::involves_gex_fb;
 use enclone_core::allowed_vars::{CVARS_ALLOWED, CVARS_ALLOWED_PCELL, LVARS_ALLOWED};
-use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, CloneInfo, ColInfo, EncloneControl, ExactClonotype, GexInfo};
+use enclone_core::enclone_structs::BarcodeFates;
 use enclone_core::mammalian_fixed_len::mammalian_fixed_len_peer_groups;
 use enclone_core::set_speakers::set_speakers;
 use enclone_proto::types::{Clonotype, DonorReferenceItem};
@@ -74,7 +74,7 @@ pub fn print_clonotypes(
     d_readers: &[Option<Reader<'_>>],
     ind_readers: &[Option<Reader<'_>>],
     h5_data: &[(usize, Vec<u32>, Vec<u32>)],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &[BarcodeFates],
     allele_data: &AlleleData,
 ) -> Result<PrintClonotypesResult, String> {
     let lvars = &ctl.clono_print_opt.lvars;
@@ -317,10 +317,6 @@ pub fn print_clonotypes(
             rsi.mat = mat;
             let mat = &rsi.mat;
 
-            // Let n be the total number of cells in this pass.
-
-            let n: usize = mults.iter().sum();
-
             // Filter.
 
             let mut in_center = true;
@@ -354,6 +350,10 @@ pub fn print_clonotypes(
                     ctl,
                 ));
             }
+
+            // Let n be the total number of cells in this pass.
+
+            let n: usize = mults.iter().sum();
 
             // Set up for parseable output.
 
@@ -886,7 +886,7 @@ pub fn print_clonotypes(
         let mut wtr = BufWriter::new(
             File::create(&ctl.gen_opt.fate_file).expect("Unable to open FATE_FILE for writing"),
         );
-        serde_json::to_writer_pretty(&mut wtr, fate).map_err(|e| e.to_string())?;
+        serde_json::to_writer_pretty(&mut wtr, &fate).map_err(|e| e.to_string())?;
     }
 
     let mut out = PrintClonotypesResult::default();

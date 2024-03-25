@@ -6,6 +6,7 @@ use crate::split_orbits::split_orbits;
 use crate::weak_chains::weak_chains;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
+use enclone_core::enclone_structs::BarcodeFates;
 use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_print::print_utils3::define_column_info;
 use enclone_proto::types::DonorReferenceItem;
@@ -29,7 +30,7 @@ pub fn some_filters(
     raw_joins: &[Vec<usize>],
     eq: &EquivRel,
     disintegrated: &[bool],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {

@@ -6,6 +6,7 @@
 use enclone_core::{
     barcode_fate::BarcodeFate,
     defs::{CloneInfo, EncloneControl, ExactClonotype},
+    enclone_structs::BarcodeFates,
 };
 use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_proto::types::DonorReferenceItem;
@@ -24,7 +25,7 @@ pub fn weak_chains(
     exact_clonotypes: &[ExactClonotype],
     info: &[CloneInfo],
     raw_joins: &[Vec<usize>],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {

@@ -6,6 +6,7 @@ use self::transcript::is_productive_contig;
 use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, OriginInfo, TigData};
+use enclone_core::enclone_structs::BarcodeFates;
 use io_utils::{open_maybe_compressed, path_exists};
 use martian_filetypes::json_file::{Json, LazyJsonReader};
 use martian_filetypes::LazyRead;
@@ -697,7 +698,7 @@ pub struct Annotations {
     pub gex_cells: Vec<Vec<String>>,
     pub gex_cells_specified: Vec<bool>,
     pub tig_bc: Vec<Vec<TigData>>,
-    pub fate: Vec<HashMap<String, BarcodeFate>>,
+    pub fate: Vec<BarcodeFates>,
 }
 
 pub fn parse_json_annotations_files(

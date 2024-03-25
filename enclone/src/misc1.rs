@@ -5,13 +5,14 @@
 use enclone_core::{
     barcode_fate::BarcodeFate,
     defs::{CloneInfo, EncloneControl, ExactClonotype, TigData},
+    enclone_structs::BarcodeFates,
 };
 use equiv::EquivRel;
 use itertools::Itertools;
 #[cfg(not(target_os = "windows"))]
 use pager::Pager;
 
-use std::collections::HashMap;
+
 use std::time::Instant;
 use string_utils::stringme;
 use vector_utils::{
@@ -198,7 +199,7 @@ pub fn lookup_heavy_chain_reuse(
 pub fn cross_filter(
     ctl: &EncloneControl,
     tig_bc: &mut Vec<Vec<TigData>>,
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
 ) {
     // Get the list of dataset origins.  Here we allow the same origin name to have been used
     // for more than one donor, as we haven't explicitly prohibited that.

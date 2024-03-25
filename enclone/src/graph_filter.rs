@@ -4,12 +4,13 @@
 
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, TigData};
+use enclone_core::enclone_structs::BarcodeFates;
 use graph_simple::GraphSimple;
 use io_utils::fwriteln;
 use petgraph::prelude::*;
 use rayon::prelude::*;
 use std::cmp::{max, min};
-use std::collections::HashMap;
+
 use std::io::Write;
 use string_utils::strme;
 use vector_utils::{bin_member, bin_position, erase_if, lower_bound, next_diff12_3, reverse_sort};
@@ -34,7 +35,7 @@ pub fn graph_filter(
     ctl: &EncloneControl,
     tig_bc: &mut Vec<Vec<TigData>>,
     graph: bool,
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
 ) {
     let mut ndels = 0;
     let mut seqs = Vec::<(&[u8], bool, &str, usize)>::new();
