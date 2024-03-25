@@ -62,7 +62,6 @@ pub struct EncloneExacts {
     pub join_info: Vec<JoinInfo>,
     pub drefs: Vec<DonorReferenceItem>,
     pub sr: Vec<Vec<Double>>,
-    pub is_bcr: bool,
     pub allele_data: AlleleData,
 }
 

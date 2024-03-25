@@ -10,20 +10,8 @@ pub fn main_enclone_stop_ranger(
     fate: Vec<BarcodeFates>,
 ) -> Result<(), String> {
     // Unpack inputs.
-
-    let to_bc = &inter.ex.to_bc;
-    let exact_clonotypes = &inter.ex.exact_clonotypes;
-    let raw_joins = &inter.ex.raw_joins;
-    let info = &inter.ex.info;
-    let orbits = &inter.ex.orbits;
-    let vdj_cells = &inter.ex.vdj_cells;
-    let refdata = &inter.setup.refdata;
-    let drefs = &inter.ex.drefs;
     let gex_info = &inter.setup.gex_info;
-    let sr = &inter.ex.sr;
     let ctl = &inter.setup.ctl;
-    let is_bcr = inter.ex.is_bcr;
-    let allele_data = &inter.ex.allele_data;
 
     // Load the GEX and FB data.  This is quite horrible: the code and computation are duplicated
     // verbatim in fcell.rs.
@@ -54,23 +42,12 @@ pub fn main_enclone_stop_ranger(
 
     // Find and print clonotypes.  (But we don't actually print them here.)
     print_clonotypes(
-        is_bcr,
-        to_bc,
-        sr,
-        refdata,
-        drefs,
-        ctl,
-        exact_clonotypes,
-        info,
-        orbits,
-        raw_joins,
-        gex_info,
-        vdj_cells,
+        &inter.setup,
+        &inter.ex,
         &d_readers,
         &ind_readers,
         &h5_data,
         &fate,
-        allele_data,
     )?;
     Ok(())
 }

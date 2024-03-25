@@ -889,7 +889,6 @@ pub fn main_enclone_start(
                 join_info,
                 drefs,
                 sr,
-                is_bcr,
                 allele_data: AlleleData {
                     alt_refs,
                     var_pos: Vec::new(),
