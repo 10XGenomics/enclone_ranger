@@ -107,7 +107,6 @@ pub fn main_enclone_start(
     let gex_info = &setup.gex_info;
     let refdata = &setup.refdata;
     let is_bcr = setup.is_bcr;
-    let to_ref_index = &setup.to_ref_index;
 
     // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
@@ -125,7 +124,7 @@ pub fn main_enclone_start(
         gex_cells_specified,
         vdj_cells,
         mut fate,
-    } = parse_json_annotations_files(ctl, refdata, to_ref_index)?;
+    } = parse_json_annotations_files(ctl, refdata)?;
 
     // Populate features.
 

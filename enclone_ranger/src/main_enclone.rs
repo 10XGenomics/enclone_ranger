@@ -14,7 +14,6 @@ use enclone_core::enclone_structs::EncloneSetup;
 use enclone_stuff::start::main_enclone_start;
 use std::sync::atomic::Ordering::SeqCst;
 use std::{
-    collections::HashMap,
     fs::File,
     io::{BufRead, BufReader},
     time::Instant,
@@ -133,13 +132,6 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
         is_tcr = false;
     }
     make_vdj_ref_data_core(&mut refdata, refx2, &ext_refx, is_tcr, is_bcr, None);
-    let to_ref_index: HashMap<usize, usize> = refdata
-        .id
-        .iter()
-        .take(refdata.refs.len())
-        .enumerate()
-        .map(|(i, &id)| (id as usize, i))
-        .collect();
 
     // Determine if the species is human or mouse or unknown.
 
@@ -154,6 +146,5 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
         gex_info,
         tall: Some(tall),
         is_bcr,
-        to_ref_index,
     })
 }

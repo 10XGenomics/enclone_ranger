@@ -71,7 +71,6 @@ pub fn print_clonotypes(
         tall: _,
         refdata,
         is_bcr,
-        to_ref_index: _,
     } = setup;
     let EncloneExacts {
         to_bc,

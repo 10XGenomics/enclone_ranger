@@ -704,7 +704,6 @@ pub struct Annotations {
 pub fn parse_json_annotations_files(
     ctl: &EncloneControl,
     refdata: &RefData,
-    to_ref_index: &HashMap<usize, usize>,
 ) -> Result<Annotations, String> {
     // Note: only tracking truncated seq and quals initially
     let ann = if !ctl.gen_opt.cellranger {
@@ -712,6 +711,13 @@ pub fn parse_json_annotations_files(
     } else {
         "contig_annotations.json"
     };
+    let to_ref_index = refdata
+        .id
+        .iter()
+        .take(refdata.refs.len())
+        .enumerate()
+        .map(|(i, &id)| (id as usize, i))
+        .collect();
     let results = ctl
         .origin_info
         .dataset_path
@@ -729,7 +735,7 @@ pub fn parse_json_annotations_files(
                 li,
                 &json,
                 refdata,
-                to_ref_index,
+                &to_ref_index,
                 ctl.gen_opt.reannotate,
                 ctl,
             )
