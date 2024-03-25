@@ -21,7 +21,6 @@ use vector_utils::{bin_member, erase_if, next_diff, next_diff1_2, sort_sync2};
 
 pub fn delete_doublets(
     orbits: &mut Vec<Vec<i32>>,
-    is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
     ctl: &EncloneControl,
@@ -48,7 +47,6 @@ pub fn delete_doublets(
             let o = orbits[i].clone();
             let (od, mut exacts) = setup_define_mat(&o, info);
             let mat = define_mat(
-                is_bcr,
                 to_bc,
                 sr,
                 ctl,

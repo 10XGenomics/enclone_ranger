@@ -70,7 +70,6 @@ pub fn print_clonotypes(
         gex_info,
         tall: _,
         refdata,
-        is_bcr,
     } = setup;
     let EncloneExacts {
         to_bc,
@@ -265,7 +264,6 @@ pub fn print_clonotypes(
             // Sort exact subclonotypes.
 
             let mat = define_mat(
-                *is_bcr,
                 to_bc,
                 sr,
                 ctl,
@@ -307,7 +305,6 @@ pub fn print_clonotypes(
 
             let nexacts = exacts.len();
             let mat = define_mat(
-                *is_bcr,
                 to_bc,
                 sr,
                 ctl,

@@ -13,7 +13,6 @@ use vector_utils::{bin_position, unique_sort, VecUtils};
 
 pub fn split_orbits(
     orbits: &mut Vec<Vec<i32>>,
-    is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
     ctl: &EncloneControl,
@@ -27,7 +26,6 @@ pub fn split_orbits(
     for o in orbits.iter() {
         let (od, exacts) = setup_define_mat(o, info);
         let mat = define_mat(
-            is_bcr,
             to_bc,
             sr,
             ctl,

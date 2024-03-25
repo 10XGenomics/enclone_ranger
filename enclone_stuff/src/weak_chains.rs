@@ -18,7 +18,6 @@ use vector_utils::erase_if;
 
 pub fn weak_chains(
     orbits: &mut Vec<Vec<i32>>,
-    is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
     ctl: &EncloneControl,
@@ -40,7 +39,6 @@ pub fn weak_chains(
         let o = orbits[i].clone();
         let (od, exacts) = setup_define_mat(&o, info);
         let mat = define_mat(
-            is_bcr,
             to_bc,
             sr,
             ctl,

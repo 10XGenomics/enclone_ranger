@@ -17,7 +17,6 @@ pub struct EncloneSetup {
     pub gex_info: GexInfo,
     pub tall: Option<Instant>,
     pub refdata: RefData,
-    pub is_bcr: bool,
 }
 
 pub type BarcodeFates = HashMap<String, BarcodeFate>;

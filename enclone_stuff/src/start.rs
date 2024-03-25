@@ -106,7 +106,6 @@ pub fn main_enclone_start(
     let ctl = &setup.ctl;
     let gex_info = &setup.gex_info;
     let refdata = &setup.refdata;
-    let is_bcr = setup.is_bcr;
 
     // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
@@ -364,7 +363,6 @@ pub fn main_enclone_start(
     let mut join_info = Vec::<JoinInfo>::new();
     let mut raw_joins = Vec::<(i32, i32)>::new();
     let mut eq: EquivRel = join_exacts(
-        is_bcr,
         &to_bc,
         refdata,
         ctl,
@@ -516,7 +514,6 @@ pub fn main_enclone_start(
         .flat_map(|orbit| {
             let (od, exacts) = setup_define_mat(&orbit, info);
             let mat = define_mat(
-                is_bcr,
                 &to_bc,
                 &sr,
                 ctl,
@@ -584,7 +581,6 @@ pub fn main_enclone_start(
 
     some_filters(
         &mut orbits,
-        is_bcr,
         &to_bc,
         &sr,
         ctl,

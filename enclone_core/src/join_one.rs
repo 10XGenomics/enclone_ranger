@@ -64,7 +64,6 @@ pub fn partial_bernoulli_sum(n: usize, k: usize) -> f64 {
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn join_one<'a>(
-    is_bcr: bool,
     k1: usize,
     k2: usize,
     ctl: &EncloneControl,
@@ -76,6 +75,7 @@ pub fn join_one<'a>(
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) -> bool {
+    let is_bcr = ctl.gen_opt.is_bcr();
     // Do not merge onesies or foursies with anything.  Deferred until later.
     // Note that perhaps some foursies should be declared doublets and deleted.
     // Note onesies merging above is turned off so this appears to be moot.
