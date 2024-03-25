@@ -10,22 +10,6 @@ use qd::Double;
 use std::{collections::HashMap, time::Instant};
 use vdj_ann::refx;
 
-#[derive(Clone, Debug, Default)]
-pub struct MainEncloneOutput {
-    pub pics: Vec<String>, // clonotype tables
-    pub last_widths: Vec<u32>,
-    pub svgs: Vec<String>, // SVG objects
-    pub summary: String,   // summary
-    pub metrics: Vec<String>,
-    pub dataset_names: Vec<String>,
-    pub parseable_stdouth: bool,
-    pub noprint: bool,
-    pub noprintx: bool,
-    pub html: bool,
-    pub ngroup: bool,
-    pub pretty: bool,
-}
-
 #[derive(Default)]
 pub struct EncloneSetup {
     pub ctl: EncloneControl,
