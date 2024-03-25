@@ -12,7 +12,6 @@ use itertools::Itertools;
 #[cfg(not(target_os = "windows"))]
 use pager::Pager;
 
-
 use std::time::Instant;
 use string_utils::stringme;
 use vector_utils::{

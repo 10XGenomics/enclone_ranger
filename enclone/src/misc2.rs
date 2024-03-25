@@ -13,7 +13,6 @@ use io_utils::{fwriteln, open_for_write_new};
 use rayon::prelude::*;
 use std::cmp::{max, min};
 
-
 use std::fmt::Write as _;
 use std::io::Write;
 
