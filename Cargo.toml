@@ -84,3 +84,4 @@ split-debuginfo = "unpacked"
 
 [workspace.dependencies]
 itertools = ">=0.10"
+anyhow = "1"

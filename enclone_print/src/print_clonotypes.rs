@@ -20,12 +20,11 @@ use crate::print_utils5::{delete_weaks, vars_and_shares};
 use enclone_args::proc_args_check::involves_gex_fb;
 use enclone_core::allowed_vars::{CVARS_ALLOWED, CVARS_ALLOWED_PCELL, LVARS_ALLOWED};
 use enclone_core::defs::{CloneInfo, ColInfo};
-use enclone_core::enclone_structs::{BarcodeFates, EncloneExacts, EncloneSetup};
+use enclone_core::enclone_structs::{BarcodeFates, EncloneExacts, EncloneSetup, GexReaders};
 use enclone_core::mammalian_fixed_len::mammalian_fixed_len_peer_groups;
 use enclone_core::set_speakers::set_speakers;
 use enclone_proto::types::Clonotype;
 use equiv::EquivRel;
-use hdf5::Reader;
 use itertools::{izip, Itertools};
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
@@ -59,9 +58,7 @@ pub struct PrintClonotypesResult {
 pub fn print_clonotypes(
     setup: &EncloneSetup,
     exacts: &EncloneExacts,
-    d_readers: &[Option<Reader<'_>>],
-    ind_readers: &[Option<Reader<'_>>],
-    h5_data: &[(usize, Vec<u32>, Vec<u32>)],
+    gex_readers: &[Option<GexReaders<'_>>],
     fate: &[BarcodeFates],
 ) -> Result<PrintClonotypesResult, String> {
     let EncloneSetup {
@@ -633,9 +630,7 @@ pub fn print_clonotypes(
                         &rsi,
                         dref,
                         &groups,
-                        d_readers,
-                        ind_readers,
-                        h5_data,
+                        gex_readers,
                         &mut these_stats,
                         &stats_pass1,
                         vdj_cells,
