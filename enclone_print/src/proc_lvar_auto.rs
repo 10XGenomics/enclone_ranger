@@ -4,12 +4,10 @@
 use amino::{codon_to_aa, nucleotide_to_aminoacid_sequence};
 
 use enclone_core::defs::{ColInfo, EncloneControl, ExactClonotype, GexInfo, POUT_SEP};
-use enclone_core::enclone_structs::BarcodeFates;
+use enclone_core::enclone_structs::{BarcodeFates, GexReaders};
 use enclone_core::median::{median_f64, rounded_median};
 use enclone_proto::types::DonorReferenceItem;
-use hdf5::Reader;
 use itertools::Itertools;
-use ndarray::s;
 use regex::Regex;
 use std::cmp::{max, min};
 use std::collections::HashMap;
@@ -45,9 +43,7 @@ pub fn proc_lvar_auto(
     gex_counts_unsorted: &[usize],
     gex_fcounts_unsorted: &[f64],
     n_gexs: &[usize],
-    d_readers: &[Option<Reader<'_>>],
-    ind_readers: &[Option<Reader<'_>>],
-    h5_data: &[(usize, Vec<u32>, Vec<u32>)],
+    gex_readers: &[Option<GexReaders<'_>>],
     alt_bcs: &[&str],
 ) -> Result<bool, String> {
     let clonotype_id = exacts[u];
@@ -790,25 +786,7 @@ pub fn proc_lvar_auto(
                     let mut raw_count = 0;
                     let z1 = gex_info.h5_indptr[li][p as usize] as usize;
                     let z2 = gex_info.h5_indptr[li][p as usize + 1] as usize; // is p+1 OK??
-                    let d: Vec<u32>;
-                    let ind: Vec<u32>;
-                    if ctl.gen_opt.h5_pre {
-                        d = h5_data[li].1[z1..z2].to_vec();
-                        ind = h5_data[li].2[z1..z2].to_vec();
-                    } else {
-                        d = d_readers[li]
-                            .as_ref()
-                            .unwrap()
-                            .read_slice(s![z1..z2])
-                            .unwrap()
-                            .to_vec();
-                        ind = ind_readers[li]
-                            .as_ref()
-                            .unwrap()
-                            .read_slice(s![z1..z2])
-                            .unwrap()
-                            .to_vec();
-                    }
+                    let (d, ind) = gex_readers[li].as_ref().unwrap().get_range(z1..z2).unwrap();
                     for j in 0..d.len() {
                         if gex_info.is_gex[li][ind[j] as usize] {
                             raw_count += d[j] as usize;
@@ -829,25 +807,7 @@ pub fn proc_lvar_auto(
                 if p >= 0 {
                     let z1 = gex_info.h5_indptr[li][p as usize] as usize;
                     let z2 = gex_info.h5_indptr[li][p as usize + 1] as usize; // is p+1 OK??
-                    let d: Vec<u32>;
-                    let ind: Vec<u32>;
-                    if ctl.gen_opt.h5_pre {
-                        d = h5_data[li].1[z1..z2].to_vec();
-                        ind = h5_data[li].2[z1..z2].to_vec();
-                    } else {
-                        d = d_readers[li]
-                            .as_ref()
-                            .unwrap()
-                            .read_slice(s![z1..z2])
-                            .unwrap()
-                            .to_vec();
-                        ind = ind_readers[li]
-                            .as_ref()
-                            .unwrap()
-                            .read_slice(s![z1..z2])
-                            .unwrap()
-                            .to_vec();
-                    }
+                    let (d, ind) = gex_readers[li].as_ref().unwrap().get_range(z1..z2).unwrap();
                     for j in 0..d.len() {
                         if gex_info.is_gex[li][ind[j] as usize] {
                             let n = d[j] as usize;
@@ -882,25 +842,7 @@ pub fn proc_lvar_auto(
                     let mut raw_count = 0;
                     let z1 = gex_info.h5_indptr[li][p as usize] as usize;
                     let z2 = gex_info.h5_indptr[li][p as usize + 1] as usize; // is p+1 OK??
-                    let d: Vec<u32>;
-                    let ind: Vec<u32>;
-                    if ctl.gen_opt.h5_pre {
-                        d = h5_data[li].1[z1..z2].to_vec();
-                        ind = h5_data[li].2[z1..z2].to_vec();
-                    } else {
-                        d = d_readers[li]
-                            .as_ref()
-                            .unwrap()
-                            .read_slice(s![z1..z2])
-                            .unwrap()
-                            .to_vec();
-                        ind = ind_readers[li]
-                            .as_ref()
-                            .unwrap()
-                            .read_slice(s![z1..z2])
-                            .unwrap()
-                            .to_vec();
-                    }
+                    let (d, ind) = gex_readers[li].as_ref().unwrap().get_range(z1..z2).unwrap();
                     for j in 0..d.len() {
                         if gex_info.is_gex[li][ind[j] as usize] {
                             raw_count += d[j] as usize;
@@ -921,25 +863,7 @@ pub fn proc_lvar_auto(
                 if p >= 0 {
                     let z1 = gex_info.h5_indptr[li][p as usize] as usize;
                     let z2 = gex_info.h5_indptr[li][p as usize + 1] as usize; // is p+1 OK??
-                    let d: Vec<u32>;
-                    let ind: Vec<u32>;
-                    if ctl.gen_opt.h5_pre {
-                        d = h5_data[li].1[z1..z2].to_vec();
-                        ind = h5_data[li].2[z1..z2].to_vec();
-                    } else {
-                        d = d_readers[li]
-                            .as_ref()
-                            .unwrap()
-                            .read_slice(s![z1..z2])
-                            .unwrap()
-                            .to_vec();
-                        ind = ind_readers[li]
-                            .as_ref()
-                            .unwrap()
-                            .read_slice(s![z1..z2])
-                            .unwrap()
-                            .to_vec();
-                    }
+                    let (d, ind) = gex_readers[li].as_ref().unwrap().get_range(z1..z2).unwrap();
                     for j in 0..d.len() {
                         if gex_info.is_gex[li][ind[j] as usize] {
                             let n = d[j] as usize;
