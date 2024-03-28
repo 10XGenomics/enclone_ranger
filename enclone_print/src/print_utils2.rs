@@ -44,7 +44,7 @@ pub fn row_fill(
     show_aa: &[Vec<usize>],
     ref_diff_pos: &[Vec<Vec<usize>>],
     field_types: &[Vec<u8>],
-    row: &mut Vec<String>,                    // row of human-readable output
+    row: &mut Vec<String>, // row of human-readable output; only written in pass #2
     out_data: &mut [HashMap<String, String>], // row of parseable output
     cx: &mut [Vec<String>],
     d_all: &mut [Vec<u32>],
@@ -141,7 +141,9 @@ pub fn row_fill(
     for l in &dataset_indices {
         lenas.push(ctl.origin_info.dataset_id[*l].clone());
     }
-    row.push(String::new()); // row number (#), filled in below
+    if pass == 2 {
+        row.push(String::new()); // row number (#), filled in below
+    }
     let mut counts = Vec::<usize>::new();
     let mut gex_counts_unsorted = Vec::<usize>::new();
     let mut gex_fcounts_unsorted = Vec::<f64>::new();
@@ -308,10 +310,10 @@ pub fn row_fill(
                         out_valsf.sort_by(|a, b| a.partial_cmp(b).unwrap());
                         median = format!("{:.1}", median_f64(&out_valsf));
                     }
-                    if i < lvars.len() {
-                        row.push(median.clone());
-                    }
                     if pass == 2 {
+                        if i < lvars.len() {
+                            row.push(median.clone());
+                        }
                         if ctl.parseable_opt.pbarcode {
                             speak!(
                                 u,
@@ -323,8 +325,6 @@ pub fn row_fill(
                         }
                     }
                     stats.push((x.to_string(), out_vals.clone()));
-                } else if i < lvars.len() {
-                    row.push(String::new());
                 }
                 continue 'lvar_loop;
             }
@@ -363,7 +363,7 @@ pub fn row_fill(
             gex_readers,
             &alt_bcs,
         )? {
-            let _ = proc_lvar2(
+            proc_lvar2(
                 i,
                 x,
                 pass,
@@ -390,7 +390,7 @@ pub fn row_fill(
     // Sanity check.  It's here because if it fails and that failure was not detected, something
     // exceptionally cryptic would happen downstream.
 
-    if row.len() != lvars.len() + 1 {
+    if pass == 2 && row.len() != lvars.len() + 1 {
         let mut msg = format!(
             "Oops, row.len() != lvars.len() + 1, as in fact we have\n\
             row.len() = {} and lvars.len() = {}, and in more detail,\n\

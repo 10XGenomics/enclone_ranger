@@ -53,21 +53,19 @@ pub fn proc_lvar_auto(
     let verbose = ctl.gen_opt.row_fill_verbose;
     let (abbr, vname) = var.split_once(':').unwrap_or((var, var));
 
-    macro_rules! speak {
-        ($u:expr, $var:expr, $val:expr) => {
-            if pass == 2 && (!ctl.parseable_opt.pout.is_empty() || !extra_args.is_empty()) {
-                let mut v = $var.to_string();
-                v = v.replace("_Σ", "_sum");
-                v = v.replace("_μ", "_mean");
-                if ctl.parseable_opt.pcols.is_empty()
-                    || bin_member(&ctl.parseable_opt.pcols_sortx, &v)
-                    || bin_member(&extra_args, &v)
-                {
-                    out_data[$u].insert(v, $val);
-                }
+    let mut speak = |val| {
+        if pass == 2 && (!ctl.parseable_opt.pout.is_empty() || !extra_args.is_empty()) {
+            let mut v = abbr.to_string();
+            v = v.replace("_Σ", "_sum");
+            v = v.replace("_μ", "_mean");
+            if ctl.parseable_opt.pcols.is_empty()
+                || bin_member(&ctl.parseable_opt.pcols_sortx, &v)
+                || bin_member(extra_args, &v)
+            {
+                out_data[u].insert(v, val);
             }
-        };
-    }
+        }
+    };
 
     let val = if false {
         (String::new(), Vec::<String>::new(), "")
@@ -1452,26 +1450,26 @@ pub fn proc_lvar_auto(
                 eprint!("lvar {var} ==> {}; ", String::new());
                 eprintln!("i = {i}, lvars.len() = {}", lvars.len());
             }
-            if i < lvars.len() {
-                row.push(String::new());
-            }
             if pass == 2 {
-                speak!(u, abbr, String::new());
+                if i < lvars.len() {
+                    row.push(String::new());
+                }
+                speak(String::new());
             }
             stats.push((abbr.to_string(), cell.clone()));
             if pass == 2 {
-                speak!(u, abbr, format!("{}", cell.iter().format(POUT_SEP)));
+                speak(format!("{}", cell.iter().format(POUT_SEP)));
             }
         } else if (!exact.is_empty() && !var.ends_with("_cell")) || cell.is_empty() {
             if verbose {
                 eprint!("lvar {var} ==> {exact}; ");
                 eprintln!("i = {i}, lvars.len() = {}", lvars.len());
             }
-            if i < lvars.len() {
-                row.push(exact.clone());
-            }
             if pass == 2 {
-                speak!(u, abbr, exact.to_string());
+                if i < lvars.len() {
+                    row.push(exact.clone());
+                }
+                speak(exact.to_string());
             }
             if cell.is_empty() {
                 stats.push((abbr.to_string(), vec![exact; ex.ncells()]));
@@ -1480,7 +1478,7 @@ pub fn proc_lvar_auto(
             }
         } else if !cell.is_empty() {
             if pass == 2 {
-                speak!(u, abbr, format!("{}", cell.iter().format(POUT_SEP)));
+                speak(format!("{}", cell.iter().format(POUT_SEP)));
             }
             stats.push((abbr.to_string(), cell.clone()));
         }

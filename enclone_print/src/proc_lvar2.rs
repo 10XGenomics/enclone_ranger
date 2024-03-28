@@ -31,12 +31,11 @@ pub fn proc_lvar2(
     gex_sum: f64,
     gex_fcounts_unsorted: &[f64],
     extra_args: &[String],
-) -> bool {
+) {
     let clonotype_id = exacts[u];
     let ex = &exact_clonotypes[clonotype_id];
     let verbose = ctl.gen_opt.row_fill_verbose;
 
-    // Set up speak macro.
     let mut speak = |var: &str, val| {
         if pass == 2 && (!ctl.parseable_opt.pout.is_empty() || !extra_args.is_empty()) {
             let mut v = var.to_string();
@@ -51,18 +50,17 @@ pub fn proc_lvar2(
         }
     };
 
-    // Set up lead variable macros.  This is the mechanism for generating
+    // This is the mechanism for generating
     // both human-readable and parseable output for lead variables.
-
     let mut lvar = |var: &str, val: String| {
         if verbose {
             eprint!("lvar {var} ==> {val}; ");
-            eprintln!("$i = {}, lvars.len() = {}", i, lvars.len());
-        }
-        if i < lvars.len() {
-            row.push(val.clone());
+            eprintln!("$i = {i}, lvars.len() = {}", lvars.len());
         }
         if pass == 2 {
+            if i < lvars.len() {
+                row.push(val.clone());
+            }
             speak(var, val);
         }
     };
@@ -185,13 +183,12 @@ pub fn proc_lvar2(
             eprint!("lvar {x} ==> ; ");
             eprintln!("$i = {i}, lvars.len() = {}", lvars.len());
         }
-        if i < lvars.len() {
-            row.push(String::new());
-        }
         if pass == 2 {
+            if i < lvars.len() {
+                row.push(String::new());
+            }
             speak(x, String::new());
         }
         stats.push((x.to_string(), vec![String::new(); ex.ncells()]));
     }
-    true
 }
