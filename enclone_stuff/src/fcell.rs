@@ -2,101 +2,22 @@
 
 // Filter using constraints imposed by FCELL.
 
-use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype, GexInfo};
+use enclone_core::defs::{CloneInfo, ExactClonotype};
+use enclone_core::enclone_structs::EncloneSetup;
 use enclone_print::print_utils4::get_gex_matrix_entry;
 use evalexpr::{ContextWithMutableVariables, HashMapContext};
-use hdf5::Reader;
-use io_utils::{dir_list, path_exists};
-use ndarray::s;
-use rayon::prelude::*;
-use std::env;
-use std::thread;
-use std::time;
 
 use vector_utils::{bin_position, erase_if};
 
 pub fn filter_by_fcell(
-    ctl: &EncloneControl,
+    setup: &EncloneSetup,
     orbits: &mut Vec<Vec<i32>>,
     info: &[CloneInfo],
     exact_clonotypes: &mut [ExactClonotype],
-    gex_info: &GexInfo,
 ) -> Result<(), String> {
+    let (gex_info, ctl) = (&setup.gex_info, &setup.ctl);
     if !ctl.clono_filt_opt_def.fcell.is_empty() {
-        // Load the GEX and FB data.  This is quite horrible: the code and computation are
-        // duplicated verbatim in stop.rs.
-
-        let mut d_readers = Vec::<Option<Reader<'_>>>::new();
-        let mut ind_readers = Vec::<Option<Reader<'_>>>::new();
-        for li in 0..ctl.origin_info.n() {
-            if !ctl.origin_info.gex_path[li].is_empty() {
-                let x = gex_info.h5_data[li].as_ref();
-                if x.is_none() {
-                    // THIS FAILS SPORADICALLY, OBSERVED MULTIPLE TIMES,
-                    // CAUSING PUSH TO D_READERS BELOW TO FAIL.
-                    eprintln!("\nWeird, gex_info.h5_data[li].as_ref() is None.");
-                    eprintln!("Path = {}.", ctl.origin_info.gex_path[li]);
-                    let current = env::current_dir().unwrap();
-                    println!(
-                        "The current working directory is {}",
-                        current.canonicalize().unwrap().display()
-                    );
-                    if path_exists(&ctl.origin_info.gex_path[li]) {
-                        eprintln!(
-                            "The directory that is supposed to contain \
-                            raw_feature_bc_matrix.h5 exists."
-                        );
-                        let list = dir_list(&ctl.origin_info.gex_path[li]);
-                        eprintln!(
-                            "This directory is {} and its contents are:",
-                            ctl.origin_info.gex_path[li]
-                        );
-                        for (i, li) in list.into_iter().enumerate() {
-                            eprintln!("{}.  {li}", i + 1);
-                        }
-                        let h5_path =
-                            format!("{}/raw_feature_bc_matrix.h5", ctl.origin_info.gex_path[li]);
-                        eprintln!("H5 path = {h5_path}.");
-                        if !path_exists(&h5_path) {
-                            let mut msg = format!("H5 path {h5_path} does not exist.\n");
-                            msg += "Retrying a few times to see if it appears.\n";
-                            for _ in 0..5 {
-                                msg += "Sleeping for 0.1 seconds.";
-                                thread::sleep(time::Duration::from_millis(100));
-                                if !path_exists(&h5_path) {
-                                    msg += "Now h5 path does not exist.\n";
-                                } else {
-                                    msg += "Now h5 path exists.\n";
-                                    break;
-                                }
-                            }
-                            msg += "Aborting.\n";
-                            return Err(msg);
-                        }
-                        println!("h5 path exists.");
-                    } else {
-                        println!("Path exists.");
-                    }
-                    println!();
-                }
-                d_readers.push(Some(x.unwrap().as_reader()));
-                ind_readers.push(Some(gex_info.h5_indices[li].as_ref().unwrap().as_reader()));
-            } else {
-                d_readers.push(None);
-                ind_readers.push(None);
-            }
-        }
-        let mut h5_data = Vec::<(usize, Vec<u32>, Vec<u32>)>::new();
-        for li in 0..ctl.origin_info.n() {
-            h5_data.push((li, Vec::new(), Vec::new()));
-        }
-        h5_data.par_iter_mut().for_each(|res| {
-            let li = res.0;
-            if !ctl.origin_info.gex_path[li].is_empty() && ctl.gen_opt.h5_pre {
-                res.1 = d_readers[li].as_ref().unwrap().read_raw().unwrap();
-                res.2 = ind_readers[li].as_ref().unwrap().read_raw().unwrap();
-            }
-        });
+        let gex_readers = setup.create_gex_readers();
 
         // Proceed.
 
@@ -118,23 +39,8 @@ pub fn filter_by_fcell(
                         if p >= 0 {
                             let z1 = gex_info.h5_indptr[li][p as usize] as usize;
                             let z2 = gex_info.h5_indptr[li][p as usize + 1] as usize; // p+1 OK?
-                            if ctl.gen_opt.h5_pre {
-                                d_all[l] = h5_data[li].1[z1..z2].to_vec();
-                                ind_all[l] = h5_data[li].2[z1..z2].to_vec();
-                            } else {
-                                d_all[l] = d_readers[li]
-                                    .as_ref()
-                                    .unwrap()
-                                    .read_slice(s![z1..z2])
-                                    .unwrap()
-                                    .to_vec();
-                                ind_all[l] = ind_readers[li]
-                                    .as_ref()
-                                    .unwrap()
-                                    .read_slice(s![z1..z2])
-                                    .unwrap()
-                                    .to_vec();
-                            }
+                            (d_all[l], ind_all[l]) =
+                                gex_readers[li].as_ref().unwrap().get_range(z1..z2).unwrap();
                         }
                     }
                 }

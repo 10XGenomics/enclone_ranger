@@ -505,7 +505,7 @@ pub fn main_enclone_start(
 
     // Filter using constraints imposed by FCELL.
 
-    filter_by_fcell(ctl, &mut orbits, info, &mut exact_clonotypes, gex_info)?;
+    filter_by_fcell(setup, &mut orbits, info, &mut exact_clonotypes)?;
 
     // Break up clonotypes containing a large number of chains. These are
     // very likely to be false merges
