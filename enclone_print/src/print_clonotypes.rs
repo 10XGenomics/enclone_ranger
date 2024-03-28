@@ -599,9 +599,6 @@ pub fn print_clonotypes(
                             typex[col] = true;
                         }
                     }
-                    for mut cxr in cx {
-                        row.append(&mut cxr);
-                    }
                 }
 
                 // Combine stats for the same variable.  This is needed because each exact

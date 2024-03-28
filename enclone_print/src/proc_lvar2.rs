@@ -22,8 +22,8 @@ pub fn proc_lvar2(
     gex_info: &GexInfo,
     row: &mut Vec<String>,
     out_data: &mut [HashMap<String, String>],
-    d_all: &mut [Vec<u32>],
-    ind_all: &mut [Vec<u32>],
+    d_all: &[Vec<u32>],
+    ind_all: &[Vec<u32>],
     stats: &mut Vec<(String, Vec<String>)>,
     lvars: &[String],
     _alt_bcs: &[&str],
@@ -37,55 +37,35 @@ pub fn proc_lvar2(
     let verbose = ctl.gen_opt.row_fill_verbose;
 
     // Set up speak macro.
-
-    macro_rules! speak {
-        ($u:expr, $var:expr, $val:expr) => {
-            if pass == 2 && (ctl.parseable_opt.pout.len() > 0 || extra_args.len() > 0) {
-                let mut v = $var.to_string();
-                if ctl.parseable_opt.pcols.is_empty()
-                    || bin_member(&ctl.parseable_opt.pcols_sortx, &v)
-                    || bin_member(&extra_args, &v)
-                {
-                    v = v.replace("_Σ", "_sum");
-                    v = v.replace("_μ", "_mean");
-                    out_data[$u].insert(v, $val);
-                }
+    let mut speak = |var: &str, val| {
+        if pass == 2 && (!ctl.parseable_opt.pout.is_empty() || !extra_args.is_empty()) {
+            let mut v = var.to_string();
+            if ctl.parseable_opt.pcols.is_empty()
+                || bin_member(&ctl.parseable_opt.pcols_sortx, &v)
+                || bin_member(extra_args, &v)
+            {
+                v = v.replace("_Σ", "_sum");
+                v = v.replace("_μ", "_mean");
+                out_data[u].insert(v, val);
             }
-        };
-    }
+        }
+    };
 
     // Set up lead variable macros.  This is the mechanism for generating
     // both human-readable and parseable output for lead variables.
 
-    macro_rules! lvar {
-        ($i: expr, $var:expr, $val:expr) => {
-            if verbose {
-                eprint!("lvar {} ==> {}; ", $var, $val);
-                eprintln!("$i = {}, lvars.len() = {}", $i, lvars.len());
-            }
-            if $i < lvars.len() {
-                row.push($val)
-            }
-            if pass == 2 {
-                speak!(u, $var.to_string(), $val);
-            }
-        };
-    }
-    macro_rules! lvar_stats1 {
-        ($i: expr, $var:expr, $val:expr) => {
-            if verbose {
-                eprint!("lvar {} ==> {}; ", $var, $val);
-                eprintln!("$i = {}, lvars.len() = {}", $i, lvars.len());
-            }
-            if $i < lvars.len() {
-                row.push($val)
-            }
-            if pass == 2 {
-                speak!(u, $var.to_string(), $val);
-            }
-            stats.push(($var.to_string(), vec![$val; ex.ncells()]));
-        };
-    }
+    let mut lvar = |var: &str, val: String| {
+        if verbose {
+            eprint!("lvar {var} ==> {val}; ");
+            eprintln!("$i = {}, lvars.len() = {}", i, lvars.len());
+        }
+        if i < lvars.len() {
+            row.push(val.clone());
+        }
+        if pass == 2 {
+            speak(var, val);
+        }
+    };
 
     // Proceed.
 
@@ -176,32 +156,42 @@ pub fn proc_lvar2(
                     ));
                 }
                 let val = format!("{}", c.iter().format(POUT_SEP));
-                speak!(u, x, val);
+                speak(x, val);
             }
         } else if xorig.ends_with("_cell") {
             if pass == 2 {
                 let val = format!("{}", counts_sub.iter().format(POUT_SEP));
-                speak!(u, x, val);
+                speak(x, val);
             }
         } else if y0.ends_with("_min") {
-            lvar![i, x, format!("{}", counts_sub_sorted[0])];
+            lvar(x, format!("{}", counts_sub_sorted[0]));
         } else if y0.ends_with("_max") {
-            lvar![i, x, format!("{}", counts_sub_sorted[counts_sub.len() - 1])];
+            lvar(x, format!("{}", counts_sub_sorted[counts_sub.len() - 1]));
         } else if y0.ends_with("_μ") {
-            lvar![i, x, format!("{}", mean.round())];
+            lvar(x, format!("{}", mean.round()));
         } else if y0.ends_with("_Σ") {
-            lvar![i, x, format!("{}", sum.round())];
+            lvar(x, format!("{}", sum.round()));
         } else if y0.ends_with("_%") {
-            lvar![i, x, format!("{:.2}", (100.0 * sum) / gex_sum)];
+            lvar(x, format!("{:.2}", (100.0 * sum) / gex_sum));
         } else {
             let mut median = 0;
             if !counts_sub_sorted.is_empty() {
                 median = rounded_median(&counts_sub_sorted);
             }
-            lvar![i, x, format!("{median}")];
+            lvar(x, format!("{median}"));
         }
     } else if i < lvars.len() {
-        lvar_stats1![i, x, String::new()];
+        if verbose {
+            eprint!("lvar {x} ==> ; ");
+            eprintln!("$i = {i}, lvars.len() = {}", lvars.len());
+        }
+        if i < lvars.len() {
+            row.push(String::new());
+        }
+        if pass == 2 {
+            speak(x, String::new());
+        }
+        stats.push((x.to_string(), vec![String::new(); ex.ncells()]));
     }
     true
 }
