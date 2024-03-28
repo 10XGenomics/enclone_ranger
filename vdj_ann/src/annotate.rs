@@ -1542,10 +1542,10 @@ pub fn annotate_seq_core(
                     }
                 }
             }
-            let count_true = |bools: &[bool]| (bools[0..n]).iter().filter(|c| **c).count();
+            let count_true = |bools: &[bool]| bools.iter().filter(|c| **c).count();
 
-            let total1 = count_true(&cov1);
-            let total2 = count_true(&cov2);
+            let total1 = count_true(&cov1[0..n]);
+            let total2 = count_true(&cov2[0..n]);
 
             // Same as above but always exclude UTRs.
 
@@ -1569,8 +1569,8 @@ pub fn annotate_seq_core(
                 }
             }
 
-            let total1_nu = count_true(&cov1_nu);
-            let total2_nu = count_true(&cov2_nu);
+            let total1_nu = count_true(&cov1_nu[0..n]);
+            let total2_nu = count_true(&cov2_nu[0..n]);
 
             // Compute amount shared.
 
