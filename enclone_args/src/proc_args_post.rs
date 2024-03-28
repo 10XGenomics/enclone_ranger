@@ -425,7 +425,7 @@ pub fn proc_args_post(
             "\nIf you use ALIGN_JALIGN_CONSISTENCY, you should also use PLAIN.\n".to_string(),
         );
     }
-    if ctl.gen_opt.gene_scan_exact && ctl.gen_opt.gene_scan_test.is_none() {
+    if ctl.gen_opt.gene_scan_exact && ctl.gen_opt.gene_scan.is_none() {
         return Err(
             "\nIt doesn't make sense to specify SCAN_EXIT unless SCAN is also specified.\n"
                 .to_string(),
@@ -680,17 +680,9 @@ pub fn proc_args_post(
     for i in 0..ctl.clono_filt_opt.bounds.len() {
         ctl.clono_filt_opt.bounds[i].require_valid_variables(ctl)?;
     }
-    if ctl.gen_opt.gene_scan_test.is_some() {
-        ctl.gen_opt
-            .gene_scan_test
-            .as_ref()
-            .unwrap()
-            .require_valid_variables(ctl)?;
-        ctl.gen_opt
-            .gene_scan_control
-            .as_ref()
-            .unwrap()
-            .require_valid_variables(ctl)?;
+    if let Some(gene_scan_opts) = &ctl.gen_opt.gene_scan {
+        gene_scan_opts.test.require_valid_variables(ctl)?;
+        gene_scan_opts.control.require_valid_variables(ctl)?;
     }
     Ok(())
 }

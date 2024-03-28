@@ -5,17 +5,17 @@
 //
 // Problem: stack traces from this file consistently do not go back to the main program.
 
-use crate::define_mat::{define_mat, Od};
+use crate::define_mat::define_mat;
 use crate::filter::survives_filter;
 use crate::finish_table::{finish_table, Sr};
-use crate::gene_scan::gene_scan_test;
+use crate::gene_scan::{gene_scan_test, InSet};
 use crate::loupe::{loupe_out, make_loupe_clonotype};
 use crate::print_utils1::{compute_field_types, extra_args, start_gen};
 use crate::print_utils2::row_fill;
 use crate::print_utils3::{
     consensus_codon_cdr3, define_column_info, get_extra_parseables, process_complete,
 };
-use crate::print_utils4::{build_show_aa, compute_bu, compute_some_stats};
+use crate::print_utils4::{build_show_aa, compute_bu, compute_some_stats, SomeStats};
 use crate::print_utils5::{delete_weaks, vars_and_shares};
 use enclone_args::proc_args_check::involves_gex_fb;
 use enclone_core::allowed_vars::{CVARS_ALLOWED, CVARS_ALLOWED_PCELL, LVARS_ALLOWED};
@@ -26,10 +26,9 @@ use enclone_core::set_speakers::set_speakers;
 use enclone_proto::types::{Clonotype, DonorReferenceItem};
 use equiv::EquivRel;
 use hdf5::Reader;
-use itertools::izip;
+use itertools::{izip, Itertools};
 use qd::Double;
 use rayon::prelude::*;
-use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::BufWriter;
@@ -37,19 +36,28 @@ use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
 
-// Print clonotypes.  A key challenge here is to define the columns that represent shared
-// chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
-//
-// This code carries out a second function, which is to filter out exact subclonotypes in orbits
-// that appear to be junk.  Exactly how these should be reflected in files is TBD.
-//
-// Some inputs for this section:
-// refdata                = reference sequence data
-// ctl                    = control parameters
-// exact_clonotypes       = the vector of all exact subclonotypes
-// info                   = vector of clonotype info
-// eq                     = equivalence relation on info
+#[derive(Default)]
+pub struct PrintClonotypesResult {
+    pub pics: Vec<String>,
+    pub exacts: Vec<Vec<usize>>,
+    pub in_center: Vec<bool>,
+    pub rsi: Vec<ColInfo>,
+    pub out_datas: Vec<Vec<HashMap<String, String>>>,
+    pub gene_scan_result: Vec<Vec<InSet>>,
+}
 
+/// Print clonotypes.  A key challenge here is to define the columns that represent shared
+/// chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
+///
+/// This code carries out a second function, which is to filter out exact subclonotypes in orbits
+/// that appear to be junk.  Exactly how these should be reflected in files is TBD.
+///
+/// Some inputs for this section:
+/// refdata                = reference sequence data
+/// ctl                    = control parameters
+/// exact_clonotypes       = the vector of all exact subclonotypes
+/// info                   = vector of clonotype info
+/// eq                     = equivalence relation on info
 pub fn print_clonotypes(
     is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
@@ -66,16 +74,9 @@ pub fn print_clonotypes(
     d_readers: &[Option<Reader<'_>>],
     ind_readers: &[Option<Reader<'_>>],
     h5_data: &[(usize, Vec<u32>, Vec<u32>)],
-    pics: &mut Vec<String>,
-    exacts: &mut Vec<Vec<usize>>,
-    in_center: &mut Vec<bool>,
-    rsi: &mut Vec<ColInfo>,
-    out_datas: &mut Vec<Vec<HashMap<String, String>>>,
-    tests: &mut Vec<usize>,
-    controls: &mut Vec<usize>,
     fate: &mut [HashMap<String, BarcodeFate>],
     allele_data: &AlleleData,
-) -> Result<(), String> {
+) -> Result<PrintClonotypesResult, String> {
     let lvars = &ctl.clono_print_opt.lvars;
 
     // Compute extra args.
@@ -105,11 +106,11 @@ pub fn print_clonotypes(
     // Define parseable output columns.  The entire machinery for parseable output is controlled
     // by macros that begin with "speak".
 
-    let mut max_chains = 4;
+    let max_chains = 4;
     // This seems like a bug, since rsi is uninitialized upon entry to print_clonotypes.
-    for r in rsi.iter() {
-        max_chains = max(max_chains, r.mat.len());
-    }
+    // for r in rsi.iter() {
+    //     max_chains = max(max_chains, r.mat.len());
+    // }
     let mut parseable_fields = Vec::<String>::new();
     set_speakers(ctl, &mut parseable_fields, max_chains);
     let pcols_sort = &ctl.parseable_opt.pcols_sort;
@@ -182,55 +183,40 @@ pub fn print_clonotypes(
 
     // Traverse the orbits.
 
+    #[derive(Default)]
+    struct TraverseResult {
+        subdata: Option<TraverseResultSubdata>,
+        loupe_clonotype: Option<Clonotype>,
+        out_data: Vec<HashMap<String, String>>,
+        num_cells: isize,
+        gene_scan_membership: Vec<InSet>,
+    }
+
+    /// All of the fields appear or do not, together.
+    struct TraverseResultSubdata {
+        pic: String,
+        exacts: Vec<usize>,
+        rsi: ColInfo,
+        in_center: bool,
+    }
+
     // 0: index in reps
     // 1: vector of clonotype pictures
     // 2: vector of some clonotype info
     //    [parallel to 1]
     // next to last three entries = whitelist contam, denominator for that, low gex count
     // added out_datas (used to be next to last three, now one more)
-    let mut results = Vec::<(
-        usize,
-        Vec<String>,
-        Vec<(Vec<usize>, ColInfo)>,
-        usize,
-        usize,
-        usize,
-        Vec<Clonotype>,
-        Vec<Vec<HashMap<String, String>>>,
-        isize,
-        Vec<bool>,
-        Vec<bool>,
-        Vec<(usize, String, BarcodeFate)>,
-        Vec<bool>,
-        String,
-    )>::new();
-    for i in 0..orbits.len() {
-        results.push((
-            i,
-            Vec::<String>::new(),
-            Vec::<(Vec<usize>, ColInfo)>::new(),
-            0,
-            0,
-            0,
-            Vec::<Clonotype>::new(),
-            Vec::<Vec<HashMap<String, String>>>::new(),
-            0,
-            Vec::<bool>::new(),
-            Vec::<bool>::new(),
-            Vec::new(),
-            Vec::new(),
-            String::new(),
-        ));
-    }
-    results.par_iter_mut().for_each(|res| {
-        let i = res.0;
-        let o = &orbits[i];
-        let mut od = Vec::<Od>::new();
-        for id in o {
-            let x: &CloneInfo = &info[*id as usize];
-            od.push((x.origin.clone(), x.clonotype_id, *id));
-        }
-        od.sort();
+    let result_iter = orbits.par_iter().map(|o| {
+        let mut res = TraverseResult::default();
+
+        let od: Vec<_> = o
+            .iter()
+            .map(|id| {
+                let x: &CloneInfo = &info[*id as usize];
+                (x.origin.clone(), x.clonotype_id, *id)
+            })
+            .sorted()
+            .collect();
 
         // Reconstruct the participating clones.  This is needed because most exact subclonotypes
         // having more than two chains have been split up.
@@ -242,7 +228,6 @@ pub fn print_clonotypes(
         let mut exacts = Vec::<usize>::new();
         let mut mults = Vec::<usize>::new();
         let mut j = 0;
-        let loupe_clonotypes = &mut res.6;
         while j < od.len() {
             let k = next_diff12_3(&od, j as i32) as usize;
             let mut mult = 0_usize;
@@ -261,7 +246,8 @@ pub fn print_clonotypes(
 
         let mut bads = vec![false; exacts.len()];
         let mut stats_pass1 = Vec::<Vec<(String, Vec<String>)>>::new();
-        for pass in 1..=2 {
+
+        for pass in [1, 2] {
             // Delete weak exact subclonotypes.
 
             if pass == 2 && !ctl.clono_filt_opt.protect_bads {
@@ -359,7 +345,7 @@ pub fn print_clonotypes(
             // Generate Loupe data.
 
             if (!ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty()) && pass == 2 {
-                loupe_clonotypes.push(make_loupe_clonotype(
+                res.loupe_clonotype = Some(make_loupe_clonotype(
                     exact_clonotypes,
                     &exacts,
                     &rsi,
@@ -371,8 +357,6 @@ pub fn print_clonotypes(
 
             // Set up for parseable output.
 
-            let mut out_data = Vec::<HashMap<String, String>>::new();
-
             // Print the orbit.
             // ◼ An assumption of this code is that a productive pair does not have two contigs
             // ◼ having identical CDR3_AA sequences.  At present this is not enforced by the
@@ -380,8 +364,11 @@ pub fn print_clonotypes(
             // ◼ some unsavory workarounds below.
 
             let mut mlog = Vec::<u8>::new();
-            if n >= ctl.clono_filt_opt.ncells_low
-                || ctl.clono_group_opt.asymmetric_center == "from_filters"
+            if !(n >= ctl.clono_filt_opt.ncells_low
+                || ctl.clono_group_opt.asymmetric_center == "from_filters")
+            {
+                continue;
+            }
             {
                 // Start to generate parseable output.
 
@@ -390,7 +377,7 @@ pub fn print_clonotypes(
                         ctl,
                         &exacts,
                         exact_clonotypes,
-                        &mut out_data,
+                        &mut res.out_data,
                         &mut mlog,
                         &extra_args,
                     );
@@ -414,7 +401,7 @@ pub fn print_clonotypes(
                     &mut vars_amino,
                     &mut shares_amino,
                     &mut ref_diff_pos,
-                    &mut out_data,
+                    &mut res.out_data,
                 );
 
                 // Mark some weak exact subclonotypes for deletion.
@@ -575,11 +562,7 @@ pub fn print_clonotypes(
 
                 // Compute some stats;
 
-                let mut cred = Vec::<Vec<String>>::new();
-                let mut pe = Vec::<Vec<String>>::new();
-                let mut ppe = Vec::<Vec<String>>::new();
-                let mut npe = Vec::<Vec<String>>::new();
-                compute_some_stats(
+                let SomeStats { cred, pe, ppe, npe } = compute_some_stats(
                     ctl,
                     &lvars,
                     &exacts,
@@ -587,10 +570,6 @@ pub fn print_clonotypes(
                     gex_info,
                     vdj_cells,
                     &n_vdj_gex,
-                    &mut cred,
-                    &mut pe,
-                    &mut ppe,
-                    &mut npe,
                 );
 
                 // Precompute for near and far.
@@ -617,7 +596,6 @@ pub fn print_clonotypes(
                 for u in 0..nexacts {
                     let mut typex = vec![false; cols];
                     let mut row = Vec::<String>::new();
-                    let mut gex_low = 0;
                     let mut cx = Vec::<Vec<String>>::new();
                     for col in 0..cols {
                         cx.push(vec![String::new(); rsi.cvars[col].len()]);
@@ -627,7 +605,7 @@ pub fn print_clonotypes(
                     let mut d_all = vec![Vec::<u32>::new(); ex.clones.len()];
                     let mut ind_all = vec![Vec::<u32>::new(); ex.clones.len()];
                     let mut these_stats = Vec::<(String, Vec<String>)>::new();
-                    let resx = row_fill(
+                    row_fill(
                         pass,
                         u,
                         ctl,
@@ -643,9 +621,8 @@ pub fn print_clonotypes(
                         &ref_diff_pos,
                         &field_types,
                         &mut bads,
-                        &mut gex_low,
                         &mut row,
-                        &mut out_data,
+                        &mut res.out_data,
                         &mut cx,
                         &mut d_all,
                         &mut ind_all,
@@ -669,16 +646,12 @@ pub fn print_clonotypes(
                         fate,
                         &cdr3_con,
                         allele_data,
-                    );
+                    )?;
                     stats.append(&mut these_stats.clone());
                     if pass == 1 {
                         stats_pass1.push(these_stats.clone());
                     }
                     these_stats.sort_by(|a, b| a.0.cmp(&b.0));
-                    if let Err(e) = resx {
-                        res.13 = e;
-                        return;
-                    }
                     let mut bli = ex
                         .clones
                         .iter()
@@ -695,7 +668,6 @@ pub fn print_clonotypes(
                     for mut cxr in cx {
                         row.append(&mut cxr);
                     }
-                    res.5 = gex_low;
 
                     // Compute per-cell entries.
 
@@ -852,21 +824,20 @@ pub fn print_clonotypes(
                 }
 
                 // See if we're in the test and control sets for gene scan.
-
-                gene_scan_test(
-                    ctl,
-                    &stats,
-                    &stats_orig,
-                    nexacts,
-                    n,
-                    &mut res.9,
-                    &mut res.10,
-                );
+                if let Some(gene_scan_opts) = &ctl.gen_opt.gene_scan {
+                    res.gene_scan_membership = gene_scan_test(
+                        gene_scan_opts,
+                        ctl.gen_opt.gene_scan_exact,
+                        &stats,
+                        &stats_orig,
+                        nexacts,
+                        n,
+                    );
+                }
 
                 // Make the table.
 
-                let mut logz = String::new();
-                finish_table(
+                let clonotype_pic = finish_table(
                     n,
                     ctl,
                     &exacts,
@@ -880,54 +851,35 @@ pub fn print_clonotypes(
                     dref,
                     &peer_groups,
                     &mut mlog,
-                    &mut logz,
                     &stats,
                     sr,
                     &extra_args,
                     pcols_sort,
-                    &mut out_data,
+                    &mut res.out_data,
                     &rord,
                     pass,
                     &cdr3_con,
                 );
 
                 // Save.
-
-                res.1.push(logz);
-                res.2.push((exacts.clone(), rsi.clone()));
-                res.12.push(in_center);
+                res.subdata = Some(TraverseResultSubdata {
+                    pic: clonotype_pic,
+                    exacts: exacts.clone(),
+                    rsi: rsi.clone(),
+                    in_center,
+                });
                 for u in 0..exacts.len() {
-                    res.8 += exact_clonotypes[exacts[u]].ncells() as isize;
+                    res.num_cells += exact_clonotypes[exacts[u]].ncells() as isize;
                 }
             }
-            if pass == 2 {
-                res.7.push(out_data);
-            }
         }
+        Ok(res)
     });
-    for r in &results {
-        if !r.13.is_empty() {
-            return Err(r.13.clone());
-        }
-    }
-
-    for ri in &results {
-        for vj in &ri.11 {
-            fate[vj.0].insert(vj.1.clone(), vj.2.clone());
-        }
-    }
+    let mut results: Vec<_> = result_iter.collect::<Result<Vec<TraverseResult>, String>>()?;
 
     // Sort results in descending order by number of cells.
 
-    results.sort_by_key(|x| -x.8);
-
-    // Write loupe output.
-
-    let mut all_loupe_clonotypes = Vec::<Clonotype>::new();
-    for r in &mut results {
-        all_loupe_clonotypes.append(&mut r.6);
-    }
-    loupe_out(ctl, all_loupe_clonotypes, refdata, dref);
+    results.sort_by_key(|x| -x.num_cells);
 
     // Write out the fate of each filtered barcode.
     if !ctl.gen_opt.fate_file.is_empty() {
@@ -937,43 +889,23 @@ pub fn print_clonotypes(
         serde_json::to_writer_pretty(&mut wtr, fate).map_err(|e| e.to_string())?;
     }
 
-    // Set up to group and print clonotypes.
+    let mut out = PrintClonotypesResult::default();
+    let mut all_loupe_clonotypes = Vec::<Clonotype>::new();
 
-    for ri in results.iter_mut().take(orbits.len()) {
-        for (v1, (v2, &v12)) in ri.1.iter().zip(ri.2.iter().zip(ri.12.iter())) {
-            pics.push(v1.clone());
-            exacts.push(v2.0.clone());
-            rsi.push(v2.1.clone());
-            in_center.push(v12);
+    for ri in results {
+        if let Some(subdata) = ri.subdata {
+            out.pics.push(subdata.pic);
+            out.exacts.push(subdata.exacts);
+            out.rsi.push(subdata.rsi);
+            out.in_center.push(subdata.in_center);
         }
-        out_datas.append(&mut ri.7);
+        out.out_datas.push(ri.out_data);
+        out.gene_scan_result.push(ri.gene_scan_membership);
+        all_loupe_clonotypes.extend(ri.loupe_clonotype);
     }
 
-    // Gather some data for gene scan.
+    // Write loupe output.
+    loupe_out(ctl, all_loupe_clonotypes, refdata, dref);
 
-    if ctl.gen_opt.gene_scan_test.is_some() && !ctl.gen_opt.gene_scan_exact {
-        for (i, r) in results.iter().take(orbits.len()).enumerate() {
-            for (&v9, &v10) in r.9.iter().zip(r.10.iter()) {
-                if v9 {
-                    tests.push(i);
-                }
-                if v10 {
-                    controls.push(i);
-                }
-            }
-        }
-    }
-    if ctl.gen_opt.gene_scan_test.is_some() && ctl.gen_opt.gene_scan_exact {
-        for (r, e) in results.iter().zip(exacts.iter()) {
-            for (&ej, (&v9, &v10)) in e.iter().zip(r.9.iter().zip(r.10.iter())) {
-                if v9 {
-                    tests.push(ej);
-                }
-                if v10 {
-                    controls.push(ej);
-                }
-            }
-        }
-    }
-    Ok(())
+    Ok(out)
 }

@@ -158,9 +158,7 @@ pub struct GeneralOpt {
     pub summary_csv: bool,
     pub cr_version: String,
     pub nwarn: bool,
-    pub gene_scan_test: Option<LinearCondition>,
-    pub gene_scan_control: Option<LinearCondition>,
-    pub gene_scan_threshold: Option<LinearCondition>,
+    pub gene_scan: Option<GeneScanOpts>,
     pub gene_scan_exact: bool,
     pub clonotype_group_names: Option<String>,
     pub origin_color_map: HashMap<String, String>,
@@ -249,6 +247,13 @@ pub struct GeneralOpt {
     pub session_name: String,
     pub state_narrative: String,
     pub session_narrative: String,
+}
+
+#[derive(Clone, PartialEq)]
+pub struct GeneScanOpts {
+    pub test: LinearCondition,
+    pub control: LinearCondition,
+    pub threshold: LinearCondition,
 }
 
 // Some plot options.  Note that plot options are not allowed to affect intermediate computation.

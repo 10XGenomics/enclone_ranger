@@ -869,9 +869,9 @@ pub fn extra_args(ctl: &EncloneControl) -> Vec<String> {
     for i in 0..ctl.clono_filt_opt.bounds.len() {
         extra_args.append(&mut ctl.clono_filt_opt.bounds[i].var.clone());
     }
-    if ctl.gen_opt.gene_scan_test.is_some() {
-        extra_args.append(&mut ctl.gen_opt.gene_scan_test.as_ref().unwrap().var.clone());
-        extra_args.append(&mut ctl.gen_opt.gene_scan_control.as_ref().unwrap().var.clone());
+    if let Some(gene_scan_opts) = &ctl.gen_opt.gene_scan {
+        extra_args.extend(gene_scan_opts.test.var.iter().cloned());
+        extra_args.extend(gene_scan_opts.control.var.iter().cloned());
     }
     extra_args.append(&mut ctl.plot_opt.sim_mat_plot_vars.clone());
     for i in 0..ctl.gen_opt.var_def.len() {

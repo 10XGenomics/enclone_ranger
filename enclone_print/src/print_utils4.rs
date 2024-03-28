@@ -251,6 +251,13 @@ pub fn build_show_aa(
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
+pub struct SomeStats {
+    pub cred: Vec<Vec<String>>,
+    pub pe: Vec<Vec<String>>,
+    pub ppe: Vec<Vec<String>>,
+    pub npe: Vec<Vec<String>>,
+}
+
 pub fn compute_some_stats(
     ctl: &EncloneControl,
     lvars: &[String],
@@ -259,16 +266,12 @@ pub fn compute_some_stats(
     gex_info: &GexInfo,
     vdj_cells: &[Vec<String>],
     n_vdj_gex: &[usize],
-    cred: &mut Vec<Vec<String>>,
-    pe: &mut Vec<Vec<String>>,
-    ppe: &mut Vec<Vec<String>>,
-    npe: &mut Vec<Vec<String>>,
-) {
+) -> SomeStats {
     let nexacts = exacts.len();
 
     // Compute "cred" stats (credibility/# of neighboring cells that are also B cells).
 
-    *cred = vec![Vec::<String>::new(); lvars.len()];
+    let mut cred = vec![Vec::<String>::new(); lvars.len()];
     for (lvar, cred) in lvars.iter().zip(cred.iter_mut()) {
         if lvar == "cred" {
             for &clonotype_id in exacts.iter().take(nexacts) {
@@ -307,7 +310,7 @@ pub fn compute_some_stats(
 
     // Compute pe (PCA distance).
 
-    *pe = vec![Vec::<String>::new(); lvars.len()];
+    let mut pe = vec![Vec::<String>::new(); lvars.len()];
     for k in 0..lvars.len() {
         if lvars[k].starts_with("pe") {
             let n = lvars[k].after("pe").force_usize();
@@ -364,7 +367,7 @@ pub fn compute_some_stats(
 
     // Compute ppe (PCA distance).
 
-    *ppe = vec![Vec::<String>::new(); lvars.len()];
+    let mut ppe = vec![Vec::<String>::new(); lvars.len()];
     for k in 0..lvars.len() {
         if lvars[k].starts_with("ppe") {
             let n = lvars[k].after("ppe").force_usize();
@@ -435,7 +438,7 @@ pub fn compute_some_stats(
 
     // Compute npe (PCA distance).
 
-    *npe = vec![Vec::<String>::new(); lvars.len()];
+    let mut npe = vec![Vec::<String>::new(); lvars.len()];
     for k in 0..lvars.len() {
         if lvars[k].starts_with("npe") {
             let n = lvars[k].after("npe").force_usize();
@@ -482,6 +485,8 @@ pub fn compute_some_stats(
             }
         }
     }
+
+    SomeStats { cred, pe, ppe, npe }
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
