@@ -8,10 +8,10 @@ use amino::nucleotide_to_aminoacid_sequence;
 use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, ExactClonotype, Junction, TigData, TigData0, TigData1};
+use enclone_core::enclone_structs::BarcodeFates;
 use io_utils::{fwriteln, open_for_write_new};
 use rayon::prelude::*;
 use std::cmp::{max, min};
-use std::collections::HashMap;
 
 use std::fmt::Write as _;
 use std::io::Write;
@@ -273,7 +273,7 @@ pub fn find_exact_subclonotypes(
     ctl: &EncloneControl,
     tig_bc: &[Vec<TigData>],
     refdata: &RefData,
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
 ) -> Vec<ExactClonotype> {
     let mut exact_clonotypes = Vec::<ExactClonotype>::new();
     let mut r = 0;

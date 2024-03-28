@@ -29,7 +29,6 @@ use std::io::Write;
 use vector_utils::{bin_member, erase_if, next_diff1_2};
 
 pub fn join_exacts(
-    is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     refdata: &RefData,
     ctl: &EncloneControl,
@@ -104,7 +103,6 @@ pub fn join_exacts(
         // what this means.
 
         join_core(
-            is_bcr,
             i,
             j,
             ctl,

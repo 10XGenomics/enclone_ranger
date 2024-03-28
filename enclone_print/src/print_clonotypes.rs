@@ -19,21 +19,19 @@ use crate::print_utils4::{build_show_aa, compute_bu, compute_some_stats, SomeSta
 use crate::print_utils5::{delete_weaks, vars_and_shares};
 use enclone_args::proc_args_check::involves_gex_fb;
 use enclone_core::allowed_vars::{CVARS_ALLOWED, CVARS_ALLOWED_PCELL, LVARS_ALLOWED};
-use enclone_core::barcode_fate::BarcodeFate;
-use enclone_core::defs::{AlleleData, CloneInfo, ColInfo, EncloneControl, ExactClonotype, GexInfo};
+use enclone_core::defs::{CloneInfo, ColInfo};
+use enclone_core::enclone_structs::{BarcodeFates, EncloneExacts, EncloneSetup};
 use enclone_core::mammalian_fixed_len::mammalian_fixed_len_peer_groups;
 use enclone_core::set_speakers::set_speakers;
-use enclone_proto::types::{Clonotype, DonorReferenceItem};
+use enclone_proto::types::Clonotype;
 use equiv::EquivRel;
 use hdf5::Reader;
 use itertools::{izip, Itertools};
-use qd::Double;
 use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::BufWriter;
 use string_utils::TextUtils;
-use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
 
 #[derive(Default)]
@@ -59,24 +57,32 @@ pub struct PrintClonotypesResult {
 /// info                   = vector of clonotype info
 /// eq                     = equivalence relation on info
 pub fn print_clonotypes(
-    is_bcr: bool,
-    to_bc: &HashMap<(usize, usize), Vec<String>>,
-    sr: &[Vec<Double>],
-    refdata: &RefData,
-    dref: &[DonorReferenceItem],
-    ctl: &EncloneControl,
-    exact_clonotypes: &[ExactClonotype],
-    info: &[CloneInfo],
-    orbits: &[Vec<i32>],
-    raw_joins: &[Vec<usize>],
-    gex_info: &GexInfo,
-    vdj_cells: &[Vec<String>],
+    setup: &EncloneSetup,
+    exacts: &EncloneExacts,
     d_readers: &[Option<Reader<'_>>],
     ind_readers: &[Option<Reader<'_>>],
     h5_data: &[(usize, Vec<u32>, Vec<u32>)],
-    fate: &mut [HashMap<String, BarcodeFate>],
-    allele_data: &AlleleData,
+    fate: &[BarcodeFates],
 ) -> Result<PrintClonotypesResult, String> {
+    let EncloneSetup {
+        ctl,
+        ann: _,
+        gex_info,
+        tall: _,
+        refdata,
+    } = setup;
+    let EncloneExacts {
+        to_bc,
+        exact_clonotypes,
+        raw_joins,
+        info,
+        orbits,
+        vdj_cells,
+        join_info: _,
+        drefs: dref,
+        sr,
+        allele_data,
+    } = exacts;
     let lvars = &ctl.clono_print_opt.lvars;
 
     // Compute extra args.
@@ -258,7 +264,6 @@ pub fn print_clonotypes(
             // Sort exact subclonotypes.
 
             let mat = define_mat(
-                is_bcr,
                 to_bc,
                 sr,
                 ctl,
@@ -300,7 +305,6 @@ pub fn print_clonotypes(
 
             let nexacts = exacts.len();
             let mat = define_mat(
-                is_bcr,
                 to_bc,
                 sr,
                 ctl,
@@ -316,10 +320,6 @@ pub fn print_clonotypes(
             let mut rsi = define_column_info(ctl, &exacts, exact_clonotypes, &mat, refdata);
             rsi.mat = mat;
             let mat = &rsi.mat;
-
-            // Let n be the total number of cells in this pass.
-
-            let n: usize = mults.iter().sum();
 
             // Filter.
 
@@ -354,6 +354,10 @@ pub fn print_clonotypes(
                     ctl,
                 ));
             }
+
+            // Let n be the total number of cells in this pass.
+
+            let n: usize = mults.iter().sum();
 
             // Set up for parseable output.
 
@@ -886,7 +890,7 @@ pub fn print_clonotypes(
         let mut wtr = BufWriter::new(
             File::create(&ctl.gen_opt.fate_file).expect("Unable to open FATE_FILE for writing"),
         );
-        serde_json::to_writer_pretty(&mut wtr, fate).map_err(|e| e.to_string())?;
+        serde_json::to_writer_pretty(&mut wtr, &fate).map_err(|e| e.to_string())?;
     }
 
     let mut out = PrintClonotypesResult::default();

@@ -249,6 +249,32 @@ pub struct GeneralOpt {
     pub session_narrative: String,
 }
 
+impl GeneralOpt {
+    pub fn is_bcr(&self) -> bool {
+        if self.tcr {
+            assert!(!self.bcr);
+            return false;
+        }
+        // The original logic for computing this value was based on the confusing
+        // assumption that this is always true if self.tcr is false.
+        // I've preserved this for now, but this line might make sense to add:
+        // assert!(self.bcr);
+        true
+    }
+
+    pub fn is_tcr(&self) -> bool {
+        if self.bcr {
+            assert!(!self.tcr);
+            return false;
+        }
+        // The original logic for computing this value was based on the confusing
+        // assumption that this is always true if self.bcr is false.
+        // I've preserved this for now, but this line might make sense to add:
+        // assert!(self.tcr);
+        true
+    }
+}
+
 #[derive(Clone, PartialEq)]
 pub struct GeneScanOpts {
     pub test: LinearCondition,

@@ -9,8 +9,8 @@ use crate::proc_lvar2::proc_lvar2;
 use crate::proc_lvar_auto::proc_lvar_auto;
 use amino::{codon_to_aa, nucleotide_to_aminoacid_sequence};
 use enclone_core::allowed_vars::LVARS_ALLOWED;
-use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{AlleleData, ColInfo, EncloneControl, ExactClonotype, GexInfo, POUT_SEP};
+use enclone_core::enclone_structs::BarcodeFates;
 use enclone_core::median::median_f64;
 use enclone_proto::types::DonorReferenceItem;
 use enclone_vars::decode_arith;
@@ -69,7 +69,7 @@ pub fn row_fill(
     extra_args: &[String],
     all_vars: &[&str],
     need_gex: bool,
-    fate: &[HashMap<String, BarcodeFate>],
+    fate: &[BarcodeFates],
     cdr3_con: &[Vec<u8>],
     allele_data: &AlleleData,
 ) -> Result<(), String> {

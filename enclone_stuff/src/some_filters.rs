@@ -6,6 +6,7 @@ use crate::split_orbits::split_orbits;
 use crate::weak_chains::weak_chains;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
+use enclone_core::enclone_structs::BarcodeFates;
 use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_print::print_utils3::define_column_info;
 use enclone_proto::types::DonorReferenceItem;
@@ -20,7 +21,6 @@ use vector_utils::{erase_if, next_diff1_2, unique_sort};
 
 pub fn some_filters(
     orbits: &mut Vec<Vec<i32>>,
-    is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
     ctl: &EncloneControl,
@@ -29,7 +29,7 @@ pub fn some_filters(
     raw_joins: &[Vec<usize>],
     eq: &EquivRel,
     disintegrated: &[bool],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {
@@ -37,7 +37,6 @@ pub fn some_filters(
 
     delete_doublets(
         orbits,
-        is_bcr,
         to_bc,
         sr,
         ctl,
@@ -65,7 +64,6 @@ pub fn some_filters(
         let o = orbits[i].clone();
         let (od, exacts) = setup_define_mat(&o, info);
         let mat = define_mat(
-            is_bcr,
             to_bc,
             sr,
             ctl,
@@ -194,7 +192,6 @@ pub fn some_filters(
 
     split_orbits(
         orbits,
-        is_bcr,
         to_bc,
         sr,
         ctl,
@@ -209,7 +206,6 @@ pub fn some_filters(
 
     weak_chains(
         orbits,
-        is_bcr,
         to_bc,
         sr,
         ctl,
@@ -225,7 +221,6 @@ pub fn some_filters(
 
     split_orbits(
         orbits,
-        is_bcr,
         to_bc,
         sr,
         ctl,
@@ -249,7 +244,6 @@ pub fn some_filters(
         let o = orbits[i].clone();
         let (od, exacts) = setup_define_mat(&o, info);
         let mat = define_mat(
-            is_bcr,
             to_bc,
             sr,
             ctl,
@@ -427,7 +421,6 @@ pub fn some_filters(
 
     split_orbits(
         orbits,
-        is_bcr,
         to_bc,
         sr,
         ctl,

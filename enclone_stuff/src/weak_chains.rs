@@ -6,6 +6,7 @@
 use enclone_core::{
     barcode_fate::BarcodeFate,
     defs::{CloneInfo, EncloneControl, ExactClonotype},
+    enclone_structs::BarcodeFates,
 };
 use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_proto::types::DonorReferenceItem;
@@ -17,14 +18,13 @@ use vector_utils::erase_if;
 
 pub fn weak_chains(
     orbits: &mut Vec<Vec<i32>>,
-    is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
     ctl: &EncloneControl,
     exact_clonotypes: &[ExactClonotype],
     info: &[CloneInfo],
     raw_joins: &[Vec<usize>],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {
@@ -39,7 +39,6 @@ pub fn weak_chains(
         let o = orbits[i].clone();
         let (od, exacts) = setup_define_mat(&o, info);
         let mat = define_mat(
-            is_bcr,
             to_bc,
             sr,
             ctl,

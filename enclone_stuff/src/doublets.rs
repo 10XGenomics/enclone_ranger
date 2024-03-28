@@ -7,6 +7,7 @@
 use enclone_core::{
     barcode_fate::BarcodeFate,
     defs::{CloneInfo, EncloneControl, ExactClonotype},
+    enclone_structs::BarcodeFates,
 };
 use enclone_print::define_mat::{define_mat, setup_define_mat};
 use enclone_proto::types::DonorReferenceItem;
@@ -20,7 +21,6 @@ use vector_utils::{bin_member, erase_if, next_diff, next_diff1_2, sort_sync2};
 
 pub fn delete_doublets(
     orbits: &mut Vec<Vec<i32>>,
-    is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
     ctl: &EncloneControl,
@@ -29,7 +29,7 @@ pub fn delete_doublets(
     raw_joins: &[Vec<usize>],
     refdata: &RefData,
     dref: &[DonorReferenceItem],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
 ) {
     if ctl.clono_filt_opt_def.doublet {
         // Define pure subclonotypes.  To do this we break each clonotype up by chain signature.
@@ -47,7 +47,6 @@ pub fn delete_doublets(
             let o = orbits[i].clone();
             let (od, mut exacts) = setup_define_mat(&o, info);
             let mat = define_mat(
-                is_bcr,
                 to_bc,
                 sr,
                 ctl,
