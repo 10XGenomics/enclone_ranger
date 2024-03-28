@@ -11,7 +11,7 @@ use crate::finish_table::{finish_table, Sr};
 use crate::gene_scan::{gene_scan_test, InSet};
 use crate::loupe::{loupe_out, make_loupe_clonotype};
 use crate::print_utils1::{compute_field_types, extra_args, start_gen};
-use crate::print_utils2::row_fill;
+use crate::print_utils2::{has_whitelist_contamination, row_fill};
 use crate::print_utils3::{
     consensus_codon_cdr3, define_column_info, get_extra_parseables, process_complete,
 };
@@ -247,7 +247,6 @@ pub fn print_clonotypes(
         // There are two passes.  On the first pass we only identify the exact subclonotypes that
         // are junk.  On the second pass we remove those and then print the orbit.
 
-        let mut bads = vec![false; exacts.len()];
         let mut stats_pass1 = Vec::<Vec<(String, Vec<String>)>>::new();
 
         for _ in [0] {
@@ -355,7 +354,7 @@ pub fn print_clonotypes(
                 );
 
                 // Mark some weak exact subclonotypes for deletion.
-
+                let mut bads = vec![false; exacts.len()];
                 delete_weaks(ctl, &exacts, exact_clonotypes, mat, refdata, &mut bads);
 
                 // Done unless on second pass.  Unless there are bounds or COMPLETE specified
@@ -538,6 +537,11 @@ pub fn print_clonotypes(
                     let mut d_all = vec![Vec::<u32>::new(); ex.clones.len()];
                     let mut ind_all = vec![Vec::<u32>::new(); ex.clones.len()];
                     let mut these_stats = Vec::<(String, Vec<String>)>::new();
+
+                    if ctl.clono_filt_opt_def.whitef && !has_whitelist_contamination(ex) {
+                        bads[u] = true;
+                    }
+
                     row_fill(
                         1,
                         u,
@@ -553,7 +557,6 @@ pub fn print_clonotypes(
                         &show_aa,
                         &ref_diff_pos,
                         &field_types,
-                        &mut bads,
                         &mut row,
                         &mut res.out_data,
                         &mut cx,
@@ -703,16 +706,17 @@ pub fn print_clonotypes(
                 // Process COMPLETE.
 
                 process_complete(ctl, nexacts, &mut bads, mat);
+
+                // Delete weak exact subclonotypes.
+
+                if !ctl.clono_filt_opt.protect_bads {
+                    erase_if(&mut mults, &bads);
+                    erase_if(&mut exacts, &bads);
+                }
             }
         } // end pass 1
         for _ in [0] {
             // pass 2
-            // Delete weak exact subclonotypes.
-
-            if !ctl.clono_filt_opt.protect_bads {
-                erase_if(&mut mults, &bads);
-                erase_if(&mut exacts, &bads);
-            }
 
             // Sort exact subclonotypes.
 
@@ -1056,7 +1060,6 @@ pub fn print_clonotypes(
                         &show_aa,
                         &ref_diff_pos,
                         &field_types,
-                        &mut bads,
                         &mut row,
                         &mut res.out_data,
                         &mut cx,
@@ -1214,39 +1217,25 @@ pub fn print_clonotypes(
                             maxs.push(max);
                         }
                     }
-                    if ctl.clono_filt_opt.bound_type[bi] == "mean" && (fail || !x.satisfied(&means))
+                    if ctl.clono_filt_opt.bound_type[bi] == "mean"
+                        && (fail || !x.satisfied(&means))
+                        && ctl.clono_group_opt.asymmetric_center == "from_filters"
                     {
-                        if ctl.clono_group_opt.asymmetric_center == "from_filters" {
-                            in_center = false;
-                        } else {
-                            for b in bads.iter_mut().take(nexacts) {
-                                *b = true;
-                            }
-                        }
+                        in_center = false;
                     }
-                    if ctl.clono_filt_opt.bound_type[bi] == "min" && (fail || !x.satisfied(&mins)) {
-                        if ctl.clono_group_opt.asymmetric_center == "from_filters" {
-                            in_center = false;
-                        } else {
-                            for b in bads.iter_mut().take(nexacts) {
-                                *b = true;
-                            }
-                        }
+                    if ctl.clono_filt_opt.bound_type[bi] == "min"
+                        && (fail || !x.satisfied(&mins))
+                        && ctl.clono_group_opt.asymmetric_center == "from_filters"
+                    {
+                        in_center = false;
                     }
-                    if ctl.clono_filt_opt.bound_type[bi] == "max" && (fail || !x.satisfied(&maxs)) {
-                        if ctl.clono_group_opt.asymmetric_center == "from_filters" {
-                            in_center = false;
-                        } else {
-                            for b in bads.iter_mut().take(nexacts) {
-                                *b = true;
-                            }
-                        }
+                    if ctl.clono_filt_opt.bound_type[bi] == "max"
+                        && (fail || !x.satisfied(&maxs))
+                        && ctl.clono_group_opt.asymmetric_center == "from_filters"
+                    {
+                        in_center = false;
                     }
                 }
-
-                // Process COMPLETE.
-
-                process_complete(ctl, nexacts, &mut bads, mat);
 
                 // See if we're in the test and control sets for gene scan.
                 if let Some(gene_scan_opts) = &ctl.gen_opt.gene_scan {

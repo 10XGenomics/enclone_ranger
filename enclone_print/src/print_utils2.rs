@@ -44,7 +44,6 @@ pub fn row_fill(
     show_aa: &[Vec<usize>],
     ref_diff_pos: &[Vec<Vec<usize>>],
     field_types: &[Vec<u8>],
-    bads: &mut [bool],
     row: &mut Vec<String>,                    // row of human-readable output
     out_data: &mut [HashMap<String, String>], // row of parseable output
     cx: &mut [Vec<String>],
@@ -147,12 +146,6 @@ pub fn row_fill(
     let mut gex_counts_unsorted = Vec::<usize>::new();
     let mut gex_fcounts_unsorted = Vec::<f64>::new();
     let mut n_gexs = Vec::<usize>::new();
-
-    // It may not make any sense at all for this code to be here.
-
-    if ctl.clono_filt_opt_def.whitef && !has_whitelist_contamination(ex) {
-        bads[u] = true;
-    }
 
     // It might be possible to speed this up a lot by pulling part of the "let d" and
     // "let ind" constructs out of the loop.
@@ -659,7 +652,7 @@ pub fn row_fill(
     Ok(())
 }
 
-fn has_whitelist_contamination(ex: &ExactClonotype) -> bool {
+pub fn has_whitelist_contamination(ex: &ExactClonotype) -> bool {
     let mut bch = vec![Vec::<(usize, String, usize, usize)>::new(); 2];
     for l in 0..ex.clones.len() {
         let li = ex.clones[l][0].dataset_index;
@@ -694,6 +687,5 @@ fn has_whitelist_contamination(ex: &ExactClonotype) -> bool {
         }
     }
     let junk_rate = percent_ratio(junk, ex.clones.len());
-    // WRONG!  THIS IS SUPPOSED TO BE EXECUTED ON PASS 1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     junk_rate != 0.0
 }
