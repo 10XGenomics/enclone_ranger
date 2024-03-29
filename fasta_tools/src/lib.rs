@@ -131,9 +131,7 @@ pub fn read_fasta_contents_into_vec_dna_string_plus_headers(
 ) {
     let mut last: String = String::new();
     let mut first = true;
-    let lines = f.split('\n').collect::<Vec<&str>>();
-    for i in 0..lines.len() {
-        let s = &lines[i];
+    for s in f.split('\n') {
         if first {
             if !s.starts_with('>') {
                 panic!("fasta format failure reading {}", f);
