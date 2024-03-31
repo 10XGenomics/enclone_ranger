@@ -301,110 +301,101 @@ pub fn print_clonotypes(
 
         let mut loupe_clonotype = None;
         let mut res = None;
-        for _ in [2] {
-            // Delete weak exact subclonotypes.
 
-            if !ctl.clono_filt_opt.protect_bads {
-                erase_if(&mut mults, &bads);
-                erase_if(&mut exacts, &bads);
-            }
+        // Delete weak exact subclonotypes.
 
-            sort_exact_clonotypes(setup, enclone_exacts, &od, &mut exacts, &mut mults);
+        if !ctl.clono_filt_opt.protect_bads {
+            erase_if(&mut mults, &bads);
+            erase_if(&mut exacts, &bads);
+        }
 
-            // Define a matrix mat[col][ex] which is the column of the exact subclonotype
-            // corresponding to the given column col of the clonotype, which may or may not be
-            // defined.  Then define other information associated to each chain.  These are
-            // reference sequence identifiers, CDR3 start positions, and the like.
+        sort_exact_clonotypes(setup, enclone_exacts, &od, &mut exacts, &mut mults);
 
-            let mat = define_mat(
-                to_bc,
-                sr,
-                ctl,
-                exact_clonotypes,
-                &exacts,
-                &od,
-                info,
-                raw_joins,
-                refdata,
-                dref,
-            );
-            let mut rsi = define_column_info(ctl, &exacts, exact_clonotypes, &mat, refdata);
-            rsi.mat = mat;
+        // Define a matrix mat[col][ex] which is the column of the exact subclonotype
+        // corresponding to the given column col of the clonotype, which may or may not be
+        // defined.  Then define other information associated to each chain.  These are
+        // reference sequence identifiers, CDR3 start positions, and the like.
 
-            // Filter.
+        let mat = define_mat(
+            to_bc,
+            sr,
+            ctl,
+            exact_clonotypes,
+            &exacts,
+            &od,
+            info,
+            raw_joins,
+            refdata,
+            dref,
+        );
+        let mut rsi = define_column_info(ctl, &exacts, exact_clonotypes, &mat, refdata);
+        rsi.mat = mat;
 
-            let mut in_center = true;
-            if !survives_filter(
-                &exacts,
-                &rsi,
-                ctl,
-                exact_clonotypes,
-                refdata,
-                gex_info,
-                dref,
-            ) {
-                if ctl.clono_group_opt.asymmetric_center == "from_filters" {
-                    in_center = false;
-                } else {
-                    continue;
-                }
-            }
+        // Filter.
 
-            // Generate Loupe data.
-
-            if !ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty() {
-                loupe_clonotype = Some(make_loupe_clonotype(
-                    exact_clonotypes,
-                    &exacts,
-                    &rsi,
-                    refdata,
-                    dref,
-                    ctl,
-                ));
-            }
-
-            // Let n be the total number of cells in this pass.
-
-            let n: usize = mults.iter().sum();
-
-            // Set up for parseable output.
-
-            // Print the orbit.
-            // ◼ An assumption of this code is that a productive pair does not have two contigs
-            // ◼ having identical CDR3_AA sequences.  At present this is not enforced by the
-            // ◼ assembly stage, so the assumption is violated.  To work around this there are
-            // ◼ some unsavory workarounds below.
-
-            if !(n >= ctl.clono_filt_opt.ncells_low
-                || ctl.clono_group_opt.asymmetric_center == "from_filters")
-            {
-                continue;
-            }
-            {
-                res = process_orbit_tail_enclone_only(
-                    2,
-                    setup,
-                    enclone_exacts,
-                    gex_readers,
-                    fate,
-                    &all_vars,
-                    &alt_bcs,
-                    &extra_args,
-                    need_gex,
-                    have_gex,
-                    &exacts,
-                    &mults,
-                    n,
-                    &rsi,
-                    &n_vdj_gex,
-                    &peer_groups,
-                    pcols_sort,
-                    &mut bads,
-                    &mut stats_pass1,
-                    in_center,
-                )?;
+        let mut in_center = true;
+        if !survives_filter(
+            &exacts,
+            &rsi,
+            ctl,
+            exact_clonotypes,
+            refdata,
+            gex_info,
+            dref,
+        ) {
+            if ctl.clono_group_opt.asymmetric_center == "from_filters" {
+                in_center = false;
+            } else {
+                return Ok((loupe_clonotype, res));
             }
         }
+
+        // Generate Loupe data.
+
+        if !ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty() {
+            loupe_clonotype = Some(make_loupe_clonotype(
+                exact_clonotypes,
+                &exacts,
+                &rsi,
+                refdata,
+                dref,
+                ctl,
+            ));
+        }
+
+        // Let n be the total number of cells in this pass.
+
+        let n: usize = mults.iter().sum();
+
+        if !(n >= ctl.clono_filt_opt.ncells_low
+            || ctl.clono_group_opt.asymmetric_center == "from_filters")
+        {
+            return Ok((loupe_clonotype, res));
+        }
+
+        res = process_orbit_tail_enclone_only(
+            2,
+            setup,
+            enclone_exacts,
+            gex_readers,
+            fate,
+            &all_vars,
+            &alt_bcs,
+            &extra_args,
+            need_gex,
+            have_gex,
+            &exacts,
+            &mults,
+            n,
+            &rsi,
+            &n_vdj_gex,
+            &peer_groups,
+            pcols_sort,
+            &mut bads,
+            &mut stats_pass1,
+            in_center,
+        )?;
+
         Ok((loupe_clonotype, res))
     });
     let mut results: Vec<_> = result_iter
@@ -570,6 +561,12 @@ fn process_orbit_tail_enclone_only(
     let mut out_data = Vec::new();
 
     // Start to generate parseable output.
+
+    // Print the orbit.
+    // ◼ An assumption of this code is that a productive pair does not have two contigs
+    // ◼ having identical CDR3_AA sequences.  At present this is not enforced by the
+    // ◼ assembly stage, so the assumption is violated.  To work around this there are
+    // ◼ some unsavory workarounds below.
 
     if pass == 2 {
         start_gen(
