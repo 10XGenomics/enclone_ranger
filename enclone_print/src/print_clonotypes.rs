@@ -231,67 +231,49 @@ pub fn print_clonotypes(
 
         let mut bads = vec![false; exacts.len()];
         let mut stats_pass1 = Vec::<Vec<(String, Vec<String>)>>::new();
-        let mut loupe_clonotype = None;
-        let mut res = None;
 
-        for _ in [1] {
-            sort_exact_clonotypes(setup, enclone_exacts, &od, &mut exacts, &mut mults);
+        sort_exact_clonotypes(setup, enclone_exacts, &od, &mut exacts, &mut mults);
 
-            // Define a matrix mat[col][ex] which is the column of the exact subclonotype
-            // corresponding to the given column col of the clonotype, which may or may not be
-            // defined.  Then define other information associated to each chain.  These are
-            // reference sequence identifiers, CDR3 start positions, and the like.
+        // Define a matrix mat[col][ex] which is the column of the exact subclonotype
+        // corresponding to the given column col of the clonotype, which may or may not be
+        // defined.  Then define other information associated to each chain.  These are
+        // reference sequence identifiers, CDR3 start positions, and the like.
 
-            let mat = define_mat(
-                to_bc,
-                sr,
-                ctl,
-                exact_clonotypes,
-                &exacts,
-                &od,
-                info,
-                raw_joins,
-                refdata,
-                dref,
-            );
-            let mut rsi = define_column_info(ctl, &exacts, exact_clonotypes, &mat, refdata);
-            rsi.mat = mat;
-            let mat = &rsi.mat;
+        let mat = define_mat(
+            to_bc,
+            sr,
+            ctl,
+            exact_clonotypes,
+            &exacts,
+            &od,
+            info,
+            raw_joins,
+            refdata,
+            dref,
+        );
+        let mut rsi = define_column_info(ctl, &exacts, exact_clonotypes, &mat, refdata);
+        rsi.mat = mat;
+        let mat = &rsi.mat;
 
-            // Filter.
+        // Filter.
 
-            // Let n be the total number of cells in this pass.
+        // Let n be the total number of cells in this pass.
+        let n: usize = mults.iter().sum();
 
-            let n: usize = mults.iter().sum();
+        if n >= ctl.clono_filt_opt.ncells_low
+            || ctl.clono_group_opt.asymmetric_center == "from_filters"
+        {
+            // Mark some weak exact subclonotypes for deletion.
+            delete_weaks(ctl, &exacts, exact_clonotypes, mat, refdata, &mut bads);
 
-            // Set up for parseable output.
+            // Done unless there are bounds or COMPLETE specified
+            // or VAR_DEF specified.
 
-            // Print the orbit.
-            // ◼ An assumption of this code is that a productive pair does not have two contigs
-            // ◼ having identical CDR3_AA sequences.  At present this is not enforced by the
-            // ◼ assembly stage, so the assumption is violated.  To work around this there are
-            // ◼ some unsavory workarounds below.
-
-            if !(n >= ctl.clono_filt_opt.ncells_low
-                || ctl.clono_group_opt.asymmetric_center == "from_filters")
+            if !ctl.clono_filt_opt.bounds.is_empty()
+                || ctl.gen_opt.complete
+                || !ctl.gen_opt.var_def.is_empty()
             {
-                continue;
-            }
-            {
-                // Mark some weak exact subclonotypes for deletion.
-                delete_weaks(ctl, &exacts, exact_clonotypes, mat, refdata, &mut bads);
-
-                // Done unless there are bounds or COMPLETE specified
-                // or VAR_DEF specified.
-
-                if ctl.clono_filt_opt.bounds.is_empty()
-                    && !ctl.gen_opt.complete
-                    && ctl.gen_opt.var_def.is_empty()
-                {
-                    continue;
-                }
-
-                res = process_orbit_tail_enclone_only(
+                let res = process_orbit_tail_enclone_only(
                     1,
                     setup,
                     enclone_exacts,
@@ -313,8 +295,12 @@ pub fn print_clonotypes(
                     &mut stats_pass1,
                     true,
                 )?;
+                assert!(res.is_none());
             }
         }
+
+        let mut loupe_clonotype = None;
+        let mut res = None;
         for _ in [2] {
             // Delete weak exact subclonotypes.
 
