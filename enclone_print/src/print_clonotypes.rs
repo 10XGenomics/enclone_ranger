@@ -5,7 +5,7 @@
 //
 // Problem: stack traces from this file consistently do not go back to the main program.
 
-use crate::define_mat::define_mat;
+use crate::define_mat::{define_mat, Od};
 use crate::filter::survives_filter;
 use crate::finish_table::{finish_table, Sr};
 use crate::gene_scan::{gene_scan_test, InSet};
@@ -242,42 +242,7 @@ pub fn print_clonotypes(
                 erase_if(&mut exacts, &bads);
             }
 
-            // Sort exact subclonotypes.
-
-            let mat = define_mat(
-                to_bc,
-                sr,
-                ctl,
-                exact_clonotypes,
-                &exacts,
-                &od,
-                info,
-                raw_joins,
-                refdata,
-                dref,
-            );
-            let priority = exacts
-                .iter()
-                .enumerate()
-                .map(|(u, &exact)| {
-                    let typex = mat.iter().map(|col| col[u].is_some()).collect::<Vec<_>>();
-                    let clonotype_id = exact;
-                    let ex = &exact_clonotypes[clonotype_id];
-                    let mut utot0 = 0;
-                    if let Some(mid) = mat[0][u] {
-                        let ex = &exact_clonotypes[clonotype_id];
-                        for j in 0..ex.clones.len() {
-                            utot0 += ex.clones[j][mid].umi_count;
-                        }
-                    }
-                    (typex, ex.ncells(), utot0)
-                })
-                .collect::<Vec<_>>();
-            let permutation = permutation::sort(&priority[..]);
-            exacts = permutation.apply_slice(&exacts[..]);
-            mults = permutation.apply_slice(&mults[..]);
-            exacts.reverse();
-            mults.reverse();
+            sort_exact_clonotypes(setup, enclone_exacts, &od, &mut exacts, &mut mults);
 
             // Define a matrix mat[col][ex] which is the column of the exact subclonotype
             // corresponding to the given column col of the clonotype, which may or may not be
@@ -432,6 +397,69 @@ pub fn print_clonotypes(
     loupe_out(ctl, all_loupe_clonotypes, refdata, dref);
 
     Ok(out)
+}
+
+/// Sort exact subclonotypes.
+fn sort_exact_clonotypes(
+    setup: &EncloneSetup,
+    enclone_exacts: &EncloneExacts,
+    od: &[Od],
+    exacts: &mut Vec<usize>,
+    mults: &mut Vec<usize>,
+) {
+    let EncloneSetup {
+        ctl,
+        ann: _,
+        gex_info: _,
+        tall: _,
+        refdata,
+    } = setup;
+    let EncloneExacts {
+        to_bc,
+        exact_clonotypes,
+        raw_joins,
+        info,
+        orbits: _,
+        vdj_cells: _,
+        join_info: _,
+        drefs: dref,
+        sr,
+        allele_data: _,
+    } = enclone_exacts;
+    let mat = define_mat(
+        to_bc,
+        sr,
+        ctl,
+        exact_clonotypes,
+        exacts,
+        od,
+        info,
+        raw_joins,
+        refdata,
+        dref,
+    );
+    let priority = exacts
+        .iter()
+        .enumerate()
+        .map(|(u, &exact)| {
+            let typex = mat.iter().map(|col| col[u].is_some()).collect::<Vec<_>>();
+            let clonotype_id = exact;
+            let ex = &exact_clonotypes[clonotype_id];
+            let mut utot0 = 0;
+            if let Some(mid) = mat[0][u] {
+                let ex = &exact_clonotypes[clonotype_id];
+                for j in 0..ex.clones.len() {
+                    utot0 += ex.clones[j][mid].umi_count;
+                }
+            }
+            (typex, ex.ncells(), utot0)
+        })
+        .collect::<Vec<_>>();
+    let permutation = permutation::sort(&priority[..]);
+    *exacts = permutation.apply_slice(&exacts[..]);
+    *mults = permutation.apply_slice(&mults[..]);
+    exacts.reverse();
+    mults.reverse();
 }
 
 #[derive(Default)]
