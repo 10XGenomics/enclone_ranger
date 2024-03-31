@@ -63,7 +63,7 @@ pub fn row_fill(
     nd_fields: &[String],
     peer_groups: &[Vec<(usize, u8, u32)>],
     extra_args: &[String],
-    all_vars: &[&str],
+    all_vars: &[String],
     need_gex: bool,
     fate: &[BarcodeFates],
     cdr3_con: &[Vec<u8>],
@@ -483,7 +483,7 @@ pub fn row_fill(
         let have_notes = rsi.cvars[col].contains(&"notes".to_string());
         let mut notes_pos = 0;
         let mut notes_in = false;
-        for (j, &var) in all_vars.iter().take(rsi_vars.len()).enumerate() {
+        for (j, var) in all_vars.iter().take(rsi_vars.len()).enumerate() {
             if var == "notes" {
                 notes_pos = j;
                 notes_in = true;
@@ -494,7 +494,7 @@ pub fn row_fill(
         if mid.is_none() {
             continue;
         }
-        for (j, &var) in all_vars.iter().enumerate() {
+        for (j, var) in all_vars.iter().enumerate() {
             let mut jj = j;
             if !have_notes && notes_in && j >= notes_pos {
                 jj -= 1;
@@ -580,7 +580,7 @@ pub fn row_fill(
 
         // Create column entry.
 
-        for (j, &var) in all_vars.iter().enumerate() {
+        for (j, var) in all_vars.iter().enumerate() {
             let mut jj = j;
             if !have_notes && notes_in && j >= notes_pos {
                 jj -= 1;

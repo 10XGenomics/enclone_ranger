@@ -36,13 +36,14 @@ pub fn finish_table(
     stats: &[(String, Vec<String>)],
     sr: Vec<Sr>,
     extra_args: &[String],
-    pcols_sort: &[String],
     out_data: &mut Vec<HashMap<String, String>>,
     rord: &[usize],
     pass: usize,
     cdr3_con: &[Vec<u8>],
 ) -> String {
     // Fill in exact_subclonotype_id, reorder.
+
+    let pcols_sort = &ctl.parseable_opt.pcols_sort;
 
     let nexacts = exacts.len();
     if !ctl.parseable_opt.pout.is_empty() || !extra_args.is_empty() {

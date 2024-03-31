@@ -22,7 +22,6 @@ use enclone_core::allowed_vars::{CVARS_ALLOWED, CVARS_ALLOWED_PCELL, LVARS_ALLOW
 use enclone_core::defs::{CloneInfo, ColInfo};
 use enclone_core::enclone_structs::{BarcodeFates, EncloneExacts, EncloneSetup, GexReaders};
 use enclone_core::mammalian_fixed_len::mammalian_fixed_len_peer_groups;
-use enclone_core::set_speakers::set_speakers;
 use enclone_proto::types::Clonotype;
 use equiv::EquivRel;
 use itertools::{izip, Itertools};
@@ -68,115 +67,12 @@ pub fn print_clonotypes<T: Send>(
         raw_joins,
         info,
         orbits,
-        vdj_cells,
+        vdj_cells: _,
         join_info: _,
         drefs: dref,
         sr,
         allele_data: _,
     } = enclone_exacts;
-    let lvars = &ctl.clono_print_opt.lvars;
-
-    // Compute extra args.
-
-    let extra_args = extra_args(ctl);
-
-    // Determine if any lvars need gex info.
-
-    let need_gex = {
-        lvars.iter().map(String::as_str).any(involves_gex_fb)
-            || {
-                if ctl.parseable_opt.pout.is_empty() {
-                    false
-                } else if ctl.parseable_opt.pcols.is_empty() {
-                    LVARS_ALLOWED.into_iter().any(involves_gex_fb)
-                } else {
-                    ctl.parseable_opt
-                        .pcols
-                        .iter()
-                        .map(String::as_str)
-                        .any(involves_gex_fb)
-                }
-            }
-            || extra_args.iter().map(String::as_str).any(involves_gex_fb)
-    };
-
-    // Define parseable output columns.  The entire machinery for parseable output is controlled
-    // by macros that begin with "speak".
-
-    let max_chains = 4;
-    // This seems like a bug, since rsi is uninitialized upon entry to print_clonotypes.
-    // for r in rsi.iter() {
-    //     max_chains = max(max_chains, r.mat.len());
-    // }
-    let mut parseable_fields = Vec::<String>::new();
-    set_speakers(ctl, &mut parseable_fields, max_chains);
-    let pcols_sort = &ctl.parseable_opt.pcols_sort;
-
-    // Identify certain extra parseable variables.  These arise from parameterizable cvars.
-
-    let mut extra_parseables = get_extra_parseables(ctl, pcols_sort);
-
-    // Compute all_vars.
-
-    let rsi_vars = &ctl.clono_print_opt.cvars;
-    let mut all_vars = rsi_vars.iter().map(String::as_str).collect::<Vec<_>>();
-    for var in CVARS_ALLOWED {
-        if !rsi_vars.contains(&var.to_string()) {
-            all_vars.push(var);
-        }
-    }
-    for var in CVARS_ALLOWED_PCELL {
-        if !rsi_vars.contains(&var.to_string()) {
-            all_vars.push(var);
-        }
-    }
-    all_vars.append(&mut extra_parseables);
-    for x in &extra_args {
-        if !rsi_vars.contains(x) {
-            all_vars.push(x.as_str());
-        }
-    }
-
-    // Test for presence of GEX/FB data.
-
-    let mut have_gex = false;
-    for i in 0..ctl.origin_info.gex_path.len() {
-        if !ctl.origin_info.gex_path[i].is_empty() {
-            have_gex = true;
-        }
-    }
-
-    // Gather alt_bcs_fields.
-
-    let mut alt_bcs = Vec::<String>::new();
-    for li in 0..ctl.origin_info.alt_bc_fields.len() {
-        for i in 0..ctl.origin_info.alt_bc_fields[li].len() {
-            alt_bcs.push(ctl.origin_info.alt_bc_fields[li][i].0.clone());
-        }
-    }
-    unique_sort(&mut alt_bcs);
-
-    // Compute number of vdj cells that are gex.
-
-    let mut n_vdj_gex = Vec::<usize>::new();
-    for (gex, vdj) in gex_info
-        .pca
-        .iter()
-        .zip(vdj_cells.iter())
-        .take(ctl.origin_info.n())
-    {
-        let mut n = 0;
-        for y in gex {
-            if bin_member(vdj, y.0) {
-                n += 1;
-            }
-        }
-        n_vdj_gex.push(n);
-    }
-
-    // Compute peer groups.
-
-    let peer_groups = mammalian_fixed_len_peer_groups(refdata);
 
     // Traverse the orbits.
 
@@ -264,18 +160,10 @@ pub fn print_clonotypes<T: Send>(
                 enclone_exacts,
                 gex_readers,
                 fate,
-                &all_vars,
-                &alt_bcs,
-                &extra_args,
-                need_gex,
-                have_gex,
                 &exacts,
                 &mults,
                 n,
                 &rsi,
-                &n_vdj_gex,
-                &peer_groups,
-                pcols_sort,
                 &mut bads,
                 &mut stats_pass1,
                 true,
@@ -355,18 +243,10 @@ pub fn print_clonotypes<T: Send>(
             enclone_exacts,
             gex_readers,
             fate,
-            &all_vars,
-            &alt_bcs,
-            &extra_args,
-            need_gex,
-            have_gex,
             &exacts,
             &mults,
             n,
             &rsi,
-            &n_vdj_gex,
-            &peer_groups,
-            pcols_sort,
             &mut bads,
             &mut stats_pass1,
             in_center,
@@ -484,18 +364,10 @@ pub trait OrbitProcessor<T> {
         enclone_exacts: &EncloneExacts,
         gex_readers: &[Option<GexReaders<'_>>],
         fate: &[BarcodeFates],
-        all_vars: &[&str],
-        alt_bcs: &[String],
-        extra_args: &[String],
-        need_gex: bool,
-        have_gex: bool,
         exacts: &[usize],
         mults: &[usize],
         n: usize,
         rsi: &ColInfo,
-        n_vdj_gex: &[usize],
-        peer_groups: &[Vec<(usize, u8, u32)>],
-        pcols_sort: &[String],
         bads: &mut [bool],
         stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
         in_center: bool,
@@ -510,18 +382,10 @@ pub trait OrbitProcessor<T> {
         enclone_exacts: &EncloneExacts,
         gex_readers: &[Option<GexReaders<'_>>],
         fate: &[BarcodeFates],
-        all_vars: &[&str],
-        alt_bcs: &[String],
-        extra_args: &[String],
-        need_gex: bool,
-        have_gex: bool,
         exacts: &[usize],
         mults: &[usize],
         n: usize,
         rsi: &ColInfo,
-        n_vdj_gex: &[usize],
-        peer_groups: &[Vec<(usize, u8, u32)>],
-        pcols_sort: &[String],
         bads: &mut [bool],
         stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
         in_center: bool,
@@ -535,9 +399,131 @@ pub trait OrbitProcessor<T> {
     fn collect(&mut self, result: Option<T>) {}
 }
 
-#[derive(Default)]
 pub struct EncloneOrbitProcessor {
     pub result: PrintClonotypesResult,
+    n_vdj_gex: Vec<usize>,
+    peer_groups: Vec<Vec<(usize, u8, u32)>>,
+    alt_bcs: Vec<String>,
+    have_gex: bool,
+    need_gex: bool,
+    all_vars: Vec<String>,
+    extra_args: Vec<String>,
+}
+
+impl EncloneOrbitProcessor {
+    pub fn new(setup: &EncloneSetup, vdj_cells: &[Vec<String>]) -> Self {
+        let EncloneSetup {
+            ctl,
+            ann: _,
+            gex_info,
+            tall: _,
+            refdata,
+        } = setup;
+
+        let lvars = &ctl.clono_print_opt.lvars;
+
+        // Compute extra args.
+
+        let extra_args = extra_args(ctl);
+
+        // Determine if any lvars need gex info.
+
+        let need_gex = {
+            lvars.iter().map(String::as_str).any(involves_gex_fb)
+                || {
+                    if ctl.parseable_opt.pout.is_empty() {
+                        false
+                    } else if ctl.parseable_opt.pcols.is_empty() {
+                        LVARS_ALLOWED.into_iter().any(involves_gex_fb)
+                    } else {
+                        ctl.parseable_opt
+                            .pcols
+                            .iter()
+                            .map(String::as_str)
+                            .any(involves_gex_fb)
+                    }
+                }
+                || extra_args.iter().map(String::as_str).any(involves_gex_fb)
+        };
+
+        // Compute all_vars.
+
+        let rsi_vars = &ctl.clono_print_opt.cvars;
+        let mut all_vars = rsi_vars.clone();
+        for var in CVARS_ALLOWED {
+            if !rsi_vars.iter().any(|v| v == var) {
+                all_vars.push(var.to_string());
+            }
+        }
+        for var in CVARS_ALLOWED_PCELL {
+            if !rsi_vars.iter().any(|v| v == var) {
+                all_vars.push(var.to_string());
+            }
+        }
+        // Identify certain extra parseable variables.  These arise from parameterizable cvars.
+        all_vars.extend(
+            get_extra_parseables(ctl, &ctl.parseable_opt.pcols_sort)
+                .into_iter()
+                .map(String::from),
+        );
+        for x in &extra_args {
+            if !rsi_vars.contains(x) {
+                all_vars.push(x.clone());
+            }
+        }
+
+        // Test for presence of GEX/FB data.
+
+        let mut have_gex = false;
+        for i in 0..ctl.origin_info.gex_path.len() {
+            if !ctl.origin_info.gex_path[i].is_empty() {
+                have_gex = true;
+            }
+        }
+
+        // Gather alt_bcs_fields.
+
+        let mut alt_bcs = Vec::<String>::new();
+        for li in 0..ctl.origin_info.alt_bc_fields.len() {
+            for i in 0..ctl.origin_info.alt_bc_fields[li].len() {
+                alt_bcs.push(ctl.origin_info.alt_bc_fields[li][i].0.clone());
+            }
+        }
+        unique_sort(&mut alt_bcs);
+
+        // Compute peer groups.
+
+        let peer_groups = mammalian_fixed_len_peer_groups(refdata);
+
+        // Compute number of vdj cells that are gex.
+
+        let mut n_vdj_gex = Vec::<usize>::new();
+        for (gex, vdj) in gex_info
+            .pca
+            .iter()
+            .zip(vdj_cells.iter())
+            .take(ctl.origin_info.n())
+        {
+            let mut n = 0;
+            for y in gex {
+                if bin_member(vdj, y.0) {
+                    n += 1;
+                }
+            }
+            n_vdj_gex.push(n);
+        }
+
+        Self {
+            result: Default::default(),
+            n_vdj_gex,
+            peer_groups,
+            alt_bcs,
+            have_gex,
+            need_gex,
+            all_vars,
+            extra_args,
+        }
+    }
 }
 
 impl OrbitProcessor<TraverseResult> for &mut EncloneOrbitProcessor {
@@ -547,18 +533,10 @@ impl OrbitProcessor<TraverseResult> for &mut EncloneOrbitProcessor {
         enclone_exacts: &EncloneExacts,
         gex_readers: &[Option<GexReaders<'_>>],
         fate: &[BarcodeFates],
-        all_vars: &[&str],
-        alt_bcs: &[String],
-        extra_args: &[String],
-        need_gex: bool,
-        have_gex: bool,
         exacts: &[usize],
         mults: &[usize],
         n: usize,
         rsi: &ColInfo,
-        n_vdj_gex: &[usize],
-        peer_groups: &[Vec<(usize, u8, u32)>],
-        pcols_sort: &[String],
         bads: &mut [bool],
         stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
         in_center: bool,
@@ -576,18 +554,17 @@ impl OrbitProcessor<TraverseResult> for &mut EncloneOrbitProcessor {
             enclone_exacts,
             gex_readers,
             fate,
-            all_vars,
-            alt_bcs,
-            extra_args,
-            need_gex,
-            have_gex,
+            &self.all_vars,
+            &self.alt_bcs,
+            &self.extra_args,
+            self.need_gex,
+            self.have_gex,
             exacts,
             mults,
             n,
             rsi,
-            n_vdj_gex,
-            peer_groups,
-            pcols_sort,
+            &self.n_vdj_gex,
+            &self.peer_groups,
             bads,
             stats_pass1,
             in_center,
@@ -602,18 +579,10 @@ impl OrbitProcessor<TraverseResult> for &mut EncloneOrbitProcessor {
         enclone_exacts: &EncloneExacts,
         gex_readers: &[Option<GexReaders<'_>>],
         fate: &[BarcodeFates],
-        all_vars: &[&str],
-        alt_bcs: &[String],
-        extra_args: &[String],
-        need_gex: bool,
-        have_gex: bool,
         exacts: &[usize],
         mults: &[usize],
         n: usize,
         rsi: &ColInfo,
-        n_vdj_gex: &[usize],
-        peer_groups: &[Vec<(usize, u8, u32)>],
-        pcols_sort: &[String],
         bads: &mut [bool],
         stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
         in_center: bool,
@@ -624,18 +593,17 @@ impl OrbitProcessor<TraverseResult> for &mut EncloneOrbitProcessor {
             enclone_exacts,
             gex_readers,
             fate,
-            all_vars,
-            alt_bcs,
-            extra_args,
-            need_gex,
-            have_gex,
+            &self.all_vars,
+            &self.alt_bcs,
+            &self.extra_args,
+            self.need_gex,
+            self.have_gex,
             exacts,
             mults,
             n,
             rsi,
-            n_vdj_gex,
-            peer_groups,
-            pcols_sort,
+            &self.n_vdj_gex,
+            &self.peer_groups,
             bads,
             stats_pass1,
             in_center,
@@ -673,7 +641,7 @@ fn process_orbit_tail_enclone_only(
     enclone_exacts: &EncloneExacts,
     gex_readers: &[Option<GexReaders<'_>>],
     fate: &[BarcodeFates],
-    all_vars: &[&str],
+    all_vars: &[String],
     alt_bcs: &[String],
     extra_args: &[String],
     need_gex: bool,
@@ -684,7 +652,6 @@ fn process_orbit_tail_enclone_only(
     rsi: &ColInfo,
     n_vdj_gex: &[usize],
     peer_groups: &[Vec<(usize, u8, u32)>],
-    pcols_sort: &[String],
     bads: &mut [bool],
     stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
     mut in_center: bool,
@@ -1190,7 +1157,6 @@ fn process_orbit_tail_enclone_only(
         &stats,
         sr,
         extra_args,
-        pcols_sort,
         &mut out_data,
         &rord,
         pass,
