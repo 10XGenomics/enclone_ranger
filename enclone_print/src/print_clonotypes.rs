@@ -27,6 +27,7 @@ use enclone_proto::types::Clonotype;
 use equiv::EquivRel;
 use itertools::{izip, Itertools};
 use rayon::prelude::*;
+use std::cmp::Reverse;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::BufWriter;
@@ -299,9 +300,6 @@ pub fn print_clonotypes(
             }
         }
 
-        let mut loupe_clonotype = None;
-        let mut res = None;
-
         // Delete weak exact subclonotypes.
 
         if !ctl.clono_filt_opt.protect_bads {
@@ -346,22 +344,14 @@ pub fn print_clonotypes(
             if ctl.clono_group_opt.asymmetric_center == "from_filters" {
                 in_center = false;
             } else {
-                return Ok((loupe_clonotype, res));
+                return Ok((0, None, None));
             }
         }
 
         // Generate Loupe data.
 
-        if !ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty() {
-            loupe_clonotype = Some(make_loupe_clonotype(
-                exact_clonotypes,
-                &exacts,
-                &rsi,
-                refdata,
-                dref,
-                ctl,
-            ));
-        }
+        let loupe_clonotype = (!ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty())
+            .then(|| make_loupe_clonotype(exact_clonotypes, &exacts, &rsi, refdata, dref, ctl));
 
         // Let n be the total number of cells in this pass.
 
@@ -370,10 +360,15 @@ pub fn print_clonotypes(
         if !(n >= ctl.clono_filt_opt.ncells_low
             || ctl.clono_group_opt.asymmetric_center == "from_filters")
         {
-            return Ok((loupe_clonotype, res));
+            return Ok((0, loupe_clonotype, None));
         }
 
-        res = process_orbit_tail_enclone_only(
+        let num_cells: usize = exacts
+            .iter()
+            .map(|exact| exact_clonotypes[*exact].ncells())
+            .sum();
+
+        let res = process_orbit_tail_enclone_only(
             2,
             setup,
             enclone_exacts,
@@ -396,14 +391,14 @@ pub fn print_clonotypes(
             in_center,
         )?;
 
-        Ok((loupe_clonotype, res))
+        Ok((num_cells, loupe_clonotype, res))
     });
     let mut results: Vec<_> = result_iter
-        .collect::<Result<Vec<(Option<Clonotype>, Option<TraverseResult>)>, String>>()?;
+        .collect::<Result<Vec<(usize, Option<Clonotype>, Option<TraverseResult>)>, String>>()?;
 
     // Sort results in descending order by number of cells.
 
-    results.sort_by_key(|(_, x)| -x.as_ref().map(|r| r.num_cells).unwrap_or_default());
+    results.sort_by_key(|(num_cells, _, _)| Reverse(*num_cells));
 
     // Write out the fate of each filtered barcode.
     if !ctl.gen_opt.fate_file.is_empty() {
@@ -416,7 +411,7 @@ pub fn print_clonotypes(
     let mut out = PrintClonotypesResult::default();
     let mut all_loupe_clonotypes = Vec::<Clonotype>::new();
 
-    for (loupe_clonotype, ri) in results {
+    for (_, loupe_clonotype, ri) in results {
         if let Some(data) = ri {
             out.pics.push(data.pic);
             out.exacts.push(data.exacts);
@@ -507,7 +502,6 @@ struct TraverseResult {
     rsi: ColInfo,
     in_center: bool,
     out_data: Vec<HashMap<String, String>>,
-    num_cells: isize,
     gene_scan_membership: Vec<InSet>,
 }
 
@@ -1046,10 +1040,6 @@ fn process_orbit_tail_enclone_only(
         exacts: exacts.to_vec(),
         rsi: rsi.clone(),
         in_center,
-        num_cells: exacts
-            .iter()
-            .map(|exact| exact_clonotypes[*exact].ncells() as isize)
-            .sum(),
         out_data,
         gene_scan_membership,
     }))
