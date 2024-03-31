@@ -315,10 +315,10 @@ pub fn print_clonotypes(
                 )?;
             }
         }
-        for pass in [2] {
+        for _ in [2] {
             // Delete weak exact subclonotypes.
 
-            if pass == 2 && !ctl.clono_filt_opt.protect_bads {
+            if !ctl.clono_filt_opt.protect_bads {
                 erase_if(&mut mults, &bads);
                 erase_if(&mut exacts, &bads);
             }
@@ -344,22 +344,19 @@ pub fn print_clonotypes(
             );
             let mut rsi = define_column_info(ctl, &exacts, exact_clonotypes, &mat, refdata);
             rsi.mat = mat;
-            let mat = &rsi.mat;
 
             // Filter.
 
             let mut in_center = true;
-            if pass == 2
-                && !survives_filter(
-                    &exacts,
-                    &rsi,
-                    ctl,
-                    exact_clonotypes,
-                    refdata,
-                    gex_info,
-                    dref,
-                )
-            {
+            if !survives_filter(
+                &exacts,
+                &rsi,
+                ctl,
+                exact_clonotypes,
+                refdata,
+                gex_info,
+                dref,
+            ) {
                 if ctl.clono_group_opt.asymmetric_center == "from_filters" {
                     in_center = false;
                 } else {
@@ -369,7 +366,7 @@ pub fn print_clonotypes(
 
             // Generate Loupe data.
 
-            if (!ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty()) && pass == 2 {
+            if !ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty() {
                 loupe_clonotype = Some(make_loupe_clonotype(
                     exact_clonotypes,
                     &exacts,
@@ -398,25 +395,8 @@ pub fn print_clonotypes(
                 continue;
             }
             {
-                // Mark some weak exact subclonotypes for deletion.
-
-                if pass == 1 {
-                    delete_weaks(ctl, &exacts, exact_clonotypes, mat, refdata, &mut bads);
-                }
-
-                // Done unless on second pass.  Unless there are bounds or COMPLETE specified
-                // or VAR_DEF specified.
-
-                if pass == 1
-                    && ctl.clono_filt_opt.bounds.is_empty()
-                    && !ctl.gen_opt.complete
-                    && ctl.gen_opt.var_def.is_empty()
-                {
-                    continue;
-                }
-
                 res = process_orbit_tail_enclone_only(
-                    pass,
+                    2,
                     setup,
                     enclone_exacts,
                     gex_readers,
