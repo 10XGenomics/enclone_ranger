@@ -35,16 +35,6 @@ use string_utils::TextUtils;
 
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
 
-#[derive(Default)]
-pub struct PrintClonotypesResult {
-    pub pics: Vec<String>,
-    pub exacts: Vec<Vec<usize>>,
-    pub in_center: Vec<bool>,
-    pub rsi: Vec<ColInfo>,
-    pub out_datas: Vec<Vec<HashMap<String, String>>>,
-    pub gene_scan_result: Vec<Vec<InSet>>,
-}
-
 /// Print clonotypes.  A key challenge here is to define the columns that represent shared
 /// chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
 ///
@@ -57,12 +47,14 @@ pub struct PrintClonotypesResult {
 /// exact_clonotypes       = the vector of all exact subclonotypes
 /// info                   = vector of clonotype info
 /// eq                     = equivalence relation on info
-pub fn print_clonotypes(
+pub fn print_clonotypes<T: Send>(
     setup: &EncloneSetup,
     enclone_exacts: &EncloneExacts,
     gex_readers: &[Option<GexReaders<'_>>],
     fate: &[BarcodeFates],
-) -> Result<PrintClonotypesResult, String> {
+    mut proc: impl OrbitProcessor<T> + Send + Sync,
+    // proc: impl OrbitProcessor<T>,
+) -> Result<(), String> {
     let EncloneSetup {
         ctl,
         ann: _,
@@ -267,37 +259,27 @@ pub fn print_clonotypes(
             // Mark some weak exact subclonotypes for deletion.
             delete_weaks(ctl, &exacts, exact_clonotypes, mat, refdata, &mut bads);
 
-            // Done unless there are bounds or COMPLETE specified
-            // or VAR_DEF specified.
-
-            if !ctl.clono_filt_opt.bounds.is_empty()
-                || ctl.gen_opt.complete
-                || !ctl.gen_opt.var_def.is_empty()
-            {
-                let res = process_orbit_tail_enclone_only(
-                    1,
-                    setup,
-                    enclone_exacts,
-                    gex_readers,
-                    fate,
-                    &all_vars,
-                    &alt_bcs,
-                    &extra_args,
-                    need_gex,
-                    have_gex,
-                    &exacts,
-                    &mults,
-                    n,
-                    &rsi,
-                    &n_vdj_gex,
-                    &peer_groups,
-                    pcols_sort,
-                    &mut bads,
-                    &mut stats_pass1,
-                    true,
-                )?;
-                assert!(res.is_none());
-            }
+            proc.filter(
+                setup,
+                enclone_exacts,
+                gex_readers,
+                fate,
+                &all_vars,
+                &alt_bcs,
+                &extra_args,
+                need_gex,
+                have_gex,
+                &exacts,
+                &mults,
+                n,
+                &rsi,
+                &n_vdj_gex,
+                &peer_groups,
+                pcols_sort,
+                &mut bads,
+                &mut stats_pass1,
+                true,
+            )?;
         }
 
         // Delete weak exact subclonotypes.
@@ -368,8 +350,7 @@ pub fn print_clonotypes(
             .map(|exact| exact_clonotypes[*exact].ncells())
             .sum();
 
-        let res = process_orbit_tail_enclone_only(
-            2,
+        let res = proc.finalize(
             setup,
             enclone_exacts,
             gex_readers,
@@ -393,8 +374,8 @@ pub fn print_clonotypes(
 
         Ok((num_cells, loupe_clonotype, res))
     });
-    let mut results: Vec<_> = result_iter
-        .collect::<Result<Vec<(usize, Option<Clonotype>, Option<TraverseResult>)>, String>>()?;
+    let mut results: Vec<_> =
+        result_iter.collect::<Result<Vec<(usize, Option<Clonotype>, Option<T>)>, String>>()?;
 
     // Sort results in descending order by number of cells.
 
@@ -408,28 +389,17 @@ pub fn print_clonotypes(
         serde_json::to_writer_pretty(&mut wtr, &fate).map_err(|e| e.to_string())?;
     }
 
-    let mut out = PrintClonotypesResult::default();
     let mut all_loupe_clonotypes = Vec::<Clonotype>::new();
 
     for (_, loupe_clonotype, ri) in results {
-        if let Some(data) = ri {
-            out.pics.push(data.pic);
-            out.exacts.push(data.exacts);
-            out.rsi.push(data.rsi);
-            out.in_center.push(data.in_center);
-            out.out_datas.push(data.out_data);
-            out.gene_scan_result.push(data.gene_scan_membership);
-        } else {
-            out.out_datas.push(Vec::new());
-            out.gene_scan_result.push(Vec::new());
-        }
         all_loupe_clonotypes.extend(loupe_clonotype);
+        proc.collect(ri);
     }
 
     // Write loupe output.
     loupe_out(ctl, all_loupe_clonotypes, refdata, dref);
 
-    Ok(out)
+    Ok(())
 }
 
 /// Sort exact subclonotypes.
@@ -496,13 +466,207 @@ fn sort_exact_clonotypes(
 }
 
 #[derive(Default)]
-struct TraverseResult {
+pub struct TraverseResult {
     pic: String,
     exacts: Vec<usize>,
     rsi: ColInfo,
     in_center: bool,
     out_data: Vec<HashMap<String, String>>,
     gene_scan_membership: Vec<InSet>,
+}
+
+/// Inject a behavior to provide additional filtering and post-processing of each orbit.
+pub trait OrbitProcessor<T> {
+    #[allow(unused)]
+    fn filter(
+        &self,
+        setup: &EncloneSetup,
+        enclone_exacts: &EncloneExacts,
+        gex_readers: &[Option<GexReaders<'_>>],
+        fate: &[BarcodeFates],
+        all_vars: &[&str],
+        alt_bcs: &[String],
+        extra_args: &[String],
+        need_gex: bool,
+        have_gex: bool,
+        exacts: &[usize],
+        mults: &[usize],
+        n: usize,
+        rsi: &ColInfo,
+        n_vdj_gex: &[usize],
+        peer_groups: &[Vec<(usize, u8, u32)>],
+        pcols_sort: &[String],
+        bads: &mut [bool],
+        stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
+        in_center: bool,
+    ) -> Result<(), String> {
+        Ok(())
+    }
+
+    #[allow(unused)]
+    fn finalize(
+        &self,
+        setup: &EncloneSetup,
+        enclone_exacts: &EncloneExacts,
+        gex_readers: &[Option<GexReaders<'_>>],
+        fate: &[BarcodeFates],
+        all_vars: &[&str],
+        alt_bcs: &[String],
+        extra_args: &[String],
+        need_gex: bool,
+        have_gex: bool,
+        exacts: &[usize],
+        mults: &[usize],
+        n: usize,
+        rsi: &ColInfo,
+        n_vdj_gex: &[usize],
+        peer_groups: &[Vec<(usize, u8, u32)>],
+        pcols_sort: &[String],
+        bads: &mut [bool],
+        stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
+        in_center: bool,
+    ) -> Result<Option<T>, String> {
+        Ok(None)
+    }
+
+    /// Collect a single result from processing an orbit; the results will be
+    /// provided in a sorted order.
+    #[allow(unused)]
+    fn collect(&mut self, result: Option<T>) {}
+}
+
+impl<T, F> OrbitProcessor<T> for &mut F where F: OrbitProcessor<T> {}
+
+#[derive(Default)]
+pub struct EncloneOrbitProcessor {
+    pub result: PrintClonotypesResult,
+}
+
+impl OrbitProcessor<TraverseResult> for EncloneOrbitProcessor {
+    fn filter(
+        &self,
+        setup: &EncloneSetup,
+        enclone_exacts: &EncloneExacts,
+        gex_readers: &[Option<GexReaders<'_>>],
+        fate: &[BarcodeFates],
+        all_vars: &[&str],
+        alt_bcs: &[String],
+        extra_args: &[String],
+        need_gex: bool,
+        have_gex: bool,
+        exacts: &[usize],
+        mults: &[usize],
+        n: usize,
+        rsi: &ColInfo,
+        n_vdj_gex: &[usize],
+        peer_groups: &[Vec<(usize, u8, u32)>],
+        pcols_sort: &[String],
+        bads: &mut [bool],
+        stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
+        in_center: bool,
+    ) -> Result<(), String> {
+        let ctl = &setup.ctl;
+        if ctl.clono_filt_opt.bounds.is_empty()
+            && !ctl.gen_opt.complete
+            && ctl.gen_opt.var_def.is_empty()
+        {
+            return Ok(());
+        }
+        let res = process_orbit_tail_enclone_only(
+            1,
+            setup,
+            enclone_exacts,
+            gex_readers,
+            fate,
+            all_vars,
+            alt_bcs,
+            extra_args,
+            need_gex,
+            have_gex,
+            exacts,
+            mults,
+            n,
+            rsi,
+            n_vdj_gex,
+            peer_groups,
+            pcols_sort,
+            bads,
+            stats_pass1,
+            in_center,
+        )?;
+        assert!(res.is_none());
+        Ok(())
+    }
+
+    fn finalize(
+        &self,
+        setup: &EncloneSetup,
+        enclone_exacts: &EncloneExacts,
+        gex_readers: &[Option<GexReaders<'_>>],
+        fate: &[BarcodeFates],
+        all_vars: &[&str],
+        alt_bcs: &[String],
+        extra_args: &[String],
+        need_gex: bool,
+        have_gex: bool,
+        exacts: &[usize],
+        mults: &[usize],
+        n: usize,
+        rsi: &ColInfo,
+        n_vdj_gex: &[usize],
+        peer_groups: &[Vec<(usize, u8, u32)>],
+        pcols_sort: &[String],
+        bads: &mut [bool],
+        stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
+        in_center: bool,
+    ) -> Result<Option<TraverseResult>, String> {
+        process_orbit_tail_enclone_only(
+            2,
+            setup,
+            enclone_exacts,
+            gex_readers,
+            fate,
+            all_vars,
+            alt_bcs,
+            extra_args,
+            need_gex,
+            have_gex,
+            exacts,
+            mults,
+            n,
+            rsi,
+            n_vdj_gex,
+            peer_groups,
+            pcols_sort,
+            bads,
+            stats_pass1,
+            in_center,
+        )
+    }
+
+    fn collect(&mut self, result: Option<TraverseResult>) {
+        if let Some(data) = result {
+            self.result.pics.push(data.pic);
+            self.result.exacts.push(data.exacts);
+            self.result.rsi.push(data.rsi);
+            self.result.in_center.push(data.in_center);
+            self.result.out_datas.push(data.out_data);
+            self.result.gene_scan_result.push(data.gene_scan_membership);
+        } else {
+            self.result.out_datas.push(Vec::new());
+            self.result.gene_scan_result.push(Vec::new());
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct PrintClonotypesResult {
+    pub pics: Vec<String>,
+    pub exacts: Vec<Vec<usize>>,
+    pub in_center: Vec<bool>,
+    pub rsi: Vec<ColInfo>,
+    pub out_datas: Vec<Vec<HashMap<String, String>>>,
+    pub gene_scan_result: Vec<Vec<InSet>>,
 }
 
 fn process_orbit_tail_enclone_only(
