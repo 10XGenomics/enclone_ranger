@@ -31,6 +31,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::BufWriter;
 use string_utils::TextUtils;
+
 use vector_utils::{bin_member, bin_position, erase_if, next_diff12_3, unique_sort};
 
 #[derive(Default)]
@@ -57,7 +58,7 @@ pub struct PrintClonotypesResult {
 /// eq                     = equivalence relation on info
 pub fn print_clonotypes(
     setup: &EncloneSetup,
-    exacts: &EncloneExacts,
+    enclone_exacts: &EncloneExacts,
     gex_readers: &[Option<GexReaders<'_>>],
     fate: &[BarcodeFates],
 ) -> Result<PrintClonotypesResult, String> {
@@ -78,8 +79,8 @@ pub fn print_clonotypes(
         join_info: _,
         drefs: dref,
         sr,
-        allele_data,
-    } = exacts;
+        allele_data: _,
+    } = enclone_exacts;
     let lvars = &ctl.clono_print_opt.lvars;
 
     // Compute extra args.
@@ -186,23 +187,6 @@ pub fn print_clonotypes(
 
     // Traverse the orbits.
 
-    #[derive(Default)]
-    struct TraverseResult {
-        subdata: Option<TraverseResultSubdata>,
-        loupe_clonotype: Option<Clonotype>,
-        out_data: Vec<HashMap<String, String>>,
-        num_cells: isize,
-        gene_scan_membership: Vec<InSet>,
-    }
-
-    /// All of the fields appear or do not, together.
-    struct TraverseResultSubdata {
-        pic: String,
-        exacts: Vec<usize>,
-        rsi: ColInfo,
-        in_center: bool,
-    }
-
     // 0: index in reps
     // 1: vector of clonotype pictures
     // 2: vector of some clonotype info
@@ -210,8 +194,6 @@ pub fn print_clonotypes(
     // next to last three entries = whitelist contam, denominator for that, low gex count
     // added out_datas (used to be next to last three, now one more)
     let result_iter = orbits.par_iter().map(|o| {
-        let mut res = TraverseResult::default();
-
         let od: Vec<_> = o
             .iter()
             .map(|id| {
@@ -249,6 +231,8 @@ pub fn print_clonotypes(
 
         let mut bads = vec![false; exacts.len()];
         let mut stats_pass1 = Vec::<Vec<(String, Vec<String>)>>::new();
+        let mut loupe_clonotype = None;
+        let mut res = None;
 
         for pass in [1, 2] {
             // Delete weak exact subclonotypes.
@@ -300,7 +284,6 @@ pub fn print_clonotypes(
             // defined.  Then define other information associated to each chain.  These are
             // reference sequence identifiers, CDR3 start positions, and the like.
 
-            let nexacts = exacts.len();
             let mat = define_mat(
                 to_bc,
                 sr,
@@ -313,7 +296,6 @@ pub fn print_clonotypes(
                 refdata,
                 dref,
             );
-            let cols = mat.len();
             let mut rsi = define_column_info(ctl, &exacts, exact_clonotypes, &mat, refdata);
             rsi.mat = mat;
             let mat = &rsi.mat;
@@ -342,7 +324,7 @@ pub fn print_clonotypes(
             // Generate Loupe data.
 
             if (!ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty()) && pass == 2 {
-                res.loupe_clonotype = Some(make_loupe_clonotype(
+                loupe_clonotype = Some(make_loupe_clonotype(
                     exact_clonotypes,
                     &exacts,
                     &rsi,
@@ -364,47 +346,12 @@ pub fn print_clonotypes(
             // ◼ assembly stage, so the assumption is violated.  To work around this there are
             // ◼ some unsavory workarounds below.
 
-            let mut mlog = Vec::<u8>::new();
             if !(n >= ctl.clono_filt_opt.ncells_low
                 || ctl.clono_group_opt.asymmetric_center == "from_filters")
             {
                 continue;
             }
             {
-                // Start to generate parseable output.
-
-                if pass == 2 {
-                    start_gen(
-                        ctl,
-                        &exacts,
-                        exact_clonotypes,
-                        &mut res.out_data,
-                        &mut mlog,
-                        &extra_args,
-                    );
-                }
-
-                // Find variant positions.  And some other things.
-
-                let mut vars = Vec::<Vec<usize>>::new();
-                let mut vars_amino = Vec::<Vec<usize>>::new();
-                let mut shares_amino = Vec::<Vec<usize>>::new();
-                let mut ref_diff_pos = Vec::<Vec<Vec<usize>>>::new();
-                vars_and_shares(
-                    pass,
-                    ctl,
-                    &exacts,
-                    exact_clonotypes,
-                    &rsi,
-                    refdata,
-                    dref,
-                    &mut vars,
-                    &mut vars_amino,
-                    &mut shares_amino,
-                    &mut ref_diff_pos,
-                    &mut res.out_data,
-                );
-
                 // Mark some weak exact subclonotypes for deletion.
 
                 if pass == 1 {
@@ -422,463 +369,38 @@ pub fn print_clonotypes(
                     continue;
                 }
 
-                // Define amino acid positions to show.
-
-                let show_aa = build_show_aa(
-                    ctl,
-                    &rsi,
-                    &vars_amino,
-                    &shares_amino,
-                    refdata,
-                    dref,
-                    &exacts,
-                    exact_clonotypes,
-                );
-
-                // Define field types corresponding to the amino acid positions to show.
-                let field_types = compute_field_types(ctl, &rsi, &show_aa);
-
-                // Build varmat matrix of size (nexacts, cols).
-                let mut varmat = vec![vec![vec![b'-']; cols]; nexacts];
-                for (col, (mat_slice, seqss_slice, vars_slice)) in
-                    izip!(mat, &rsi.seqss, &vars).take(cols).enumerate()
-                {
-                    for (varmat_u, m, seq) in izip!(&mut varmat, mat_slice, seqss_slice) {
-                        varmat_u[col] = if m.is_some() {
-                            vars_slice
-                                .iter()
-                                .map(|&p| *seq.get(p).unwrap_or(&b'?'))
-                                .collect()
-                        } else {
-                            vec![b'-']
-                        }
-                    }
-                }
-
-                // Find the fields associated to nd<k> if used.
-
-                let mut lvarsc = lvars.clone();
-                let mut nd_fields = Vec::<String>::new();
-                for (i, x) in lvars.iter().enumerate() {
-                    if x.starts_with("nd")
-                        && x.after("nd").parse::<usize>().is_ok()
-                        && x.after("nd").force_usize() >= 1
-                    {
-                        lvarsc.clear();
-                        lvarsc.extend(lvars.iter().take(i).cloned());
-                        let k = x.after("nd").force_usize();
-                        let mut n = vec![0_usize; ctl.origin_info.n()];
-                        for u in 0..nexacts {
-                            let ex = &exact_clonotypes[exacts[u]];
-                            for l in 0..ex.ncells() {
-                                n[ex.clones[l][0].dataset_index] += 1;
-                            }
-                        }
-                        let mut datasets = ctl.origin_info.dataset_id.clone();
-                        // does not work for unknown reason, so "manually" replaced
-                        // sort_sync2(&mut n, &mut datasets);
-                        let permutation = permutation::sort(&n[..]);
-                        n = permutation.apply_slice(&n[..]);
-                        datasets = permutation.apply_slice(&datasets[..]);
-                        n.reverse();
-                        datasets.reverse();
-                        for l in 0..n.len() {
-                            if n[l] == 0 {
-                                n.truncate(l);
-                                datasets.truncate(l);
-                                break;
-                            }
-                        }
-                        for (l, ds) in datasets.iter().take(k).enumerate() {
-                            if l >= n.len() {
-                                break;
-                            }
-                            nd_fields.push(format!("n_{}", ds.as_str()));
-                            lvarsc.push(format!("n_{}", ds.as_str()));
-                        }
-                        if n.len() > k {
-                            nd_fields.push("n_other".to_string());
-                            lvarsc.push("n_other".to_string());
-                        }
-                        lvarsc.extend(lvars.iter().skip(i + 1).cloned());
-                        break;
-                    }
-                }
-                let lvars = lvarsc.clone();
-                let mut lvarsh = HashSet::<String>::new();
-                for x in &lvars {
-                    lvarsh.insert(x.to_string());
-                }
-
-                // Now build table content.
-
-                let mut sr = Vec::<Sr>::new();
-                let mut groups = HashMap::<usize, Vec<usize>>::new();
-                for lvar in &lvars {
-                    if let Some(Ok(d)) = lvar.strip_prefix('g').map(str::parse::<usize>) {
-                        if groups.contains_key(&d) {
-                            continue;
-                        }
-                        let mut e: EquivRel = EquivRel::new(nexacts as i32);
-                        for (u1, &e1) in exacts.iter().take(nexacts).enumerate() {
-                            let ex1 = &exact_clonotypes[e1];
-                            for (u2, &e2) in exacts.iter().enumerate().take(nexacts).skip(u1 + 1) {
-                                if e.class_id(u1 as i32) == e.class_id(u2 as i32) {
-                                    continue;
-                                }
-                                let ex2 = &exact_clonotypes[e2];
-                                let mut diffs = 0;
-                                'comp: for (mm, vars) in mat.iter().zip(vars.iter()).take(cols) {
-                                    if let (Some(m1), Some(m2)) = (mm[u1], mm[u2]) {
-                                        let (s1, s2) =
-                                            (&ex1.share[m1].seq_del, &ex2.share[m2].seq_del);
-                                        for &p in vars {
-                                            if s1[p] != s2[p] {
-                                                diffs += 1;
-                                                if diffs > d {
-                                                    break 'comp;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                                if diffs <= d {
-                                    e.join(u1 as i32, u2 as i32);
-                                }
-                            }
-                        }
-                        let mut c = Vec::<usize>::new();
-                        let mut reps = Vec::<i32>::new();
-                        e.orbit_reps(&mut reps);
-                        for u in 0..nexacts {
-                            c.push(bin_position(&reps, &e.class_id(u as i32)) as usize);
-                        }
-                        groups.insert(d, c);
-                    }
-                }
-
-                // Set up to record stats that assign a value to each cell for a given variable.
-
-                let mut stats = Vec::<(String, Vec<String>)>::new();
-
-                // Compute some stats;
-
-                let SomeStats { cred, pe, ppe, npe } = compute_some_stats(
-                    ctl,
-                    &lvars,
-                    &exacts,
-                    exact_clonotypes,
-                    gex_info,
-                    vdj_cells,
-                    &n_vdj_gex,
-                );
-
-                // Precompute for near and far.
-
-                let mut fp = vec![Vec::<usize>::new(); varmat.len()]; // footprints
-                for i in 0..varmat.len() {
-                    for j in 0..varmat[i].len() {
-                        if varmat[i][j] != vec![b'-'] {
-                            fp[i].push(j);
-                        }
-                    }
-                }
-
-                // Form CDR3 consensus sequences.
-
-                let mut cdr3_con = Vec::<Vec<u8>>::new();
-                if ctl.gen_opt.color == "codon-diffs" {
-                    cdr3_con = consensus_codon_cdr3(&rsi, &exacts, exact_clonotypes);
-                }
-
-                // Build rows.
-
-                let mut cell_count = 0;
-                for u in 0..nexacts {
-                    let mut typex = vec![false; cols];
-                    let mut row = Vec::<String>::new();
-                    let mut cx = Vec::<Vec<String>>::new();
-                    for col in 0..cols {
-                        cx.push(vec![String::new(); rsi.cvars[col].len()]);
-                    }
-                    let clonotype_id = exacts[u];
-                    let ex = &exact_clonotypes[clonotype_id];
-                    let mut d_all = vec![Vec::<u32>::new(); ex.clones.len()];
-                    let mut ind_all = vec![Vec::<u32>::new(); ex.clones.len()];
-                    let mut these_stats = Vec::<(String, Vec<String>)>::new();
-                    row_fill(
-                        pass,
-                        u,
-                        ctl,
-                        &exacts,
-                        &mults,
-                        exact_clonotypes,
-                        gex_info,
-                        refdata,
-                        &varmat,
-                        &fp,
-                        &vars_amino,
-                        &show_aa,
-                        &ref_diff_pos,
-                        &field_types,
-                        &mut bads,
-                        &mut row,
-                        &mut res.out_data,
-                        &mut cx,
-                        &mut d_all,
-                        &mut ind_all,
-                        &rsi,
-                        dref,
-                        &groups,
-                        gex_readers,
-                        &mut these_stats,
-                        &stats_pass1,
-                        vdj_cells,
-                        &n_vdj_gex,
-                        &lvars,
-                        &lvarsh,
-                        &nd_fields,
-                        &peer_groups,
-                        &extra_args,
-                        &all_vars,
-                        need_gex,
-                        fate,
-                        &cdr3_con,
-                        allele_data,
-                    )?;
-                    stats.append(&mut these_stats.clone());
-                    if pass == 1 {
-                        stats_pass1.push(these_stats.clone());
-                    }
-                    these_stats.sort_by(|a, b| a.0.cmp(&b.0));
-                    let mut bli = ex
-                        .clones
-                        .iter()
-                        .enumerate()
-                        .map(|(l, clone)| (clone[0].barcode.clone(), clone[0].dataset_index, l))
-                        .collect::<Vec<_>>();
-                    // WHY ARE WE SORTING HERE?
-                    bli.sort();
-                    for col in 0..cols {
-                        if mat[col][u].is_some() {
-                            typex[col] = true;
-                        }
-                    }
-                    for mut cxr in cx {
-                        row.append(&mut cxr);
-                    }
-
-                    // Compute per-cell entries.
-
-                    if pass == 2 {
-                        let mut subrows = Vec::<Vec<String>>::new();
-                        compute_bu(
-                            u,
-                            cell_count,
-                            &exacts,
-                            &lvars,
-                            ctl,
-                            &bli,
-                            ex,
-                            exact_clonotypes,
-                            &mut row,
-                            &mut subrows,
-                            have_gex,
-                            gex_info,
-                            &rsi,
-                            &mut sr,
-                            fate,
-                            &nd_fields,
-                            &alt_bcs,
-                            &cred,
-                            &pe,
-                            &ppe,
-                            &npe,
-                            &d_all,
-                            &ind_all,
-                            mat,
-                            &these_stats,
-                            refdata,
-                        );
-                    }
-                    cell_count += ex.clones.len();
-                }
-                let mut rord = Vec::<usize>::new(); // note that this is now superfluous
-                for j in 0..sr.len() {
-                    rord.push(j);
-                }
-
-                // Combine stats for the same variable.  This is needed because each exact
-                // subclonotype contributes.  Note that we don't care about the order of the
-                // values here (other than stability) because what we're going to do with them is
-                // compute the mean or max.
-
-                stats.sort_by(|a, b| a.0.cmp(&b.0));
-                let stats_orig = stats.clone();
-                let mut stats2 = Vec::<(String, Vec<String>)>::new();
-                let mut i = 0;
-                while i < stats.len() {
-                    let mut j = i + 1;
-                    while j < stats.len() {
-                        if stats[j].0 != stats[i].0 {
-                            break;
-                        }
-                        j += 1;
-                    }
-                    let all = stats[i..j]
-                        .iter()
-                        .flat_map(|s| s.1.iter().cloned())
-                        .collect();
-                    stats2.push((stats[i].0.clone(), all));
-                    i = j;
-                }
-                stats = stats2;
-
-                // Traverse the bounds and apply them.
-                // Notes:
-                // 1. This seems to run during both pass 1 and 2, and should only run
-                //    during pass 1.
-                // 2. The results of this can be counterintuitive, because the filtering is
-                //    applied during pass 1, when there could be cells in the clonotype, that
-                //    are removed by other filters.
-
-                for bi in 0..ctl.clono_filt_opt.bounds.len() {
-                    let x = &ctl.clono_filt_opt.bounds[bi];
-                    let mut means = Vec::<f64>::new();
-                    let mut mins = Vec::<f64>::new();
-                    let mut maxs = Vec::<f64>::new();
-                    // traverse the coefficients on the left hand side (each having a variable)
-                    let mut fail = false;
-                    for vi in x.var.iter().take(x.n()) {
-                        let mut vals = Vec::<f64>::new(); // the stats for the variable
-                        for stat in &stats {
-                            if stat.0 == *vi {
-                                for sk in &stat.1 {
-                                    if let Ok(sk) = sk.parse::<f64>() {
-                                        vals.push(sk);
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                        let mut min = 1_000_000_000.0_f64;
-                        let mut mean = 0.0;
-                        let mut max = -1_000_000_000.0_f64;
-                        let mut count = 0;
-                        for val in vals {
-                            if !val.is_nan() {
-                                min = min.min(val);
-                                mean += val;
-                                max = max.max(val);
-                                count += 1;
-                            }
-                        }
-                        if count == 0 {
-                            fail = true;
-                        } else {
-                            mins.push(min);
-                            mean /= count as f64;
-                            means.push(mean);
-                            maxs.push(max);
-                        }
-                    }
-                    if ctl.clono_filt_opt.bound_type[bi] == "mean" && (fail || !x.satisfied(&means))
-                    {
-                        if ctl.clono_group_opt.asymmetric_center == "from_filters" {
-                            in_center = false;
-                        } else {
-                            for b in bads.iter_mut().take(nexacts) {
-                                *b = true;
-                            }
-                        }
-                    }
-                    if ctl.clono_filt_opt.bound_type[bi] == "min" && (fail || !x.satisfied(&mins)) {
-                        if ctl.clono_group_opt.asymmetric_center == "from_filters" {
-                            in_center = false;
-                        } else {
-                            for b in bads.iter_mut().take(nexacts) {
-                                *b = true;
-                            }
-                        }
-                    }
-                    if ctl.clono_filt_opt.bound_type[bi] == "max" && (fail || !x.satisfied(&maxs)) {
-                        if ctl.clono_group_opt.asymmetric_center == "from_filters" {
-                            in_center = false;
-                        } else {
-                            for b in bads.iter_mut().take(nexacts) {
-                                *b = true;
-                            }
-                        }
-                    }
-                }
-
-                // Process COMPLETE.
-
-                process_complete(ctl, nexacts, &mut bads, mat);
-
-                // Done unless on second pass.
-
-                if pass == 1 {
-                    continue;
-                }
-
-                // See if we're in the test and control sets for gene scan.
-                if let Some(gene_scan_opts) = &ctl.gen_opt.gene_scan {
-                    res.gene_scan_membership = gene_scan_test(
-                        gene_scan_opts,
-                        ctl.gen_opt.gene_scan_exact,
-                        &stats,
-                        &stats_orig,
-                        nexacts,
-                        n,
-                    );
-                }
-
-                // Make the table.
-
-                let clonotype_pic = finish_table(
-                    n,
-                    ctl,
-                    &exacts,
-                    exact_clonotypes,
-                    &rsi,
-                    &vars,
-                    &show_aa,
-                    &field_types,
-                    &lvars,
-                    refdata,
-                    dref,
-                    &peer_groups,
-                    &mut mlog,
-                    &stats,
-                    sr,
-                    &extra_args,
-                    pcols_sort,
-                    &mut res.out_data,
-                    &rord,
+                res = process_orbit_tail_enclone_only(
                     pass,
-                    &cdr3_con,
-                );
-
-                // Save.
-                res.subdata = Some(TraverseResultSubdata {
-                    pic: clonotype_pic,
-                    exacts: exacts.clone(),
-                    rsi: rsi.clone(),
+                    setup,
+                    enclone_exacts,
+                    gex_readers,
+                    fate,
+                    &all_vars,
+                    &alt_bcs,
+                    &extra_args,
+                    need_gex,
+                    have_gex,
+                    &exacts,
+                    &mults,
+                    n,
+                    &rsi,
+                    &n_vdj_gex,
+                    &peer_groups,
+                    pcols_sort,
+                    &mut bads,
+                    &mut stats_pass1,
                     in_center,
-                });
-                for u in 0..exacts.len() {
-                    res.num_cells += exact_clonotypes[exacts[u]].ncells() as isize;
-                }
+                )?;
             }
         }
-        Ok(res)
+        Ok((loupe_clonotype, res))
     });
-    let mut results: Vec<_> = result_iter.collect::<Result<Vec<TraverseResult>, String>>()?;
+    let mut results: Vec<_> = result_iter
+        .collect::<Result<Vec<(Option<Clonotype>, Option<TraverseResult>)>, String>>()?;
 
     // Sort results in descending order by number of cells.
 
-    results.sort_by_key(|x| -x.num_cells);
+    results.sort_by_key(|(_, x)| -x.as_ref().map(|r| r.num_cells).unwrap_or_default());
 
     // Write out the fate of each filtered barcode.
     if !ctl.gen_opt.fate_file.is_empty() {
@@ -891,20 +413,572 @@ pub fn print_clonotypes(
     let mut out = PrintClonotypesResult::default();
     let mut all_loupe_clonotypes = Vec::<Clonotype>::new();
 
-    for ri in results {
-        if let Some(subdata) = ri.subdata {
-            out.pics.push(subdata.pic);
-            out.exacts.push(subdata.exacts);
-            out.rsi.push(subdata.rsi);
-            out.in_center.push(subdata.in_center);
+    for (loupe_clonotype, ri) in results {
+        if let Some(data) = ri {
+            out.pics.push(data.pic);
+            out.exacts.push(data.exacts);
+            out.rsi.push(data.rsi);
+            out.in_center.push(data.in_center);
+            out.out_datas.push(data.out_data);
+            out.gene_scan_result.push(data.gene_scan_membership);
+        } else {
+            out.out_datas.push(Vec::new());
+            out.gene_scan_result.push(Vec::new());
         }
-        out.out_datas.push(ri.out_data);
-        out.gene_scan_result.push(ri.gene_scan_membership);
-        all_loupe_clonotypes.extend(ri.loupe_clonotype);
+        all_loupe_clonotypes.extend(loupe_clonotype);
     }
 
     // Write loupe output.
     loupe_out(ctl, all_loupe_clonotypes, refdata, dref);
 
     Ok(out)
+}
+
+#[derive(Default)]
+struct TraverseResult {
+    pic: String,
+    exacts: Vec<usize>,
+    rsi: ColInfo,
+    in_center: bool,
+    out_data: Vec<HashMap<String, String>>,
+    num_cells: isize,
+    gene_scan_membership: Vec<InSet>,
+}
+
+fn process_orbit_tail_enclone_only(
+    pass: usize,
+    setup: &EncloneSetup,
+    enclone_exacts: &EncloneExacts,
+    gex_readers: &[Option<GexReaders<'_>>],
+    fate: &[BarcodeFates],
+    all_vars: &[&str],
+    alt_bcs: &[String],
+    extra_args: &[String],
+    need_gex: bool,
+    have_gex: bool,
+    exacts: &[usize],
+    mults: &[usize],
+    n: usize,
+    rsi: &ColInfo,
+    n_vdj_gex: &[usize],
+    peer_groups: &[Vec<(usize, u8, u32)>],
+    pcols_sort: &[String],
+    bads: &mut [bool],
+    stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
+    mut in_center: bool,
+) -> Result<Option<TraverseResult>, String> {
+    let EncloneSetup {
+        ctl,
+        ann: _,
+        gex_info,
+        tall: _,
+        refdata,
+    } = setup;
+    let EncloneExacts {
+        to_bc: _,
+        exact_clonotypes,
+        raw_joins: _,
+        info: _,
+        orbits: _,
+        vdj_cells,
+        join_info: _,
+        drefs: dref,
+        sr: _,
+        allele_data,
+    } = enclone_exacts;
+    let nexacts = exacts.len();
+    let mat = &rsi.mat;
+    let cols = mat.len();
+    let lvars = &ctl.clono_print_opt.lvars;
+
+    let mut mlog = Vec::<u8>::new();
+    let mut out_data = Vec::new();
+
+    // Start to generate parseable output.
+
+    if pass == 2 {
+        start_gen(
+            ctl,
+            exacts,
+            exact_clonotypes,
+            &mut out_data,
+            &mut mlog,
+            extra_args,
+        );
+    }
+
+    // Find variant positions.  And some other things.
+
+    let mut vars = Vec::<Vec<usize>>::new();
+    let mut vars_amino = Vec::<Vec<usize>>::new();
+    let mut shares_amino = Vec::<Vec<usize>>::new();
+    let mut ref_diff_pos = Vec::<Vec<Vec<usize>>>::new();
+    vars_and_shares(
+        pass,
+        ctl,
+        exacts,
+        exact_clonotypes,
+        rsi,
+        refdata,
+        dref,
+        &mut vars,
+        &mut vars_amino,
+        &mut shares_amino,
+        &mut ref_diff_pos,
+        &mut out_data,
+    );
+
+    // Define amino acid positions to show.
+
+    let show_aa = build_show_aa(
+        ctl,
+        rsi,
+        &vars_amino,
+        &shares_amino,
+        refdata,
+        dref,
+        exacts,
+        exact_clonotypes,
+    );
+
+    // Define field types corresponding to the amino acid positions to show.
+    let field_types = compute_field_types(ctl, rsi, &show_aa);
+
+    // Build varmat matrix of size (nexacts, cols).
+    let mut varmat = vec![vec![vec![b'-']; cols]; nexacts];
+    for (col, (mat_slice, seqss_slice, vars_slice)) in
+        izip!(mat, &rsi.seqss, &vars).take(cols).enumerate()
+    {
+        for (varmat_u, m, seq) in izip!(&mut varmat, mat_slice, seqss_slice) {
+            varmat_u[col] = if m.is_some() {
+                vars_slice
+                    .iter()
+                    .map(|&p| *seq.get(p).unwrap_or(&b'?'))
+                    .collect()
+            } else {
+                vec![b'-']
+            }
+        }
+    }
+
+    // Find the fields associated to nd<k> if used.
+
+    let mut lvarsc = lvars.clone();
+    let mut nd_fields = Vec::<String>::new();
+    for (i, x) in lvars.iter().enumerate() {
+        if x.starts_with("nd")
+            && x.after("nd").parse::<usize>().is_ok()
+            && x.after("nd").force_usize() >= 1
+        {
+            lvarsc.clear();
+            lvarsc.extend(lvars.iter().take(i).cloned());
+            let k = x.after("nd").force_usize();
+            let mut n = vec![0_usize; ctl.origin_info.n()];
+            for u in 0..nexacts {
+                let ex = &exact_clonotypes[exacts[u]];
+                for l in 0..ex.ncells() {
+                    n[ex.clones[l][0].dataset_index] += 1;
+                }
+            }
+            let mut datasets = ctl.origin_info.dataset_id.clone();
+            // does not work for unknown reason, so "manually" replaced
+            // sort_sync2(&mut n, &mut datasets);
+            let permutation = permutation::sort(&n[..]);
+            n = permutation.apply_slice(&n[..]);
+            datasets = permutation.apply_slice(&datasets[..]);
+            n.reverse();
+            datasets.reverse();
+            for l in 0..n.len() {
+                if n[l] == 0 {
+                    n.truncate(l);
+                    datasets.truncate(l);
+                    break;
+                }
+            }
+            for (l, ds) in datasets.iter().take(k).enumerate() {
+                if l >= n.len() {
+                    break;
+                }
+                nd_fields.push(format!("n_{}", ds.as_str()));
+                lvarsc.push(format!("n_{}", ds.as_str()));
+            }
+            if n.len() > k {
+                nd_fields.push("n_other".to_string());
+                lvarsc.push("n_other".to_string());
+            }
+            lvarsc.extend(lvars.iter().skip(i + 1).cloned());
+            break;
+        }
+    }
+    let lvars = lvarsc.clone();
+    let mut lvarsh = HashSet::<String>::new();
+    for x in &lvars {
+        lvarsh.insert(x.to_string());
+    }
+
+    // Now build table content.
+
+    let mut sr = Vec::<Sr>::new();
+    let mut groups = HashMap::<usize, Vec<usize>>::new();
+    for lvar in &lvars {
+        if let Some(Ok(d)) = lvar.strip_prefix('g').map(str::parse::<usize>) {
+            if groups.contains_key(&d) {
+                continue;
+            }
+            let mut e: EquivRel = EquivRel::new(nexacts as i32);
+            for (u1, &e1) in exacts.iter().take(nexacts).enumerate() {
+                let ex1 = &exact_clonotypes[e1];
+                for (u2, &e2) in exacts.iter().enumerate().take(nexacts).skip(u1 + 1) {
+                    if e.class_id(u1 as i32) == e.class_id(u2 as i32) {
+                        continue;
+                    }
+                    let ex2 = &exact_clonotypes[e2];
+                    let mut diffs = 0;
+                    'comp: for (mm, vars) in mat.iter().zip(vars.iter()).take(cols) {
+                        if let (Some(m1), Some(m2)) = (mm[u1], mm[u2]) {
+                            let (s1, s2) = (&ex1.share[m1].seq_del, &ex2.share[m2].seq_del);
+                            for &p in vars {
+                                if s1[p] != s2[p] {
+                                    diffs += 1;
+                                    if diffs > d {
+                                        break 'comp;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if diffs <= d {
+                        e.join(u1 as i32, u2 as i32);
+                    }
+                }
+            }
+            let mut c = Vec::<usize>::new();
+            let mut reps = Vec::<i32>::new();
+            e.orbit_reps(&mut reps);
+            for u in 0..nexacts {
+                c.push(bin_position(&reps, &e.class_id(u as i32)) as usize);
+            }
+            groups.insert(d, c);
+        }
+    }
+
+    // Set up to record stats that assign a value to each cell for a given variable.
+
+    let mut stats = Vec::<(String, Vec<String>)>::new();
+
+    // Compute some stats;
+
+    let SomeStats { cred, pe, ppe, npe } = compute_some_stats(
+        ctl,
+        &lvars,
+        exacts,
+        exact_clonotypes,
+        gex_info,
+        vdj_cells,
+        n_vdj_gex,
+    );
+
+    // Precompute for near and far.
+
+    let mut fp = vec![Vec::<usize>::new(); varmat.len()]; // footprints
+    for i in 0..varmat.len() {
+        for j in 0..varmat[i].len() {
+            if varmat[i][j] != vec![b'-'] {
+                fp[i].push(j);
+            }
+        }
+    }
+
+    // Form CDR3 consensus sequences.
+
+    let mut cdr3_con = Vec::<Vec<u8>>::new();
+    if ctl.gen_opt.color == "codon-diffs" {
+        cdr3_con = consensus_codon_cdr3(rsi, exacts, exact_clonotypes);
+    }
+
+    // Build rows.
+
+    let mut cell_count = 0;
+    for u in 0..nexacts {
+        let mut typex = vec![false; cols];
+        let mut row = Vec::<String>::new();
+        let mut cx = Vec::<Vec<String>>::new();
+        for col in 0..cols {
+            cx.push(vec![String::new(); rsi.cvars[col].len()]);
+        }
+        let clonotype_id = exacts[u];
+        let ex = &exact_clonotypes[clonotype_id];
+        let mut d_all = vec![Vec::<u32>::new(); ex.clones.len()];
+        let mut ind_all = vec![Vec::<u32>::new(); ex.clones.len()];
+        let mut these_stats = Vec::<(String, Vec<String>)>::new();
+        row_fill(
+            pass,
+            u,
+            ctl,
+            exacts,
+            mults,
+            exact_clonotypes,
+            gex_info,
+            refdata,
+            &varmat,
+            &fp,
+            &vars_amino,
+            &show_aa,
+            &ref_diff_pos,
+            &field_types,
+            bads,
+            &mut row,
+            &mut out_data,
+            &mut cx,
+            &mut d_all,
+            &mut ind_all,
+            rsi,
+            dref,
+            &groups,
+            gex_readers,
+            &mut these_stats,
+            stats_pass1,
+            vdj_cells,
+            n_vdj_gex,
+            &lvars,
+            &lvarsh,
+            &nd_fields,
+            peer_groups,
+            extra_args,
+            all_vars,
+            need_gex,
+            fate,
+            &cdr3_con,
+            allele_data,
+        )?;
+        stats.append(&mut these_stats.clone());
+        if pass == 1 {
+            stats_pass1.push(these_stats.clone());
+        }
+        these_stats.sort_by(|a, b| a.0.cmp(&b.0));
+        let mut bli = ex
+            .clones
+            .iter()
+            .enumerate()
+            .map(|(l, clone)| (clone[0].barcode.clone(), clone[0].dataset_index, l))
+            .collect::<Vec<_>>();
+        // WHY ARE WE SORTING HERE?
+        bli.sort();
+        for col in 0..cols {
+            if mat[col][u].is_some() {
+                typex[col] = true;
+            }
+        }
+        for mut cxr in cx {
+            row.append(&mut cxr);
+        }
+
+        // Compute per-cell entries.
+
+        if pass == 2 {
+            let mut subrows = Vec::<Vec<String>>::new();
+            compute_bu(
+                u,
+                cell_count,
+                exacts,
+                &lvars,
+                ctl,
+                &bli,
+                ex,
+                exact_clonotypes,
+                &mut row,
+                &mut subrows,
+                have_gex,
+                gex_info,
+                rsi,
+                &mut sr,
+                fate,
+                &nd_fields,
+                alt_bcs,
+                &cred,
+                &pe,
+                &ppe,
+                &npe,
+                &d_all,
+                &ind_all,
+                mat,
+                &these_stats,
+                refdata,
+            );
+        }
+        cell_count += ex.clones.len();
+    }
+    let mut rord = Vec::<usize>::new(); // note that this is now superfluous
+    for j in 0..sr.len() {
+        rord.push(j);
+    }
+
+    // Combine stats for the same variable.  This is needed because each exact
+    // subclonotype contributes.  Note that we don't care about the order of the
+    // values here (other than stability) because what we're going to do with them is
+    // compute the mean or max.
+
+    stats.sort_by(|a, b| a.0.cmp(&b.0));
+    let stats_orig = stats.clone();
+    let mut stats2 = Vec::<(String, Vec<String>)>::new();
+    let mut i = 0;
+    while i < stats.len() {
+        let mut j = i + 1;
+        while j < stats.len() {
+            if stats[j].0 != stats[i].0 {
+                break;
+            }
+            j += 1;
+        }
+        let all = stats[i..j]
+            .iter()
+            .flat_map(|s| s.1.iter().cloned())
+            .collect();
+        stats2.push((stats[i].0.clone(), all));
+        i = j;
+    }
+    stats = stats2;
+
+    // Traverse the bounds and apply them.
+    // Notes:
+    // 1. This seems to run during both pass 1 and 2, and should only run
+    //    during pass 1.
+    // 2. The results of this can be counterintuitive, because the filtering is
+    //    applied during pass 1, when there could be cells in the clonotype, that
+    //    are removed by other filters.
+
+    for bi in 0..ctl.clono_filt_opt.bounds.len() {
+        let x = &ctl.clono_filt_opt.bounds[bi];
+        let mut means = Vec::<f64>::new();
+        let mut mins = Vec::<f64>::new();
+        let mut maxs = Vec::<f64>::new();
+        // traverse the coefficients on the left hand side (each having a variable)
+        let mut fail = false;
+        for vi in x.var.iter().take(x.n()) {
+            let mut vals = Vec::<f64>::new(); // the stats for the variable
+            for stat in &stats {
+                if stat.0 == *vi {
+                    for sk in &stat.1 {
+                        if let Ok(sk) = sk.parse::<f64>() {
+                            vals.push(sk);
+                        }
+                    }
+                    break;
+                }
+            }
+            let mut min = 1_000_000_000.0_f64;
+            let mut mean = 0.0;
+            let mut max = -1_000_000_000.0_f64;
+            let mut count = 0;
+            for val in vals {
+                if !val.is_nan() {
+                    min = min.min(val);
+                    mean += val;
+                    max = max.max(val);
+                    count += 1;
+                }
+            }
+            if count == 0 {
+                fail = true;
+            } else {
+                mins.push(min);
+                mean /= count as f64;
+                means.push(mean);
+                maxs.push(max);
+            }
+        }
+        if ctl.clono_filt_opt.bound_type[bi] == "mean" && (fail || !x.satisfied(&means)) {
+            if ctl.clono_group_opt.asymmetric_center == "from_filters" {
+                in_center = false;
+            } else {
+                for b in bads.iter_mut().take(nexacts) {
+                    *b = true;
+                }
+            }
+        }
+        if ctl.clono_filt_opt.bound_type[bi] == "min" && (fail || !x.satisfied(&mins)) {
+            if ctl.clono_group_opt.asymmetric_center == "from_filters" {
+                in_center = false;
+            } else {
+                for b in bads.iter_mut().take(nexacts) {
+                    *b = true;
+                }
+            }
+        }
+        if ctl.clono_filt_opt.bound_type[bi] == "max" && (fail || !x.satisfied(&maxs)) {
+            if ctl.clono_group_opt.asymmetric_center == "from_filters" {
+                in_center = false;
+            } else {
+                for b in bads.iter_mut().take(nexacts) {
+                    *b = true;
+                }
+            }
+        }
+    }
+
+    // Process COMPLETE.
+
+    process_complete(ctl, nexacts, bads, mat);
+
+    // Done unless on second pass.
+
+    if pass == 1 {
+        return Ok(None);
+    }
+
+    // See if we're in the test and control sets for gene scan.
+    let gene_scan_membership = ctl
+        .gen_opt
+        .gene_scan
+        .as_ref()
+        .map(|gene_scan_opts| {
+            gene_scan_test(
+                gene_scan_opts,
+                ctl.gen_opt.gene_scan_exact,
+                &stats,
+                &stats_orig,
+                nexacts,
+                n,
+            )
+        })
+        .unwrap_or_default();
+
+    // Make the table.
+
+    let clonotype_pic = finish_table(
+        n,
+        ctl,
+        exacts,
+        exact_clonotypes,
+        rsi,
+        &vars,
+        &show_aa,
+        &field_types,
+        &lvars,
+        refdata,
+        dref,
+        peer_groups,
+        &mut mlog,
+        &stats,
+        sr,
+        extra_args,
+        pcols_sort,
+        &mut out_data,
+        &rord,
+        pass,
+        &cdr3_con,
+    );
+
+    Ok(Some(TraverseResult {
+        pic: clonotype_pic,
+        exacts: exacts.to_vec(),
+        rsi: rsi.clone(),
+        in_center,
+        num_cells: exacts
+            .iter()
+            .map(|exact| exact_clonotypes[*exact].ncells() as isize)
+            .sum(),
+        out_data,
+        gene_scan_membership,
+    }))
 }
