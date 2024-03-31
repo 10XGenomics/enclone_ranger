@@ -535,14 +535,12 @@ pub trait OrbitProcessor<T> {
     fn collect(&mut self, result: Option<T>) {}
 }
 
-impl<T, F> OrbitProcessor<T> for &mut F where F: OrbitProcessor<T> {}
-
 #[derive(Default)]
 pub struct EncloneOrbitProcessor {
     pub result: PrintClonotypesResult,
 }
 
-impl OrbitProcessor<TraverseResult> for EncloneOrbitProcessor {
+impl OrbitProcessor<TraverseResult> for &mut EncloneOrbitProcessor {
     fn filter(
         &self,
         setup: &EncloneSetup,
