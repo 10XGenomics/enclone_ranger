@@ -348,6 +348,14 @@ pub trait OrbitProcessor<T> {
         stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
         in_center: bool,
     ) -> Result<(), String> {
+        let ctl = &setup.ctl;
+        // This assertion ensures that we never would have entered code that was
+        // moved out of this repo and into enclone proper.
+        assert!(
+            ctl.clono_filt_opt.bounds.is_empty()
+                && !ctl.gen_opt.complete
+                && ctl.gen_opt.var_def.is_empty()
+        );
         Ok(())
     }
 
