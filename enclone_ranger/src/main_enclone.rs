@@ -10,7 +10,7 @@ use enclone_args::load_gex::get_gex_info;
 use enclone_args::proc_args::proc_args;
 use enclone_core::defs::EncloneControl;
 use enclone_core::enclone_structs::EncloneSetup;
-use enclone_print::print_clonotypes::{print_clonotypes, OrbitProcessor};
+use enclone_print::process_clonotypes::{print_clonotypes, OrbitProcessor};
 use enclone_stuff::start::main_enclone_start;
 use std::sync::atomic::Ordering::SeqCst;
 use std::{

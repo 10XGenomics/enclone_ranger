@@ -5,11 +5,11 @@
 //
 // Problem: stack traces from this file consistently do not go back to the main program.
 
+use crate::define_column_info::define_column_info;
 use crate::define_mat::{define_mat, Od};
+use crate::delete_weaks::delete_weaks;
 use crate::filter::survives_filter;
 use crate::loupe::{loupe_out, make_loupe_clonotype};
-use crate::print_utils3::define_column_info;
-use crate::print_utils5::delete_weaks;
 use enclone_core::defs::{CloneInfo, ColInfo};
 use enclone_core::enclone_structs::{BarcodeFates, EncloneExacts, EncloneSetup, GexReaders};
 use enclone_proto::types::Clonotype;

@@ -4,7 +4,7 @@
 
 use enclone_core::defs::{CloneInfo, ExactClonotype};
 use enclone_core::enclone_structs::EncloneSetup;
-use enclone_print::print_utils4::get_gex_matrix_entry;
+use enclone_print::get_gex_matrix_entry::get_gex_matrix_entry;
 use evalexpr::{ContextWithMutableVariables, HashMapContext};
 
 use vector_utils::{bin_position, erase_if};
