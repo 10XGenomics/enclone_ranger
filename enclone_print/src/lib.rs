@@ -2,7 +2,6 @@
 
 pub mod define_mat;
 pub mod filter;
-pub mod gene_scan;
 pub mod loupe;
 pub mod print_clonotypes;
 pub mod print_utils1;
