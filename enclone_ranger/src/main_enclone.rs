@@ -4,13 +4,13 @@
 // be passed are limited.  The code here is simplified and could be further simplified.
 
 use self::refx::{make_vdj_ref_data_core, RefData};
-use crate::stop::main_enclone_stop_ranger;
 use crate::USING_PAGER;
 use enclone::innate::species;
 use enclone_args::load_gex::get_gex_info;
 use enclone_args::proc_args::proc_args;
 use enclone_core::defs::EncloneControl;
 use enclone_core::enclone_structs::EncloneSetup;
+use enclone_print::print_clonotypes::{print_clonotypes, OrbitProcessor};
 use enclone_stuff::start::main_enclone_start;
 use std::sync::atomic::Ordering::SeqCst;
 use std::{
@@ -76,7 +76,8 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
     }
     let setup = main_enclone_setup_ranger(args)?;
     let (exacts, fate) = main_enclone_start(&setup)?;
-    main_enclone_stop_ranger(&setup, &exacts, fate)
+    let gex_readers = setup.create_gex_readers();
+    print_clonotypes::<()>(&setup, &exacts, &gex_readers, &fate, NoOpProc)
 }
 
 pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String> {
@@ -146,3 +147,7 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
         tall: Some(tall),
     })
 }
+
+struct NoOpProc;
+
+impl OrbitProcessor<()> for NoOpProc {}
