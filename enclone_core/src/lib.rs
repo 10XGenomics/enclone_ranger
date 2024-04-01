@@ -15,7 +15,6 @@ pub mod logging;
 pub mod median;
 pub mod opt_d;
 pub mod print_tools;
-pub mod set_speakers;
 pub mod slurp;
 pub mod stringulate;
 pub mod test_def;
