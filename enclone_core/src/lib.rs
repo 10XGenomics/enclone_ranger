@@ -12,7 +12,6 @@ pub mod hcomp;
 pub mod join_one;
 pub mod linear_condition;
 pub mod logging;
-pub mod mammalian_fixed_len;
 pub mod median;
 pub mod opt_d;
 pub mod print_tools;
