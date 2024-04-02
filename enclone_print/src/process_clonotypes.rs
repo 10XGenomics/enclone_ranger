@@ -22,12 +22,12 @@ use vector_utils::{erase_if, next_diff12_3};
 /// Process clonotypes.
 /// Filter out exact subclonotypes in orbits that appear to be junk.
 /// Write out barcode fates and loupe clonotype files.
-pub fn print_clonotypes<T: Send>(
+pub fn process_clonotypes<T: Send, D: Default>(
     setup: &EncloneSetup,
     enclone_exacts: &EncloneExacts,
     gex_readers: &[Option<GexReaders<'_>>],
     fate: &[BarcodeFates],
-    mut proc: impl OrbitProcessor<T> + Send + Sync,
+    mut proc: impl OrbitProcessor<T, D> + Send + Sync,
 ) -> Result<(), String> {
     let EncloneSetup {
         ctl,
@@ -115,7 +115,7 @@ pub fn print_clonotypes<T: Send>(
         // Let n be the total number of cells in this pass.
         let n: usize = mults.iter().sum();
 
-        if n >= ctl.clono_filt_opt.ncells_low
+        let proc_filter_data = if n >= ctl.clono_filt_opt.ncells_low
             || ctl.clono_group_opt.asymmetric_center == "from_filters"
         {
             // Mark some weak exact subclonotypes for deletion.
@@ -132,8 +132,10 @@ pub fn print_clonotypes<T: Send>(
                 &rsi,
                 &mut bads,
                 true,
-            )?;
-        }
+            )?
+        } else {
+            Default::default()
+        };
 
         // Delete weak exact subclonotypes.
 
@@ -214,6 +216,7 @@ pub fn print_clonotypes<T: Send>(
             &rsi,
             &mut bads,
             in_center,
+            proc_filter_data,
         )?;
 
         Ok((num_cells, loupe_clonotype, res))
@@ -310,7 +313,11 @@ fn sort_exact_clonotypes(
 }
 
 /// Inject a behavior to provide additional filtering and post-processing of each orbit.
-pub trait OrbitProcessor<T> {
+pub trait OrbitProcessor<T, D: Default> {
+    /// Filter performs additional filtering of clonotypes by mutating bads.
+    ///
+    /// The processor may return a data structure of type D that is provided
+    /// to the finalize method.
     #[allow(unused)]
     fn filter(
         &self,
@@ -324,7 +331,7 @@ pub trait OrbitProcessor<T> {
         rsi: &ColInfo,
         bads: &mut [bool],
         in_center: bool,
-    ) -> Result<(), String> {
+    ) -> Result<D, String> {
         let ctl = &setup.ctl;
         // This assertion ensures that we never would have entered code that was
         // moved out of this repo and into enclone proper.
@@ -333,7 +340,7 @@ pub trait OrbitProcessor<T> {
                 && !ctl.gen_opt.complete
                 && ctl.gen_opt.var_def.is_empty()
         );
-        Ok(())
+        Ok(Default::default())
     }
 
     #[allow(unused)]
@@ -349,6 +356,7 @@ pub trait OrbitProcessor<T> {
         rsi: &ColInfo,
         bads: &mut [bool],
         in_center: bool,
+        filter_data: D,
     ) -> Result<Option<T>, String> {
         Ok(None)
     }

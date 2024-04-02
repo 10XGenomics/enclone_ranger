@@ -10,7 +10,7 @@ use enclone_args::load_gex::get_gex_info;
 use enclone_args::proc_args::proc_args;
 use enclone_core::defs::EncloneControl;
 use enclone_core::enclone_structs::EncloneSetup;
-use enclone_print::process_clonotypes::{print_clonotypes, OrbitProcessor};
+use enclone_print::process_clonotypes::{process_clonotypes, OrbitProcessor};
 use enclone_stuff::start::main_enclone_start;
 use std::sync::atomic::Ordering::SeqCst;
 use std::{
@@ -77,7 +77,7 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
     let setup = main_enclone_setup_ranger(args)?;
     let (exacts, fate) = main_enclone_start(&setup)?;
     let gex_readers = setup.create_gex_readers();
-    print_clonotypes::<()>(&setup, &exacts, &gex_readers, &fate, NoOpProc)
+    process_clonotypes::<(), ()>(&setup, &exacts, &gex_readers, &fate, NoOpProc)
 }
 
 pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String> {
@@ -150,4 +150,4 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
 
 struct NoOpProc;
 
-impl OrbitProcessor<()> for NoOpProc {}
+impl OrbitProcessor<(), ()> for NoOpProc {}
