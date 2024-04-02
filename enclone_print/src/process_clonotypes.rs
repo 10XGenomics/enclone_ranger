@@ -85,15 +85,12 @@ pub fn process_clonotypes<T: Send, D: Default>(
 
         // Identify the exact subclonotypes that are junk.
 
-        let mut bads = vec![false; exacts.len()];
-
         sort_exact_clonotypes(setup, enclone_exacts, &od, &mut exacts, &mut mults);
 
         // Define a matrix mat[col][ex] which is the column of the exact subclonotype
         // corresponding to the given column col of the clonotype, which may or may not be
         // defined.  Then define other information associated to each chain.  These are
         // reference sequence identifiers, CDR3 start positions, and the like.
-
         let mat = define_mat(
             to_bc,
             sr,
@@ -114,6 +111,8 @@ pub fn process_clonotypes<T: Send, D: Default>(
 
         // Let n be the total number of cells in this pass.
         let n: usize = mults.iter().sum();
+
+        let mut bads = vec![false; exacts.len()];
 
         let proc_filter_data = if n >= ctl.clono_filt_opt.ncells_low
             || ctl.clono_group_opt.asymmetric_center == "from_filters"
@@ -150,7 +149,6 @@ pub fn process_clonotypes<T: Send, D: Default>(
         // corresponding to the given column col of the clonotype, which may or may not be
         // defined.  Then define other information associated to each chain.  These are
         // reference sequence identifiers, CDR3 start positions, and the like.
-
         let mat = define_mat(
             to_bc,
             sr,
@@ -343,6 +341,7 @@ pub trait OrbitProcessor<T, D: Default> {
         Ok(Default::default())
     }
 
+    /// Perform any final processing on the orbit after filtering.
     #[allow(unused)]
     fn finalize(
         &self,
