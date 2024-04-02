@@ -52,7 +52,7 @@ pub fn filter_gelbead_contamination(
         bch[l].sort_unstable();
         let mut m = 0;
         while m < bch[l].len() {
-            let n = next_diff12_4(&bch[l], m as i32) as usize;
+            let n = next_diff12_4(&bch[l], m);
             let mut count = 0;
             for u1 in m..n {
                 for u2 in m..n {
@@ -121,7 +121,7 @@ pub fn create_exact_subclonotype_core(
             let mut callsx = Vec::<(usize, u8)>::new(); // (qual,base)
             let mut i = 0;
             while i < calls.len() {
-                let j = next_diff1_2(&calls, i as i32) as usize;
+                let j = next_diff1_2(&calls, i);
                 let mut q = 0;
                 for c in &calls[i..j] {
                     q += c.1 as usize;
@@ -156,7 +156,7 @@ pub fn create_exact_subclonotype_core(
             let mut callsx = Vec::<(usize, u8)>::new(); // (qual,base)
             let mut i = 0;
             while i < calls.len() {
-                let j = next_diff1_2(&calls, i as i32) as usize;
+                let j = next_diff1_2(&calls, i);
                 let mut q = 0;
                 for c in &calls[i..j] {
                     q += c.1 as usize;
@@ -373,7 +373,7 @@ pub fn find_exact_subclonotypes(
         bc.sort_unstable();
         let mut i = 0;
         while i < bc.len() {
-            let j = next_diff1_2(&bc, i as i32) as usize;
+            let j = next_diff1_2(&bc, i);
             if j - i >= 2 {
                 for bck in &bc[i..j] {
                     let t = bck.1;
@@ -535,7 +535,7 @@ pub fn search_for_shm_indels(ctl: &EncloneControl, tig_bc: &[Vec<TigData>]) {
         unique_sort(&mut cs);
         let mut i = 0;
         while i < cs.len() {
-            let j = next_diff1_3(&cs, i as i32) as usize;
+            let j = next_diff1_3(&cs, i);
             if j - i > 1 {
                 println!("{}", cs[i].2);
             }
@@ -566,7 +566,7 @@ pub fn check_for_barcode_reuse(
         let mut reuse = Vec::<(usize, usize)>::new();
         let mut i = 0;
         while i < all.len() {
-            let j = next_diff1_3(&all, i as i32) as usize;
+            let j = next_diff1_3(&all, i);
             for k1 in i..j {
                 for k2 in k1 + 1..j {
                     // We require identity on one cdr3_aa.  That seems to be about the right amount
