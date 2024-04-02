@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use vdj_ann::refx::RefData;
 
 pub fn join_core<'a>(
-    is_bcr: bool,
     i: usize,
     j: usize,
     ctl: &EncloneControl,
@@ -34,7 +33,6 @@ pub fn join_core<'a>(
                 continue;
             }
             if join_one(
-                is_bcr,
                 k1,
                 k2,
                 ctl,

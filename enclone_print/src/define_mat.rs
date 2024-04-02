@@ -77,7 +77,6 @@ pub fn setup_define_mat(orbit: &[i32], info: &[CloneInfo]) -> (Vec<Od>, Vec<usiz
 // algorithm, and is the number of columns (chains) in the clonotype table.
 
 pub fn define_mat(
-    is_bcr: bool,
     to_bc: &HashMap<(usize, usize), Vec<String>>,
     sr: &[Vec<Double>],
     ctl: &EncloneControl,
@@ -171,7 +170,6 @@ pub fn define_mat(
                         if info[l1].lens == info[l2].lens {
                             let mut pot = Vec::<PotentialJoin<'_>>::new();
                             if join_one(
-                                is_bcr,
                                 l1,
                                 l2,
                                 ctl,
@@ -247,7 +245,6 @@ pub fn define_mat(
                 }
                 let mut pot = Vec::<PotentialJoin<'_>>::new();
                 if join_one(
-                    is_bcr,
                     i1,
                     i2,
                     ctl,

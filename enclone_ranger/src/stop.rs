@@ -1,27 +1,18 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
-use enclone_core::enclone_structs::EncloneIntermediates;
+use enclone_core::enclone_structs::{BarcodeFates, EncloneExacts, EncloneSetup};
 use enclone_print::print_clonotypes::print_clonotypes;
 use hdf5::Reader;
 use rayon::prelude::*;
 
-pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), String> {
+pub fn main_enclone_stop_ranger(
+    setup: &EncloneSetup,
+    exacts: &EncloneExacts,
+    fate: Vec<BarcodeFates>,
+) -> Result<(), String> {
     // Unpack inputs.
-
-    let to_bc = &inter.ex.to_bc;
-    let exact_clonotypes = &inter.ex.exact_clonotypes;
-    let raw_joins = &inter.ex.raw_joins;
-    let info = &inter.ex.info;
-    let orbits = &inter.ex.orbits;
-    let vdj_cells = &inter.ex.vdj_cells;
-    let refdata = &inter.setup.refdata;
-    let drefs = &inter.ex.drefs;
-    let gex_info = &inter.setup.gex_info;
-    let sr = &inter.ex.sr;
-    let fate = &mut inter.ex.fate;
-    let ctl = &inter.setup.ctl;
-    let is_bcr = inter.ex.is_bcr;
-    let allele_data = &inter.ex.allele_data;
+    let gex_info = &setup.gex_info;
+    let ctl = &setup.ctl;
 
     // Load the GEX and FB data.  This is quite horrible: the code and computation are duplicated
     // verbatim in fcell.rs.
@@ -51,24 +42,6 @@ pub fn main_enclone_stop_ranger(mut inter: EncloneIntermediates) -> Result<(), S
     });
 
     // Find and print clonotypes.  (But we don't actually print them here.)
-    print_clonotypes(
-        is_bcr,
-        to_bc,
-        sr,
-        refdata,
-        drefs,
-        ctl,
-        exact_clonotypes,
-        info,
-        orbits,
-        raw_joins,
-        gex_info,
-        vdj_cells,
-        &d_readers,
-        &ind_readers,
-        &h5_data,
-        fate,
-        allele_data,
-    )?;
+    print_clonotypes(setup, exacts, &d_readers, &ind_readers, &h5_data, &fate)?;
     Ok(())
 }

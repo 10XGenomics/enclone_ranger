@@ -3,6 +3,7 @@
 // This file provides the single function build_info.
 
 use enclone_core::barcode_fate::BarcodeFate;
+use enclone_core::enclone_structs::BarcodeFates;
 use vdj_ann::refx;
 
 use self::refx::RefData;
@@ -12,7 +13,7 @@ use debruijn::{dna_string::DnaString, Mer};
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
 use enclone_core::print_tools::emit_codon_color_escape;
 use rayon::prelude::*;
-use std::collections::HashMap;
+
 use std::convert::TryInto;
 use std::fmt::Write;
 use string_utils::strme;
@@ -22,7 +23,7 @@ pub fn build_info(
     refdata: &RefData,
     ctl: &EncloneControl,
     exact_clonotypes: &mut [ExactClonotype],
-    fate: &mut [HashMap<String, BarcodeFate>],
+    fate: &mut [BarcodeFates],
 ) -> Vec<CloneInfo> {
     // Build info about clonotypes.  We create a data structure info.
     // An entry in info is a clonotype having appropriate properties.

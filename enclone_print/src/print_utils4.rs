@@ -2,13 +2,13 @@
 
 use amino::codon_to_aa;
 use enclone_core::{
-    barcode_fate::BarcodeFate,
     defs::{ColInfo, EncloneControl, ExactClonotype, GexInfo},
+    enclone_structs::BarcodeFates,
 };
 use enclone_proto::types::DonorReferenceItem;
 use equiv::EquivRel;
 use itertools::Itertools;
-use std::collections::HashMap;
+
 use string_utils::TextUtils;
 use vdj_ann::refx::RefData;
 use vector_utils::{bin_member, bin_position, bin_position1_2, unique_sort};
@@ -506,7 +506,7 @@ pub fn compute_bu(
     gex_info: &GexInfo,
     rsi: &ColInfo,
     sr: &mut Vec<Sr>,
-    fate: &[HashMap<String, BarcodeFate>],
+    fate: &[BarcodeFates],
     nd_fields: &[String],
     alt_bcs: &[String],
     cred: &[Vec<String>],

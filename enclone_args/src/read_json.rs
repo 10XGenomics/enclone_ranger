@@ -6,6 +6,7 @@ use self::transcript::is_productive_contig;
 use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
 use enclone_core::defs::{EncloneControl, OriginInfo, TigData};
+use enclone_core::enclone_structs::BarcodeFates;
 use io_utils::{open_maybe_compressed, path_exists};
 use martian_filetypes::json_file::{Json, LazyJsonReader};
 use martian_filetypes::LazyRead;
@@ -697,13 +698,12 @@ pub struct Annotations {
     pub gex_cells: Vec<Vec<String>>,
     pub gex_cells_specified: Vec<bool>,
     pub tig_bc: Vec<Vec<TigData>>,
-    pub fate: Vec<HashMap<String, BarcodeFate>>,
+    pub fate: Vec<BarcodeFates>,
 }
 
 pub fn parse_json_annotations_files(
     ctl: &EncloneControl,
     refdata: &RefData,
-    to_ref_index: &HashMap<usize, usize>,
 ) -> Result<Annotations, String> {
     // Note: only tracking truncated seq and quals initially
     let ann = if !ctl.gen_opt.cellranger {
@@ -711,6 +711,13 @@ pub fn parse_json_annotations_files(
     } else {
         "contig_annotations.json"
     };
+    let to_ref_index = refdata
+        .id
+        .iter()
+        .take(refdata.refs.len())
+        .enumerate()
+        .map(|(i, &id)| (id as usize, i))
+        .collect();
     let results = ctl
         .origin_info
         .dataset_path
@@ -728,7 +735,7 @@ pub fn parse_json_annotations_files(
                 li,
                 &json,
                 refdata,
-                to_ref_index,
+                &to_ref_index,
                 ctl.gen_opt.reannotate,
                 ctl,
             )
