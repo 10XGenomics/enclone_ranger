@@ -1,9 +1,8 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
-
-// This file supplies the single function print_clonotypes.  It prints clonotypes, but also
-// does some filtering to remove 'noise' clonotypes.
-//
-// Problem: stack traces from this file consistently do not go back to the main program.
+//! This file provides the function process_clonotypes, which performs some final
+//! filtering and writes out the barcode fate and the loupe clonotype files.
+//!
+//! Additional behavior is injected by Enclone through the OrbitProcessor trait.
 
 use crate::define_column_info::define_column_info;
 use crate::define_mat::{define_mat, Od};
@@ -20,25 +19,15 @@ use std::fs::File;
 use std::io::BufWriter;
 use vector_utils::{erase_if, next_diff12_3};
 
-/// Print clonotypes.  A key challenge here is to define the columns that represent shared
-/// chains.  This is given below by the code that forms an equivalence relation on the CDR3_AAs.
-///
-/// This code carries out a second function, which is to filter out exact subclonotypes in orbits
-/// that appear to be junk.  Exactly how these should be reflected in files is TBD.
-///
-/// Some inputs for this section:
-/// refdata                = reference sequence data
-/// ctl                    = control parameters
-/// exact_clonotypes       = the vector of all exact subclonotypes
-/// info                   = vector of clonotype info
-/// eq                     = equivalence relation on info
+/// Process clonotypes.
+/// Filter out exact subclonotypes in orbits that appear to be junk.
+/// Write out barcode fates and loupe clonotype files.
 pub fn print_clonotypes<T: Send>(
     setup: &EncloneSetup,
     enclone_exacts: &EncloneExacts,
     gex_readers: &[Option<GexReaders<'_>>],
     fate: &[BarcodeFates],
     mut proc: impl OrbitProcessor<T> + Send + Sync,
-    // proc: impl OrbitProcessor<T>,
 ) -> Result<(), String> {
     let EncloneSetup {
         ctl,
@@ -61,13 +50,6 @@ pub fn print_clonotypes<T: Send>(
     } = enclone_exacts;
 
     // Traverse the orbits.
-
-    // 0: index in reps
-    // 1: vector of clonotype pictures
-    // 2: vector of some clonotype info
-    //    [parallel to 1]
-    // next to last three entries = whitelist contam, denominator for that, low gex count
-    // added out_datas (used to be next to last three, now one more)
     let result_iter = orbits.par_iter().map(|o| {
         let od: Vec<_> = o
             .iter()
@@ -101,11 +83,9 @@ pub fn print_clonotypes<T: Send>(
             j = k;
         }
 
-        // There are two passes.  On the first pass we only identify the exact subclonotypes that
-        // are junk.  On the second pass we remove those and then print the orbit.
+        // Identify the exact subclonotypes that are junk.
 
         let mut bads = vec![false; exacts.len()];
-        let mut stats_pass1 = Vec::<Vec<(String, Vec<String>)>>::new();
 
         sort_exact_clonotypes(setup, enclone_exacts, &od, &mut exacts, &mut mults);
 
@@ -151,7 +131,6 @@ pub fn print_clonotypes<T: Send>(
                 n,
                 &rsi,
                 &mut bads,
-                &mut stats_pass1,
                 true,
             )?;
         }
@@ -234,7 +213,6 @@ pub fn print_clonotypes<T: Send>(
             n,
             &rsi,
             &mut bads,
-            &mut stats_pass1,
             in_center,
         )?;
 
@@ -345,7 +323,6 @@ pub trait OrbitProcessor<T> {
         n: usize,
         rsi: &ColInfo,
         bads: &mut [bool],
-        stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
         in_center: bool,
     ) -> Result<(), String> {
         let ctl = &setup.ctl;
@@ -371,7 +348,6 @@ pub trait OrbitProcessor<T> {
         n: usize,
         rsi: &ColInfo,
         bads: &mut [bool],
-        stats_pass1: &mut Vec<Vec<(String, Vec<String>)>>,
         in_center: bool,
     ) -> Result<Option<T>, String> {
         Ok(None)
