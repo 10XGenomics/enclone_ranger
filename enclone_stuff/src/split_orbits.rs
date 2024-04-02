@@ -1,7 +1,7 @@
 // Copyright (c) 2021 10x Genomics, Inc. All rights reserved.
 
 use enclone_core::defs::{CloneInfo, EncloneControl, ExactClonotype};
-use enclone_print::define_mat::{define_mat, setup_define_mat};
+use enclone_process::define_mat::{define_mat, setup_define_mat};
 use enclone_proto::types::DonorReferenceItem;
 use equiv::EquivRel;
 use qd::Double;

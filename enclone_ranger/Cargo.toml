@@ -21,7 +21,7 @@ publish = false
 
 [dependencies]
 enclone_core = { path = "../enclone_core" }
-enclone_print = { path = "../enclone_print" }
+enclone_process = { path = "../enclone_process" }
 enclone_stuff = { path = "../enclone_stuff" }
 enclone = { path = "../enclone" }
 enclone_args = { path = "../enclone_args" }

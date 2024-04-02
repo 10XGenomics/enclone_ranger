@@ -10,7 +10,7 @@ enclone_exec          just the actual main program
 enclone_help          help menus from the command line
 enclone_main          this includes the enclone main program guts
 enclone_paper         calculations for enclone paper
-enclone_print         prints clonotypes in the sense of creating the "pictures" (much of core logic)
+enclone_process       final filtering and output of clonotypes
 enclone_proto         stuff for communicating with Loupe, and reused for other purposes
 enclone_ranger        entry point for cellranger
 enclone_stuff         things called by enclone_main and enclone_ranger

@@ -647,7 +647,7 @@ pub fn export_code(level: usize) -> Vec<(String, String)> {
 
     // Build cvar auto file.
 
-    let actual_out = "enclone_print/src/proc_cvar_auto.rs".to_string();
+    let actual_out = "enclone_process/src/proc_cvar_auto.rs".to_string();
     let mut temp_out = "enclone_exec/testx/outputs/proc_cvar_auto.rs".to_string();
     let mut vars_loc = "enclone_vars/src/vars".to_string();
     if level == 1 {
@@ -819,7 +819,7 @@ pub fn export_code(level: usize) -> Vec<(String, String)> {
 
     // Build lvar auto file.
 
-    let actual_out = "enclone_print/src/proc_lvar_auto.rs".to_string();
+    let actual_out = "enclone_process/src/proc_lvar_auto.rs".to_string();
     let mut temp_out = "enclone_exec/testx/outputs/proc_lvar_auto.rs".to_string();
     let mut vars_loc = "enclone_vars/src/vars".to_string();
     if level == 1 {
