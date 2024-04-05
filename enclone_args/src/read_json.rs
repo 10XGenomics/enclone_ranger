@@ -697,7 +697,7 @@ pub fn parse_json_annotations_files(
     refdata: &RefData,
 ) -> Result<Annotations, String> {
     // Note: only tracking truncated seq and quals initially
-    let ann = if !ctl.gen_opt.cellranger {
+    let ann = if !ctl.gen_opt.cellranger.cellranger {
         "all_contig_annotations.json"
     } else {
         "contig_annotations.json"

@@ -475,7 +475,7 @@ pub fn main_enclone_start(
                 for (clone, d) in ex.clones.iter().take(ex.ncells()).zip(to_delete.iter_mut()) {
                     let li = clone[0].dataset_index;
                     let bc = &clone[0].barcode;
-                    if ctl.gen_opt.cellranger {
+                    if ctl.gen_opt.cellranger.cellranger {
                         if gex_cells_specified[li] && !bin_member(&gex_cells[li], bc) {
                             *d = true;
                             fate[li].insert(bc.clone(), BarcodeFate::NotGexCell);

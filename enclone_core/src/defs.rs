@@ -91,10 +91,17 @@ impl OriginInfo {
     }
 }
 
+/// The subset of configuration options used by Cellranger.
+#[derive(Default, PartialEq)]
+pub struct CellrangerOpt {
+    pub cellranger: bool,
+}
+
 // Miscellaneous general options.
 
 #[derive(Default, PartialEq)]
 pub struct GeneralOpt {
+    pub cellranger: CellrangerOpt,
     pub pre: Vec<String>,
     pub indels: bool,
     pub reannotate: bool,
@@ -146,7 +153,6 @@ pub struct GeneralOpt {
     pub required_three_chain_clonotypes: Option<usize>,
     pub required_four_chain_clonotypes: Option<usize>,
     pub required_datasets: Option<usize>,
-    pub cellranger: bool,
     pub summary: bool,
     pub summary_clean: bool,
     pub summary_csv: bool,

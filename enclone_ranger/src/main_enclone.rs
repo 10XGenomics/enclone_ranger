@@ -82,11 +82,10 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
 
 pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String> {
     let tall = Instant::now();
-
     // Set up stuff, read args, etc.
 
     let mut ctl = EncloneControl::default();
-    ctl.gen_opt.cellranger = true;
+    ctl.gen_opt.cellranger.cellranger = true;
     for arg in args.iter().skip(1) {
         if arg.starts_with("PRE=") {
             ctl.gen_opt.pre.clear();

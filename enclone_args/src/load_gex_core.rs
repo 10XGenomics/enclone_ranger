@@ -141,15 +141,22 @@ pub fn load_gex(
 
             // Find files.
 
-            let pca_file = find_pca_file(ctl, &outs, &analysis, pathlist);
-            let json_metrics_file = find_json_metrics_file(ctl, &outs, &analysis, pathlist);
-            let feature_metrics_file = find_feature_metrics_file(ctl, &outs, &analysis, pathlist);
-            let metrics_file = find_metrics_file(ctl, &outs, &analysis, pathlist);
-            let cluster_file = find_cluster_file(ctl, &outs, &analysis, pathlist);
+            let pca_file = find_pca_file(&analysis, pathlist);
+            let cluster_file = find_cluster_file(&analysis, pathlist);
+
+            let (json_metrics_file, feature_metrics_file, metrics_file) = if !ctl.gen_opt.cellranger.cellranger {(
+                find_json_metrics_file(&analysis, pathlist),
+                find_feature_metrics_file(&analysis, pathlist),
+                find_metrics_file(&outs, pathlist)
+            )} else {
+                Default::default()
+            };
 
             // Proceed.
 
             for f in &[pca_file.clone(), cluster_file.clone()] {
+
+
                 if !path_exists(f) {
                     r.error = format!(
                         "\nThe file\n{f}\ndoes not exist.  \
