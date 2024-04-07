@@ -603,7 +603,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("BINARY", &mut ctl.gen_opt.binary),
         ("FATE_FILE", &mut ctl.gen_opt.fate_file),
         ("HONEY_OUT", &mut ctl.plot_opt.honey_out),
-        ("PROTO", &mut ctl.gen_opt.proto),
         ("SUBSET_JSON", &mut ctl.gen_opt.subset_json),
     ];
 

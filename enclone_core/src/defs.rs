@@ -98,8 +98,10 @@ impl OriginInfo {
 pub struct CellrangerOpt {
     /// True if enclone is being called from Cellranger.
     pub cellranger: bool,
-    /// Path to donor reference file.
+    /// Path to donor reference output file.
     pub dref_file: String,
+    /// Path to protobuf output file.
+    pub proto: String,
 }
 
 impl CellrangerOpt {
@@ -111,13 +113,16 @@ impl CellrangerOpt {
         for arg in args {
             let mut pieces = arg.split('=');
             let arg_name = pieces.next().unwrap();
-            let get_val = || pieces.exactly_one().expect("FIXME").to_string();
+            let mut get_rest = || pieces.join("=");
             match arg_name {
                 "CELLRANGER" => {
                     cr_opts.cellranger = true;
                 }
                 "DONOR_REF_FILE" => {
-                    cr_opts.dref_file = get_val();
+                    cr_opts.dref_file = get_rest();
+                }
+                "PROTO" => {
+                    cr_opts.proto = get_rest();
                 }
                 _ => {
                     // FIXME
@@ -168,7 +173,6 @@ pub struct GeneralOpt {
     pub complete: bool,
     pub exact: Option<usize>,
     pub binary: String,
-    pub proto: String,
     pub fate_file: String,
     // Optional path to a json file containing metadata
     pub proto_metadata: Option<String>,

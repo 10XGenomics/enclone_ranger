@@ -185,7 +185,7 @@ pub fn process_clonotypes<T: Send, D: Default>(
 
         // Generate Loupe data.
 
-        let loupe_clonotype = (!ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty())
+        let loupe_clonotype = (!ctl.gen_opt.binary.is_empty() || !ctl.cr_opt.proto.is_empty())
             .then(|| make_loupe_clonotype(exact_clonotypes, &exacts, &rsi, refdata, dref, ctl));
 
         // Let n be the total number of cells in this pass.

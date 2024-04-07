@@ -430,7 +430,7 @@ pub fn loupe_out(
     refdata: &RefData,
     dref: &[DonorReferenceItem],
 ) {
-    if !ctl.gen_opt.binary.is_empty() || !ctl.gen_opt.proto.is_empty() {
+    if !ctl.gen_opt.binary.is_empty() || !ctl.cr_opt.proto.is_empty() {
         let mut uref = Vec::new();
         for i in 0..refdata.refs.len() {
             uref.push(UniversalReferenceItem {
@@ -468,8 +468,8 @@ pub fn loupe_out(
         if !ctl.gen_opt.binary.is_empty() {
             write_obj(&enclone_outputs, &ctl.gen_opt.binary);
         }
-        if !ctl.gen_opt.proto.is_empty() {
-            write_proto(enclone_outputs, &ctl.gen_opt.proto).unwrap();
+        if !ctl.cr_opt.proto.is_empty() {
+            write_proto(enclone_outputs, &ctl.cr_opt.proto).unwrap();
         }
     }
 }
