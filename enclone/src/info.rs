@@ -222,10 +222,6 @@ pub fn build_info(
                 } else {
                     // maybe can't happen
                     vs.push(rt.clone());
-                    // At one point there was a bug in which the following line was missing.
-                    // This caused a traceback on "enclone 123085 RE".  It is interesting because
-                    // the traceback did not get back to the main program, even with
-                    // "enclone 123085 RE NOPRETTY".
                     vs_notes.push(String::new());
                     vsnx = String::new();
                 }

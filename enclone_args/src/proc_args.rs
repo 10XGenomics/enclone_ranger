@@ -649,8 +649,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         "NALL",
         "NALL_CELL",
         "NALL_GEX",
-        "NOPAGER",
-        "NOPRETTY",
         "PLAIN",
         "PRINT_CPU",
         "PRINT_CPU_INFO",

@@ -67,7 +67,6 @@ Other optional arguments:
       2. You want to see the effect of changed annotation code.
 - NPLAIN: reverses PLAIN
 - INDELS: search for and list CDR3s from clonotypes with possible SHM indels (exploratory)
-- NOPRETTY: turn off pretty trace entirely
 - HEAVY_CHAIN_REUSE: look for instances of heavy chain reuse
 - BINARY=filename: generate binary output file
 - PROTO=filename: generate proto output file
