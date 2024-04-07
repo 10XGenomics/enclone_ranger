@@ -144,7 +144,7 @@ pub fn load_gex(
             let pca_file = find_pca_file(&analysis, pathlist);
             let cluster_file = find_cluster_file(&analysis, pathlist);
 
-            let (json_metrics_file, feature_metrics_file, metrics_file) = if !ctl.gen_opt.cellranger.cellranger {(
+            let (json_metrics_file, feature_metrics_file, metrics_file) = if !ctl.cr_opt.cellranger {(
                 find_json_metrics_file(&analysis, pathlist),
                 find_feature_metrics_file(&analysis, pathlist),
                 find_metrics_file(&outs, pathlist)

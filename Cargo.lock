@@ -514,6 +514,7 @@ dependencies = [
 name = "enclone_ranger"
 version = "0.5.219"
 dependencies = [
+ "anyhow",
  "enclone",
  "enclone_args",
  "enclone_core",

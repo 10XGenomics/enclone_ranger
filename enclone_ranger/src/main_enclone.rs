@@ -5,10 +5,11 @@
 
 use self::refx::{make_vdj_ref_data_core, RefData};
 use crate::USING_PAGER;
+use anyhow::anyhow;
 use enclone::innate::species;
 use enclone_args::load_gex::get_gex_info;
 use enclone_args::proc_args::proc_args;
-use enclone_core::defs::EncloneControl;
+use enclone_core::defs::{CellrangerOpt, EncloneControl};
 use enclone_core::enclone_structs::EncloneSetup;
 use enclone_process::process_clonotypes::{process_clonotypes, OrbitProcessor};
 use enclone_stuff::start::main_enclone_start;
@@ -21,7 +22,7 @@ use std::{
 use string_utils::TextUtils;
 use vdj_ann::refx;
 
-pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
+pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
     const REQUIRED_ARGS: [&str; 8] = [
         "CELLRANGER",
         "DONOR_REF_FILE",
@@ -75,17 +76,23 @@ pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
         }
     }
     let setup = main_enclone_setup_ranger(args)?;
-    let (exacts, fate) = main_enclone_start(&setup)?;
+    let (exacts, fate) = main_enclone_start(&setup).map_err(|e| anyhow!(e))?;
     let gex_readers = setup.create_gex_readers();
     process_clonotypes::<(), ()>(&setup, &exacts, &gex_readers, &fate, NoOpProc)
+        .map_err(|e| anyhow!(e))?;
+    Ok(())
 }
 
-pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String> {
+pub fn main_enclone_setup_ranger(args: Vec<String>) -> anyhow::Result<EncloneSetup> {
     let tall = Instant::now();
     // Set up stuff, read args, etc.
+    let (cr_opt, args) = CellrangerOpt::from_args(args)?;
 
-    let mut ctl = EncloneControl::default();
-    ctl.gen_opt.cellranger.cellranger = true;
+    let mut ctl = EncloneControl {
+        cr_opt,
+        ..Default::default()
+    };
+
     for arg in args.iter().skip(1) {
         if arg.starts_with("PRE=") {
             ctl.gen_opt.pre.clear();
@@ -100,11 +107,11 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
     ctl.gen_opt.nopager = true;
     ctl.pretty = true;
     USING_PAGER.store(false, SeqCst);
-    proc_args(&mut ctl, args)?;
+    proc_args(&mut ctl, &args).map_err(|e| anyhow!(e))?;
 
     // Get gene expression and feature barcode counts.
 
-    let gex_info = get_gex_info(&mut ctl)?;
+    let gex_info = get_gex_info(&mut ctl).map_err(|e| anyhow!(e))?;
 
     // Determine the reference sequence that is to be used.
 

@@ -601,7 +601,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
 
     let set_string_writeable = [
         ("BINARY", &mut ctl.gen_opt.binary),
-        ("DONOR_REF_FILE", &mut ctl.gen_opt.dref_file),
         ("FATE_FILE", &mut ctl.gen_opt.fate_file),
         ("HONEY_OUT", &mut ctl.plot_opt.honey_out),
         ("PROTO", &mut ctl.gen_opt.proto),
@@ -641,7 +640,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     // Define arguments that do nothing (because already parsed), and which have no "= value" part.
 
     let set_nothing_simple = [
-        "CELLRANGER",
         "DUMP_INTERNAL_IDS",
         "EVIL_EYE",
         "LONG_HELP",

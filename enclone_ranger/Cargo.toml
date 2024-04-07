@@ -20,6 +20,7 @@ publish = false
 # in the root of the enclone repo.
 
 [dependencies]
+anyhow.workspace = true
 enclone_core = { path = "../enclone_core" }
 enclone_process = { path = "../enclone_process" }
 enclone_stuff = { path = "../enclone_stuff" }

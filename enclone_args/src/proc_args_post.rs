@@ -246,7 +246,7 @@ pub fn proc_args_post(
         &mut ctl.plot_opt.plot_file,
         &mut ctl.gen_opt.fasta_filename,
         &mut ctl.gen_opt.fasta_aa_filename,
-        &mut ctl.gen_opt.dref_file,
+        &mut ctl.cr_opt.dref_file,
         &mut ctl.parseable_opt.pout,
     ];
     for f in &mut files {

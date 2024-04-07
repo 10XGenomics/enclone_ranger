@@ -286,12 +286,12 @@ pub fn main_enclone_start(
         alt_refs = find_alleles(refdata, ctl, &exact_clonotypes);
     }
 
-    if !ctl.gen_opt.dref_file.is_empty() {
-        let f = File::create(&ctl.gen_opt.dref_file);
+    if !ctl.cr_opt.dref_file.is_empty() {
+        let f = File::create(&ctl.cr_opt.dref_file);
         if f.is_err() {
             eprintln!(
-                "\nError trying to write ctl.gen_opt.dref_file = {}.",
-                ctl.gen_opt.dref_file
+                "\nError trying to write ctl.cr_opt.dref_file = {}.",
+                ctl.cr_opt.dref_file
             );
         }
         let mut f = BufWriter::new(f.unwrap());
@@ -475,7 +475,7 @@ pub fn main_enclone_start(
                 for (clone, d) in ex.clones.iter().take(ex.ncells()).zip(to_delete.iter_mut()) {
                     let li = clone[0].dataset_index;
                     let bc = &clone[0].barcode;
-                    if ctl.gen_opt.cellranger.cellranger {
+                    if ctl.cr_opt.cellranger {
                         if gex_cells_specified[li] && !bin_member(&gex_cells[li], bc) {
                             *d = true;
                             fate[li].insert(bc.clone(), BarcodeFate::NotGexCell);

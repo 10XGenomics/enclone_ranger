@@ -314,14 +314,14 @@ pub fn proc_xcr(
     }
     let val = expand_integer_ranges(val);
     let val = expand_analysis_sets(&val)?;
-    let donor_groups = if ctl.gen_opt.cellranger.cellranger {
+    let donor_groups = if ctl.cr_opt.cellranger {
         vec![&val[..]]
     } else {
         val.split(';').collect::<Vec<&str>>()
     };
     let mut gex2 = expand_integer_ranges(gex);
     gex2 = expand_analysis_sets(&gex2)?;
-    let donor_groups_gex = if ctl.gen_opt.cellranger.cellranger {
+    let donor_groups_gex = if ctl.cr_opt.cellranger {
         vec![&gex2[..]]
     } else {
         gex2.split(';').collect::<Vec<&str>>()
@@ -353,14 +353,14 @@ pub fn proc_xcr(
     }
 
     for (id, d) in donor_groups.iter().enumerate() {
-        let origin_groups = if ctl.gen_opt.cellranger.cellranger {
+        let origin_groups = if ctl.cr_opt.cellranger {
             vec![&d[..]]
         } else {
             (*d).split(':').collect::<Vec<&str>>()
         };
         let mut origin_groups_gex = Vec::<&str>::new();
         if have_gex {
-            if ctl.gen_opt.cellranger.cellranger {
+            if ctl.cr_opt.cellranger {
                 origin_groups_gex = vec![donor_groups_gex[id]];
             } else {
                 origin_groups_gex = donor_groups_gex[id].split(':').collect::<Vec<&str>>();
@@ -389,7 +389,7 @@ pub fn proc_xcr(
             }
         }
         for (is, s) in origin_groups.iter().enumerate() {
-            let mut datasets = if ctl.gen_opt.cellranger.cellranger {
+            let mut datasets = if ctl.cr_opt.cellranger {
                 vec![&s[..]]
             } else {
                 (*s).split(',').collect::<Vec<&str>>()
@@ -402,7 +402,7 @@ pub fn proc_xcr(
             let datasets_gex: Vec<&str>;
             let mut datasets_bc = Vec::<&str>::new();
             if have_gex {
-                if ctl.gen_opt.cellranger.cellranger {
+                if ctl.cr_opt.cellranger {
                     datasets_gex = vec![origin_groups_gex[is]];
                 } else {
                     datasets_gex = origin_groups_gex[is].split(',').collect::<Vec<&str>>();

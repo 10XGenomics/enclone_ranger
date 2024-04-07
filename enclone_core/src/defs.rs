@@ -2,10 +2,12 @@
 
 use crate::cell_color::CellColor;
 use crate::linear_condition::LinearCondition;
+use anyhow::Result;
 use debruijn::dna_string::DnaString;
 use evalexpr::Node;
 use hdf5::Dataset;
 
+use itertools::Itertools;
 use regex::Regex;
 use std::cmp::max;
 use std::collections::HashMap;
@@ -94,14 +96,50 @@ impl OriginInfo {
 /// The subset of configuration options used by Cellranger.
 #[derive(Default, PartialEq)]
 pub struct CellrangerOpt {
+    /// True if enclone is being called from Cellranger.
     pub cellranger: bool,
+    /// Path to donor reference file.
+    pub dref_file: String,
+}
+
+impl CellrangerOpt {
+    /// Process command line arguments relevant to cellranger.
+    /// Any unused arguments are returned for further processing.
+    pub fn from_args(args: Vec<String>) -> Result<(Self, Vec<String>)> {
+        let mut cr_opts = Self::default();
+        let mut unused_args = Vec::new();
+        for arg in args {
+            let mut pieces = arg.split('=');
+            let arg_name = pieces.next().unwrap();
+            match arg_name {
+                "CELLRANGER" => {
+                    cr_opts.cellranger = true;
+                }
+                "DONOR_REF_FILE" => {
+                    cr_opts.dref_file = pieces.exactly_one().expect("FIXME").to_string();
+                }
+                _ => {
+                    // FIXME
+                    unused_args.push(arg.clone());
+                }
+            }
+        }
+        Ok((cr_opts, unused_args))
+    }
+
+    /// Validate parsed options.
+    pub fn validate(&self) -> Result<()> {
+        if !self.dref_file.is_empty() {
+            // TODO: test writability
+        }
+        Ok(())
+    }
 }
 
 // Miscellaneous general options.
 
 #[derive(Default, PartialEq)]
 pub struct GeneralOpt {
-    pub cellranger: CellrangerOpt,
     pub pre: Vec<String>,
     pub indels: bool,
     pub reannotate: bool,
@@ -139,7 +177,6 @@ pub struct GeneralOpt {
     pub ext: String,
     pub extc: HashMap<(String, String), String>,
     pub extn: HashMap<String, usize>,
-    pub dref_file: String,
     pub mouse: bool,
     pub refname: String,
     pub noprint: bool,
@@ -525,28 +562,52 @@ pub struct ParseableOpt {
 
 #[derive(Default)]
 pub struct EncloneControl {
-    pub start_time: Option<Instant>,             // enclone start time
-    pub gen_opt: GeneralOpt,                     // miscellaneous general options
-    pub plot_opt: PlotOpt,                       // plot options
-    pub pretty: bool,                            // use escape characters to enhance view
-    pub nogray: bool,                            // don't gray in per cell lines
-    pub silent: bool,                            // turn off extra logging
-    pub force: bool,                             // make joins even if redundant
-    pub debug_table_printing: bool,              // turn on debugging for table printing
-    pub merge_all_impropers: bool,               // merge all improper exact subclonotypes
-    pub heur: ClonotypeHeuristics,               // algorithmic heuristics
-    pub origin_info: OriginInfo,                 // origin (sample) info
-    pub allele_alg_opt: AlleleAlgOpt,            // algorithmic options for allele finding
-    pub allele_print_opt: AllelePrintOpt,        // print options for allele finding
-    pub join_alg_opt: JoinAlgOpt,                // algorithmic options for join
-    pub join_print_opt: JoinPrintOpt,            // printing options for join operations
-    pub clono_filt_opt_def: ClonoFiltOptDefault, // default filtering options for clonotypes
-    pub clono_filt_opt: ClonoFiltOpt,            // filtering options for clonotypes
-    pub clono_print_opt: ClonoPrintOpt,          // printing options for clonotypes
-    pub clono_group_opt: ClonoGroupOpt,          // grouping options for clonotypes
-    pub parseable_opt: ParseableOpt,             // parseable output options
-    pub pathlist: Vec<String>,                   // list of input files
-    pub last_modified: Vec<SystemTime>,          // last modified for pathlist
+    /// enclone start time
+    pub start_time: Option<Instant>,
+    /// miscellaneous general options
+    pub gen_opt: GeneralOpt,
+    /// Config options used by cellranger.
+    pub cr_opt: CellrangerOpt,
+    /// plot options
+    pub plot_opt: PlotOpt,
+    /// use escape characters to enhance view              
+    pub pretty: bool,
+    /// don't gray in per cell lines         
+    pub nogray: bool,
+    /// turn off extra logging              
+    pub silent: bool,
+    /// make joins even if redundant                      
+    pub force: bool,
+    /// turn on debugging for table printing           
+    pub debug_table_printing: bool,
+    /// merge all improper exact subclonotypes       
+    pub merge_all_impropers: bool,
+    /// algorithmic heuristics             
+    pub heur: ClonotypeHeuristics,
+    /// origin (sample) info              
+    pub origin_info: OriginInfo,
+    /// algorithmic options for allele finding    
+    pub allele_alg_opt: AlleleAlgOpt,
+    /// print options for allele finding
+    pub allele_print_opt: AllelePrintOpt,
+    /// algorithmic options for join
+    pub join_alg_opt: JoinAlgOpt,
+    /// printing options for join operations          
+    pub join_print_opt: JoinPrintOpt,
+    /// default filtering options for clonotypes
+    pub clono_filt_opt_def: ClonoFiltOptDefault,
+    /// filtering options for clonotypes
+    pub clono_filt_opt: ClonoFiltOpt,
+    /// printing options for clonotypes          
+    pub clono_print_opt: ClonoPrintOpt,
+    /// grouping options for clonotypes        
+    pub clono_group_opt: ClonoGroupOpt,
+    /// parseable output options
+    pub parseable_opt: ParseableOpt,
+    /// list of input files  
+    pub pathlist: Vec<String>,
+    /// last modified for pathlist       
+    pub last_modified: Vec<SystemTime>,
 }
 
 // Set up data structure to track clonotype data.  A TigData is for one contig;

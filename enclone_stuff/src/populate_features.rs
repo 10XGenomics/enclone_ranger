@@ -139,7 +139,7 @@ pub fn populate_features(
     // the user supplied the wrong reference, so there is no value in criticizing the reference
     // in that case.
 
-    if !log.is_empty() && !ctl.gen_opt.cellranger.cellranger && !ctl.gen_opt.accept_broken {
+    if !log.is_empty() && !ctl.cr_opt.cellranger && !ctl.gen_opt.accept_broken {
         let mut log = Vec::<u8>::new();
         fwriteln!(
             log,
