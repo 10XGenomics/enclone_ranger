@@ -9,52 +9,12 @@ use enclone_core::{
 };
 use equiv::EquivRel;
 use itertools::Itertools;
-#[cfg(not(target_os = "windows"))]
-use pager::Pager;
 
 use std::time::Instant;
 use string_utils::stringme;
 use vector_utils::{
     bin_member, bin_position, erase_if, next_diff, next_diff1_3, unique_sort, VecUtils,
 };
-
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-
-// This section contains a function that supports paging.  It does not work under Windows, and
-// we describe here all the *known* problems with getting enclone to work under Windows.
-// 1. It does not compile for us.  When we tried, there was a problem with libhdf-5.
-// 2. Paging is turned off, because the pager crate doesn't compile under Windows, and porting
-//    it to Windows appears nontrivial.
-// 3. ANSI escape characters are not handled correctly, at least by default.
-// In addition, we have some concerns about what it would mean to properly test enclone on Windows,
-// given that some users might have older OS installs, and support for ANSI escape characters
-// appears to have been changed in 2018. This is not made easier by the Windows Subsystem for
-// Linux.
-
-#[cfg(not(target_os = "windows"))]
-pub fn setup_pager(pager: bool) {
-    // If the output is going to a terminal, set up paging so that output is in effect piped to
-    // "less -R -F -X -K".
-    //
-    // ∙ The option -R is used to render ANSI escape characters correctly.  We do not use
-    //   -r instead because if you navigate backwards in less -r, stuff gets screwed up,
-    //   which is consistent with the scary stuff in the man page for less at -r.  However -R will
-    //   not display all unicode characters correctly, so those have to be picked carefully,
-    //   by empirically testing that e.g. "echo ◼ | less -R -F -X" renders correctly.
-    //
-    // ∙ The -F option makes less exit immediately if all the output can be seen in one screen.
-    //
-    // ∙ The -X option is needed because we found that in full screen mode on OSX Catalina, output
-    //   was sent to the alternate screen, and hence it appeared that one got no output at all
-    //   from enclone.  This is really bad, so do not turn off this option!
-
-    if pager {
-        Pager::with_pager("less -R -F -X -K").setup();
-    }
-}
-
-#[cfg(target_os = "windows")]
-pub fn setup_pager(_pager: bool) {}
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 

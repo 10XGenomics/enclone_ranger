@@ -38,9 +38,6 @@ string_utils = { path = "../string_utils" }
 vdj_ann = { path = "../vdj_ann" }
 vector_utils = { path = "../vector_utils" }
 
-[target.'cfg(not(windows))'.dependencies]
-pager = "0.16"
-
 [target.'cfg(not(windows))'.dependencies.hdf5]
 git = "https://github.com/10XGenomics/hdf5-rust.git"
 branch = "conda_nov2021"

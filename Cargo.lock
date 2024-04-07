@@ -405,7 +405,6 @@ dependencies = [
  "hdf5",
  "io_utils",
  "itertools",
- "pager",
  "petgraph",
  "qd",
  "rayon",
@@ -1201,16 +1200,6 @@ name = "once_cell"
 version = "1.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3fdb12b2476b595f9358c5161aa467c2438859caa136dec86c26fdd2efe17b92"
-
-[[package]]
-name = "pager"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2599211a5c97fbbb1061d3dc751fa15f404927e4846e07c643287d6d1f462880"
-dependencies = [
- "errno",
- "libc",
-]
 
 [[package]]
 name = "parking_lot"
