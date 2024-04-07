@@ -104,7 +104,7 @@ pub fn main_enclone_setup_ranger(args: Vec<String>) -> anyhow::Result<EncloneSet
     ctl.start_time = Some(tall);
     ctl.gen_opt.cpu_all_start = 0;
     ctl.gen_opt.cpu_this_start = 0;
-    ctl.gen_opt.nopager = true;
+    ctl.cr_opt.nopager = true;
     ctl.pretty = true;
     USING_PAGER.store(false, SeqCst);
     proc_args(&mut ctl, &args).map_err(|e| anyhow!(e))?;

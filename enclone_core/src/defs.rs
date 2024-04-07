@@ -100,6 +100,8 @@ pub struct CellrangerOpt {
     pub cellranger: bool,
     /// Path to donor reference file.
     pub dref_file: String,
+    /// If true, do not use output paging.
+    pub nopager: bool,
 }
 
 impl CellrangerOpt {
@@ -115,6 +117,9 @@ impl CellrangerOpt {
             match arg_name {
                 "CELLRANGER" => {
                     cr_opts.cellranger = true;
+                }
+                "NOPAGER" => {
+                    cr_opts.nopager = true;
                 }
                 "DONOR_REF_FILE" => {
                     cr_opts.dref_file = get_val();
@@ -238,7 +243,6 @@ pub struct GeneralOpt {
     pub subset_json: String,
     pub fold_headers: bool,
     pub no_uncap_sim: bool,
-    pub nopager: bool,
     pub info: Option<String>,
     pub info_fields: Vec<String>,
     pub info_data: HashMap<String, Vec<String>>,
