@@ -623,7 +623,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
             &mut ctl.gen_opt.clonotype_group_names,
         ),
         ("HONEY_IN", &mut ctl.plot_opt.honey_in),
-        ("PROTO_METADATA", &mut ctl.gen_opt.proto_metadata),
     ];
 
     // Define arguments that set something to a string that is an input file name, not represented

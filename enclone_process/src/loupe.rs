@@ -447,13 +447,15 @@ pub fn loupe_out(
                 nt_sequence: refdata.refs[i].to_ascii_vec(),
             });
         }
-        let metadata = match &ctl.gen_opt.proto_metadata {
-            Some(fname) => serde_json::from_reader(
+        let metadata = if !ctl.cr_opt.proto_metadata.is_empty() {
+            let fname = &ctl.cr_opt.proto_metadata;
+            serde_json::from_reader(
                 std::fs::File::open(fname)
                     .unwrap_or_else(|_| panic!("Error while reading {fname}")),
             )
-            .unwrap_or_else(|_| panic!("Unable to deserialize Metadata from {fname}")),
-            None => Metadata::default(),
+            .unwrap_or_else(|_| panic!("Unable to deserialize Metadata from {fname}"))
+        } else {
+            Metadata::default()
         };
         let enclone_outputs = EncloneOutputs {
             version: PROTO_VERSION.into(),

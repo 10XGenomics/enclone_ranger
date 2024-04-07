@@ -102,6 +102,8 @@ pub struct CellrangerOpt {
     pub dref_file: String,
     /// Path to protobuf output file.
     pub proto: String,
+    /// Optional path to a json file containing metadata.
+    pub proto_metadata: String,
 }
 
 impl CellrangerOpt {
@@ -123,6 +125,9 @@ impl CellrangerOpt {
                 }
                 "PROTO" => {
                     cr_opts.proto = get_rest();
+                }
+                "PROTO_METADATA" => {
+                    cr_opts.proto_metadata = get_rest();
                 }
                 _ => {
                     // FIXME
@@ -174,8 +179,6 @@ pub struct GeneralOpt {
     pub exact: Option<usize>,
     pub binary: String,
     pub fate_file: String,
-    // Optional path to a json file containing metadata
-    pub proto_metadata: Option<String>,
     pub h5_pre: bool,
     pub accept_reuse: bool,
     pub descrip: bool,
