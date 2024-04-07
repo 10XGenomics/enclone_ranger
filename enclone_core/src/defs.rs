@@ -111,12 +111,13 @@ impl CellrangerOpt {
         for arg in args {
             let mut pieces = arg.split('=');
             let arg_name = pieces.next().unwrap();
+            let get_val = || pieces.exactly_one().expect("FIXME").to_string();
             match arg_name {
                 "CELLRANGER" => {
                     cr_opts.cellranger = true;
                 }
                 "DONOR_REF_FILE" => {
-                    cr_opts.dref_file = pieces.exactly_one().expect("FIXME").to_string();
+                    cr_opts.dref_file = get_val();
                 }
                 _ => {
                     // FIXME

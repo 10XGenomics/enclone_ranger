@@ -24,8 +24,8 @@ use vdj_ann::refx;
 
 pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
     const REQUIRED_ARGS: [&str; 8] = [
-        "CELLRANGER",
-        "DONOR_REF_FILE",
+        "CELLRANGER",     // done
+        "DONOR_REF_FILE", // done
         "MAX_CORES",
         "NOPAGER",
         "NOPRINT",
