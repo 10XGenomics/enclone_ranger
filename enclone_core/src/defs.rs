@@ -100,8 +100,6 @@ pub struct CellrangerOpt {
     pub cellranger: bool,
     /// Path to donor reference file.
     pub dref_file: String,
-    /// If true, do not use output paging.
-    pub nopager: bool,
 }
 
 impl CellrangerOpt {
@@ -117,9 +115,6 @@ impl CellrangerOpt {
             match arg_name {
                 "CELLRANGER" => {
                     cr_opts.cellranger = true;
-                }
-                "NOPAGER" => {
-                    cr_opts.nopager = true;
                 }
                 "DONOR_REF_FILE" => {
                     cr_opts.dref_file = get_val();
