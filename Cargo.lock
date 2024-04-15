@@ -996,7 +996,7 @@ dependencies = [
 [[package]]
 name = "martian"
 version = "0.26.0"
-source = "git+https://github.com/martian-lang/martian-rust?branch=master#345490b52d2722fe30b042d78dcd601225aaee21"
+source = "git+https://github.com/martian-lang/martian-rust?branch=master#c725cfd15a1eeb993721bd798a27c73577e7c8c5"
 dependencies = [
  "anyhow",
  "backtrace",
@@ -1013,7 +1013,7 @@ dependencies = [
 [[package]]
 name = "martian-derive"
 version = "0.26.0"
-source = "git+https://github.com/martian-lang/martian-rust?branch=master#345490b52d2722fe30b042d78dcd601225aaee21"
+source = "git+https://github.com/martian-lang/martian-rust?branch=master#c725cfd15a1eeb993721bd798a27c73577e7c8c5"
 dependencies = [
  "martian",
  "proc-macro2",
@@ -1025,7 +1025,7 @@ dependencies = [
 [[package]]
 name = "martian-filetypes"
 version = "0.27.0"
-source = "git+https://github.com/martian-lang/martian-rust?branch=master#345490b52d2722fe30b042d78dcd601225aaee21"
+source = "git+https://github.com/martian-lang/martian-rust?branch=master#c725cfd15a1eeb993721bd798a27c73577e7c8c5"
 dependencies = [
  "anyhow",
  "bincode",
