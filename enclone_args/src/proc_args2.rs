@@ -144,7 +144,7 @@ pub fn proc_args_tail(ctl: &mut EncloneControl, args: &[String]) -> Result<(), S
     if !ctl.clono_print_opt.amino.is_empty() {
         ctl.clono_print_opt.cvars.insert(0, "amino".to_string());
     }
-    if ctl.gen_opt.mouse && !ctl.gen_opt.refname.is_empty() {
+    if ctl.gen_opt.mouse && !ctl.cr_opt.refname.is_empty() {
         return Err(
             "\nIf you specify REF, please do not also specify MOUSE.  It is enough to\n\
              set REF to a mouse reference sequence.\n"
