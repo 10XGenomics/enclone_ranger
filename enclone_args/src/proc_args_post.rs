@@ -497,8 +497,8 @@ pub fn proc_args_post(
             let f = get_path_fail(meta, ctl, "META")?;
             if f.contains('/') {
                 let d = f.rev_before("/").to_string();
-                if !ctl.gen_opt.pre.contains(&d) {
-                    ctl.gen_opt.pre.push(d);
+                if !ctl.cr_opt.pre.contains(&d) {
+                    ctl.cr_opt.pre.push(d);
                 }
             }
             v.push(f);

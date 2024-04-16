@@ -23,7 +23,7 @@ use string_utils::TextUtils;
 use vdj_ann::refx;
 
 pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
-    const REQUIRED_ARGS: [&str; 8] = [
+    const REQUIRED_ARGS: [&str; 7] = [
         "CELLRANGER",     // done
         "DONOR_REF_FILE", // done
         "MAX_CORES",
@@ -91,14 +91,6 @@ pub fn main_enclone_setup_ranger(args: Vec<String>) -> anyhow::Result<EncloneSet
         ..Default::default()
     };
 
-    for arg in args.iter().skip(1) {
-        if arg.starts_with("PRE=") {
-            ctl.gen_opt.pre.clear();
-            ctl.gen_opt
-                .pre
-                .extend(arg.after("PRE=").split(',').map(str::to_string));
-        }
-    }
     ctl.start_time = Some(tall);
     ctl.gen_opt.cpu_all_start = 0;
     ctl.gen_opt.cpu_this_start = 0;
