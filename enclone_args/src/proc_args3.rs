@@ -68,14 +68,14 @@ fn expand_analysis_sets(x: &str) -> Result<String, String> {
 // Functions to find the path to data.
 
 pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<String, String> {
-    for x in &ctl.gen_opt.pre {
+    for x in &ctl.cr_opt.pre {
         let pp = format!("{x}/{p}");
         if path_exists(&pp) {
             return Ok(pp);
         }
     }
     if !path_exists(p) {
-        if ctl.gen_opt.pre.is_empty() {
+        if ctl.cr_opt.pre.is_empty() {
             let path = std::env::current_dir().unwrap();
             return Err(format!(
                 "\nIn directory {}, unable to find the path {}.  This came from the {} argument.\n",
@@ -86,7 +86,7 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
         }
         let path = std::env::current_dir().unwrap();
         let mut pre_msg = "Here are the number of entries in your PRE directories:\n".to_string();
-        for x in &ctl.gen_opt.pre {
+        for x in &ctl.cr_opt.pre {
             let mut count = "(does not exist)".to_string();
             if path_exists(x) {
                 count = dir_list(x).len().to_string();
@@ -99,7 +99,7 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
                 in\nPRE={}.\nThis came from the {} argument.\n{}",
             path.display(),
             p,
-            ctl.gen_opt.pre.iter().format(","),
+            ctl.cr_opt.pre.iter().format(","),
             source,
             pre_msg
         ));
@@ -109,7 +109,7 @@ pub fn get_path_fail(p: &str, ctl: &EncloneControl, source: &str) -> Result<Stri
 
 fn get_path(p: &str, ctl: &EncloneControl, ok: &mut bool) -> String {
     *ok = false;
-    for x in &ctl.gen_opt.pre {
+    for x in &ctl.cr_opt.pre {
         let mut pp = format!("{x}/{p}");
         if pp.starts_with('~') {
             tilde_expand_me(&mut pp);

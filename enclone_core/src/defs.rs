@@ -97,7 +97,10 @@ impl OriginInfo {
 #[derive(PartialEq)]
 pub struct CellrangerOpt {
     /// True if enclone is being called from Cellranger.
+    // FIXME: always true when called from CR... we should figure out how to
+    // eliminate this.
     pub cellranger: bool,
+    pub pre: Vec<String>,
     /// Path to reference.
     pub refname: String,
 
@@ -120,6 +123,7 @@ impl Default for CellrangerOpt {
     fn default() -> Self {
         Self {
             cellranger: Default::default(),
+            pre: Default::default(),
             refname: Default::default(),
             dref_file: Default::default(),
             proto: Default::default(),
@@ -147,6 +151,12 @@ impl CellrangerOpt {
             match arg_name {
                 "CELLRANGER" => {
                     cr_opts.cellranger = true;
+                }
+                "PRE" => {
+                    cr_opts.pre = get_rest().split(',').map(str::to_string).collect();
+                }
+                "REF" => {
+                    cr_opts.refname = get_rest();
                 }
                 "DONOR_REF_FILE" => {
                     cr_opts.dref_file = get_rest();
@@ -189,7 +199,6 @@ impl CellrangerOpt {
 
 #[derive(Default, PartialEq)]
 pub struct GeneralOpt {
-    pub pre: Vec<String>,
     pub indels: bool,
     pub reannotate: bool,
     pub heavy_chain_reuse: bool,
