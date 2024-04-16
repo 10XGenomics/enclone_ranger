@@ -152,6 +152,9 @@ impl CellrangerOpt {
                 "NUMI" => {
                     cr_opts.umi_filt = false;
                 }
+                "NUMI_RATIO" => {
+                    cr_opts.umi_ratio_filt = false;
+                }
                 _ => {
                     // FIXME
                     unused_args.push(arg.clone());

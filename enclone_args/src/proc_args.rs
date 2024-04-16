@@ -332,46 +332,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         }
     }
 
-    // Preprocess NALL and NALL_GEX.
-    // FIXME: these should be implmeneted as a direct action on opt rather than
-    // pushing additional command line args.
-    for arg in &args[1..].to_vec() {
-        if arg == "NALL" || arg == "NALL_CELL" || arg == "NALL_GEX" {
-            for arg_to_append in [
-                "NCELL",
-                "NGEX",
-                "NCROSS",
-                "NDOUBLET",
-                "NUMI",
-                "NUMI_RATIO",
-                "NGRAPH_FILTER",
-                "NMAX",
-                "NQUAL",
-                "NWEAK_CHAINS",
-                "NWEAK_ONESIES",
-                "NFOURSIE_KILL",
-                "NWHITEF",
-                "NBC_DUP",
-                "MIX_DONORS",
-                "NIMPROPER",
-                "NSIG",
-            ] {
-                if arg_to_append == "NCELL" {
-                    if arg != "NALL_CELL" {
-                        args.push(arg_to_append.to_string());
-                    }
-                } else if arg_to_append == "NGEX" {
-                    if arg != "NALL_GEX" {
-                        args.push(arg_to_append.to_string());
-                    }
-                } else {
-                    args.push(arg_to_append.to_string());
-                }
-            }
-            break;
-        }
-    }
-
     // Define arguments that set something to true.
 
     let mut set_true = vec![
