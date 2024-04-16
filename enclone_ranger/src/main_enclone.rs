@@ -30,7 +30,7 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
         "NOPRINT", // now unused in enclone_ranger
         "PRE",
         "PROTO", // done
-        "REF",
+        "REF",   // done
     ];
     const ALLOWED_ARGS: [&str; 16] = [
         "BCR",
@@ -114,7 +114,7 @@ pub fn main_enclone_setup_ranger(args: Vec<String>) -> anyhow::Result<EncloneSet
 
     let mut refx = String::new();
     let ann = "contig_annotations.json";
-    let fx = File::open(&ctl.gen_opt.refname);
+    let fx = File::open(&ctl.cr_opt.refname);
     let f = BufReader::new(fx.unwrap());
     for line in f.lines() {
         let s = line.unwrap();

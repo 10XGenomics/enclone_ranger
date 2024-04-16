@@ -628,7 +628,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("BC_JOINT", &mut ctl.gen_opt.bc_joint),
         ("EXTERNAL_REF", &mut ctl.gen_opt.external_ref),
         ("POST_FILTER", &mut ctl.gen_opt.post_filter),
-        ("REF", &mut ctl.gen_opt.refname),
     ];
 
     // Define arguments that do nothing (because already parsed), and which have no "= value" part.

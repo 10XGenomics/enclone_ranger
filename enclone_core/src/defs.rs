@@ -98,6 +98,9 @@ impl OriginInfo {
 pub struct CellrangerOpt {
     /// True if enclone is being called from Cellranger.
     pub cellranger: bool,
+    /// Path to reference.
+    pub refname: String,
+
     /// Path to donor reference output file.
     pub dref_file: String,
     /// Path to protobuf output file.
@@ -117,6 +120,7 @@ impl Default for CellrangerOpt {
     fn default() -> Self {
         Self {
             cellranger: Default::default(),
+            refname: Default::default(),
             dref_file: Default::default(),
             proto: Default::default(),
             proto_metadata: Default::default(),
@@ -135,7 +139,11 @@ impl CellrangerOpt {
         for arg in args {
             let mut pieces = arg.split('=');
             let arg_name = pieces.next().unwrap();
-            let mut get_rest = || pieces.join("=");
+            let mut get_rest = || {
+                let result = pieces.join("=");
+                assert!(!result.is_empty(), "no value provided for {arg_name}");
+                result
+            };
             match arg_name {
                 "CELLRANGER" => {
                     cr_opts.cellranger = true;
@@ -168,6 +176,10 @@ impl CellrangerOpt {
     pub fn validate(&self) -> Result<()> {
         if !self.dref_file.is_empty() {
             // TODO: test writability
+        }
+
+        if !self.refname.is_empty() {
+            // TODO: check readability
         }
         Ok(())
     }
@@ -212,7 +224,6 @@ pub struct GeneralOpt {
     pub extc: HashMap<(String, String), String>,
     pub extn: HashMap<String, usize>,
     pub mouse: bool,
-    pub refname: String,
     pub noprint: bool,
     pub noprintx: bool,
     pub required_fps: Option<usize>,
