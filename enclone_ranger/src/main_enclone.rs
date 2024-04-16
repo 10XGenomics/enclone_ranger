@@ -27,7 +27,7 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
         "CELLRANGER",     // done
         "DONOR_REF_FILE", // done
         "MAX_CORES",
-        "NOPRINT",
+        "NOPRINT", // now unused in enclone_ranger
         "PRE",
         "PROTO", // done
         "REF",
