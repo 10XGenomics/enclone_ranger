@@ -130,7 +130,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     ctl.clono_filt_opt_def.doublet = true;
     ctl.clono_filt_opt_def.bc_dup = true;
     ctl.clono_filt_opt.max_datasets = 1000000000;
-    ctl.clono_filt_opt_def.umi_ratio_filt = true;
     ctl.clono_filt_opt.max_exacts = 1_000_000_000;
 
     ctl.clono_print_opt.amino = vec![
@@ -515,7 +514,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("NQUAL", &mut ctl.clono_filt_opt.qual_filter),
         ("NSIG", &mut ctl.clono_filt_opt_def.signature),
         ("NSILENT", &mut ctl.silent),
-        ("NUMI_RATIO", &mut ctl.clono_filt_opt_def.umi_ratio_filt),
         ("NWEAK_CHAINS", &mut ctl.clono_filt_opt_def.weak_chains),
         ("NWEAK_ONESIES", &mut ctl.clono_filt_opt_def.weak_onesies),
         ("PRINT_FAILED_JOINS", &mut ctl.join_print_opt.quiet),

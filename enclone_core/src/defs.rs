@@ -109,6 +109,8 @@ pub struct CellrangerOpt {
     // TOOD: split these back out into a separate struct?
     /// umi count filter
     pub umi_filt: bool,
+    /// umi ratio filter
+    pub umi_ratio_filt: bool,
 }
 
 impl Default for CellrangerOpt {
@@ -119,6 +121,7 @@ impl Default for CellrangerOpt {
             proto: Default::default(),
             proto_metadata: Default::default(),
             umi_filt: true,
+            umi_ratio_filt: true,
         }
     }
 }
@@ -454,7 +457,6 @@ pub struct ClonoFiltOptDefault {
     pub doublet: bool,             // filter putative doublets
     pub fcell: Vec<Node>,          // constraints from FCELL
     pub umi_filt_mark: bool,       // umi count filter (but only mark)
-    pub umi_ratio_filt: bool,      // umi ratio filter
     pub umi_ratio_filt_mark: bool, // umi ratio filter (but only mark)
     pub weak_chains: bool,         // filter weak chains from clonotypes
     pub whitef: bool,              // only show clonotypes exhibiting whitelist contamination

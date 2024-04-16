@@ -299,7 +299,7 @@ pub fn filter_umi(
                                     .insert(ex.clones[i][0].barcode.clone(), BarcodeFate::UmiRatio);
                             }
                         }
-                        if ctl.clono_filt_opt_def.umi_ratio_filt {
+                        if ctl.cr_opt.umi_ratio_filt {
                             erase_if(&mut ex.clones, &to_delete[j]);
                             if ex.ncells() == 0 {
                                 to_deletex[j] = true;
@@ -308,7 +308,7 @@ pub fn filter_umi(
                     }
                 }
                 if pass == 2 {
-                    if ctl.clono_filt_opt_def.umi_ratio_filt {
+                    if ctl.cr_opt.umi_ratio_filt {
                         erase_if(&mut o, &to_deletex);
                     }
                     if !o.is_empty() {

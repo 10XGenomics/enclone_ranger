@@ -480,7 +480,7 @@ pub fn proc_args_post(
                 .to_string(),
         );
     }
-    if ctl.clono_filt_opt_def.umi_ratio_filt && ctl.clono_filt_opt_def.umi_ratio_filt_mark {
+    if ctl.cr_opt.umi_ratio_filt && ctl.clono_filt_opt_def.umi_ratio_filt_mark {
         return Err(
             "\nIf you use UMI_RATIO_FILT_MARK, you should also use NUMI_RATIO, to turn off \
             the filter,\nas otherwise nothing will be marked.\n"
