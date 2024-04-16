@@ -29,13 +29,13 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
         "MAX_CORES",
         "NOPRINT",
         "PRE",
-        "PROTO",
+        "PROTO", // done
         "REF",
     ];
     const ALLOWED_ARGS: [&str; 16] = [
         "BCR",
         "META",
-        "PROTO_METADATA",
+        "PROTO_METADATA", // done
         "TCR",
         "TCRGD",
         "GAMMA_DELTA",
