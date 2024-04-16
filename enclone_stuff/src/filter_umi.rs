@@ -192,7 +192,7 @@ pub fn filter_umi(
                                         .insert(ex.clones[i][0].barcode.clone(), BarcodeFate::Umi);
                                 }
                             }
-                            if ctl.clono_filt_opt_def.umi_filt {
+                            if ctl.cr_opt.umi_filt {
                                 erase_if(&mut ex.clones, &to_delete);
                             }
                         }

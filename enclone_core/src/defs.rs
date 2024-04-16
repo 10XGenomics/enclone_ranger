@@ -94,7 +94,7 @@ impl OriginInfo {
 }
 
 /// The subset of configuration options used by Cellranger.
-#[derive(Default, PartialEq)]
+#[derive(PartialEq)]
 pub struct CellrangerOpt {
     /// True if enclone is being called from Cellranger.
     pub cellranger: bool,
@@ -104,6 +104,23 @@ pub struct CellrangerOpt {
     pub proto: String,
     /// Optional path to a json file containing metadata.
     pub proto_metadata: String,
+
+    // Clonotype filtering options.
+    // TOOD: split these back out into a separate struct?
+    /// umi count filter
+    pub umi_filt: bool,
+}
+
+impl Default for CellrangerOpt {
+    fn default() -> Self {
+        Self {
+            cellranger: Default::default(),
+            dref_file: Default::default(),
+            proto: Default::default(),
+            proto_metadata: Default::default(),
+            umi_filt: true,
+        }
+    }
 }
 
 impl CellrangerOpt {
@@ -128,6 +145,9 @@ impl CellrangerOpt {
                 }
                 "PROTO_METADATA" => {
                     cr_opts.proto_metadata = get_rest();
+                }
+                "NUMI" => {
+                    cr_opts.umi_filt = false;
                 }
                 _ => {
                     // FIXME
@@ -433,7 +453,6 @@ pub struct ClonoFiltOptDefault {
     pub weak_onesies: bool,        // filter weak onesies
     pub doublet: bool,             // filter putative doublets
     pub fcell: Vec<Node>,          // constraints from FCELL
-    pub umi_filt: bool,            // umi count filter
     pub umi_filt_mark: bool,       // umi count filter (but only mark)
     pub umi_ratio_filt: bool,      // umi ratio filter
     pub umi_ratio_filt_mark: bool, // umi ratio filter (but only mark)

@@ -130,7 +130,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     ctl.clono_filt_opt_def.doublet = true;
     ctl.clono_filt_opt_def.bc_dup = true;
     ctl.clono_filt_opt.max_datasets = 1000000000;
-    ctl.clono_filt_opt_def.umi_filt = true;
     ctl.clono_filt_opt_def.umi_ratio_filt = true;
     ctl.clono_filt_opt.max_exacts = 1_000_000_000;
 
@@ -335,10 +334,11 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     }
 
     // Preprocess NALL and NALL_GEX.
-
-    for i in 1..args.len() {
-        if args[i] == *"NALL" || args[i] == "NALL_CELL" || args[i] == "NALL_GEX" {
-            let f = [
+    // FIXME: these should be implmeneted as a direct action on opt rather than
+    // pushing additional command line args.
+    for arg in &args[1..].to_vec() {
+        if arg == "NALL" || arg == "NALL_CELL" || arg == "NALL_GEX" {
+            for arg_to_append in [
                 "NCELL",
                 "NGEX",
                 "NCROSS",
@@ -356,18 +356,17 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
                 "MIX_DONORS",
                 "NIMPROPER",
                 "NSIG",
-            ];
-            for j in 0..f.len() {
-                if f[j] == "NCELL" {
-                    if args[i] != "NALL_CELL" {
-                        args.push(f[j].to_string());
+            ] {
+                if arg_to_append == "NCELL" {
+                    if arg != "NALL_CELL" {
+                        args.push(arg_to_append.to_string());
                     }
-                } else if f[j] == "NGEX" {
-                    if args[i] != "NALL_GEX" {
-                        args.push(f[j].to_string());
+                } else if arg_to_append == "NGEX" {
+                    if arg != "NALL_GEX" {
+                        args.push(arg_to_append.to_string());
                     }
                 } else {
-                    args.push(f[j].to_string());
+                    args.push(arg_to_append.to_string());
                 }
             }
             break;
@@ -516,7 +515,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("NQUAL", &mut ctl.clono_filt_opt.qual_filter),
         ("NSIG", &mut ctl.clono_filt_opt_def.signature),
         ("NSILENT", &mut ctl.silent),
-        ("NUMI", &mut ctl.clono_filt_opt_def.umi_filt),
         ("NUMI_RATIO", &mut ctl.clono_filt_opt_def.umi_ratio_filt),
         ("NWEAK_CHAINS", &mut ctl.clono_filt_opt_def.weak_chains),
         ("NWEAK_ONESIES", &mut ctl.clono_filt_opt_def.weak_onesies),

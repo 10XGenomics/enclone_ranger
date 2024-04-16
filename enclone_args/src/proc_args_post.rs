@@ -473,7 +473,7 @@ pub fn proc_args_post(
             "\nIf the value of PHYLIP_DNA is not stdout, it must end in .tar.\n".to_string(),
         );
     }
-    if ctl.clono_filt_opt_def.umi_filt && ctl.clono_filt_opt_def.umi_filt_mark {
+    if ctl.cr_opt.umi_filt && ctl.clono_filt_opt_def.umi_filt_mark {
         return Err(
             "\nIf you use UMI_FILT_MARK, you should also use NUMI, to turn off \
             the filter,\nas otherwise nothing will be marked.\n"
