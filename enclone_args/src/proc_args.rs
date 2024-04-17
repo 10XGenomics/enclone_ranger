@@ -557,7 +557,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
 
     let set_string_writeable = [
         ("BINARY", &mut ctl.gen_opt.binary),
-        ("FATE_FILE", &mut ctl.gen_opt.fate_file),
         ("HONEY_OUT", &mut ctl.plot_opt.honey_out),
         ("SUBSET_JSON", &mut ctl.gen_opt.subset_json),
     ];

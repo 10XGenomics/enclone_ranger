@@ -110,6 +110,8 @@ pub struct CellrangerOpt {
     pub proto: String,
     /// Optional path to a json file containing metadata.
     pub proto_metadata: String,
+    /// Optional path to write out barcode fate.
+    pub fate_file: String,
 
     // Clonotype filtering options.
     // TOOD: split these back out into a separate struct?
@@ -128,6 +130,7 @@ impl Default for CellrangerOpt {
             dref_file: Default::default(),
             proto: Default::default(),
             proto_metadata: Default::default(),
+            fate_file: Default::default(),
             umi_filt: true,
             umi_ratio_filt: true,
         }
@@ -187,7 +190,9 @@ impl CellrangerOpt {
         if !self.dref_file.is_empty() {
             // TODO: test writability
         }
-
+        if !self.fate_file.is_empty() {
+            // TODO: test writability
+        }
         if !self.refname.is_empty() {
             // TODO: check readability
         }
@@ -225,7 +230,6 @@ pub struct GeneralOpt {
     pub complete: bool,
     pub exact: Option<usize>,
     pub binary: String,
-    pub fate_file: String,
     pub h5_pre: bool,
     pub accept_reuse: bool,
     pub descrip: bool,
