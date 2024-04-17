@@ -28,9 +28,9 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
         "DONOR_REF_FILE", // done
         "MAX_CORES",
         "NOPRINT", // now unused in enclone_ranger
-        "PRE",
-        "PROTO", // done
-        "REF",   // done
+        "PRE",     // done
+        "PROTO",   // done
+        "REF",     // done
     ];
     const ALLOWED_ARGS: [&str; 16] = [
         "BCR",
