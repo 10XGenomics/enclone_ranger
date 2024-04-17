@@ -128,6 +128,8 @@ pub struct CellrangerOpt {
     pub weak_chains: bool,
     /// filter weak foursies
     pub weak_foursies: bool,
+    /// filter putative doublets
+    pub doublet: bool,
 }
 
 impl Default for CellrangerOpt {
@@ -146,6 +148,7 @@ impl Default for CellrangerOpt {
             umi_ratio_filt: true,
             weak_chains: true,
             weak_foursies: true,
+            doublet: true,
         }
     }
 }
@@ -506,7 +509,6 @@ pub struct ClonoFiltOptDefault {
     pub ngex: bool,     // turn off gex filtering,
     pub non_cell_mark: bool,
     pub weak_onesies: bool,        // filter weak onesies
-    pub doublet: bool,             // filter putative doublets
     pub fcell: Vec<Node>,          // constraints from FCELL
     pub umi_filt_mark: bool,       // umi count filter (but only mark)
     pub umi_ratio_filt_mark: bool, // umi ratio filter (but only mark)

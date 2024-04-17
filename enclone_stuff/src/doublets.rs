@@ -31,7 +31,7 @@ pub fn delete_doublets(
     dref: &[DonorReferenceItem],
     fate: &mut [BarcodeFates],
 ) {
-    if ctl.clono_filt_opt_def.doublet {
+    if ctl.cr_opt.doublet {
         // Define pure subclonotypes.  To do this we break each clonotype up by chain signature.
         // Note duplication of code with print_clonotypes.rs.  And this is doing some
         // superfluous compute.
