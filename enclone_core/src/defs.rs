@@ -116,6 +116,8 @@ pub struct CellrangerOpt {
     /// True if running in gamma-delta mode.
     pub gamma_delta: bool,
 
+    pub ngraph_filter: bool,
+
     // Clonotype filtering options.
     // TOOD: split these back out into a separate struct?
     /// umi count filter
@@ -135,6 +137,7 @@ impl Default for CellrangerOpt {
             proto_metadata: Default::default(),
             fate_file: Default::default(),
             gamma_delta: Default::default(),
+            ngraph_filter: Default::default(),
             umi_filt: true,
             umi_ratio_filt: true,
         }
@@ -180,6 +183,9 @@ impl CellrangerOpt {
                 "GAMMA_DELTA" => {
                     cr_opts.gamma_delta = true;
                 }
+                "NGRAPH_FILTER" => {
+                    cr_opts.ngraph_filter = true;
+                }
                 "NUMI" => {
                     cr_opts.umi_filt = false;
                 }
@@ -217,7 +223,6 @@ pub struct GeneralOpt {
     pub indels: bool,
     pub reannotate: bool,
     pub heavy_chain_reuse: bool,
-    pub ngraph_filter: bool,
     pub graph: bool,
     pub utr_con: bool,
     pub con_con: bool,

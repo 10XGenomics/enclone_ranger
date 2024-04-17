@@ -399,7 +399,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("NEWICK", &mut ctl.gen_opt.newick),
         ("NGEX", &mut ctl.clono_filt_opt_def.ngex),
         ("NOGRAY", &mut ctl.nogray),
-        ("NGRAPH_FILTER", &mut ctl.gen_opt.ngraph_filter),
         ("NGROUP", &mut ctl.clono_group_opt.ngroup),
         ("NIMPROPER", &mut ctl.merge_all_impropers),
         ("NMAX", &mut ctl.clono_filt_opt_def.nmax),

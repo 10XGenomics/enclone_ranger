@@ -379,7 +379,7 @@ pub fn graph_filter(
                 .insert(tig_bc[i][0].barcode.clone(), BarcodeFate::GraphFilter);
         }
     }
-    if !ctl.gen_opt.ngraph_filter {
+    if !ctl.cr_opt.ngraph_filter {
         erase_if(tig_bc, &to_delete);
     }
     if graph {

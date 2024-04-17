@@ -38,11 +38,11 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
         "PROTO_METADATA", // done
         "TCR",
         "TCRGD",
-        "GAMMA_DELTA", // done
-        "FATE_FILE",   // done
-        "NUMI",        // done
-        "NUMI_RATIO",  // done
-        "NGRAPH_FILTER",
+        "GAMMA_DELTA",   // done
+        "FATE_FILE",     // done
+        "NUMI",          // done
+        "NUMI_RATIO",    // done
+        "NGRAPH_FILTER", // done
         "NWEAK_CHAINS",
         "NFOURSIE_KILL",
         "NDOUBLET",
