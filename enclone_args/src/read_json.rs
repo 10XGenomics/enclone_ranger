@@ -201,7 +201,7 @@ fn process_json_annotation(
                 chain_type = refdata.name[t][0..3].to_string();
                 if chain_type == *"IGH"
                     || chain_type == *"TRB"
-                    || (chain_type == *"TRD" && ctl.gen_opt.gamma_delta)
+                    || (chain_type == *"TRD" && ctl.cr_opt.gamma_delta)
                 {
                     left = true;
                 }
@@ -291,7 +291,7 @@ fn process_json_annotation(
                 cdr3_start -= tig_start as usize;
                 if chain == VdjChain::IGH
                     || chain == VdjChain::TRB
-                    || (chain == VdjChain::TRD && ctl.gen_opt.gamma_delta)
+                    || (chain == VdjChain::TRD && ctl.cr_opt.gamma_delta)
                 {
                     left = true;
                 }
