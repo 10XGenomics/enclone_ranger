@@ -487,7 +487,7 @@ pub fn proc_args_post(
         );
     }
 
-    // Process TCR, BCR and META.
+    // Process TCR, BCR and metas.
 
     check_cvars(ctl)?;
     if !ctl.cr_opt.metas.is_empty() {
