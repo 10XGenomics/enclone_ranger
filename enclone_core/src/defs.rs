@@ -113,6 +113,9 @@ pub struct CellrangerOpt {
     /// Optional path to write out barcode fate.
     pub fate_file: String,
 
+    /// True if running in gamma-delta mode.
+    pub gamma_delta: bool,
+
     // Clonotype filtering options.
     // TOOD: split these back out into a separate struct?
     /// umi count filter
@@ -131,6 +134,7 @@ impl Default for CellrangerOpt {
             proto: Default::default(),
             proto_metadata: Default::default(),
             fate_file: Default::default(),
+            gamma_delta: Default::default(),
             umi_filt: true,
             umi_ratio_filt: true,
         }
@@ -169,6 +173,12 @@ impl CellrangerOpt {
                 }
                 "PROTO_METADATA" => {
                     cr_opts.proto_metadata = get_rest();
+                }
+                "FATE_FILE" => {
+                    cr_opts.fate_file = get_rest();
+                }
+                "GAMMA_DELTA" => {
+                    cr_opts.gamma_delta = true;
                 }
                 "NUMI" => {
                     cr_opts.umi_filt = false;
@@ -324,7 +334,6 @@ pub struct GeneralOpt {
     pub var_def: Vec<(String, String, Node, String)>, // {(variable, value, compiled value, expr)}
     pub nospaces: bool,
     pub subsample: f64,
-    pub gamma_delta: bool,
     pub pre_eval: bool,
     pub pre_eval_show: bool,
     pub external_ref: String,

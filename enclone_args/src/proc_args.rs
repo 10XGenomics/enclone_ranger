@@ -412,7 +412,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("FOLD_HEADERS", &mut ctl.gen_opt.fold_headers),
         ("FORCE", &mut ctl.force),
         ("FULL_SEQC", &mut ctl.clono_print_opt.full_seqc),
-        ("GAMMA_DELTA", &mut ctl.gen_opt.gamma_delta),
         ("GRAPH", &mut ctl.gen_opt.graph),
         (
             "GROUP_CDR3H_LEN_VAR",
@@ -919,12 +918,12 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
 
     // Do residual argument processing.
 
-    if ctl.gen_opt.gamma_delta && !have_tcrgd || !ctl.gen_opt.gamma_delta && have_tcrgd {
+    if ctl.cr_opt.gamma_delta && !have_tcrgd || !ctl.cr_opt.gamma_delta && have_tcrgd {
         return Err(
             "\n. GAMMA_DELTA flag has to be enabled for using TCRGD= and vice versa.\n".to_string(),
         );
     }
-    if ctl.gen_opt.gamma_delta && (have_bcr || have_gex || have_meta || have_tcr) {
+    if ctl.cr_opt.gamma_delta && (have_bcr || have_gex || have_meta || have_tcr) {
         return Err(
             "\n. Unsupported input type in GAMMA_DELTA mode. Only TCRGD= input is supported.\n"
                 .to_string(),
