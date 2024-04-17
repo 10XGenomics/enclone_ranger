@@ -26,11 +26,11 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
     const REQUIRED_ARGS: [&str; 7] = [
         "CELLRANGER",     // done
         "DONOR_REF_FILE", // done
-        "MAX_CORES",
-        "NOPRINT", // now unused in enclone_ranger
-        "PRE",     // done
-        "PROTO",   // done
-        "REF",     // done
+        "MAX_CORES", // FIXME: move this behavior into enclone and set thread count in CR when calling
+        "NOPRINT",   // now unused in enclone_ranger
+        "PRE",       // done
+        "PROTO",     // done
+        "REF",       // done
     ];
     const ALLOWED_ARGS: [&str; 16] = [
         "BCR",
