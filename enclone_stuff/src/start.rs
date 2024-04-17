@@ -249,7 +249,7 @@ pub fn main_enclone_start(
             }
         }
     }
-    if ctl.clono_filt_opt_def.weak_foursies {
+    if ctl.cr_opt.weak_foursies {
         erase_if(&mut exact_clonotypes, &to_delete);
     }
 
