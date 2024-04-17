@@ -125,7 +125,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     ctl.clono_filt_opt.qual_filter = true;
     ctl.clono_filt_opt_def.signature = true;
     ctl.clono_filt_opt_def.weak_onesies = true;
-    ctl.clono_filt_opt_def.doublet = true;
     ctl.clono_filt_opt_def.bc_dup = true;
     ctl.clono_filt_opt.max_datasets = 1000000000;
     ctl.clono_filt_opt.max_exacts = 1_000_000_000;
@@ -464,7 +463,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     let mut set_false = vec![
         ("H5_SLICE", &mut ctl.gen_opt.h5_pre),
         ("NBC_DUP", &mut ctl.clono_filt_opt_def.bc_dup),
-        ("NDOUBLET", &mut ctl.clono_filt_opt_def.doublet),
         ("NMERGE_ONESIES", &mut ctl.join_alg_opt.merge_onesies_ctl),
         ("NQUAL", &mut ctl.clono_filt_opt.qual_filter),
         ("NSIG", &mut ctl.clono_filt_opt_def.signature),
