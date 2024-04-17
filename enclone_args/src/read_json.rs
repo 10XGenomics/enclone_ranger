@@ -142,8 +142,7 @@ fn process_json_annotation(
     // Reannotate.
     if reannotate || ctl.gen_opt.reprod {
         let x = DnaString::from_dna_string(&ann.sequence);
-        let mut ann1 = Vec::<Annotation>::new();
-        annotate_seq(&x, refdata, &mut ann1, true, false, true);
+        let mut ann1 = annotate_seq(&x, refdata, true, false, true);
 
         // If there are multiple V segment alignments, possibly reduce to just one.
 
