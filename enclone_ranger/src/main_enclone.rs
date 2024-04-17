@@ -34,7 +34,7 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
     ];
     const ALLOWED_ARGS: [&str; 16] = [
         "BCR",
-        "META",
+        "META",           // done
         "PROTO_METADATA", // done
         "TCR",
         "TCRGD",

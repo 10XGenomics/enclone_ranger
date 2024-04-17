@@ -5,7 +5,7 @@
 use crate::proc_args2::{is_f64_arg, is_usize_arg};
 use enclone_core::defs::{EncloneControl, GeneScanOpts};
 use enclone_core::linear_condition::LinearCondition;
-use enclone_core::{require_readable_file, tilde_expand_me};
+use enclone_core::require_readable_file;
 use evalexpr::build_operator_tree;
 use io_utils::open_for_read;
 use regex::Regex;
@@ -16,7 +16,6 @@ use vector_utils::unique_sort;
 pub fn process_special_arg2(
     arg: &str,
     ctl: &mut EncloneControl,
-    metas: &mut Vec<String>,
     metaxs: &mut Vec<String>,
     xcrs: &mut Vec<String>,
     using_plot: &mut bool,
@@ -665,13 +664,6 @@ pub fn process_special_arg2(
     } else if is_usize_arg(arg, "CELLS")? {
         ctl.clono_filt_opt.ncells_low = arg.after("CELLS=").force_usize();
         ctl.clono_filt_opt.ncells_high = ctl.clono_filt_opt.ncells_low;
-    } else if arg.starts_with("META=") {
-        let v = arg.after("META=").split(',');
-        for f in v {
-            let mut f = f.to_string();
-            tilde_expand_me(&mut f);
-            metas.push(f);
-        }
     } else if arg.starts_with("METAX=") {
         let f = arg.after("METAX=");
         let f = f.chars().filter(|c| !c.is_whitespace()).collect();

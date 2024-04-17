@@ -169,7 +169,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     let mut have_meta = false;
     let mut gex = String::new();
     let mut bc = String::new();
-    let mut metas = Vec::<String>::new();
     let mut metaxs = Vec::<String>::new();
     let mut xcrs = Vec::<String>::new();
     for i in 1..args.len() {
@@ -183,7 +182,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
             have_bcr = true;
         } else if args[i].starts_with("GEX=") {
             have_gex = true;
-        } else if args[i].starts_with("META=") || args[i].starts_with("METAX=") {
+        } else if !ctl.cr_opt.metas.is_empty() || args[i].starts_with("METAX=") {
             have_meta = true;
         }
         if args[i].starts_with("GEX=") {
@@ -887,14 +886,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
             continue;
         }
         if !process_special_arg1(&args[i], ctl)? {
-            process_special_arg2(
-                &args[i],
-                ctl,
-                &mut metas,
-                &mut metaxs,
-                &mut xcrs,
-                &mut using_plot,
-            )?;
+            process_special_arg2(&args[i], ctl, &mut metaxs, &mut xcrs, &mut using_plot)?;
         }
     }
 
@@ -913,8 +905,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
                 .to_string(),
         );
     }
-    proc_args_post(
-        ctl, &args, &metas, &metaxs, &xcrs, have_gex, &gex, &bc, using_plot,
-    )?;
+    proc_args_post(ctl, &args, &metaxs, &xcrs, have_gex, &gex, &bc, using_plot)?;
     Ok(())
 }
