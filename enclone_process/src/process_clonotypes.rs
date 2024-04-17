@@ -227,9 +227,9 @@ pub fn process_clonotypes<T: Send, D: Default>(
     results.sort_by_key(|(num_cells, _, _)| Reverse(*num_cells));
 
     // Write out the fate of each filtered barcode.
-    if !ctl.gen_opt.fate_file.is_empty() {
+    if !ctl.cr_opt.fate_file.is_empty() {
         let mut wtr = BufWriter::new(
-            File::create(&ctl.gen_opt.fate_file).expect("Unable to open FATE_FILE for writing"),
+            File::create(&ctl.cr_opt.fate_file).expect("Unable to open FATE_FILE for writing"),
         );
         serde_json::to_writer_pretty(&mut wtr, &fate).map_err(|e| e.to_string())?;
     }
