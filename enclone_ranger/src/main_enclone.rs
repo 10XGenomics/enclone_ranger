@@ -40,8 +40,8 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
         "TCRGD",
         "GAMMA_DELTA",
         "FATE_FILE",
-        "NUMI",
-        "NUMI_RATIO",
+        "NUMI",       // done
+        "NUMI_RATIO", // done
         "NGRAPH_FILTER",
         "NWEAK_CHAINS",
         "NFOURSIE_KILL",
