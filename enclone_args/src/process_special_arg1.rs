@@ -19,14 +19,7 @@ use std::fs::{read_to_string, remove_file, File};
 use string_utils::TextUtils;
 use vector_utils::{unique_sort, VecUtils};
 
-pub fn process_special_arg1(
-    arg: &str,
-    ctl: &mut EncloneControl,
-    _metas: &mut [String],
-    _metaxs: &mut [String],
-    _xcrs: &mut [String],
-    _using_plot: &mut bool,
-) -> Result<bool, String> {
+pub fn process_special_arg1(arg: &str, ctl: &mut EncloneControl) -> Result<bool, String> {
     // Process the argument.
 
     if is_simple_arg(arg, "SEQ")? {

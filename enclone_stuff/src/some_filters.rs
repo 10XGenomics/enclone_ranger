@@ -147,7 +147,7 @@ pub fn some_filters(
                     t.push(col);
                 }
             }
-            if dels.contains(&t) && ctl.clono_filt_opt_def.signature {
+            if dels.contains(&t) && ctl.cr_opt.signature {
                 res.2.push(exacts[u]);
                 let ex = &exact_clonotypes[exacts[u]];
                 for i in 0..ex.ncells() {

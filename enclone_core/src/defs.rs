@@ -130,6 +130,8 @@ pub struct CellrangerOpt {
     pub weak_foursies: bool,
     /// filter putative doublets
     pub doublet: bool,
+    /// signature filtering
+    pub signature: bool,
 }
 
 impl Default for CellrangerOpt {
@@ -149,6 +151,7 @@ impl Default for CellrangerOpt {
             weak_chains: true,
             weak_foursies: true,
             doublet: true,
+            signature: true,
         }
     }
 }
@@ -206,6 +209,12 @@ impl CellrangerOpt {
                 }
                 "NFOURSIE_KILL" => {
                     cr_opts.weak_foursies = false;
+                }
+                "NDOUBLET" => {
+                    cr_opts.doublet = false;
+                }
+                "NSIG" => {
+                    cr_opts.signature = false;
                 }
                 _ => {
                     // FIXME
@@ -515,7 +524,6 @@ pub struct ClonoFiltOptDefault {
     pub whitef: bool,              // only show clonotypes exhibiting whitelist contamination
     pub ncross: bool,              // turn off cross filtering,
     pub bc_dup: bool,              // filter duplicated barcodes within an exact subclonotype
-    pub signature: bool,           // signature filtering
     pub nmax: bool,                // turn off max contigs filter
 }
 
