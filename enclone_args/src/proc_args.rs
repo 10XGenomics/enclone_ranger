@@ -123,7 +123,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     ctl.clono_filt_opt.min_umi = 0;
     ctl.clono_filt_opt.max_chains = 1000000;
     ctl.clono_filt_opt.qual_filter = true;
-    ctl.clono_filt_opt_def.signature = true;
     ctl.clono_filt_opt_def.weak_onesies = true;
     ctl.clono_filt_opt_def.bc_dup = true;
     ctl.clono_filt_opt.max_datasets = 1000000000;
@@ -505,7 +504,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("NBC_DUP", &mut ctl.clono_filt_opt_def.bc_dup),
         ("NMERGE_ONESIES", &mut ctl.join_alg_opt.merge_onesies_ctl),
         ("NQUAL", &mut ctl.clono_filt_opt.qual_filter),
-        ("NSIG", &mut ctl.clono_filt_opt_def.signature),
         ("NSILENT", &mut ctl.silent),
         ("NWEAK_ONESIES", &mut ctl.clono_filt_opt_def.weak_onesies),
         ("PRINT_FAILED_JOINS", &mut ctl.join_print_opt.quiet),
@@ -888,14 +886,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         if processed[i] {
             continue;
         }
-        if !process_special_arg1(
-            &args[i],
-            ctl,
-            &mut metas,
-            &mut metaxs,
-            &mut xcrs,
-            &mut using_plot,
-        )? {
+        if !process_special_arg1(&args[i], ctl)? {
             process_special_arg2(
                 &args[i],
                 ctl,

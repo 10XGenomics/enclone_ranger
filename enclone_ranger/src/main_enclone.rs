@@ -46,7 +46,7 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
         "NWEAK_CHAINS",  // done
         "NFOURSIE_KILL", // done
         "NDOUBLET",      // done
-        "NSIG",
+        "NSIG",          // done
         "SPLIT_MAX_CHAINS",
         "NCROSS",
     ];
