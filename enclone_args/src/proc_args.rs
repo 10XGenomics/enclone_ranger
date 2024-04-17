@@ -124,7 +124,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     ctl.clono_filt_opt.max_chains = 1000000;
     ctl.clono_filt_opt.qual_filter = true;
     ctl.clono_filt_opt_def.signature = true;
-    ctl.clono_filt_opt_def.weak_chains = true;
     ctl.clono_filt_opt_def.weak_onesies = true;
     ctl.clono_filt_opt_def.weak_foursies = true;
     ctl.clono_filt_opt_def.doublet = true;
@@ -472,7 +471,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("NQUAL", &mut ctl.clono_filt_opt.qual_filter),
         ("NSIG", &mut ctl.clono_filt_opt_def.signature),
         ("NSILENT", &mut ctl.silent),
-        ("NWEAK_CHAINS", &mut ctl.clono_filt_opt_def.weak_chains),
         ("NWEAK_ONESIES", &mut ctl.clono_filt_opt_def.weak_onesies),
         ("PRINT_FAILED_JOINS", &mut ctl.join_print_opt.quiet),
     ];
