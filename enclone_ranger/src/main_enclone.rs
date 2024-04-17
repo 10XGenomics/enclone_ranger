@@ -44,7 +44,7 @@ pub fn main_enclone_ranger(args: Vec<String>) -> anyhow::Result<()> {
         "NUMI_RATIO",    // done
         "NGRAPH_FILTER", // done
         "NWEAK_CHAINS",  // done
-        "NFOURSIE_KILL",
+        "NFOURSIE_KILL", // done
         "NDOUBLET",
         "NSIG",
         "SPLIT_MAX_CHAINS",

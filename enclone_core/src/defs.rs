@@ -126,6 +126,8 @@ pub struct CellrangerOpt {
     pub umi_ratio_filt: bool,
     /// filter weak chains from clonotypes
     pub weak_chains: bool,
+    /// filter weak foursies
+    pub weak_foursies: bool,
 }
 
 impl Default for CellrangerOpt {
@@ -143,6 +145,7 @@ impl Default for CellrangerOpt {
             umi_filt: true,
             umi_ratio_filt: true,
             weak_chains: true,
+            weak_foursies: true,
         }
     }
 }
@@ -197,6 +200,9 @@ impl CellrangerOpt {
                 }
                 "NWEAK_CHAINS" => {
                     cr_opts.weak_chains = false;
+                }
+                "NFOURSIE_KILL" => {
+                    cr_opts.weak_foursies = false;
                 }
                 _ => {
                     // FIXME
@@ -497,7 +503,6 @@ pub struct JoinAlgOpt {
 pub struct ClonoFiltOptDefault {
     pub marked_b: bool, // only print clonotypes having a mark and which are typed as B cells
     pub donor: bool,    // allow cells from different donors to be placed in the same clonotype
-    pub weak_foursies: bool, // filter weak foursies
     pub ngex: bool,     // turn off gex filtering,
     pub non_cell_mark: bool,
     pub weak_onesies: bool,        // filter weak onesies
