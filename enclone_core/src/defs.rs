@@ -124,6 +124,8 @@ pub struct CellrangerOpt {
     pub umi_filt: bool,
     /// umi ratio filter
     pub umi_ratio_filt: bool,
+    /// filter weak chains from clonotypes
+    pub weak_chains: bool,
 }
 
 impl Default for CellrangerOpt {
@@ -140,6 +142,7 @@ impl Default for CellrangerOpt {
             ngraph_filter: Default::default(),
             umi_filt: true,
             umi_ratio_filt: true,
+            weak_chains: true,
         }
     }
 }
@@ -191,6 +194,9 @@ impl CellrangerOpt {
                 }
                 "NUMI_RATIO" => {
                     cr_opts.umi_ratio_filt = false;
+                }
+                "NWEAK_CHAINS" => {
+                    cr_opts.weak_chains = false;
                 }
                 _ => {
                     // FIXME
@@ -499,7 +505,6 @@ pub struct ClonoFiltOptDefault {
     pub fcell: Vec<Node>,          // constraints from FCELL
     pub umi_filt_mark: bool,       // umi count filter (but only mark)
     pub umi_ratio_filt_mark: bool, // umi ratio filter (but only mark)
-    pub weak_chains: bool,         // filter weak chains from clonotypes
     pub whitef: bool,              // only show clonotypes exhibiting whitelist contamination
     pub ncross: bool,              // turn off cross filtering,
     pub bc_dup: bool,              // filter duplicated barcodes within an exact subclonotype
