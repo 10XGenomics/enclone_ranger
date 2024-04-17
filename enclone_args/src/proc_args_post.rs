@@ -147,7 +147,6 @@ fn parse_bc_joint(ctl: &mut EncloneControl) -> Result<(), String> {
 pub fn proc_args_post(
     ctl: &mut EncloneControl,
     args: &[String],
-    metas: &[String],
     metaxs: &[String],
     xcrs: &[String],
     have_gex: bool,
@@ -491,9 +490,9 @@ pub fn proc_args_post(
     // Process TCR, BCR and META.
 
     check_cvars(ctl)?;
-    if !metas.is_empty() {
-        let mut v = Vec::<String>::with_capacity(metas.len());
-        for meta in metas {
+    if !ctl.cr_opt.metas.is_empty() {
+        let mut v = Vec::<String>::with_capacity(ctl.cr_opt.metas.len());
+        for meta in &ctl.cr_opt.metas {
             let f = get_path_fail(meta, ctl, "META")?;
             if f.contains('/') {
                 let d = f.rev_before("/").to_string();

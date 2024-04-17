@@ -2,6 +2,7 @@
 
 use crate::cell_color::CellColor;
 use crate::linear_condition::LinearCondition;
+use crate::tilde_expand_me;
 use anyhow::Result;
 use debruijn::dna_string::DnaString;
 use evalexpr::Node;
@@ -103,6 +104,8 @@ pub struct CellrangerOpt {
     pub pre: Vec<String>,
     /// Path to reference.
     pub refname: String,
+    /// Paths to optional metadata files.
+    pub metas: Vec<String>,
 
     /// Path to donor reference output file.
     pub dref_file: String,
@@ -140,6 +143,7 @@ impl Default for CellrangerOpt {
             cellranger: Default::default(),
             pre: Default::default(),
             refname: Default::default(),
+            metas: Default::default(),
             dref_file: Default::default(),
             proto: Default::default(),
             proto_metadata: Default::default(),
@@ -179,6 +183,13 @@ impl CellrangerOpt {
                 }
                 "REF" => {
                     cr_opts.refname = get_rest();
+                }
+                "META" => {
+                    for meta in get_rest().split(',') {
+                        let mut f = meta.to_string();
+                        tilde_expand_me(&mut f);
+                        cr_opts.metas.push(f);
+                    }
                 }
                 "DONOR_REF_FILE" => {
                     cr_opts.dref_file = get_rest();
