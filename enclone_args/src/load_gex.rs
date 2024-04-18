@@ -19,7 +19,6 @@ use vector_utils::{bin_position, unique_sort};
 pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     let mut gex_features = Vec::<Vec<String>>::new();
     let mut gex_barcodes = Vec::<Vec<String>>::new();
-    let mut feature_refs = Vec::<String>::new();
     let mut cluster = Vec::<HashMap<String, usize>>::new();
     let mut cell_type = Vec::<HashMap<String, String>>::new();
     let mut cell_type_specified = Vec::<bool>::new();
@@ -37,7 +36,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
         ctl,
         &mut gex_features,
         &mut gex_barcodes,
-        &mut feature_refs,
         &mut cluster,
         &mut cell_type,
         &mut cell_type_specified,
@@ -137,7 +135,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     Ok(GexInfo {
         gex_features,
         gex_barcodes,
-        feature_refs,
         cluster,
         cell_type,
         cell_type_specified,
