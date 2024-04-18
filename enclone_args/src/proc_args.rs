@@ -452,7 +452,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("UTR_CON", &mut ctl.gen_opt.utr_con),
         ("VDUP", &mut ctl.clono_filt_opt.vdup),
         ("VIS_DUMP", &mut ctl.gen_opt.vis_dump),
-        ("WEAK", &mut ctl.gen_opt.weak),
         ("WHITEF", &mut ctl.clono_filt_opt_def.whitef),
     ];
 

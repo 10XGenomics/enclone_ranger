@@ -57,7 +57,6 @@ Other optional arguments:
 
 - FORCE: make joins even if redundant
 - EXP: exploratory code for exact clonotyping on
-- WEAK: for EXP, print all and show weaks
 - GRAPH: show logging from light-heavy graph construction
 - UTR_CON: run experimental UTR consensus code
 - CON_CON: run experimental constant region consensus code
