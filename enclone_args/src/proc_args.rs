@@ -346,7 +346,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("BCJOIN", &mut ctl.join_alg_opt.bcjoin),
         ("BUILT_IN", &mut ctl.gen_opt.built_in),
         ("CDIFF", &mut ctl.clono_filt_opt.cdiff),
-        ("CHAIN_BRIEF", &mut ctl.clono_print_opt.chain_brief),
         ("COMPLETE", &mut ctl.gen_opt.complete),
         ("CON", &mut ctl.allele_print_opt.con),
         ("CON_CON", &mut ctl.gen_opt.con_con),

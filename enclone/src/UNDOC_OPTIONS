@@ -48,7 +48,6 @@ Optional arguments governing input and output files:
 Optional arguments that control printing of individual clonotypes:
 
 - white   = percent of sequences implicated in whitelist expansion.
-- CHAIN_BRIEF: show abbreviated chain column headers
 - DEBUG_TABLE_PRINTING: add print lines to help debug printing of tables.
 - NOTE_SIMPLE: note if the first sequence for the chain is simple, in the sense that it exactly
                equals the concatenation of the right-truncated V with the full J segment.

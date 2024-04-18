@@ -578,7 +578,6 @@ pub struct ClonoPrintOpt {
     pub cvars: Vec<String>, // per-chain per-exact-clonotype columns
     pub lvars: Vec<String>, // per-exact-clonotype ('lead') columns
     pub regex_match: Vec<HashMap<String, Vec<usize>>>, // matching features for <regex>_g etc.
-    pub chain_brief: bool, // show abbreviated chain headers
     pub sum: bool,  // print sum row
     pub mean: bool, // print mean row
     pub conx: bool,
