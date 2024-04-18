@@ -556,9 +556,6 @@ pub fn load_gex(
         }
         unique_sort(&mut r.gex_cell_barcodes);
     });
-    for (_, r) in &results {
-        ctl.pathlist.extend(r.f15.iter().cloned());
-    }
 
     // Test for error.
 

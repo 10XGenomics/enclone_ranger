@@ -14,7 +14,7 @@ use std::cmp::max;
 use std::collections::HashMap;
 
 use std::sync::atomic::AtomicBool;
-use std::time::{Instant, SystemTime};
+use std::time::Instant;
 use vdj_ann::annotate::Annotation;
 use vector_utils::unique_sort;
 
@@ -685,10 +685,6 @@ pub struct EncloneControl {
     pub clono_group_opt: ClonoGroupOpt,
     /// parseable output options
     pub parseable_opt: ParseableOpt,
-    /// list of input files  
-    pub pathlist: Vec<String>,
-    /// last modified for pathlist       
-    pub last_modified: Vec<SystemTime>,
 }
 
 // Set up data structure to track clonotype data.  A TigData is for one contig;
