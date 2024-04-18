@@ -262,7 +262,6 @@ pub struct GeneralOpt {
     pub utr_con: bool,
     pub con_con: bool,
     pub nwhitef: bool,
-    pub weak: bool,
     pub tcr: bool,
     pub bcr: bool,
     pub tcrgd: bool,
