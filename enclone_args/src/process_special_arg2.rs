@@ -404,7 +404,6 @@ pub fn process_special_arg2(
             if !condition.contains('=') {
                 return Err("\nArgument to PLOT is invalid.\n".to_string());
             }
-            ctl.plot_opt.plot_conditions.push(condition);
             ctl.plot_opt.plot_colors.push(color);
         }
     } else if arg.starts_with("PLOT_BY_ISOTYPE=") {
