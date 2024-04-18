@@ -365,7 +365,6 @@ pub struct GeneralOpt {
     pub toy: bool,      // toy with phylogeny
     pub group_post_filter: Option<Vec<usize>>,
     pub no_newline: bool,
-    pub fb_show: String,
     pub var_def: Vec<(String, String, Node, String)>, // {(variable, value, compiled value, expr)}
     pub nospaces: bool,
     pub subsample: f64,

@@ -332,34 +332,6 @@ pub fn process_special_arg1(arg: &str, ctl: &mut EncloneControl) -> Result<bool,
             return Err(format!("\nArgument {arg} is not properly specified.\n"));
         }
         ctl.gen_opt.chains_to_jun_align.push(n.force_usize());
-    } else if arg.starts_with("FB_SHOW=") {
-        let fields = arg.after("FB_SHOW=").split(',');
-        let mut found_k = false;
-        let mut ok = true;
-        for field in fields {
-            if field.parse::<usize>().is_ok() {
-                if found_k {
-                    return Err("\nFB_SHOW argument contains more than one integer.\n".to_string());
-                }
-                found_k = true;
-            } else {
-                if field.len() != 15 {
-                    ok = false;
-                }
-                for c in field.chars() {
-                    if c != 'A' && c != 'C' && c != 'G' && c != 'T' {
-                        ok = false;
-                    }
-                }
-            }
-        }
-        if !ok {
-            return Err("\nFB_SHOW argument must be a comma-separated list \
-                containing at most one nonnegative integer and zero or more DNA \
-                sequences of length 15 (in the alphabet A,C,G,T).\n"
-                .to_string());
-        }
-        ctl.gen_opt.fb_show = arg.after("FB_SHOW=").to_string();
     } else if arg.starts_with("POUT=") {
         let val = arg.after("POUT=");
         ctl.parseable_opt.pout = val.to_string();
