@@ -388,24 +388,6 @@ pub fn process_special_arg2(
                 .origin_color_map
                 .insert(xj.before("->").to_string(), xj.after("->").to_string());
         }
-    } else if arg.starts_with("PLOT2=") {
-        *using_plot = true;
-        let x = arg.after("PLOT2=").split(',').collect::<Vec<&str>>();
-        if x.is_empty() {
-            return Err("\nArgument to PLOT is invalid.\n".to_string());
-        }
-        if x.len() % 2 != 1 {
-            return Err("\nArgument to PLOT is invalid.\n".to_string());
-        }
-        ctl.plot_opt.plot_file = x[0].to_string();
-        for j in (1..x.len()).step_by(2) {
-            let condition = x[j].to_string();
-            let color = x[j + 1].to_string();
-            if !condition.contains('=') {
-                return Err("\nArgument to PLOT is invalid.\n".to_string());
-            }
-            ctl.plot_opt.plot_colors.push(color);
-        }
     } else if arg.starts_with("PLOT_BY_ISOTYPE=") {
         ctl.plot_opt.plot_by_isotype = true;
         ctl.plot_opt.plot_file = arg.after("PLOT_BY_ISOTYPE=").to_string();
