@@ -3,17 +3,14 @@
 // Load gene expression and feature barcoding (antibody, antigen) data from Cell Ranger outputs.
 
 use crate::load_gex_util::{
-    find_cluster_file, find_feature_metrics_file, find_json_metrics_file, find_metrics_file,
-    find_pca_file,
+    find_cluster_file, find_feature_metrics_file, find_json_metrics_file, find_pca_file,
 };
-use crate::parse_csv_pure;
 use enclone_core::defs::EncloneControl;
 use enclone_core::slurp::slurp_h5;
 use io_utils::{dir_list, open_for_read, open_userfile_for_read, path_exists};
-use itertools::Itertools;
 use rayon::prelude::*;
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Write, io::BufRead};
+use std::{collections::HashMap, io::BufRead};
 use string_utils::{parse_csv, TextUtils};
 use vector_utils::{unique_sort, VecUtils};
 
@@ -32,7 +29,6 @@ struct LoadResult {
     h5_path: String,
     feature_metrics: HashMap<(String, String), String>,
     json_metrics: HashMap<String, f64>,
-    metrics: String,
 }
 
 pub fn load_gex(
@@ -51,7 +47,6 @@ pub fn load_gex(
     h5_paths: &mut Vec<String>,
     feature_metrics: &mut Vec<HashMap<(String, String), String>>,
     json_metrics: &mut Vec<HashMap<String, f64>>,
-    metrics: &mut Vec<String>,
 ) -> Result<(), String> {
     let mut results = Vec::<(usize, LoadResult)>::new();
     for i in 0..ctl.origin_info.gex_path.len() {
@@ -139,10 +134,9 @@ pub fn load_gex(
             let pca_file = find_pca_file(&analysis);
             let cluster_file = find_cluster_file(&analysis);
 
-            let (json_metrics_file, feature_metrics_file, metrics_file) = if !ctl.cr_opt.cellranger {(
+            let (json_metrics_file, feature_metrics_file) = if !ctl.cr_opt.cellranger {(
                 find_json_metrics_file(&analysis),
                 find_feature_metrics_file(&analysis),
-                find_metrics_file(&outs)
             )} else {
                 Default::default()
             };
@@ -243,38 +237,6 @@ pub fn load_gex(
                         r.json_metrics.insert(var.to_string(), value);
                     }
                 }
-            }
-
-            // Read and parse metrics file.  Rewrite as metrics class, metric name, metric value.
-
-            if !metrics_file.is_empty() {
-                let m = std::fs::read_to_string(&metrics_file).unwrap();
-                let fields = parse_csv_pure(m.before("\n"));
-                let (mut class, mut name, mut value) = (None, None, None);
-                for field in fields {
-                    if field == "Library Type" {
-                        class = Some(i);
-                    } else if field == "Metric Name" {
-                        name = Some(i);
-                    } else if field == "Metric Value" {
-                        value = Some(i);
-                    }
-                }
-                let (class, name, value) = (class.unwrap(), name.unwrap(), value.unwrap());
-                let mut lines = Vec::<String>::new();
-                let mut first = true;
-                for line in m.lines() {
-                    if first {
-                        first = false;
-                    } else {
-                        let fields = parse_csv_pure(line);
-                        lines.push(format!(
-                            "{},{},{}",
-                            fields[class], fields[name], fields[value]
-                        ));
-                    }
-                }
-                r.metrics = format!("{}\n", lines.iter().format("\n"));
             }
 
             // Read feature metrics file.  Note that we do not enforce the requirement of this
@@ -561,42 +523,6 @@ pub fn load_gex(
     }
     h5_paths.extend(results.iter().map(|(_, r)| r.h5_path.clone()));
 
-    // Add some metrics.
-
-    let extras = [
-        (
-            "ANTIBODY_G_perfect_homopolymer_frac",
-            "Antibody Capture,G Homopolymer Frac",
-        ),
-        (
-            "GRCh38_raw_rpc_20000_subsampled_filtered_bcs_median_unique_genes_detected",
-            "Gene Expression,GRCh38 Median genes per cell (20k raw reads per cell)",
-        ),
-        (
-            "GRCh38_raw_rpc_20000_subsampled_filtered_bcs_median_counts",
-            "Gene Expression,GRCh38 Median UMI counts per cell (20k raw reads per cell)",
-        ),
-    ];
-    for x in &extras {
-        let metric_name = x.0.to_string();
-        let metric_display_name = x.1.to_string();
-        let mut have = false;
-        for (_, result) in &results {
-            if result.json_metrics.contains_key(&metric_name) {
-                have = true;
-            }
-        }
-        if have {
-            for (_, result) in &mut results {
-                let mut value = String::new();
-                if result.json_metrics.contains_key(&metric_name) {
-                    value = format!("{:.3}", result.json_metrics[&metric_name]);
-                }
-                writeln!(result.metrics, "{metric_display_name},{value}").unwrap();
-            }
-        }
-    }
-
     for (_, r) in results {
         gex_features.push(r.gex_features);
         gex_barcodes.push(r.gex_barcodes);
@@ -609,7 +535,6 @@ pub fn load_gex(
         cell_type_specified.push(r.cell_type_specified);
         feature_metrics.push(r.feature_metrics);
         json_metrics.push(r.json_metrics);
-        metrics.push(r.metrics);
     }
 
     // Done.
