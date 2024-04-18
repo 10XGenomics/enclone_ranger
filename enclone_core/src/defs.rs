@@ -423,7 +423,6 @@ pub struct PlotOpt {
     pub plot_xy_x_log10: bool,
     pub plot_xy_y_log10: bool,
     pub plot_xy_sym: bool,
-    pub plot_colors: Vec<String>,
     pub plot_file: String,
     pub plot_by_isotype: bool,
     pub plot_by_isotype_nolegend: bool,
