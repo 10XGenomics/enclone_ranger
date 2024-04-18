@@ -301,7 +301,6 @@ pub struct GeneralOpt {
     pub summary: bool,
     pub summary_clean: bool,
     pub summary_csv: bool,
-    pub cr_version: String,
     pub nwarn: bool,
     pub gene_scan: Option<GeneScanOpts>,
     pub gene_scan_exact: bool,
