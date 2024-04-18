@@ -6,16 +6,12 @@ use debruijn::dna_string::DnaString;
 use evalexpr::Node;
 use hdf5::Dataset;
 
-use io_utils::{open_for_read, path_exists};
-
 use regex::Regex;
 use std::cmp::max;
 use std::collections::HashMap;
 
-use std::io::BufRead;
 use std::sync::atomic::AtomicBool;
 use std::time::{Instant, SystemTime};
-use string_utils::TextUtils;
 use vdj_ann::annotate::Annotation;
 use vector_utils::unique_sort;
 
@@ -84,8 +80,6 @@ pub struct OriginInfo {
     // map dataset index to map of barcode to color:
     pub barcode_color: Vec<HashMap<String, String>>,
     pub alt_bc_fields: Vec<Vec<(String, HashMap<String, String>)>>,
-    pub cells_cellranger: Vec<Option<usize>>,
-    pub mean_read_pairs_per_cell_cellranger: Vec<Option<usize>>,
     // map dataset index to a map of barcode to (secreted, membrane) UMI counts:
     pub secmem: Vec<HashMap<String, (usize, usize)>>,
 }
@@ -164,7 +158,6 @@ pub struct GeneralOpt {
     pub origin_color_map: HashMap<String, String>,
     pub accept_inconsistent: bool, // TEMPORARY!
     pub current_ref: bool,         // TEMPORARY!
-    pub internal_run: bool,
     pub full_counts: bool,
     pub html: bool,
     pub html_title: String,
@@ -206,10 +199,7 @@ pub struct GeneralOpt {
     pub info_fields: Vec<String>,
     pub info_data: HashMap<String, Vec<String>>,
     pub info_resolve: bool,
-    pub internal_data_dir: String,
     pub row_fill_verbose: bool,
-    pub config_file: String,
-    pub config: HashMap<String, String>,
     pub chains_to_align: Vec<usize>,
     pub chains_to_align2: Vec<usize>,
     pub chains_to_jun_align: Vec<usize>,
@@ -898,22 +888,4 @@ pub struct PotentialJoin<'a> {
     pub k: isize,
     pub d: isize,
     pub n: usize,
-}
-
-pub fn get_config(config_file: &str, config: &mut HashMap<String, String>) -> bool {
-    if !config_file.is_empty() {
-        let mut cf = config_file.to_string();
-        if cf.contains(':') {
-            cf = cf.after(":").to_string();
-        }
-        if path_exists(&cf) {
-            let f = open_for_read![&cf];
-            for line in f.lines() {
-                let s = line.unwrap();
-                config.insert(s.before("=").to_string(), s.after("=").to_string());
-            }
-            return true;
-        }
-    }
-    false
 }

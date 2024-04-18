@@ -22,11 +22,9 @@ pub mod stringulate;
 pub mod test_def;
 pub mod var_reg;
 
-use lazy_static::lazy_static;
 use std::cmp::max;
 use std::fmt::Write;
 use std::io::BufRead;
-use std::sync::Mutex;
 use std::time::Duration;
 
 #[cfg(not(target_os = "windows"))]
@@ -105,10 +103,6 @@ pub fn expand_integer_ranges(x: &str) -> String {
         tokens2 += token.as_str();
     }
     tokens2
-}
-
-lazy_static! {
-    pub static ref REMOTE_HOST: Mutex<Vec<String>> = Mutex::new(Vec::<String>::new());
 }
 
 // Parse a line, breaking at blanks, but not if they're in quotes.  And strip the quotes.

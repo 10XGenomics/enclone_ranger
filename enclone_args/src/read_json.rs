@@ -23,7 +23,7 @@ use vector_utils::{bin_position, erase_if, unique_sort};
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-fn json_error(json: Option<&str>, internal_run: bool, msg: &str) -> String {
+fn json_error(json: Option<&str>, msg: &str) -> String {
     let mut msgx =
         "There is something wrong with the contig annotations in the cellranger output file"
             .to_string();
@@ -32,16 +32,8 @@ fn json_error(json: Option<&str>, internal_run: bool, msg: &str) -> String {
     } else {
         msgx += ".";
     }
-    if internal_run {
-        writeln!(msgx, "\n\npossibly relevant internal data: {msg}").unwrap();
-
-        msgx += "\n\nATTENTION INTERNAL 10X USERS!\n\
-            Quite possibly you are using data from a cellranger run carried out using a \
-            version\n\
-            between 3.1 and 4.0.  For certain of these versions, it is necessary to add the\n\
-            argument CURRENT_REF to your command line.  If that doesn't work, \
-            please see below.\n";
-    }
+    msgx += "\n\n";
+    msgx += msg;
     msgx += "\n\nHere is what you should do:\n\n\
         1. If you used cellranger version ≥ 4.0, the problem is very likely\n\
         that the directory outs/vdj_reference was not retained, so enclone\n\
@@ -395,7 +387,7 @@ fn process_json_annotation(
         let rt = &refdata.refs[v_ref_id];
         if annv.len() == 2 && annv[0].match_len as usize > rt.len() {
             let msg = format!("annv[0].1 = {}, rt.len() = {}", annv[0].match_len, rt.len());
-            return Err(json_error(None, ctl.gen_opt.internal_run, &msg));
+            return Err(json_error(None, &msg));
         }
 
         // Check to see if the CDR3 sequence has changed.  This could happen if the cellranger
@@ -447,7 +439,7 @@ fn process_json_annotation(
 
     if tig_start < 0 || tig_stop < 0 {
         let msg = format!("tig_start = {tig_start}, tig_stop = {tig_stop}");
-        return Err(json_error(Some(json), ctl.gen_opt.internal_run, &msg));
+        return Err(json_error(Some(json), &msg));
     }
     let (tig_start, tig_stop) = (tig_start as usize, tig_stop as usize);
     let mut quals = ann.quals.as_bytes().to_vec();

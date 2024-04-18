@@ -99,8 +99,6 @@ CURRENT_REF: temp option to force CR 4.0 reference
 
 H5_SLICE: read GEX data slice by slice rather than preloading
 
-FORCE_EXTERNAL: do not test for internal run
-
 STABLE_DOC: print documentation in a way that it won't change when the git version changes
 
 LVARS entries
@@ -298,8 +296,6 @@ barcode, and fb1_n is the number of UMIs for that feature barcode
 
 SIM_MAT_PLOT=filename,v1,...,vn
 generate a plot of the all-vs-all per cell cosine similarity for the variables vi
-
-NO_BUG_REPORTS: don't automatically report bugs
 
 SUBSAMPLE: subsample barcodes at the indicated fraction; at present this is deliberately
            randomly seeded and so nonreproducible

@@ -22,10 +22,9 @@ use string_utils::TextUtils;
 use vdj_ann::refx;
 
 pub fn main_enclone_ranger(args: &[String]) -> Result<(), String> {
-    const REQUIRED_ARGS: [&str; 9] = [
+    const REQUIRED_ARGS: [&str; 8] = [
         "CELLRANGER",
         "DONOR_REF_FILE",
-        "FORCE_EXTERNAL",
         "MAX_CORES",
         "NOPAGER",
         "NOPRINT",
@@ -87,7 +86,6 @@ pub fn main_enclone_setup_ranger(args: &[String]) -> Result<EncloneSetup, String
 
     let mut ctl = EncloneControl::default();
     ctl.gen_opt.cellranger = true;
-    ctl.gen_opt.internal_run = false;
     for arg in args.iter().skip(1) {
         if arg.starts_with("PRE=") {
             ctl.gen_opt.pre.clear();

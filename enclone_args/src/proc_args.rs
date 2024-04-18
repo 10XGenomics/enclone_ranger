@@ -226,7 +226,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     for i in 1..args.len() {
         if args[i].starts_with("BI=") || args[i].starts_with("BIB=") || args[i].starts_with("BIP") {
             let bix = format!("{}=", args[i].before("="));
-            if !ctl.gen_opt.internal_run && !args[i].starts_with("BIP=") {
+            if !args[i].starts_with("BIP=") {
                 return Err(format!("\nUnrecognized argument {}.\n", args[i]));
             }
             let x = args[i].after(&bix).split(',').collect::<Vec<&str>>();
@@ -429,7 +429,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("INDELS", &mut ctl.gen_opt.indels),
         ("INFO_RESOLVE", &mut ctl.gen_opt.info_resolve),
         ("INKT", &mut ctl.clono_filt_opt.inkt),
-        ("INTERNAL", &mut ctl.gen_opt.internal_run),
         ("JC1", &mut ctl.gen_opt.jc1),
         ("JOIN_FULL_DIFF", &mut ctl.join_alg_opt.join_full_diff),
         ("MAIT", &mut ctl.clono_filt_opt.mait),
@@ -591,7 +590,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ),
         ("CLUSTAL_AA", &mut ctl.gen_opt.clustal_aa),
         ("CLUSTAL_DNA", &mut ctl.gen_opt.clustal_dna),
-        ("CONFIG", &mut ctl.gen_opt.config_file),
         ("EXT", &mut ctl.gen_opt.ext),
         ("GROUP_CDR3", &mut ctl.clono_group_opt.cdr3),
         ("PCHAINS", &mut ctl.parseable_opt.pchains),
@@ -646,7 +644,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         "CELLRANGER",
         "DUMP_INTERNAL_IDS",
         "EVIL_EYE",
-        "FORCE_EXTERNAL",
         "LONG_HELP",
         "MARKED_B",
         "MARK_STATS",
@@ -674,7 +671,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         "GEX",
         "HTML",
         "INTERNAL",
-        "BUG_REPORTS",
         "PRE",
         "PREPOST",
         "SOURCE",
@@ -935,11 +931,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
 
     // Do residual argument processing.
 
-    if ctl.gen_opt.internal_run && ctl.gen_opt.config.is_empty() {
-        return Err(
-            "\nYou need to set up your configuration file, please ask for help.\n".to_string(),
-        );
-    }
     if ctl.gen_opt.gamma_delta && !have_tcrgd || !ctl.gen_opt.gamma_delta && have_tcrgd {
         return Err(
             "\n. GAMMA_DELTA flag has to be enabled for using TCRGD= and vice versa.\n".to_string(),
