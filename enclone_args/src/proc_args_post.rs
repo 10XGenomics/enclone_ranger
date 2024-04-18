@@ -327,23 +327,21 @@ pub fn proc_args_post(
 
     if ctl.clono_group_opt.style == "asymmetric"
         && (ctl.clono_group_opt.asymmetric_center.is_empty()
-            || ctl.clono_group_opt.asymmetric_dist_formula.is_empty()
             || ctl.clono_group_opt.asymmetric_dist_bound.is_empty())
     {
         return Err(
             "\nIf the AGROUP option is used to specify asymmetric grouping, then all\n\
-            of the options AG_CENTER, AG_DIST_FORMULA and AG_DIST_BOUND must also be \
+            of the options AG_CENTER and AG_DIST_BOUND must also be \
             specified.\n"
                 .to_string(),
         );
     }
     if (!ctl.clono_group_opt.asymmetric_center.is_empty()
-        || !ctl.clono_group_opt.asymmetric_dist_formula.is_empty()
         || !ctl.clono_group_opt.asymmetric_dist_bound.is_empty())
         && ctl.clono_group_opt.style == "symmetric"
     {
         return Err("\nIf any of the asymmetric grouping options AG_CENTER or \
-                AG_DIST_FORMULA or\nAG_DIST_BOUND are specified, then the option AGROUP \
+                AG_DIST_BOUND are specified, then the option AGROUP \
                 must also be specified, to turn on asymmetric grouping.\n"
             .to_string());
     }
@@ -355,11 +353,6 @@ pub fn proc_args_post(
                 "\nThe only allowed forms for AG_CENTER are AG_CENTER=from_filters\n\
                 and AG_CENTER=copy_filters.\n"
                     .to_string(),
-            );
-        }
-        if ctl.clono_group_opt.asymmetric_dist_formula != "cdr3_edit_distance" {
-            return Err(
-                "\nThe only allowed form for AG_DIST_FORMULA is cdr3_edit_distance.\n".to_string(),
             );
         }
         let ok1 = ctl
