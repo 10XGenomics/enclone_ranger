@@ -576,6 +576,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
     let set_nothing_simple = [
         "DUMP_INTERNAL_IDS",
         "EVIL_EYE",
+        "FORCE_EXTERNAL",
         "LONG_HELP",
         "MARKED_B",
         "MARK_STATS",
