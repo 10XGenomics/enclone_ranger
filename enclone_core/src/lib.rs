@@ -25,7 +25,6 @@ pub mod var_reg;
 use std::cmp::max;
 use std::fmt::Write;
 use std::io::BufRead;
-use std::time::Duration;
 
 #[cfg(not(target_os = "windows"))]
 use string_utils::stringme;
@@ -134,34 +133,6 @@ pub fn parse_bsv(x: &str) -> Vec<&str> {
         i = j + 1;
     }
     args
-}
-
-pub fn fetch_url(url: &str) -> Result<String, String> {
-    const TIMEOUT: u64 = 120; // timeout in seconds
-    let req = attohttpc::get(url).read_timeout(Duration::new(TIMEOUT, 0));
-    let response = req.send();
-    if response.is_err() {
-        return Err(format!(
-            "\nFailed to access URL {url},\ntimeout after two minutes.  There are a few ways that \
-            you might have arrived at this state:\n• The server for that URL is down.\n\
-            • The server for that URL is overloaded and responding very slowly.\n\
-            • Same thing as last, and your process is slamming the server.  Please inspect \
-            your command!\n\
-            • There is a bug in this program.  This is relatively unlikely but possible.\n"
-        ));
-    }
-    let response = response.unwrap();
-    if !response.is_success() {
-        let msg = response.text().unwrap();
-        if msg.contains("Not found") {
-            return Err(format!(
-                "\nAttempt to access the URL\n{url}\nfailed with \"Not found\".  Could there \
-                be something wrong with the id?\n"
-            ));
-        }
-        return Err(format!("Failed to access URL {url}: {msg}."));
-    }
-    Ok(response.text().unwrap())
 }
 
 // Test to see if a line can be read from the given file f.  If not, return an error message
