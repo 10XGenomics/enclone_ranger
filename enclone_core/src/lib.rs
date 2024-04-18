@@ -20,9 +20,12 @@ pub mod stringulate;
 pub mod test_def;
 pub mod var_reg;
 
+use io_utils::path_exists;
 use std::cmp::max;
 use std::fmt::Write;
+use std::fs::{remove_file, File};
 use std::io::BufRead;
+use string_utils::TextUtils;
 
 #[cfg(not(target_os = "windows"))]
 use string_utils::stringme;
@@ -133,10 +136,9 @@ pub fn parse_bsv(x: &str) -> Vec<&str> {
     args
 }
 
-// Test to see if a line can be read from the given file f.  If not, return an error message
-// the references arg, which is supposed to be the name of a command line argument from which
-// f originated.
-
+/// Test to see if a line can be read from the given file f.  If not, return an error message
+/// the references arg, which is supposed to be the name of a command line argument from which
+/// f originated.
 pub fn require_readable_file(f: &str, arg: &str) -> Result<(), String> {
     let x = std::fs::File::open(f);
     if x.is_err() {
@@ -160,6 +162,36 @@ pub fn require_readable_file(f: &str, arg: &str) -> Result<(), String> {
                 the command line argument {arg}.\n",
             ));
         }
+    }
+    Ok(())
+}
+
+/// Test a file for writeability by writing and then deleting it.
+pub fn test_writeable(val: &str, evil_eye: bool) -> Result<(), String> {
+    if evil_eye {
+        println!("creating file {val} to test writability");
+    }
+    let f = File::create(val);
+    if f.is_err() {
+        let mut msgx =
+            format!("\nYou've specified an output file\n{val}\nthat cannot be written.\n");
+        if val.contains('/') {
+            let dir = val.rev_before("/");
+            let msg = if path_exists(dir) {
+                "exists"
+            } else {
+                "does not exist"
+            };
+            writeln!(msgx, "Note that the path {dir} {msg}.").unwrap();
+        }
+        return Err(msgx);
+    }
+    if evil_eye {
+        println!("removing file {val}");
+    }
+    remove_file(val).unwrap_or_else(|_| panic!("could not remove file {val}"));
+    if evil_eye {
+        println!("removal of file {val} complete");
     }
     Ok(())
 }
