@@ -582,6 +582,8 @@ pub struct ClonoPrintOpt {
     pub mean: bool, // print mean row
     pub conx: bool,
     pub conp: bool,
+    /// don't gray in per cell lines         
+    pub nogray: bool,
 }
 
 // Clonotype grouping options.
@@ -653,8 +655,6 @@ pub struct EncloneControl {
     pub plot_opt: PlotOpt,
     /// use escape characters to enhance view              
     pub pretty: bool,
-    /// don't gray in per cell lines         
-    pub nogray: bool,
     /// turn off extra logging              
     pub silent: bool,
     /// make joins even if redundant                      
