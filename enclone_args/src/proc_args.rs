@@ -567,10 +567,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
             "AG_DIST_BOUND",
             &mut ctl.clono_group_opt.asymmetric_dist_bound,
         ),
-        (
-            "AG_DIST_FORMULA",
-            &mut ctl.clono_group_opt.asymmetric_dist_formula,
-        ),
         ("CLUSTAL_AA", &mut ctl.gen_opt.clustal_aa),
         ("CLUSTAL_DNA", &mut ctl.gen_opt.clustal_dna),
         ("GROUP_CDR3", &mut ctl.clono_group_opt.cdr3),

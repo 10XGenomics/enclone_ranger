@@ -620,7 +620,6 @@ pub struct ClonoGroupOpt {
 
     // ASYMMETRIC GROUPING CONTROLS
     pub asymmetric_center: String, // definition of center for asymmetric grouping
-    pub asymmetric_dist_formula: String, // definition of distance formula for asymmetric grouping
     pub asymmetric_dist_bound: String, // definition of distance bound for asymmetric grouping
     // DEPRECATED
     pub vj_refname_strong: bool, // group by having the same VJ reference names, but stronger
