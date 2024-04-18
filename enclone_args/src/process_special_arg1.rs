@@ -15,7 +15,7 @@ use expr_tools::test_functions_in_node;
 use io_utils::path_exists;
 use itertools::Itertools;
 use std::fmt::Write;
-use std::fs::{read_to_string, remove_file, File};
+use std::fs::{remove_file, File};
 use string_utils::TextUtils;
 use vector_utils::{unique_sort, VecUtils};
 
@@ -58,32 +58,6 @@ pub fn process_special_arg1(arg: &str, ctl: &mut EncloneControl) -> Result<bool,
             return Err(format!("\nArgument {arg} is not properly specified.\n"));
         }
         ctl.gen_opt.chains_to_jun_align2.push(n.force_usize());
-    } else if arg.starts_with("STATE_NARRATIVE=") {
-        let mut narrative = arg.after("STATE_NARRATIVE=").to_string();
-        if narrative.starts_with('@') {
-            let filename = narrative.after("@");
-            if !path_exists(filename) {
-                return Err(
-                    "\nThe file referenced by your STATE_NARRATIVE argument could not be found.\n"
-                        .to_string(),
-                );
-            }
-            narrative = read_to_string(filename).unwrap();
-            ctl.gen_opt.state_narrative = narrative;
-        }
-    } else if arg.starts_with("SESSION_NARRATIVE=") {
-        let mut narrative = arg.after("SESSION_NARRATIVE=").to_string();
-        if narrative.starts_with('@') {
-            let filename = narrative.after("@");
-            if !path_exists(filename) {
-                return Err(
-                    "\nThe file referenced by your SESSION_NARRATIVE argument could not be found.\n"
-                    .to_string()
-                );
-            }
-            narrative = read_to_string(filename).unwrap();
-            ctl.gen_opt.session_narrative = narrative;
-        }
     } else if arg.starts_with("JOIN_BASIC=") {
         let val = arg.after("JOIN_BASIC=");
         if val.parse::<f64>().is_err() || val.force_f64() < 0.0 || val.force_f64() > 100.0 {
