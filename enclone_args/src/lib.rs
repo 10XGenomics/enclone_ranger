@@ -1,8 +1,6 @@
 // Copyright (c) 2021 10x Genomics, Inc. All rights reserved.
 #![allow(clippy::needless_range_loop)]
 
-use io_utils::path_exists;
-
 pub mod load_gex;
 pub mod load_gex_core;
 pub mod load_gex_util;
@@ -40,12 +38,4 @@ pub fn parse_csv_pure(x: &str) -> Vec<&str> {
         y.push("");
     }
     y
-}
-
-pub fn fnx(outs: &str, name: &str) -> String {
-    let mut file = format!("{outs}/../{name}");
-    if !path_exists(&file) {
-        file = format!("{outs}/{name}");
-    }
-    file
 }

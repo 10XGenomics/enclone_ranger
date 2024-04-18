@@ -6,14 +6,14 @@ use crate::load_gex_util::{
     find_cluster_file, find_feature_metrics_file, find_json_metrics_file, find_metrics_file,
     find_pca_file,
 };
-use crate::{fnx, parse_csv_pure};
+use crate::parse_csv_pure;
 use enclone_core::defs::EncloneControl;
 use enclone_core::slurp::slurp_h5;
 use io_utils::{dir_list, open_for_read, open_userfile_for_read, path_exists};
 use itertools::Itertools;
 use rayon::prelude::*;
 use serde_json::Value;
-use std::{collections::HashMap, fmt::Write, fs::read_to_string, io::BufRead};
+use std::{collections::HashMap, fmt::Write, io::BufRead};
 use string_utils::{parse_csv, TextUtils};
 use vector_utils::{unique_sort, VecUtils};
 
@@ -33,14 +33,12 @@ struct LoadResult {
     feature_metrics: HashMap<(String, String), String>,
     json_metrics: HashMap<String, f64>,
     metrics: String,
-    feature_refs: String,
 }
 
 pub fn load_gex(
     ctl: &mut EncloneControl,
     gex_features: &mut Vec<Vec<String>>,
     gex_barcodes: &mut Vec<Vec<String>>,
-    feature_refs: &mut Vec<String>,
     cluster: &mut Vec<HashMap<String, usize>>,
     cell_type: &mut Vec<HashMap<String, String>>,
     cell_type_specified: &mut Vec<bool>,
@@ -530,13 +528,6 @@ pub fn load_gex(
             r.gex_mult = gene_mult;
             r.fb_mult = fb_mult;
 
-            // Read the feature reference file.
-
-            let fref_file = fnx(&outs, "feature_reference.csv");
-            if path_exists(&fref_file) {
-                r.feature_refs = read_to_string(&fref_file).unwrap();
-            }
-
             // Read the feature barcode matrix file.
             if let Err(err) = slurp_h5(
                 &h5_path,
@@ -619,7 +610,6 @@ pub fn load_gex(
         feature_metrics.push(r.feature_metrics);
         json_metrics.push(r.json_metrics);
         metrics.push(r.metrics);
-        feature_refs.push(r.feature_refs);
     }
 
     // Done.
