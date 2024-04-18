@@ -31,7 +31,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
     let mut h5_paths = Vec::<String>::new();
     let mut feature_metrics = Vec::<HashMap<(String, String), String>>::new();
     let mut json_metrics = Vec::<HashMap<String, f64>>::new();
-    let mut metrics = Vec::<String>::new();
     load_gex(
         ctl,
         &mut gex_features,
@@ -48,7 +47,6 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
         &mut h5_paths,
         &mut feature_metrics,
         &mut json_metrics,
-        &mut metrics,
     )?;
     if ctl.gen_opt.gene_scan.is_some() && !ctl.gen_opt.accept_inconsistent {
         let mut allf = gex_features.clone();
@@ -151,6 +149,5 @@ pub fn get_gex_info(ctl: &mut EncloneControl) -> Result<GexInfo, String> {
         have_fb,
         feature_metrics,
         json_metrics,
-        metrics,
     })
 }
