@@ -30,7 +30,6 @@ struct LoadResult {
     cell_type_specified: bool,
     error: String,
     h5_path: String,
-    f15: Vec<String>,
     feature_metrics: HashMap<(String, String), String>,
     json_metrics: HashMap<String, f64>,
     metrics: String,
@@ -70,7 +69,6 @@ pub fn load_gex(
     //    somehow the parallelism is not working.
     // 2. We know where the time is spent in the loop, and this is marked below.
     results.par_iter_mut().for_each(|(i, r)| {
-        let pathlist = &mut r.f15;
         let i = *i;
         if !gex_outs[i].is_empty() {
             // First define the path where the GEX files should live, and make sure that the path
@@ -102,7 +100,6 @@ pub fn load_gex(
             for x in &h5p {
                 let p = format!("{outs}/{x}");
                 if path_exists(&p) {
-                    pathlist.push(p.clone());
                     h5_path = p;
                     break;
                 }
@@ -141,13 +138,13 @@ pub fn load_gex(
 
             // Find files.
 
-            let pca_file = find_pca_file(&analysis, pathlist);
-            let cluster_file = find_cluster_file(&analysis, pathlist);
+            let pca_file = find_pca_file(&analysis);
+            let cluster_file = find_cluster_file(&analysis);
 
             let (json_metrics_file, feature_metrics_file, metrics_file) = if !ctl.cr_opt.cellranger {(
-                find_json_metrics_file(&analysis, pathlist),
-                find_feature_metrics_file(&analysis, pathlist),
-                find_metrics_file(&outs, pathlist)
+                find_json_metrics_file(&analysis),
+                find_feature_metrics_file(&analysis),
+                find_metrics_file(&outs)
             )} else {
                 Default::default()
             };
@@ -173,7 +170,6 @@ pub fn load_gex(
                     );
                     return;
                 }
-                pathlist.push(f.to_string());
             }
 
             // Find metrics summary file.
@@ -195,7 +191,6 @@ pub fn load_gex(
             for c in &csvs {
                 if path_exists(c) {
                     csv = c.clone();
-                    pathlist.push(c.to_string());
                     break;
                 }
             }
@@ -211,7 +206,6 @@ pub fn load_gex(
             // Read cell types.
 
             if path_exists(&types_file) {
-                pathlist.push(types_file.clone());
                 let f = open_userfile_for_read(&types_file);
                 let mut count = 0;
                 for line in f.lines() {
@@ -540,7 +534,6 @@ pub fn load_gex(
 
             let fref_file = fnx(&outs, "feature_reference.csv");
             if path_exists(&fref_file) {
-                pathlist.push(fref_file.clone());
                 r.feature_refs = read_to_string(&fref_file).unwrap();
             }
 
