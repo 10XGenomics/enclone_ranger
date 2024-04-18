@@ -576,7 +576,6 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("CLUSTAL_DNA", &mut ctl.gen_opt.clustal_dna),
         ("GROUP_CDR3", &mut ctl.clono_group_opt.cdr3),
         ("PCHAINS", &mut ctl.parseable_opt.pchains),
-        ("SESSION_NAME", &mut ctl.gen_opt.session_name),
         ("TRACE_BARCODE", &mut ctl.gen_opt.trace_barcode),
     ];
 
