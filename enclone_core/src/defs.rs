@@ -283,7 +283,6 @@ pub struct GeneralOpt {
     pub accept_reuse: bool,
     pub descrip: bool,
     pub ext: String,
-    pub extc: HashMap<(String, String), String>,
     pub extn: HashMap<String, usize>,
     pub mouse: bool,
     pub noprint: bool,
