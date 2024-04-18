@@ -880,11 +880,7 @@ pub fn main_enclone_start(
             join_info,
             drefs,
             sr,
-            allele_data: AlleleData {
-                alt_refs,
-                var_pos: Vec::new(),
-                var_bases: Vec::new(),
-            },
+            allele_data: AlleleData { alt_refs },
         },
         fate,
     ))
