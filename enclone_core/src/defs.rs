@@ -539,7 +539,6 @@ pub struct ClonoFiltOpt {
     pub cdr3: Option<Regex>, // only show clonotypes whose CDR3_AA matches regular expression
     pub cdr3_lev: String,    // only show clonotypes whose CDR3_AA matches Levenshtein dist pattern
     pub protect_bads: bool,  // protect bads from deletion
-    pub fail_only: bool,     // only print fails
     pub seg: Vec<Vec<String>>, // only show clonotypes using one of these VDJ segment names
     pub segn: Vec<Vec<String>>, // only show clonotypes using one of these VDJ segment numbers
     pub nseg: Vec<Vec<String>>, // do not show clonotypes using one of these VDJ segment names

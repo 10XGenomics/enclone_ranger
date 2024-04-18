@@ -511,9 +511,6 @@ pub fn survives_filter(
         })
         .collect::<Vec<_>>();
     unique_sort(&mut donors);
-    if ctl.clono_filt_opt.fail_only && donors.len() <= 1 {
-        return false;
-    }
 
     // Inconsistent D genes.
 
