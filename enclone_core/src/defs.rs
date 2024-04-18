@@ -282,8 +282,6 @@ pub struct GeneralOpt {
     pub h5_pre: bool,
     pub accept_reuse: bool,
     pub descrip: bool,
-    pub ext: String,
-    pub extn: HashMap<String, usize>,
     pub mouse: bool,
     pub noprint: bool,
     pub noprintx: bool,

@@ -80,13 +80,6 @@ expanded out.
 CELLRANGER: for use if called from cellranger -- changes failure message and prevents exit
             upon normal completion
 
-EXT=filename:
-Given output of an external clonotyping algorithm which took as inputs the pipeline outputs
-for the lenas in enclone.testdata, for each exact subclonotype found by enclone, report its
-composition in the external clonotyping, as clonotype_id[count], ...
-The input file should have lines of the form:
-sample barcode clonotype_id.
-
 SUMMARY_CLEAN: if SUMMARY specified, don't show computational performance stats, so
 we can regress on output
 
