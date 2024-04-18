@@ -1,14 +1,12 @@
 // Copyright (c) 2021 10X Genomics, Inc. All rights reserved.
 
-use crate::proc_args2::{
-    is_f64_arg, is_i32_arg, is_simple_arg, is_string_arg, is_usize_arg, test_writeable,
-};
+use crate::proc_args2::{is_f64_arg, is_i32_arg, is_simple_arg, is_string_arg, is_usize_arg};
 use crate::proc_args_post::proc_args_post;
 use crate::process_special_arg1::process_special_arg1;
 use crate::process_special_arg2::process_special_arg2;
 use enclone_core::defs::{ClonotypeHeuristics, EncloneControl};
 use enclone_core::test_def::replace_at_test;
-use enclone_core::{require_readable_file, tilde_expand_me};
+use enclone_core::{require_readable_file, test_writeable, tilde_expand_me};
 use itertools::Itertools;
 use std::fmt::Write;
 use std::process::Command;

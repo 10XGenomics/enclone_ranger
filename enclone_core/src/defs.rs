@@ -2,8 +2,8 @@
 
 use crate::cell_color::CellColor;
 use crate::linear_condition::LinearCondition;
-use crate::tilde_expand_me;
-use anyhow::Result;
+use crate::{require_readable_file, test_writeable, tilde_expand_me};
+use anyhow::{anyhow, ensure, Result};
 use debruijn::dna_string::DnaString;
 use evalexpr::Node;
 use hdf5::Dataset;
@@ -171,37 +171,37 @@ impl CellrangerOpt {
             let arg_name = pieces.next().unwrap();
             let mut get_rest = || {
                 let result = pieces.join("=");
-                assert!(!result.is_empty(), "no value provided for {arg_name}");
-                result
+                ensure!(!result.is_empty(), "no value provided for {arg_name}");
+                Ok(result)
             };
             match arg_name {
                 "CELLRANGER" => {
                     cr_opts.cellranger = true;
                 }
                 "PRE" => {
-                    cr_opts.pre = get_rest().split(',').map(str::to_string).collect();
+                    cr_opts.pre = get_rest()?.split(',').map(str::to_string).collect();
                 }
                 "REF" => {
-                    cr_opts.refname = get_rest();
+                    cr_opts.refname = ensure_readable_file(get_rest()?, arg_name)?;
                 }
                 "META" => {
-                    for meta in get_rest().split(',') {
+                    for meta in get_rest()?.split(',') {
                         let mut f = meta.to_string();
                         tilde_expand_me(&mut f);
                         cr_opts.metas.push(f);
                     }
                 }
                 "DONOR_REF_FILE" => {
-                    cr_opts.dref_file = get_rest();
+                    cr_opts.dref_file = ensure_writable_file(get_rest()?)?;
                 }
                 "PROTO" => {
-                    cr_opts.proto = get_rest();
+                    cr_opts.proto = ensure_writable_file(get_rest()?)?;
                 }
                 "PROTO_METADATA" => {
-                    cr_opts.proto_metadata = get_rest();
+                    cr_opts.proto_metadata = ensure_readable_file(get_rest()?, arg_name)?;
                 }
                 "FATE_FILE" => {
-                    cr_opts.fate_file = get_rest();
+                    cr_opts.fate_file = ensure_writable_file(get_rest()?)?;
                 }
                 "GAMMA_DELTA" => {
                     cr_opts.gamma_delta = true;
@@ -228,27 +228,28 @@ impl CellrangerOpt {
                     cr_opts.signature = false;
                 }
                 _ => {
-                    // FIXME
                     unused_args.push(arg.clone());
                 }
             }
         }
         Ok((cr_opts, unused_args))
     }
+}
 
-    /// Validate parsed options.
-    pub fn validate(&self) -> Result<()> {
-        if !self.dref_file.is_empty() {
-            // TODO: test writability
-        }
-        if !self.fate_file.is_empty() {
-            // TODO: test writability
-        }
-        if !self.refname.is_empty() {
-            // TODO: check readability
-        }
-        Ok(())
-    }
+/// Ensure that a path points to a readable file.
+/// Expand ~ into home directories.
+fn ensure_readable_file(mut path: String, arg: &str) -> Result<String> {
+    tilde_expand_me(&mut path);
+    require_readable_file(&path, arg).map_err(|e| anyhow!(e))?;
+    Ok(path)
+}
+
+/// Ensure that we can write to a path by writing an empty file there.
+/// Expand ~ into home directories.
+fn ensure_writable_file(mut path: String) -> Result<String> {
+    tilde_expand_me(&mut path);
+    test_writeable(&path, false).map_err(|e| anyhow!(e))?;
+    Ok(path)
 }
 
 // Miscellaneous general options.
