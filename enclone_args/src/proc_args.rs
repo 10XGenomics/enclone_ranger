@@ -393,7 +393,10 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("CONP", &mut ctl.clono_print_opt.conp),
         ("CONX", &mut ctl.clono_print_opt.conx),
         ("CURRENT_REF", &mut ctl.gen_opt.current_ref),
-        ("DEBUG_TABLE_PRINTING", &mut ctl.debug_table_printing),
+        (
+            "DEBUG_TABLE_PRINTING",
+            &mut ctl.clono_print_opt.debug_table_printing,
+        ),
         ("DEL", &mut ctl.clono_filt_opt.del),
         ("DESCRIP", &mut ctl.gen_opt.descrip),
         ("D_INCONSISTENT", &mut ctl.clono_filt_opt.d_inconsistent),

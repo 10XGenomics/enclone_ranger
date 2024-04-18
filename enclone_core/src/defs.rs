@@ -584,6 +584,8 @@ pub struct ClonoPrintOpt {
     pub conp: bool,
     /// don't gray in per cell lines         
     pub nogray: bool,
+    /// turn on debugging for table printing           
+    pub debug_table_printing: bool,
 }
 
 // Clonotype grouping options.
@@ -659,8 +661,6 @@ pub struct EncloneControl {
     pub silent: bool,
     /// make joins even if redundant                      
     pub force: bool,
-    /// turn on debugging for table printing           
-    pub debug_table_printing: bool,
     /// merge all improper exact subclonotypes       
     pub merge_all_impropers: bool,
     /// algorithmic heuristics             
