@@ -13,7 +13,7 @@ use enclone_core::defs::{
 use enclone_core::enclone_structs::BarcodeFates;
 use io_utils::{fwriteln, open_for_write_new};
 use rayon::prelude::*;
-use std::cmp::{max, min};
+use std::cmp::min;
 
 use std::fmt::Write as _;
 use std::io::Write;
@@ -34,7 +34,7 @@ struct Fate {
 /// given exact subclonotype, the same first or last half of a barcode is reused, and one
 /// instance has at least 10-fold higher UMI count.  If the fraction of the "bad"
 /// clones is at least 20%, delete them.
-pub fn filter_gelbead_contamination(
+fn filter_gelbead_contamination(
     ctl: &EncloneControl,
     clones: &mut Vec<Vec<TigData0>>,
     fate: &mut Vec<Fate>,
@@ -415,10 +415,8 @@ pub fn find_exact_subclonotypes(
         .collect();
 
     let mut exact_clonotypes = Vec::<ExactClonotype>::new();
-    let mut max_exact = 0;
     for r in results {
         if let Some(exact_clonotype) = r.0 {
-            max_exact = max(max_exact, exact_clonotype.ncells());
             exact_clonotypes.push(exact_clonotype);
         }
         for f in r.1 {
@@ -435,6 +433,11 @@ pub fn find_exact_subclonotypes(
             exact_clonotypes.len(),
             tig_bc.len()
         );
+        let max_exact = exact_clonotypes
+            .iter()
+            .map(ExactClonotype::ncells)
+            .max()
+            .unwrap_or_default();
         println!("max exact subclonotype size = {max_exact}");
     }
 
