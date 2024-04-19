@@ -2,7 +2,7 @@
 
 // Miscellaneous functions.
 
-use enclone_core::defs::{EncloneControl, ExactClonotype, TigData, TigData0, TigData1};
+use enclone_core::defs::{ExactClonotype, TigData, TigData0, TigData1};
 use io_utils::{fwrite, fwriteln};
 use itertools::Itertools;
 use std::cmp::{max, min, Ordering};
@@ -10,8 +10,6 @@ use std::io::Write;
 use string_utils::strme;
 use vdj_ann::refx::RefData;
 use vector_utils::unique_sort;
-
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn sort_tig_bc(tig_bc: &mut [Vec<TigData>], refdata: &RefData, mix_donors: bool) {
     tig_bc.sort_by(|x, y| -> Ordering {
@@ -91,27 +89,25 @@ pub fn sort_tig_bc(tig_bc: &mut [Vec<TigData>], refdata: &RefData, mix_donors: b
     });
 }
 
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-
-// Exploratory code to understand exact subclonotype consensus formation.
-//
-// 1. Not clear if we want to do this for exact subclonotypes or for clonotypes.
-// 2. Or should we be computing by UTR?
-// 3. And should we set this aside as not needing to be solved now? ***************
-//
-// - might be nice to show forward instead of reverse
-// - don't show the most trivial case with one UTR and all agree
-// - find code simplifications.
-
+/// Exploratory code to understand exact subclonotype consensus formation.
+///
+/// 1. Not clear if we want to do this for exact subclonotypes or for clonotypes.
+/// 2. Or should we be computing by UTR?
+/// 3. And should we set this aside as not needing to be solved now? ***************
+///
+/// - might be nice to show forward instead of reverse
+/// - don't show the most trivial case with one UTR and all agree
+/// - find code simplifications.
 pub fn study_consensus(
-    count: &mut usize,
-    ctl: &EncloneControl,
+    utr_con: bool,
+    con_con: bool,
     share: &[TigData1],
     clones: &[Vec<TigData0>],
     exact_clonotypes: &[ExactClonotype],
     refdata: &RefData,
 ) {
-    if ctl.gen_opt.utr_con {
+    let mut count = 0;
+    if utr_con {
         for z in 0..clones[0].len() {
             let mut log = Vec::<u8>::new();
             let (mut utr_ids, mut v_ids) = (Vec::<usize>::new(), Vec::<usize>::new());
@@ -127,7 +123,7 @@ pub fn study_consensus(
                 log,
                 "\n[{}] rev lefts for exact subclonotype {}, chain {}, \
                  vs = {}, utrs = {}, cdr3 = {}\n",
-                *count + 1,
+                count + 1,
                 exact_clonotypes.len(),
                 z,
                 v_ids.iter().format(","),
@@ -197,11 +193,11 @@ pub fn study_consensus(
             }
             if !(minlen == maxlen && diffs == 0 && utr_ids.len() == 1) {
                 print!("{}", strme(&log));
-                *count += 1;
+                count += 1;
             }
         }
     }
-    if ctl.gen_opt.con_con && !clones.is_empty() {
+    if con_con && !clones.is_empty() {
         // ???????????????????????????????????????
         // NOTE TRUNCATED TO 120 BASES!
         const SHOW: usize = 120;
@@ -212,7 +208,7 @@ pub fn study_consensus(
             fwriteln!(
                 log,
                 "\n[{}] rights for exact subclonotype {}, chain {}, cs = {:?}\n",
-                *count + 1,
+                count + 1,
                 exact_clonotypes.len(),
                 z,
                 c_ref_ids.iter().format(",")
@@ -310,7 +306,7 @@ pub fn study_consensus(
             }
             // if !( minlen == maxlen && diffs == 0 && utr_ids.len() == 1 ) {
             print!("{}", strme(&log));
-            *count += 1;
+            count += 1;
             // }
         }
     }

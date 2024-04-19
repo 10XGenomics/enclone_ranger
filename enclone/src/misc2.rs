@@ -398,10 +398,16 @@ pub fn find_exact_subclonotypes(
         let mut clones = Vec::<Vec<TigData0>>::new();
         create_exact_subclonotype_core(tig_bc, r, s, &to_delete, &mut share, &mut clones);
 
+        // NOCR
         // Explore consensus.
-
-        let mut count = 0;
-        study_consensus(&mut count, ctl, &share, &clones, &exact_clonotypes, refdata);
+        study_consensus(
+            ctl.gen_opt.utr_con,
+            ctl.gen_opt.con_con,
+            &share,
+            &clones,
+            &exact_clonotypes,
+            refdata,
+        );
 
         // Filter out putative gel bead contamination.
 
