@@ -577,7 +577,7 @@ pub fn check_one_lvar(
                 specified = true;
             }
         }
-        if !ctl.gen_opt.internal_run && !x.is_empty() {
+        if !x.is_empty() {
             return Err(format!(
                 "\nUnrecognized variable {x} for LVARS or PCOLS.  Please type \
                  \"enclone help lvars\".\n"

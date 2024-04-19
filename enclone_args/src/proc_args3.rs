@@ -3,25 +3,21 @@
 // This file contains the two functions proc_xcr and proc_meta.
 
 use enclone_core::defs::{EncloneControl, OriginInfo};
-use enclone_core::{expand_integer_ranges, fetch_url, tilde_expand_me};
-use io_utils::{dir_list, open_for_read, open_for_write_new, open_userfile_for_read, path_exists};
+use enclone_core::{expand_integer_ranges, tilde_expand_me};
+use io_utils::{dir_list, open_for_read, open_userfile_for_read, path_exists};
 use itertools::Itertools;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::fmt::Write as _;
 use std::fs::File;
-use std::io::{BufRead, BufReader, Read, Write};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::Arc;
-use std::thread;
-use std::time;
+use std::io::{BufRead, BufReader, Read};
 
 use string_utils::TextUtils;
 use vector_utils::unique_sort;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String> {
+fn expand_analysis_sets(x: &str) -> Result<String, String> {
     let mut tokens = Vec::<String>::new();
     let mut token = String::new();
     for c in x.chars() {
@@ -41,63 +37,7 @@ fn expand_analysis_sets(x: &str, ctl: &EncloneControl) -> Result<String, String>
     let mut tokens2 = Vec::<String>::new();
     for token in tokens {
         if let Some(setid) = token.strip_prefix('S') {
-            if ctl.gen_opt.internal_run {
-                let url = format!("{}/{setid}", ctl.gen_opt.config["sets"]);
-                let m = fetch_url(&url)?;
-                if m.contains("\"analysis_ids\":[") {
-                    let ids = m.between("\"analysis_ids\":[", "]");
-                    let mut ids = ids.replace(' ', "");
-                    ids = ids.replace('\n', "");
-                    let ids = ids.split(',');
-                    let mut ids2 = Vec::<&str>::new();
-
-                    // Remove wiped analysis IDs.
-
-                    for id in ids {
-                        let url = format!("{}/{id}", ctl.gen_opt.config["ones"]);
-                        let m = fetch_url(&url)?;
-                        if m.contains("502 Bad Gateway") {
-                            return Err(format!(
-                                "\nWell, this is sad.  The URL \
-                                {url} returned a 502 Bad Gateway \
-                                message.  Please try again later or ask someone for help.\n"
-                            ));
-                        }
-                        if !m.contains("\"wiped\"") {
-                            ids2.push(id);
-                        }
-                    }
-                    let mut enclone = "~/enclone".to_string();
-                    tilde_expand_me(&mut enclone);
-                    if path_exists(&enclone) {
-                        let mut sets = "~/enclone/sets".to_string();
-                        tilde_expand_me(&mut sets);
-                        if !path_exists(&sets) {
-                            std::fs::create_dir(&sets).unwrap();
-                            let mut setid = format!("~/enclone/sets/{setid}");
-                            tilde_expand_me(&mut setid);
-                            if !path_exists(&setid) {
-                                let mut f = open_for_write_new![&setid];
-                                let s = format!("{}\n", ids2.iter().format(","));
-                                f.write_all(s.as_bytes()).unwrap();
-                            }
-                        }
-                    }
-
-                    // Proceed.
-
-                    for (j, id) in ids2.into_iter().enumerate() {
-                        if j > 0 {
-                            tokens2.push(",".to_string());
-                        }
-                        tokens2.push(id.to_string());
-                    }
-                    continue;
-                }
-                return Err(format!(
-                    "\nIt looks like you've provided an incorrect analysis set ID {setid}.\n"
-                ));
-            } else if setid.parse::<usize>().is_ok() {
+            if setid.parse::<usize>().is_ok() {
                 let mut set_file = format!("~/enclone/sets/{setid}");
                 tilde_expand_me(&mut set_file);
                 if path_exists(&set_file) {
@@ -187,104 +127,14 @@ fn get_path(p: &str, ctl: &EncloneControl, ok: &mut bool) -> String {
     pp
 }
 
-fn get_path_or_internal_id(
-    p: &str,
-    ctl: &EncloneControl,
-    source: &str,
-    spinlock: &Arc<AtomicUsize>,
-) -> Result<String, String> {
+fn get_path_or_internal_id(p: &str, ctl: &EncloneControl, source: &str) -> Result<String, String> {
     if ctl.gen_opt.evil_eye {
         println!("getting path for {p}");
     }
     let mut ok = false;
     let mut pp = get_path(p, ctl, &mut ok);
     if !ok {
-        if !ctl.gen_opt.internal_run {
-            get_path_fail(&pp, ctl, source)?;
-        } else {
-            // For internal runs, try much harder.  This is so that internal users can
-            // just type an internal numerical id for a dataset and have it always
-            // work.  The code that's used here should be placed somewhere else.
-
-            let mut q = p.to_string();
-            if q.contains('/') {
-                q = q.before("/").to_string();
-            }
-            if q.parse::<usize>().is_ok() {
-                if !ctl.gen_opt.config.contains_key("ones") {
-                    let mut msg = "\nSomething is wrong.  This is an internal run, but \
-                        the configuration\nvariable \"ones\" is undefined.\n"
-                        .to_string();
-                    if ctl.gen_opt.config.is_empty() {
-                        msg += "In fact, there are no configuration variables.\n";
-                    } else {
-                        msg += "Here are the configuration variables that are defined:\n\n";
-                        for (key, value) in &ctl.gen_opt.config {
-                            write!(msg, "{key} = {value}").unwrap();
-                        }
-                        msg += "\n";
-                    }
-                    return Err(msg);
-                }
-                let url = format!("{}/{q}", ctl.gen_opt.config["ones"]);
-                // We force single threading around the https access because we observed
-                // intermittently very slow access without it.
-                while spinlock.load(Ordering::SeqCst) != 0 {}
-                spinlock.store(1, Ordering::SeqCst);
-                let m = fetch_url(&url)?;
-                spinlock.store(0, Ordering::SeqCst);
-                if m.contains("502 Bad Gateway") {
-                    return Err(format!(
-                        "\nWell this is sad.  The URL \
-                        {url} yielded a 502 Bad Gateway \
-                        message.  Please try again later or ask someone for help.\n"
-                    ));
-                }
-                if m.contains("\"path\":\"") {
-                    let path = m.between("\"path\":\"", "\"");
-                    if !p.contains('/') {
-                        pp = format!("{path}/outs");
-                    } else {
-                        pp = format!("{path}/{}", p.after("/"));
-                    }
-                    if !path_exists(&pp) {
-                        thread::sleep(time::Duration::from_millis(100));
-                        if path_exists(&pp) {
-                            return Err(format!(
-                                "\nYou are experiencing unstable filesystem access: \
-                                100 milliseconds ago, \
-                                the path\n\
-                                {pp}\nwas not visible, but now it is.  You might consider posting \
-                                this problem on an appropriate \
-                                the slack channel.\nOr retry again.  enclone is \
-                                giving up because \
-                                if filesystem access blinks in and out of existence,\n\
-                                other more cryptic events are likely to occur.\n"
-                            ));
-                        }
-                        return Err(format!(
-                            "\nIt looks like you've provided an analysis ID for \
-                                which the pipeline outs folder\n{p}\nhas not yet been generated.\n\
-                                This path did not exist:\n{pp}\n\n\
-                                Here is the stdout:\n{m}\n"
-                        ));
-                    }
-                } else {
-                    return Err(format!(
-                        "\nIt looks like you've provided either an incorrect \
-                        analysis ID {p} or else one for which\n\
-                        the pipeline outs folder has not yet been generated.\n\
-                        This URL\n{url}\ndid not provide a path.\n"
-                    ));
-                }
-            } else {
-                return Err(format!(
-                    "\nAfter searching high and low, your path\n{p}\nfor {source} \
-                    cannot be found.\nPlease check its value and also the value \
-                    for PRE if you provided that.\n"
-                ));
-            }
-        }
+        get_path_fail(&pp, ctl, source)?;
     }
     if !pp.ends_with("/outs") && path_exists(format!("{pp}/outs")) {
         pp = format!("{pp}/outs");
@@ -314,9 +164,8 @@ fn parse_bc(mut bc: String, ctl: &mut EncloneControl, call_type: &str) -> Result
     let mut tag = HashMap::<String, String>::new();
     let mut barcode_color = HashMap::<String, String>::new();
     let mut alt_bc_fields = Vec::<(String, HashMap<String, String>)>::new();
-    let spinlock: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     if !bc.is_empty() {
-        bc = get_path_or_internal_id(&bc, ctl, call_type, &spinlock)?;
+        bc = get_path_or_internal_id(&bc, ctl, call_type)?;
         let f = open_userfile_for_read(&bc);
         let mut first = true;
         let mut fieldnames = Vec::<String>::new();
@@ -464,14 +313,14 @@ pub fn proc_xcr(
         ));
     }
     let val = expand_integer_ranges(val);
-    let val = expand_analysis_sets(&val, ctl)?;
+    let val = expand_analysis_sets(&val)?;
     let donor_groups = if ctl.gen_opt.cellranger {
         vec![&val[..]]
     } else {
         val.split(';').collect::<Vec<&str>>()
     };
     let mut gex2 = expand_integer_ranges(gex);
-    gex2 = expand_analysis_sets(&gex2, ctl)?;
+    gex2 = expand_analysis_sets(&gex2)?;
     let donor_groups_gex = if ctl.gen_opt.cellranger {
         vec![&gex2[..]]
     } else {
@@ -634,10 +483,9 @@ pub fn proc_xcr(
         }
     }
 
-    let spinlock: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
     results.par_iter_mut().for_each(|res| {
         let (p, pg) = (&mut res.0, &mut res.1);
-        let resx = get_path_or_internal_id(p, ctl, source, &spinlock);
+        let resx = get_path_or_internal_id(p, ctl, source);
         match resx {
             Err(resx) => res.3 = resx,
             Ok(resx) => {
@@ -655,7 +503,7 @@ pub fn proc_xcr(
                     *p = format!("{p}/multi/vdj_t");
                 }
                 if have_gex {
-                    let resx = get_path_or_internal_id(pg, ctl, "GEX", &spinlock);
+                    let resx = get_path_or_internal_id(pg, ctl, "GEX");
                     match resx {
                         Err(resx) => res.3 = resx,
                         Ok(resx) => {
@@ -800,8 +648,7 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
 
             parse_bc(bc.clone(), ctl, "META")?;
             let current_ref = false;
-            let spinlock: Arc<AtomicUsize> = Arc::new(AtomicUsize::new(0));
-            path = get_path_or_internal_id(&path, ctl, "META", &spinlock)?;
+            path = get_path_or_internal_id(&path, ctl, "META")?;
             if ctl.gen_opt.bcr && path_exists(format!("{path}/vdj_b")) {
                 path = format!("{path}/vdj_b");
             }
@@ -821,7 +668,7 @@ pub fn proc_meta_core(lines: &[String], ctl: &mut EncloneControl) -> Result<(), 
                 path = format!("{path}/multi/vdj_t_gd");
             }
             if !gpath.is_empty() {
-                gpath = get_path_or_internal_id(&gpath, ctl, "META", &spinlock)?;
+                gpath = get_path_or_internal_id(&gpath, ctl, "META")?;
                 if path_exists(format!("{gpath}/count")) {
                     gpath = format!("{gpath}/count");
                 }

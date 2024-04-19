@@ -445,7 +445,6 @@ dependencies = [
  "amino",
  "ansi_escape",
  "anyhow",
- "attohttpc",
  "bio_edit",
  "debruijn",
  "enclone_proto",

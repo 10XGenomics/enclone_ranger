@@ -8,7 +8,7 @@ use enclone_core::tilde_expand_me;
 use enclone_vars::encode_arith;
 use evalexpr::build_operator_tree;
 use expr_tools::vars_of_node;
-use io_utils::{open_for_read, open_userfile_for_read, path_exists};
+use io_utils::{open_for_read, open_userfile_for_read};
 use std::collections::HashMap;
 use std::io::BufRead;
 
@@ -557,56 +557,6 @@ pub fn proc_args_post(
     }
 
     // Proceed.
-
-    for i in 0..ctl.origin_info.n() {
-        let (mut cells_cr, mut rpc_cr) = (None, None);
-        if ctl.gen_opt.internal_run {
-            let p = &ctl.origin_info.dataset_path[i];
-            let mut f = format!("{p}/metrics_summary_csv.csv");
-            if !path_exists(&f) {
-                f = format!("{p}/metrics_summary.csv");
-            }
-            if path_exists(&f) {
-                let f = open_userfile_for_read(&f);
-                let mut count = 0;
-                let (mut cells_field, mut rpc_field) = (None, None);
-                for line in f.lines() {
-                    count += 1;
-                    let s = line.unwrap();
-                    let fields = parse_csv(&s);
-                    for (i, x) in fields.iter().enumerate() {
-                        if count == 1 {
-                            if *x == "Estimated Number of Cells" {
-                                cells_field = Some(i);
-                            } else if *x == "Mean Read Pairs per Cell" {
-                                rpc_field = Some(i);
-                            }
-                        } else if count == 2 {
-                            if Some(i) == cells_field {
-                                let mut n = x.to_string();
-                                if n.contains('\"') {
-                                    n = n.between("\"", "\"").to_string();
-                                }
-                                n = n.replace(',', "");
-                                cells_cr = Some(n.force_usize());
-                            } else if Some(i) == rpc_field {
-                                let mut n = x.to_string();
-                                if n.contains('\"') {
-                                    n = n.between("\"", "\"").to_string();
-                                }
-                                n = n.replace(',', "");
-                                rpc_cr = Some(n.force_usize());
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        ctl.origin_info.cells_cellranger.push(cells_cr);
-        ctl.origin_info
-            .mean_read_pairs_per_cell_cellranger
-            .push(rpc_cr);
-    }
     if ctl.plot_opt.plot_by_isotype {
         if using_plot || ctl.plot_opt.use_legend {
             return Err("\nPLOT_BY_ISOTYPE cannot be used with PLOT or LEGEND.\n".to_string());
