@@ -2,7 +2,7 @@
 
 // Miscellaneous functions.
 
-use enclone_core::defs::{ExactClonotype, TigData, TigData0, TigData1};
+use enclone_core::defs::{TigData, TigData0, TigData1};
 use io_utils::{fwrite, fwriteln};
 use itertools::Itertools;
 use std::cmp::{max, min, Ordering};
@@ -99,11 +99,11 @@ pub fn sort_tig_bc(tig_bc: &mut [Vec<TigData>], refdata: &RefData, mix_donors: b
 /// - don't show the most trivial case with one UTR and all agree
 /// - find code simplifications.
 pub fn study_consensus(
+    i: usize,
     utr_con: bool,
     con_con: bool,
     share: &[TigData1],
     clones: &[Vec<TigData0>],
-    exact_clonotypes: &[ExactClonotype],
     refdata: &RefData,
 ) {
     let mut count = 0;
@@ -124,7 +124,7 @@ pub fn study_consensus(
                 "\n[{}] rev lefts for exact subclonotype {}, chain {}, \
                  vs = {}, utrs = {}, cdr3 = {}\n",
                 count + 1,
-                exact_clonotypes.len(),
+                i,
                 z,
                 v_ids.iter().format(","),
                 utr_ids.iter().format(","),
@@ -209,7 +209,7 @@ pub fn study_consensus(
                 log,
                 "\n[{}] rights for exact subclonotype {}, chain {}, cs = {:?}\n",
                 count + 1,
-                exact_clonotypes.len(),
+                i,
                 z,
                 c_ref_ids.iter().format(",")
             );

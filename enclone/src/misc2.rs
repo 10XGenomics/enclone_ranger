@@ -24,17 +24,20 @@ use vector_utils::{
     erase_if, next_diff, next_diff12_4, next_diff1_2, next_diff1_3, reverse_sort, unique_sort,
 };
 
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+struct Fate {
+    dataset_index: usize,
+    barcode: String,
+    fate: BarcodeFate,
+}
 
-// Filter out putative gel bead contamination.  We look for cases where inside a
-// given exact subclonotype, the same first or last half of a barcode is reused, and one
-// instance has at least 10-fold higher UMI count.  If the fraction of the "bad"
-// clones is at least 20%, delete them.
-
+/// Filter out putative gel bead contamination.  We look for cases where inside a
+/// given exact subclonotype, the same first or last half of a barcode is reused, and one
+/// instance has at least 10-fold higher UMI count.  If the fraction of the "bad"
+/// clones is at least 20%, delete them.
 pub fn filter_gelbead_contamination(
     ctl: &EncloneControl,
     clones: &mut Vec<Vec<TigData0>>,
-    fate: &mut Vec<(usize, String, BarcodeFate)>,
+    fate: &mut Vec<Fate>,
 ) {
     const GB_UMI_MULT: usize = 10;
     const GB_MIN_FRAC: f64 = 0.2;
@@ -77,19 +80,17 @@ pub fn filter_gelbead_contamination(
     }
     for (&b, clone) in bad.iter().zip(clones.iter()) {
         if b {
-            fate.push((
-                clone[0].dataset_index,
-                clone[0].barcode.clone(),
-                BarcodeFate::GelBeadContamination,
-            ));
+            fate.push(Fate {
+                dataset_index: clone[0].dataset_index,
+                barcode: clone[0].barcode.clone(),
+                fate: BarcodeFate::GelBeadContamination,
+            });
         }
     }
     if !ctl.gen_opt.nwhitef {
         erase_if(clones, &bad);
     }
 }
-
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
 pub fn create_exact_subclonotype_core(
     // inputs:
@@ -267,18 +268,14 @@ pub fn create_exact_subclonotype_core(
     }
 }
 
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-
-// Find exact subclonotypes.
-
+/// Find exact subclonotypes.
 pub fn find_exact_subclonotypes(
     ctl: &EncloneControl,
     tig_bc: &[Vec<TigData>],
     refdata: &RefData,
     fate: &mut [BarcodeFates],
 ) -> Vec<ExactClonotype> {
-    let mut exact_clonotypes = Vec::<ExactClonotype>::new();
-    let mut r = 0;
+    let mut r: usize = 0;
     let mut groups = Vec::<(usize, usize)>::new();
     while r < tig_bc.len() {
         let mut s = r + 1;
@@ -323,114 +320,109 @@ pub fn find_exact_subclonotypes(
         r = s;
     }
 
-    let mut results = Vec::<(
-        usize,
-        Vec<ExactClonotype>,
-        Vec<(usize, String, BarcodeFate)>,
-    )>::new();
-    for i in 0..groups.len() {
-        results.push((i, Vec::new(), Vec::new()));
-    }
-    results.par_iter_mut().for_each(|res| {
-        let i = res.0;
-        let r = groups[i].0;
-        let s = groups[i].1;
+    let results: Vec<_> = groups
+        .into_par_iter()
+        .enumerate()
+        .map(|(group_index, (r, s))| {
+            // Print reused barcodes.
 
-        // Print reused barcodes.
-
-        if ctl.gen_opt.reuse {
-            for t1 in r..s {
-                for t2 in t1 + 1..s {
-                    if tig_bc[t1][0].barcode == tig_bc[t2][0].barcode {
-                        println!("see reuse of barcode {}", tig_bc[t1][0].barcode);
-                        print!(
-                            "{}: numis =",
-                            ctl.origin_info.dataset_id[tig_bc[t1][0].dataset_index]
-                        );
-                        for m in 0..tig_bc[t1].len() {
-                            print!(" {}", tig_bc[t1][m].umi_count);
+            if ctl.gen_opt.reuse {
+                for t1 in r..s {
+                    for t2 in t1 + 1..s {
+                        if tig_bc[t1][0].barcode == tig_bc[t2][0].barcode {
+                            println!("see reuse of barcode {}", tig_bc[t1][0].barcode);
+                            print!(
+                                "{}: numis =",
+                                ctl.origin_info.dataset_id[tig_bc[t1][0].dataset_index]
+                            );
+                            for m in 0..tig_bc[t1].len() {
+                                print!(" {}", tig_bc[t1][m].umi_count);
+                            }
+                            println!();
+                            print!(
+                                "{}: numis =",
+                                ctl.origin_info.dataset_id[tig_bc[t2][0].dataset_index]
+                            );
+                            for m in 0..tig_bc[t2].len() {
+                                print!(" {}", tig_bc[t2][m].umi_count);
+                            }
+                            println!("\n");
                         }
-                        println!();
-                        print!(
-                            "{}: numis =",
-                            ctl.origin_info.dataset_id[tig_bc[t2][0].dataset_index]
-                        );
-                        for m in 0..tig_bc[t2].len() {
-                            print!(" {}", tig_bc[t2][m].umi_count);
-                        }
-                        println!("\n");
                     }
                 }
             }
-        }
 
-        // Delete reused barcodes.  In principle we could instead choose the instance having
-        // higher UMI counts.  Also we might test for more evidence of concurrence, to avoid
-        // the case where a barcode was accidentally reused.
+            // Delete reused barcodes.  In principle we could instead choose the instance having
+            // higher UMI counts.  Also we might test for more evidence of concurrence, to avoid
+            // the case where a barcode was accidentally reused.
 
-        let mut to_delete = vec![false; s - r];
-        let mut bc = (r..s)
-            .map(|t| (tig_bc[t][0].barcode.as_str(), t))
-            .collect::<Vec<_>>();
-        bc.sort_unstable();
-        let mut i = 0;
-        while i < bc.len() {
-            let j = next_diff1_2(&bc, i);
-            if j - i >= 2 {
-                for bck in &bc[i..j] {
-                    let t = bck.1;
-                    if ctl.clono_filt_opt_def.bc_dup {
-                        to_delete[t - r] = true;
+            let mut to_delete = vec![false; s - r];
+            let mut bc = (r..s)
+                .map(|t| (tig_bc[t][0].barcode.as_str(), t))
+                .collect::<Vec<_>>();
+            bc.sort_unstable();
+            let mut fates = Vec::new();
+            let mut i = 0;
+            while i < bc.len() {
+                let j = next_diff1_2(&bc, i);
+                if j - i >= 2 {
+                    for bck in &bc[i..j] {
+                        let t = bck.1;
+                        if ctl.clono_filt_opt_def.bc_dup {
+                            to_delete[t - r] = true;
+                        }
+                        fates.push(Fate {
+                            dataset_index: tig_bc[t][0].dataset_index,
+                            barcode: tig_bc[t][0].barcode.clone(),
+                            fate: BarcodeFate::DuplicatedBarcode,
+                        });
                     }
-                    res.2.push((
-                        tig_bc[t][0].dataset_index,
-                        tig_bc[t][0].barcode.clone(),
-                        BarcodeFate::DuplicatedBarcode,
-                    ));
                 }
+                i = j;
             }
-            i = j;
-        }
 
-        // Create the exact subclonotype.
+            // Create the exact subclonotype.
 
-        let mut share = Vec::<TigData1>::new();
-        let mut clones = Vec::<Vec<TigData0>>::new();
-        create_exact_subclonotype_core(tig_bc, r, s, &to_delete, &mut share, &mut clones);
+            let mut share = Vec::<TigData1>::new();
+            let mut clones = Vec::<Vec<TigData0>>::new();
+            create_exact_subclonotype_core(tig_bc, r, s, &to_delete, &mut share, &mut clones);
 
-        // NOCR
-        // Explore consensus.
-        study_consensus(
-            ctl.gen_opt.utr_con,
-            ctl.gen_opt.con_con,
-            &share,
-            &clones,
-            &exact_clonotypes,
-            refdata,
-        );
+            // NOCR
+            // Explore consensus.
+            study_consensus(
+                group_index,
+                ctl.gen_opt.utr_con,
+                ctl.gen_opt.con_con,
+                &share,
+                &clones,
+                refdata,
+            );
 
-        // Filter out putative gel bead contamination.
+            // Filter out putative gel bead contamination.
 
-        filter_gelbead_contamination(ctl, &mut clones, &mut res.2);
+            filter_gelbead_contamination(ctl, &mut clones, &mut fates);
 
-        // Save exact subclonotype.
+            // Save exact subclonotype.
 
-        if (share.len() >= ctl.gen_opt.min_chains_exact
-            || (ctl.join_alg_opt.basic_h.is_none() && !ctl.gen_opt.pre_eval))
-            && !clones.is_empty()
-        {
-            res.1.push(ExactClonotype { share, clones });
-        }
-    });
+            if (share.len() >= ctl.gen_opt.min_chains_exact
+                || (ctl.join_alg_opt.basic_h.is_none() && !ctl.gen_opt.pre_eval))
+                && !clones.is_empty()
+            {
+                return (Some(ExactClonotype { share, clones }), fates);
+            }
+            (None, fates)
+        })
+        .collect();
 
+    let mut exact_clonotypes = Vec::<ExactClonotype>::new();
     let mut max_exact = 0;
-    for i in 0..results.len() {
-        if !results[i].1.is_empty() {
-            max_exact = max(max_exact, results[i].1[0].ncells());
-            exact_clonotypes.append(&mut results[i].1);
+    for r in results {
+        if let Some(exact_clonotype) = r.0 {
+            max_exact = max(max_exact, exact_clonotype.ncells());
+            exact_clonotypes.push(exact_clonotype);
         }
-        for j in 0..results[i].2.len() {
-            fate[results[i].2[j].0].insert(results[i].2[j].1.clone(), results[i].2[j].2.clone());
+        for f in r.1 {
+            fate[f.dataset_index].insert(f.barcode, f.fate);
         }
     }
     if ctl.gen_opt.utr_con || ctl.gen_opt.con_con {
@@ -521,10 +513,7 @@ pub fn find_exact_subclonotypes(
     exact_clonotypes
 }
 
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-
-// Search for SHM indels.  Exploratory.
-
+/// Search for SHM indels.  Exploratory.
 pub fn search_for_shm_indels(tig_bc: &[Vec<TigData>]) {
     println!("CDR3s associated with possible SHM indels");
     let mut cs: Vec<((&str, usize), usize, &str)> = tig_bc
@@ -551,11 +540,8 @@ pub fn search_for_shm_indels(tig_bc: &[Vec<TigData>]) {
     println!();
 }
 
-// ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-
-// Look for barcode reuse.  The primary purpose of this is to detect instances where two
-// datasets were obtained from the same cDNA (from the same GEM well).
-
+/// Look for barcode reuse.  The primary purpose of this is to detect instances where two
+/// datasets were obtained from the same cDNA (from the same GEM well).
 pub fn check_for_barcode_reuse(
     origin_info: &OriginInfo,
     tig_bc: &[Vec<TigData>],
