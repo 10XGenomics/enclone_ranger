@@ -7,7 +7,9 @@ use crate::misc3::study_consensus;
 use amino::nucleotide_to_aminoacid_sequence;
 use debruijn::dna_string::DnaString;
 use enclone_core::barcode_fate::BarcodeFate;
-use enclone_core::defs::{EncloneControl, ExactClonotype, Junction, TigData, TigData0, TigData1};
+use enclone_core::defs::{
+    EncloneControl, ExactClonotype, Junction, OriginInfo, TigData, TigData0, TigData1,
+};
 use enclone_core::enclone_structs::BarcodeFates;
 use io_utils::{fwriteln, open_for_write_new};
 use rayon::prelude::*;
@@ -549,13 +551,13 @@ pub fn search_for_shm_indels(tig_bc: &[Vec<TigData>]) {
 // datasets were obtained from the same cDNA (from the same GEM well).
 
 pub fn check_for_barcode_reuse(
-    ctl: &EncloneControl,
+    origin_info: &OriginInfo,
     tig_bc: &[Vec<TigData>],
 ) -> Result<(), String> {
-    if !ctl.gen_opt.accept_reuse {
+    {
         const MIN_REUSE_FRAC_TO_SHOW: f64 = 0.25;
         let mut all = Vec::<(&str, usize, usize)>::new();
-        let mut total = vec![0; ctl.origin_info.dataset_id.len()];
+        let mut total = vec![0; origin_info.dataset_id.len()];
         for (i, tig_i) in tig_bc.iter().enumerate() {
             all.push((tig_i[0].barcode.as_str(), tig_i[0].dataset_index, i));
             total[tig_i[0].dataset_index] += 1;
@@ -611,8 +613,8 @@ pub fn check_for_barcode_reuse(
                 writeln!(
                     msg,
                     "{}, {} ==> {} of {}, {} barcodes ({:.1}%)",
-                    ctl.origin_info.dataset_id[l1],
-                    ctl.origin_info.dataset_id[l2],
+                    origin_info.dataset_id[l1],
+                    origin_info.dataset_id[l2],
                     n,
                     n1,
                     n2,

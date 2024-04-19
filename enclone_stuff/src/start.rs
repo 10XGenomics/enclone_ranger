@@ -201,8 +201,9 @@ pub fn main_enclone_start(
     );
 
     // Look for barcode reuse.
-
-    check_for_barcode_reuse(ctl, &tig_bc)?;
+    if !ctl.gen_opt.accept_reuse {
+        check_for_barcode_reuse(&ctl.origin_info, &tig_bc)?;
+    }
 
     // Find exact subclonotypes.
 
