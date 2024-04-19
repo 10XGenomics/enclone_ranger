@@ -3,7 +3,7 @@
 // This file provides the single function graph_filter.
 
 use enclone_core::barcode_fate::BarcodeFate;
-use enclone_core::defs::{EncloneControl, TigData};
+use enclone_core::defs::TigData;
 use enclone_core::enclone_structs::BarcodeFates;
 use graph_simple::GraphSimple;
 use io_utils::fwriteln;
@@ -32,9 +32,9 @@ use vector_utils::{bin_member, bin_position, erase_if, lower_bound, next_diff12_
 // Hmm, seems like the edges go from heavy to light.
 
 pub fn graph_filter(
-    ctl: &EncloneControl,
     tig_bc: &mut Vec<Vec<TigData>>,
-    graph: bool,
+    skip_graph_filter: bool,
+    log_graph: bool,
     fate: &mut [BarcodeFates],
 ) {
     let mut ndels = 0;
@@ -322,7 +322,7 @@ pub fn graph_filter(
                     && (stats[i].0).0 <= MAX_KILL_HEAVY
                     && (stats[i].0).1 <= MAX_KILL_HEAVY_CELLS
                 {
-                    if graph {
+                    if log_graph {
                         let w = stats[i].1;
                         println!(
                             "\nkill type 3, from {} to {}\nkilled by {} to {}",
@@ -379,10 +379,10 @@ pub fn graph_filter(
                 .insert(tig_bc[i][0].barcode.clone(), BarcodeFate::GraphFilter);
         }
     }
-    if !ctl.cr_opt.ngraph_filter {
+    if !skip_graph_filter {
         erase_if(tig_bc, &to_delete);
     }
-    if graph {
+    if log_graph {
         fwriteln!(log, "");
         print!("{}", strme(&log));
         println!("total graph filter deletions = {ndels}");

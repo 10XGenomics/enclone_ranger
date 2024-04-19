@@ -259,7 +259,7 @@ pub struct GeneralOpt {
     pub indels: bool,
     pub reannotate: bool,
     pub heavy_chain_reuse: bool,
-    pub graph: bool,
+    pub log_graph: bool,
     pub utr_con: bool,
     pub con_con: bool,
     pub nwhitef: bool,

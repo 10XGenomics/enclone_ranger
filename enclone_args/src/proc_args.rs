@@ -367,7 +367,7 @@ pub fn proc_args(ctl: &mut EncloneControl, args: &[String]) -> Result<(), String
         ("FOLD_HEADERS", &mut ctl.gen_opt.fold_headers),
         ("FORCE", &mut ctl.force),
         ("FULL_SEQC", &mut ctl.clono_print_opt.full_seqc),
-        ("GRAPH", &mut ctl.gen_opt.graph),
+        ("GRAPH", &mut ctl.gen_opt.log_graph),
         (
             "GROUP_CDR3H_LEN_VAR",
             &mut ctl.clono_group_opt.cdr3h_len_var,

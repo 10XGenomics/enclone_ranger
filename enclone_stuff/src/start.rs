@@ -162,14 +162,15 @@ pub fn main_enclone_start(
         return Err("\nNo TCR or BCR data have been specified.\n".to_string());
     }
 
+    // NOCR
     // Search for SHM indels.
     if ctl.gen_opt.indels {
         search_for_shm_indels(&tig_bc);
         return Ok(Default::default());
     }
 
+    // NOCR
     // Record fate of non-cells.
-
     if ctl.gen_opt.ncell {
         for tigi in &tig_bc {
             let bc = &tigi[0].barcode;
@@ -181,8 +182,12 @@ pub fn main_enclone_start(
     }
 
     // Filter using light --> heavy graph.
-
-    graph_filter(ctl, &mut tig_bc, ctl.gen_opt.graph, &mut fate);
+    graph_filter(
+        &mut tig_bc,
+        ctl.cr_opt.ngraph_filter,
+        ctl.gen_opt.log_graph,
+        &mut fate,
+    );
 
     // Sort tig_bc.
 
