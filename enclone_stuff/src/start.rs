@@ -190,12 +190,15 @@ pub fn main_enclone_start(
     );
 
     // Sort tig_bc.
-
     sort_tig_bc(&mut tig_bc, refdata, ctl.clono_filt_opt_def.donor);
 
     // Cross filter.
-
-    cross_filter(ctl, &mut tig_bc, &mut fate);
+    cross_filter(
+        &ctl.origin_info,
+        &mut tig_bc,
+        &mut fate,
+        ctl.clono_filt_opt_def.ncross,
+    );
 
     // Look for barcode reuse.
 

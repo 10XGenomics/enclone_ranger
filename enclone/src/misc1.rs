@@ -4,7 +4,7 @@
 
 use enclone_core::{
     barcode_fate::BarcodeFate,
-    defs::{CloneInfo, EncloneControl, ExactClonotype, TigData},
+    defs::{CloneInfo, EncloneControl, ExactClonotype, OriginInfo, TigData},
     enclone_structs::BarcodeFates,
 };
 use equiv::EquivRel;
@@ -156,26 +156,26 @@ pub fn lookup_heavy_chain_reuse(
 // subsequently distintegrated.
 
 pub fn cross_filter(
-    ctl: &EncloneControl,
+    origin_info: &OriginInfo,
     tig_bc: &mut Vec<Vec<TigData>>,
     fate: &mut [BarcodeFates],
+    ncross: bool,
 ) {
     // Get the list of dataset origins.  Here we allow the same origin name to have been used
     // for more than one donor, as we haven't explicitly prohibited that.
 
     let mut origins = Vec::<(&str, &str)>::new();
-    for i in 0..ctl.origin_info.n() {
+    for i in 0..origin_info.n() {
         origins.push((
-            ctl.origin_info.donor_id[i].as_str(),
-            ctl.origin_info.origin_id[i].as_str(),
+            origin_info.donor_id[i].as_str(),
+            origin_info.origin_id[i].as_str(),
         ));
     }
     unique_sort(&mut origins);
-    let to_origin = ctl
-        .origin_info
+    let to_origin = origin_info
         .donor_id
         .iter()
-        .zip(ctl.origin_info.origin_id.iter())
+        .zip(origin_info.origin_id.iter())
         .map(|(donor_id, origin_id)| {
             bin_position(&origins, &(donor_id.as_str(), origin_id.as_str())) as usize
         })
@@ -183,7 +183,7 @@ pub fn cross_filter(
 
     // For each dataset index, and each origin, compute the total number of productive pairs.
 
-    let mut n_dataset_index = vec![0; ctl.origin_info.n()];
+    let mut n_dataset_index = vec![0; origin_info.n()];
     let mut n_origin = vec![0; origins.len()];
     for tigi in tig_bc.iter() {
         for x in tigi {
@@ -248,12 +248,12 @@ pub fn cross_filter(
         for tig in tigi {
             if tig.umi_count < UMIS_SAVE && bin_member(&blacklist, &tig.seq()) {
                 fate[tigi[0].dataset_index].insert(tigi[0].barcode.clone(), BarcodeFate::Cross);
-                if !ctl.clono_filt_opt_def.ncross {
-                    to_delete[i] = true;
-                }
+                to_delete[i] = true;
                 break;
             }
         }
     }
-    erase_if(tig_bc, &to_delete);
+    if !ncross {
+        erase_if(tig_bc, &to_delete);
+    }
 }
