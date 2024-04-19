@@ -13,7 +13,7 @@ use vector_utils::unique_sort;
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 
-pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut [Vec<TigData>], refdata: &RefData) {
+pub fn sort_tig_bc(tig_bc: &mut [Vec<TigData>], refdata: &RefData, mix_donors: bool) {
     tig_bc.sort_by(|x, y| -> Ordering {
         for i in 0..x.len() {
             // Order by number of chains.
@@ -78,9 +78,9 @@ pub fn sort_tig_bc(ctl: &EncloneControl, tig_bc: &mut [Vec<TigData>], refdata: &
                 return Ordering::Greater;
 
             // Order by donor if MIX_DONORS option used.
-            } else if !ctl.clono_filt_opt_def.donor && x[i].donor_index < y[i].donor_index {
+            } else if !mix_donors && x[i].donor_index < y[i].donor_index {
                 return Ordering::Less;
-            } else if !ctl.clono_filt_opt_def.donor && x[i].donor_index > y[i].donor_index {
+            } else if !mix_donors && x[i].donor_index > y[i].donor_index {
                 return Ordering::Greater;
             }
         }

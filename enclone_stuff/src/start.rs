@@ -191,7 +191,7 @@ pub fn main_enclone_start(
 
     // Sort tig_bc.
 
-    sort_tig_bc(ctl, &mut tig_bc, refdata);
+    sort_tig_bc(&mut tig_bc, refdata, ctl.clono_filt_opt_def.donor);
 
     // Cross filter.
 
