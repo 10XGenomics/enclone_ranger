@@ -517,32 +517,30 @@ pub fn find_exact_subclonotypes(
 
 // Search for SHM indels.  Exploratory.
 
-pub fn search_for_shm_indels(ctl: &EncloneControl, tig_bc: &[Vec<TigData>]) {
-    if ctl.gen_opt.indels {
-        println!("CDR3s associated with possible SHM indels");
-        let mut cs: Vec<((&str, usize), usize, &str)> = tig_bc
-            .iter()
-            .flat_map(|tig| {
-                tig.iter().map(|x| {
-                    (
-                        (x.cdr3_dna.as_str(), x.v_ref_id),
-                        x.seq().len(),
-                        x.cdr3_aa.as_str(),
-                    )
-                })
+pub fn search_for_shm_indels(tig_bc: &[Vec<TigData>]) {
+    println!("CDR3s associated with possible SHM indels");
+    let mut cs: Vec<((&str, usize), usize, &str)> = tig_bc
+        .iter()
+        .flat_map(|tig| {
+            tig.iter().map(|x| {
+                (
+                    (x.cdr3_dna.as_str(), x.v_ref_id),
+                    x.seq().len(),
+                    x.cdr3_aa.as_str(),
+                )
             })
-            .collect();
-        unique_sort(&mut cs);
-        let mut i = 0;
-        while i < cs.len() {
-            let j = next_diff1_3(&cs, i);
-            if j - i > 1 {
-                println!("{}", cs[i].2);
-            }
-            i = j;
+        })
+        .collect();
+    unique_sort(&mut cs);
+    let mut i = 0;
+    while i < cs.len() {
+        let j = next_diff1_3(&cs, i);
+        if j - i > 1 {
+            println!("{}", cs[i].2);
         }
-        println!();
+        i = j;
     }
+    println!();
 }
 
 // ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓

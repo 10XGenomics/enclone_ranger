@@ -163,9 +163,8 @@ pub fn main_enclone_start(
     }
 
     // Search for SHM indels.
-
-    search_for_shm_indels(ctl, &tig_bc);
     if ctl.gen_opt.indels {
+        search_for_shm_indels(&tig_bc);
         return Ok(Default::default());
     }
 
