@@ -1,5 +1,5 @@
 [package]
-name = "enclone_print"
+name = "enclone_process"
 version = "0.5.219"
 authors = ["""David Jaffe <david.jaffe@10xgenomics.com>,
               Nigel Delaney <nigel.delaney@10xgenomics.com>,

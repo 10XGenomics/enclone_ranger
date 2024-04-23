@@ -9,7 +9,7 @@ use enclone_core::{
     defs::{CloneInfo, EncloneControl, ExactClonotype},
     enclone_structs::BarcodeFates,
 };
-use enclone_print::define_mat::{define_mat, setup_define_mat};
+use enclone_process::define_mat::{define_mat, setup_define_mat};
 use enclone_proto::types::DonorReferenceItem;
 use itertools::Itertools;
 use qd::Double;

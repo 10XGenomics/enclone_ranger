@@ -468,7 +468,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "enclone_print"
+name = "enclone_process"
 version = "0.5.219"
 dependencies = [
  "amino",
@@ -517,7 +517,7 @@ dependencies = [
  "enclone",
  "enclone_args",
  "enclone_core",
- "enclone_print",
+ "enclone_process",
  "enclone_stuff",
  "hdf5",
  "rayon",
@@ -534,7 +534,7 @@ dependencies = [
  "enclone",
  "enclone_args",
  "enclone_core",
- "enclone_print",
+ "enclone_process",
  "enclone_proto",
  "equiv",
  "evalexpr",
