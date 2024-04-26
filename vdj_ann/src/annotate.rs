@@ -2847,7 +2847,7 @@ pub fn get_cdr3(contig: &DnaStringSlice<'_>) -> Vec<CDR3Annotation> {
                     if right_flank_score >= RIGHT_FLANK_MIN_SCORE {
                         // Check if there is a stop codon in the CDR3.
                         let stop_codon = (amino_acid_seq
-                            [cdr3_start_pos + 1..right_motif_start_pos + 2])
+                            [cdr3_start_pos + 1..right_motif_start_pos + 2 + 1])
                             .iter()
                             .any(|aa| *aa == b'*');
 
@@ -3623,5 +3623,16 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn test_stopcodon_in_cdr3() {
+        let contig = DnaString::from_dna_string(
+            // nucleotide seq should result in a CDR3 with a '*' as its last amino acid and the
+            // get_cd3 function should return no valid CDR3Annotations i.e. emtpy vec
+            "ACCCAACCTGAAGACTCGGCTGTCTACTTCTGTGCAGCAAGTCTGTAAGGGGGAAATGAGAAATTAACCTTTGGGACTGG",
+        );
+        let cdr3s = get_cdr3(&contig.slice(0, contig.len()));
+        assert!(cdr3s.is_empty());
     }
 }
