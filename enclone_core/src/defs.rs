@@ -179,7 +179,6 @@ impl CellrangerOpt {
                     cr_opts.cellranger = true;
                 }
                 "PRE" => {
-                    println!("Processing {arg}");
                     cr_opts.pre = get_rest()?.split(',').map(str::to_string).collect();
                 }
                 "REF" => {
